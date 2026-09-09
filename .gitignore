@@ -1,0 +1,14 @@
+# Higgs Field 生成物・素材(バイナリ)はコミットしない
+assets/output/
+assets/source/
+*.mp4
+*.mov
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.mp3
+*.wav
+
+# OS / エディタ
+.DS_Store
