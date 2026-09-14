@@ -1,6 +1,6 @@
 # Higgs Field 生成物・素材(バイナリ)はコミットしない
-assets/output/
-assets/source/
+**/assets/output/
+**/assets/source/
 *.mp4
 *.mov
 *.png
