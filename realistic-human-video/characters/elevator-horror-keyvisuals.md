@@ -75,3 +75,12 @@
 | 警察官 私服全身 | 0c00d8c9-198f-4f4d-ad94-06d0c99d1ded | f480f23a-352e-4bcf-bc75-9b749ab4f7cd |
 | 警察官 顔アップ | bfc0afa3-d1fc-4168-912a-2dc55696bdc0 | 1304eec0-b969-4d0d-84b5-3418b8d86190 |
 | 帽子の男 全身 | ab13b532-3af3-4d82-8a09-5cac05613a9d | 064e46f1-602d-4b05-b35d-acd232f41c58 |
+
+### 採用(制服b・私服a・顔b・帽子a)と動画用エレメント
+| 人物 | Element 名 | Element ID | 画像 |
+|---|---|---|---|
+| 女性A | woman-A-full-and-face | 26a4b70c-dd2a-49be-848a-bea422108be2 | 全身a・顔a |
+| 警察官 | police-officer-full-and-face | 2899d504-2ea4-44bf-8d6c-2e1df4b97e18 | 制服全身b・私服全身a・顔アップb |
+| 帽子の男 | cap-man-full-body | 7add1774-e999-4674-b080-fa5f6c64c4de | 全身a |
+
+※ 動画生成は、ユーザーの指示があるまで行わない。
