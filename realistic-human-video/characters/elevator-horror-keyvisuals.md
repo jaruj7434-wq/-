@@ -64,3 +64,6 @@
 | 全身 | b | 1fbf4322-faf4-4f81-b66d-a88b8f4d92f6 |
 | 顔アップ | a | d3094502-5179-4532-867d-25ef216c93c7 |
 | 顔アップ | b | eea75e8f-cd65-4370-871e-225c198cd129 |
+
+### 女性A 採用:全身a・顔a → Element「woman-A-full-and-face」(26a4b70c-dd2a-49be-848a-bea422108be2)
+- 警察官 Soul(338061a8-...)学習完了
