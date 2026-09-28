@@ -1,0 +1,7 @@
+# 生成物・素材・Blender バイナリはコミットしない
+assets/
+*.blend
+*.blend1
+*.fbx
+*.glb
+*.gltf
