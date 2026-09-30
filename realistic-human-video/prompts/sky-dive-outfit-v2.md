@@ -52,3 +52,8 @@ and smiles at the camera. The camera slowly pushes in.
 Keep his face identical to the face reference in every frame. Smooth, realistic motion,
 natural fabric physics, no distortion.
 ```
+
+## 生成ログ
+| ステップ | job_id | 備考 |
+|---|---|---|
+| A(最初のコマ) | `da3e5df0-ccab-4938-a072-42b2baa60564` | 完了。ジョブ記録上のモデルは `nano_banana_2` |
