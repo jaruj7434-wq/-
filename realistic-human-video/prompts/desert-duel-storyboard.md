@@ -50,3 +50,27 @@ anamorphic 35mm look, warm amber highlights and teal shadows, subtle film grain.
 
 - モデル: `nano_banana_pro` / 9:16 / 2k / 1枚2クレジット → 16枚で32クレジット
 - 判定リスクが高いカット: F06・F07・F08・F11・F12・F15(止まった場合は言い回しを調整して再提案)
+
+## 生成ログ(2026-09-30、全16枚完了・判定落ちなし)
+
+| # | job_id |
+|---|---|
+| F01 | `3e036857-7d73-41f2-ae5b-822baa2b78ad` |
+| F02 | `ab2e3553-3bb7-49f2-8fcf-a1237f04a5db` |
+| F03 | `e4e23f78-b7b3-45db-80c5-66a917bf3c87` |
+| F04 | `b34cb589-2c36-47dc-a0e7-b2791022673b` |
+| F05 | `30c5bde0-5b67-4eef-8a93-7617954a64da` |
+| F06 | `cfbd330f-66b5-4c17-964b-53d600eddd16` |
+| F07 | `f90499ff-4647-49e8-a185-59ade974222f` |
+| F08 | `0b691bcd-8e32-4ede-bf51-7d71a1c18319` |
+| F09 | `0f3933ae-c693-457d-948a-19baeabc5fd0` |
+| F10 | `97c5f6db-5d1f-4460-aec4-ab6b1702929f` |
+| F11 | `6562ea46-ba92-4912-952a-24dc95d77a01` |
+| F12 | `c2ff7cc1-f41c-4219-ba5d-ae313518ebea` |
+| F13 | `ac13cf86-2d7a-40df-817d-ce60ec1a600b` |
+| F14 | `9db942ee-16ef-4793-b74b-62fe3a3b24c9` |
+| F15 | `0fc57001-294f-4406-be6a-8f8b6c16e11a` |
+| F16 | `4b77ed62-699f-4211-9867-5480216ec3e3` |
+
+- 変身後の衣装参照: おばあさん T3 `950cd934-…`、男性 T6 `2dfc5986-…`(medias の image_references で渡す)
+- 「stylized playful action-comedy」「no injury, no blood, no wound」の併記で発砲・命中・倒れるカットも判定を通過。
