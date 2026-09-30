@@ -1,4 +1,4 @@
-# Desert Duel — 動画化用 英語プロンプト(監督版・約20秒・20カット)
+# Desert Duel — 動画化用 英語プロンプト(監督版・約22秒・20カット)
 
 - 絵コンテ画像: `desert-duel-storyboard.md` の F01〜F16 を各カットの参照フレームとして使う
 - セリフ(日本語・確定): 男性「その服時代遅れだよ」→発砲 / おばあさん「本当のおしゃれを教えてやるよ」→発砲 / 男性「カッコ良すぎる...」→倒れる
@@ -6,7 +6,7 @@
 ## Prompt (English)
 
 ```
-TITLE: "FASHION DUEL" — a 20-second vertical (9:16) photorealistic action-comedy short film.
+TITLE: "FASHION DUEL" — a 22-second vertical (9:16) photorealistic action-comedy short film.
 
 LOGLINE
 In a sunbaked desert, a young man and an elderly woman face off in a Western-style gun duel.
@@ -108,42 +108,42 @@ SHOT 12 (11.4–12.0s) — Reaction: the man
 
 [ACT 3 — THE COUNTERSHOT: the man's makeover]
 
-SHOT 13 (12.0–12.6s) — Close-up: the grandmother
+SHOT 13 (12.0–14.0s) — Close-up: the grandmother
   She looks straight at him and says in Japanese, calm and confident:
   「本当のおしゃれを教えてやるよ」
 
-SHOT 14 (12.6–13.2s) — Reverse over-the-shoulder from behind the grandmother: she fires
+SHOT 14 (14.0–14.6s) — Reverse over-the-shoulder from behind the grandmother: she fires
   Her shoulder and gun arm in the right foreground, the man in focus on the left.
   Muzzle flash, white smoke, recoil. Camera shake.
 
-SHOT 15 (13.2–14.2s) — Bullet cam (faster, reverse direction)
+SHOT 15 (14.6–15.6s) — Bullet cam (faster, reverse direction)
   The camera chases the bullet from behind, flying right-to-left with a quick barrel roll,
   then snap-zooms into the man's chest.
 
-SHOT 16 (14.2–15.8s) — Impact and transformation (hero shot)
+SHOT 16 (15.6–17.2s) — Impact and transformation (hero shot)
   Low-angle hero shot. A tiny puff of smoke at his chest — unhurt. The striped shirt
   transforms outward like a wave into the black runway look; the long leather trench coat
   unfurls and flares dramatically in the wind as the camera pushes in and slows to slow motion.
   He stays facing right.
 
-SHOT 17 (15.8–16.8s) — Fashion reveal montage (three rapid inserts, ~0.33s each)
+SHOT 17 (17.2–18.2s) — Fashion reveal montage (three rapid inserts, ~0.33s each)
   a) Polished black lace-up boots planting in the sand.
   b) Silver rings and layered chains catching the sunlight.
   c) Slim black sunglasses sliding into place over his eyes.
 
 [ACT 4 — THE DEFEAT: the punchline]
 
-SHOT 18 (16.8–17.8s) — Medium close-up: the man realizes
+SHOT 18 (18.2–19.7s) — Medium close-up: the man realizes
   Profile, facing right. He looks down at himself, lifts the leather lapel with his left
   hand, and his face melts from shock into humbled awe. He murmurs in Japanese:
   「カッコ良すぎる...」
 
-SHOT 19 (17.8–19.0s) — Wide side-on master: he falls
+SHOT 19 (19.7–20.9s) — Wide side-on master: he falls
   Same framing as the opening. He tips stiffly forward and falls face-first into the soft
   sand like a toppled plank — a comedic, theatrical faint, completely unhurt. A puff of sand
   rises, his coat flutters down over him. The grandmother stands tall on the right.
 
-SHOT 20 (19.0–20.0s) — Final hero shot: the grandmother (the ONLY look to camera)
+SHOT 20 (20.9–22.0s) — Final hero shot: the grandmother (the ONLY look to camera)
   Medium close-up. She turns her face to the camera, raises the revolver near her lips and
   gently blows the thin curl of smoke from the muzzle, then gives a small, cool wink.
   The fallen man lies blurred in the background on the left. Freeze frame on the wink.
