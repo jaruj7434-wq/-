@@ -1,7 +1,7 @@
 # Desert Duel — 動画化用 英語プロンプト(監督版・約20秒・20カット)
 
 - 絵コンテ画像: `desert-duel-storyboard.md` の F01〜F16 を各カットの参照フレームとして使う
-- セリフは仮(変更可)
+- セリフ(日本語・確定): 男性「その服時代遅れだよ」→発砲 / おばあさん「本当のおしゃれを教えてやるよ」→発砲 / 男性「カッコ良すぎる...」→倒れる
 
 ## Prompt (English)
 
@@ -33,6 +33,11 @@ WORLD & LOOK
 - Shot like a modern action movie: anamorphic 35mm look, warm amber highlights and teal
   shadows, subtle film grain, shallow depth of field, lens flares, speed ramps
   (slow motion into real time), whip pans, snap zooms and hard cuts on the beat.
+
+DIALOGUE (spoken in Japanese, exactly as written)
+- SHOT 06, the young man, before he fires: 「その服時代遅れだよ」
+- SHOT 13, the grandmother, before she fires: 「本当のおしゃれを教えてやるよ」
+- SHOT 18, the young man, just before he falls: 「カッコ良すぎる...」
 
 CONTINUITY RULES (apply to every shot)
 - The two characters always face each other and look at each other — never at the camera,
@@ -68,8 +73,8 @@ SHOT 05 (3.7–4.3s) — Insert: the grandmother's hand
   Macro shot of her wrinkled thumb pulling back the hammer. Sharp metallic click.
 
 SHOT 06 (4.3–5.8s) — Close-up: the man's face, the line
-  Low-angle close-up, slow push-in onto his mouth as he says, with a cocky half-smile:
-  "That blue is SO last season."
+  Low-angle close-up, slow push-in onto his mouth as he says in Japanese, with a cocky
+  half-smile: 「その服時代遅れだよ」
 
 SHOT 07 (5.8–6.4s) — Close-up: the grandmother's reaction
   One eyebrow slowly rises. The corner of her mouth curls into a knowing smirk.
@@ -104,7 +109,8 @@ SHOT 12 (11.4–12.0s) — Reaction: the man
 [ACT 3 — THE COUNTERSHOT: the man's makeover]
 
 SHOT 13 (12.0–12.6s) — Close-up: the grandmother
-  She looks straight at him and says softly: "My turn, sweetie."
+  She looks straight at him and says in Japanese, calm and confident:
+  「本当のおしゃれを教えてやるよ」
 
 SHOT 14 (12.6–13.2s) — Reverse over-the-shoulder from behind the grandmother: she fires
   Her shoulder and gun arm in the right foreground, the man in focus on the left.
@@ -129,7 +135,8 @@ SHOT 17 (15.8–16.8s) — Fashion reveal montage (three rapid inserts, ~0.33s e
 
 SHOT 18 (16.8–17.8s) — Medium close-up: the man realizes
   Profile, facing right. He looks down at himself, lifts the leather lapel with his left
-  hand, and his face melts from shock into humbled awe. He whispers: "...I lost."
+  hand, and his face melts from shock into humbled awe. He murmurs in Japanese:
+  「カッコ良すぎる...」
 
 SHOT 19 (17.8–19.0s) — Wide side-on master: he falls
   Same framing as the opening. He tips stiffly forward and falls face-first into the soft
@@ -151,4 +158,4 @@ SOUND DESIGN
 
 ## メモ(日本語)
 - 多くの動画モデルは1回の生成が5〜10秒程度のため、実際の生成では ACT ごと(または数カットごと)に分割し、F01〜F16 の絵コンテ画像を開始/終了フレームとして使う想定。
-- セリフ(SHOT 06 / 13 / 18)は仮。音声は `generate_audio` 等で別途作成する場合も、実行前に許可を取る。
+- セリフの音声は `generate_audio` 等で別途作成する場合も、実行前に許可を取る。
