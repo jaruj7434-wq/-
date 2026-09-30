@@ -80,3 +80,37 @@ air, distant dunes and scattered rocks, pale warm sky. Photorealistic, natural s
 | G2 | `9aee6d87-7227-433c-97d3-b24394142077` | 218368 |
 | G3 | `c53058ab-6e37-4779-a8c5-538abc77f2da` | 236944 |
 | G4 | `eed9d86a-b399-4f1a-b9cf-551ce40a050e` | 365451 |
+
+## ステップ2: 二人を同じ画面に入れた統一カット(案)
+
+### 反省点(ステップ1b)
+- Soul は「顔」は覚えるが服装・小物は固定されず、プロンプトの言葉で帽子や別の服が足された。
+- Soul は1回に1人しか使えないため、奥のぼやけた相手が別人になった。
+
+### 方針
+- 登録済みの参照エレメント(登録時の姿=服装込み)を使い、二人を毎カット同時に入れる。
+  - 男性: `Chill Nautical Vibes` element `f264355d-52eb-4665-9e9c-a58c36c62a47`
+  - おばあさん: `Graceful Cleanup Warrior` element `4f672ef6-b040-4eb9-b178-2cf69c5f931d`
+- モデル: `nano_banana_pro`(複数参照の再現性重視)/ 9:16 / 2k / 1枚2クレジット
+- 服装の言葉(色・アイテム名)はプロンプトに書かず、「参照画像のまま」と指示して上書きを防ぐ。
+
+### 共通の固定指示(全カット末尾)
+```
+Both people must look EXACTLY like their reference images: same face, same hairstyle, same
+clothing, same colors, same accessories. Do not add hats, jackets or any new clothing or
+accessories, and do not change any outfit. The young man stands on the left side of the duel
+and the elderly woman on the right side. Photorealistic cinematic film still, anamorphic 35mm
+look, warm amber highlights and teal shadows, subtle film grain, low late-afternoon desert
+sun, long shadows, fine dust in the air.
+```
+
+| # | カット | 構図プロンプト |
+|---|---|---|
+| S1 | 全景(二人の対峙) | Wide side-on establishing shot in a vast desert: <<<M>>> on the left and <<<G>>> on the right stand about 4 meters apart facing each other, each aiming an old silver revolver at the other, both fully visible head to toe. |
+| S2 | 男性の足元から超ローアングル | Extreme low-angle shot from sand level just behind <<<M>>>'s shoes, looking up past his legs as he aims an old silver revolver; in the far background, out of focus but clearly recognizable, <<<G>>> stands aiming back at him. |
+| S3 | 男性の目元アップ | Extreme close-up of <<<M>>>'s eyes and brow, sweat on his skin, eyes narrowed; behind him, heavily blurred in the distance, the small figure of <<<G>>> facing him. |
+| S4 | 男性の肩越し | Over-the-shoulder shot from behind <<<M>>>'s right shoulder, his sleeve and the old silver revolver sharp in the foreground; <<<G>>> in soft focus in the middle distance, aiming back at him. |
+| S5 | 真上からのドローン | Top-down drone shot of the desert: <<<M>>> and <<<G>>> facing each other 4 meters apart with revolvers raised, their long shadows stretching across the rippled sand. |
+| S6 | おばあさんのローアングル | Low-angle medium shot of <<<G>>> aiming an old silver revolver, calm fearless face, wind in her hair; <<<M>>> blurred in the background aiming at her. |
+| S7 | おばあさんの顔アップ | Tight close-up of <<<G>>>'s face, a faint knowing smile, sharp eyes; <<<M>>> heavily blurred in the distant background. |
+| S8 | おばあさんの肩越し+手元 | Over-the-shoulder shot from behind <<<G>>>: her hand gripping an old silver revolver sharp in the foreground, thumb pulling back the hammer; <<<M>>> in soft focus in the distance aiming at her. |
