@@ -114,3 +114,10 @@ sun, long shadows, fine dust in the air.
 | S6 | おばあさんのローアングル | Low-angle medium shot of <<<G>>> aiming an old silver revolver, calm fearless face, wind in her hair; <<<M>>> blurred in the background aiming at her. |
 | S7 | おばあさんの顔アップ | Tight close-up of <<<G>>>'s face, a faint knowing smile, sharp eyes; <<<M>>> heavily blurred in the distant background. |
 | S8 | おばあさんの肩越し+手元 | Over-the-shoulder shot from behind <<<G>>>: her hand gripping an old silver revolver sharp in the foreground, thumb pulling back the hammer; <<<M>>> in soft focus in the distance aiming at her. |
+
+### 生成ログ(ステップ2・テスト)
+
+| # | job_id | 結果 | 備考 |
+|---|---|---|---|
+| S1 | `2f5d89d6-0f41-4904-aee8-b5bbe5fe78fb` | 完了 | 指定 `nano_banana_pro` だがジョブ記録上のモデルは `nano_banana_2` |
+| S2 | `466effdf-8d0e-4b82-81ed-f4d4ae64e329` | NSFW判定で失敗 | 銃口を人物に向ける描写+ローアングルが判定された可能性 |
