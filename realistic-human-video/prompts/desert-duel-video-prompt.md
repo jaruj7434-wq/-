@@ -1,0 +1,154 @@
+# Desert Duel — 動画化用 英語プロンプト(監督版・約20秒・20カット)
+
+- 絵コンテ画像: `desert-duel-storyboard.md` の F01〜F16 を各カットの参照フレームとして使う
+- セリフは仮(変更可)
+
+## Prompt (English)
+
+```
+TITLE: "FASHION DUEL" — a 20-second vertical (9:16) photorealistic action-comedy short film.
+
+LOGLINE
+In a sunbaked desert, a young man and an elderly woman face off in a Western-style gun duel.
+But the bullets don't hurt — whoever gets hit is instantly transformed into a brand-new,
+head-to-toe fashionable outfit. It's a battle of who can make the other look cooler.
+The grandmother wins: the young man's new look is so impossibly cool that he admits defeat
+and faints face-first into the sand, while she blows the smoke off her revolver at the camera.
+
+CHARACTERS (keep faces, hairstyles and outfits exactly as in the reference images)
+- THE YOUNG MAN: always on the LEFT side of the frame, facing RIGHT.
+  Before: his original horizontal-striped Breton shirt look.
+  After: a long, sharply tailored black leather trench coat worn open, black high-neck knit,
+  black wide-leg pleated trousers, polished black lace-up boots, layered silver chains and
+  rings, slim black sunglasses — a runway-level look.
+- THE GRANDMOTHER: always on the RIGHT side of the frame, facing LEFT.
+  Before: her original blue outfit.
+  After: a cream-white tailored long coat, cream silk blouse, cream wide-leg trousers,
+  patterned silk scarf, gold jewelry, tortoiseshell sunglasses pushed up on her head, white
+  leather sneakers — quiet-luxury style.
+
+WORLD & LOOK
+- Vast desert with low dunes and scattered rocks, low late-afternoon sun from the LEFT,
+  long shadows, drifting dust and tumbleweeds.
+- Shot like a modern action movie: anamorphic 35mm look, warm amber highlights and teal
+  shadows, subtle film grain, shallow depth of field, lens flares, speed ramps
+  (slow motion into real time), whip pans, snap zooms and hard cuts on the beat.
+
+CONTINUITY RULES (apply to every shot)
+- The two characters always face each other and look at each other — never at the camera,
+  except in the very last shot.
+- Both always hold an antique Western revolver in their right hand.
+- Never cross the 180-degree line: the man stays screen-left, the grandmother screen-right,
+  even in over-the-shoulder shots.
+- Gunfire looks real (muzzle flash, white smoke, recoil, a small brass bullet in flight),
+  but every hit is completely harmless: no injury, no blood, no wound. On impact only the
+  clothes change, spreading outward from the impact point like a wave, with a small puff
+  of smoke.
+
+SHOT LIST
+
+[ACT 1 — THE STANDOFF: build tension]
+
+SHOT 01 (0.0–1.5s) — Aerial crane-down establishing shot
+  The camera descends from high above the dunes and settles into a wide side-on shot at
+  chest height: the man on the left, the grandmother on the right, 4 meters apart, revolvers
+  raised at each other. A tumbleweed rolls between them. Wind hisses.
+
+SHOT 02 (1.5–2.3s) — Extreme close-up: the man's eyes
+  Profile, facing right. Eyes narrow. A single drop of sweat runs down his temple.
+  Very slow push-in.
+
+SHOT 03 (2.3–3.1s) — Extreme close-up: the grandmother's eyes
+  Profile, facing left. Calm, unblinking, a hint of amusement. Very slow push-in.
+
+SHOT 04 (3.1–3.7s) — Insert: the man's hand
+  Macro shot of his fingers flexing and tightening around the revolver grip.
+
+SHOT 05 (3.7–4.3s) — Insert: the grandmother's hand
+  Macro shot of her wrinkled thumb pulling back the hammer. Sharp metallic click.
+
+SHOT 06 (4.3–5.8s) — Close-up: the man's face, the line
+  Low-angle close-up, slow push-in onto his mouth as he says, with a cocky half-smile:
+  "That blue is SO last season."
+
+SHOT 07 (5.8–6.4s) — Close-up: the grandmother's reaction
+  One eyebrow slowly rises. The corner of her mouth curls into a knowing smirk.
+
+[ACT 2 — FIRST SHOT: the grandmother's makeover]
+
+SHOT 08 (6.4–7.0s) — Over-the-shoulder from behind the man: he fires
+  His shoulder and gun arm in the left foreground, the grandmother in focus on the right.
+  He pulls the trigger: bright muzzle flash, burst of white smoke, recoil kicks the gun up.
+  Hard camera shake on the shot.
+
+SHOT 09 (7.0–8.6s) — Bullet cam (slow motion)
+  The camera flies alongside the spinning brass bullet in extreme slow motion, slowly
+  orbiting around it as it cuts through glittering dust particles. The grandmother grows
+  larger in the background. In the last frames the shot speed-ramps back to real time and
+  snap-zooms toward her chest.
+
+SHOT 10 (8.6–10.2s) — Impact and transformation (speed ramp)
+  Medium-full shot. The bullet touches her chest — a tiny puff of smoke, she doesn't even
+  flinch. From that point her blue outfit transforms outward like a wave into the cream-white
+  luxury look. As the change spreads, the camera sweeps in a fast 180-degree arc around her
+  (ease-out into slow motion), coat and scarf lifting in the wind. She stays facing left.
+
+SHOT 11 (10.2–11.4s) — Fashion reveal tilt-up
+  Low angle. The camera tilts up from her white leather sneakers, over the wide-leg trousers
+  and long coat, to her scarf, gold jewelry and confident face, sunglasses resting on her head.
+  She adjusts her scarf with her left hand, revolver still in her right.
+
+SHOT 12 (11.4–12.0s) — Reaction: the man
+  Quick close-up: his jaw drops. A snap zoom on his stunned eyes.
+
+[ACT 3 — THE COUNTERSHOT: the man's makeover]
+
+SHOT 13 (12.0–12.6s) — Close-up: the grandmother
+  She looks straight at him and says softly: "My turn, sweetie."
+
+SHOT 14 (12.6–13.2s) — Reverse over-the-shoulder from behind the grandmother: she fires
+  Her shoulder and gun arm in the right foreground, the man in focus on the left.
+  Muzzle flash, white smoke, recoil. Camera shake.
+
+SHOT 15 (13.2–14.2s) — Bullet cam (faster, reverse direction)
+  The camera chases the bullet from behind, flying right-to-left with a quick barrel roll,
+  then snap-zooms into the man's chest.
+
+SHOT 16 (14.2–15.8s) — Impact and transformation (hero shot)
+  Low-angle hero shot. A tiny puff of smoke at his chest — unhurt. The striped shirt
+  transforms outward like a wave into the black runway look; the long leather trench coat
+  unfurls and flares dramatically in the wind as the camera pushes in and slows to slow motion.
+  He stays facing right.
+
+SHOT 17 (15.8–16.8s) — Fashion reveal montage (three rapid inserts, ~0.33s each)
+  a) Polished black lace-up boots planting in the sand.
+  b) Silver rings and layered chains catching the sunlight.
+  c) Slim black sunglasses sliding into place over his eyes.
+
+[ACT 4 — THE DEFEAT: the punchline]
+
+SHOT 18 (16.8–17.8s) — Medium close-up: the man realizes
+  Profile, facing right. He looks down at himself, lifts the leather lapel with his left
+  hand, and his face melts from shock into humbled awe. He whispers: "...I lost."
+
+SHOT 19 (17.8–19.0s) — Wide side-on master: he falls
+  Same framing as the opening. He tips stiffly forward and falls face-first into the soft
+  sand like a toppled plank — a comedic, theatrical faint, completely unhurt. A puff of sand
+  rises, his coat flutters down over him. The grandmother stands tall on the right.
+
+SHOT 20 (19.0–20.0s) — Final hero shot: the grandmother (the ONLY look to camera)
+  Medium close-up. She turns her face to the camera, raises the revolver near her lips and
+  gently blows the thin curl of smoke from the muzzle, then gives a small, cool wink.
+  The fallen man lies blurred in the background on the left. Freeze frame on the wink.
+
+SOUND DESIGN
+- Tense spaghetti-western whistle and twangy guitar under Act 1, wind and ticking silence.
+- Gunshots: sharp, cinematic cracks with echo across the desert.
+- Bullet cams: slowed-down whoosh with a deep bass hum.
+- Transformations: a satisfying fabric swoosh plus a sparkling shimmer.
+- Fall: soft comedic thud into sand. Final wink: a single playful guitar sting.
+```
+
+## メモ(日本語)
+- 多くの動画モデルは1回の生成が5〜10秒程度のため、実際の生成では ACT ごと(または数カットごと)に分割し、F01〜F16 の絵コンテ画像を開始/終了フレームとして使う想定。
+- セリフ(SHOT 06 / 13 / 18)は仮。音声は `generate_audio` 等で別途作成する場合も、実行前に許可を取る。
