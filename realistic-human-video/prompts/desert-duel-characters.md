@@ -67,3 +67,16 @@ air, distant dunes and scattered rocks, pale warm sky. Photorealistic, natural s
 | G2 | おばあさん | 口元・目元のクローズアップ | Tight close-up of the grandmother's face, deep wrinkles, a faint knowing smile, eyes sharp, the collar of her vivid cobalt-blue outfit framing her face, warm rim light. |
 | G3 | おばあさん | 銃を握る手の接写 | Macro close-up of the grandmother's wrinkled hand gripping an old silver revolver, the cuff of her vivid cobalt-blue sleeve in focus, thumb pulling back the hammer, sand particles glowing in the backlight. |
 | G4 | おばあさん | 逆光のワイド+ダッチアングル | Wide dutch-angle shot of the grandmother standing alone on a dune ridge, backlit by the setting sun, her vivid cobalt-blue outfit glowing at the edges, long shadow toward the camera, tumbleweed rolling past. |
+
+### 生成ログ(ステップ1b)
+
+| # | job_id | seed |
+|---|---|---|
+| M1 | `6a415727-7104-4e7d-a663-a4460d9ec72a` | 972163 |
+| M2 | `d542417c-b2e4-48b6-a61f-f7b97a4a335c` | 323823 |
+| M3 | `604116f3-4ad4-4c23-ae5a-1ad56d6aa0b6` | 402743 |
+| M4 | `d6538008-6e60-4569-9412-92299a00f827` | 956099 |
+| G1 | `cf69be10-cbe9-4633-ab7a-1569990f7244` | 887361 |
+| G2 | `9aee6d87-7227-433c-97d3-b24394142077` | 218368 |
+| G3 | `c53058ab-6e37-4779-a8c5-538abc77f2da` | 236944 |
+| G4 | `eed9d86a-b399-4f1a-b9cf-551ce40a050e` | 365451 |
