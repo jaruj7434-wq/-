@@ -42,3 +42,10 @@ Low warm late-afternoon sun from screen left, long soft shadows on the sand, fin
 air, distant dunes and scattered rocks, pale warm sky. Photorealistic, natural skin texture,
 35mm film look, shallow depth of field. Entire body visible from head to shoes.
 ```
+
+## 生成ログ
+
+| 日付 | 対象 | モデル | job_id | seed |
+|---|---|---|---|---|
+| 2026-09-30 | 男性(左) | soul_cinematic 9:16 | `de70815a-236e-4807-8c98-e15cfb4aa68e` | 534035 |
+| 2026-09-30 | おばあさん(右) | soul_cinematic 9:16 | `14a74cc9-eb71-468b-8d11-762388ea2183` | 604836 |
