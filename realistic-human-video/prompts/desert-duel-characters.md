@@ -122,3 +122,11 @@ sun, long shadows, fine dust in the air.
 | S1 | `2f5d89d6-0f41-4904-aee8-b5bbe5fe78fb` | 完了 | 指定 `nano_banana_pro` だがジョブ記録上のモデルは `nano_banana_2` |
 | S2 | `466effdf-8d0e-4b82-81ed-f4d4ae64e329` | NSFW判定で失敗 | 銃口を人物に向ける描写+ローアングルが判定された可能性 |
 | S2(再) | `102f2843-907a-46f1-ada2-d1be5c7b656f` | 完了 | 銃を「腰の高さで握る小道具リボルバー」、奥のおばあさんは銃を向けない表現に修正して通過 |
+| S3 | `0907f659-f789-4af8-9f24-216af740e72d` | 完了 | |
+| S4 | `dc28e20c-f4e9-4eaf-ac1b-42e6144af39d` | 完了 | 銃は「手前で握る小道具リボルバー」 |
+| S5 | `efbcd638-20ff-4983-b962-c4a2516931c2` | 完了 | |
+| S6 | `3b2eba7e-16a0-44f9-913e-777925370f98` | 完了 | |
+| S7 | `8bafe0c7-7d54-418e-b333-7f2f03da4953` | 完了 | |
+| S8 | `831f1cc8-c7b9-4121-94f9-c8c7d3221053` | 完了 | |
+
+- メモ: 銃を人物に向ける表現は NSFW 判定されやすい。「antique Western prop revolver」「holding / at hip height」「standing and facing」で回避できた。
