@@ -49,3 +49,21 @@ air, distant dunes and scattered rocks, pale warm sky. Photorealistic, natural s
 |---|---|---|---|---|
 | 2026-09-30 | 男性(左) | soul_cinematic 9:16 | `de70815a-236e-4807-8c98-e15cfb4aa68e` | 534035 |
 | 2026-09-30 | おばあさん(右) | soul_cinematic 9:16 | `14a74cc9-eb71-468b-8d11-762388ea2183` | 604836 |
+
+## ステップ1b: 映画的カメラワークの単体カット(案)
+
+- 修正点: おばあさんの服を「鮮やかなコバルトブルー」に強調。映画のワンシーン風に視点を多様化。
+- 共通スタイル(各プロンプト末尾に付与):
+  `Shot on anamorphic 35mm film, cinematic color grading with warm amber highlights and teal shadows, subtle film grain, photorealistic, natural skin texture, dramatic late-afternoon desert light, fine dust in the air.`
+- 相手は画面内ではピンボケの影(シルエット)としてのみ登場させる(Soul は1人ずつのため)。
+
+| # | 人物 | カット | プロンプト要旨 |
+|---|---|---|---|
+| M1 | 男性 | 足元からの超ローアングル | Extreme low-angle shot from the sand level behind the young man's shoes, looking up past his legs; he stands tall in his horizontal-striped Breton shirt, arm extended with an old silver revolver aimed at a small out-of-focus silhouette far away across the desert; the low sun flares behind him. |
+| M2 | 男性 | 目元のクローズアップ | Extreme close-up of the young man's eyes and brow, sweat on his skin, eyes narrowed and locked on his target, hard side light from the low sun, edge of the striped Breton shirt collar visible. |
+| M3 | 男性 | 肩越し+銃のピント | Over-the-shoulder shot from behind the young man's right shoulder, his striped Breton shirt sleeve and the revolver in sharp focus in the foreground, a distant blurred silhouette of his opponent on the horizon. |
+| M4 | 男性 | 真上からのドローン | High-angle drone shot looking straight down at the young man standing alone on rippled sand, gun raised, his long shadow stretching dramatically across the dunes. |
+| G1 | おばあさん | ローアングルのミディアム | Low-angle medium shot of an elderly grandmother dressed head to toe in a vivid, saturated cobalt-blue outfit, the blue strongly contrasting with the golden desert, wind moving her hair and clothes, arm extended with an old silver revolver, calm fearless face. |
+| G2 | おばあさん | 口元・目元のクローズアップ | Tight close-up of the grandmother's face, deep wrinkles, a faint knowing smile, eyes sharp, the collar of her vivid cobalt-blue outfit framing her face, warm rim light. |
+| G3 | おばあさん | 銃を握る手の接写 | Macro close-up of the grandmother's wrinkled hand gripping an old silver revolver, the cuff of her vivid cobalt-blue sleeve in focus, thumb pulling back the hammer, sand particles glowing in the backlight. |
+| G4 | おばあさん | 逆光のワイド+ダッチアングル | Wide dutch-angle shot of the grandmother standing alone on a dune ridge, backlit by the setting sun, her vivid cobalt-blue outfit glowing at the edges, long shadow toward the camera, tumbleweed rolling past. |
