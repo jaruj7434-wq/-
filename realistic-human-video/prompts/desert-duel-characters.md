@@ -121,3 +121,4 @@ sun, long shadows, fine dust in the air.
 |---|---|---|---|
 | S1 | `2f5d89d6-0f41-4904-aee8-b5bbe5fe78fb` | 完了 | 指定 `nano_banana_pro` だがジョブ記録上のモデルは `nano_banana_2` |
 | S2 | `466effdf-8d0e-4b82-81ed-f4d4ae64e329` | NSFW判定で失敗 | 銃口を人物に向ける描写+ローアングルが判定された可能性 |
+| S2(再) | `102f2843-907a-46f1-ada2-d1be5c7b656f` | 完了 | 銃を「腰の高さで握る小道具リボルバー」、奥のおばあさんは銃を向けない表現に修正して通過 |
