@@ -57,3 +57,5 @@ natural fabric physics, no distortion.
 | ステップ | job_id | 備考 |
 |---|---|---|
 | A(最初のコマ) | `da3e5df0-ccab-4938-a072-42b2baa60564` | 完了。ジョブ記録上のモデルは `nano_banana_2` |
+| B(動画)1回目 | ― | 422エラーで未実行(MiniMax H3 は start/end_image と image_references を併用不可)。クレジット消費なし |
+| B(動画)案A | `c140a802-1be2-41bf-8b1e-2bac764f7f9d` | minimax_h3 / 10秒 / 9:16。start=`da3e5df0-…`、end=`47219cff-…` のみ(顔参照なし)。プリセット ELEVATE は辞退 |
