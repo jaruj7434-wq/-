@@ -145,4 +145,4 @@ slides down over the tank top, with a gust of wind.
 and smiles at the camera as the camera slows and gently pushes in.
 Photorealistic, cinematic, realistic fabric physics, same face in every frame, no distortion.
 ```
-- v3 生成: job `5fd39ab5-d134-41b3-857f-38749e050871`(minimax_h3 / 10秒 / 9:16 / 20クレジット、2026-10-01 送信)
+- v3 生成: job `5fd39ab5-d134-41b3-857f-38749e050871`(minimax_h3 / 10秒 / 9:16 / 20クレジット、2026-10-01 完了)
