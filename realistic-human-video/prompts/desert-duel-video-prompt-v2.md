@@ -174,3 +174,4 @@ SOUND DESIGN
 |---|---|---|
 | Seedance 2.5 お試し版(draft) | ― | 2回とも 404「Media input not found」で未実行。クレジット消費なし |
 | 冒頭シーン静止画(銃口ピント・奥に男性ぼけ) | `928daf43-8dd6-40dc-94a1-846cdff43e42` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。男性 element `f264355d-…` |
+| 冒頭シーン静止画 v2(銃口をさらにアップ・マクロ、背景は強いボケ) | `9251d24a-b209-4f38-8fa6-e9d99c9676f1` | nano_banana_pro 指定 / 9:16 / 2k / 2クレジット |
