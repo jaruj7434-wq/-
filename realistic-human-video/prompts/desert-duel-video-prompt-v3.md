@@ -182,6 +182,6 @@ SOUND DESIGN
 | 内容 | job_id | 備考 |
 |---|---|---|
 | 1回目 | ― | 404「Media input not found」。画像ジョブIDを image_references に直接渡すと Seedance 2.5 で失敗する。クレジット消費なし |
-| 2回目(480p / 24秒 / 72クレジット) | `1bebc134-19da-4f2d-a614-f87173dc2af0` | 4枚を media_import_url で取り込み直して送信: 男性銃口 `761ed1bb-…`、おばあさん銃口 `b92a2e62-…`、T3 `9cd39945-…`、T6 `b168e4ab-…` |
+| 2回目(480p / 24秒 / 72クレジット) | `1bebc134-19da-4f2d-a614-f87173dc2af0`(完了 2026-10-01) | 4枚を media_import_url で取り込み直して送信: 男性銃口 `761ed1bb-…`、おばあさん銃口 `b92a2e62-…`、T3 `9cd39945-…`、T6 `b168e4ab-…` |
 
 - メモ: Seedance 2.5 で過去の生成画像を参照にする場合は、結果URLを `media_import_url` で取り込んで media_id にしてから渡す。

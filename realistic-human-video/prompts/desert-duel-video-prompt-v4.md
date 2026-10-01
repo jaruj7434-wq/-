@@ -41,9 +41,9 @@ WORLD & LOOK
   time), whip pans, snap zooms, short camera shakes on every gunshot.
 
 DIALOGUE (spoken in Japanese, exactly as written)
-- SHOT 06, the young man, before he fires: 「その服時代遅れだよ」
-- SHOT 13, the grandmother, before she fires: 「本当のおしゃれを教えてやるよ」
-- SHOT 18, the young man, just before he falls: 「カッコ良すぎる...」
+- SHOT 07, the young man, before he fires: 「その服時代遅れだよ」
+- SHOT 14, the grandmother, before she fires: 「本当のおしゃれを教えてやるよ」
+- SHOT 19, the young man, just before he falls: 「カッコ良すぎる...」
 
 CONTINUITY RULES (every shot)
 - They always face each other and look at each other — never at the camera, except in the
