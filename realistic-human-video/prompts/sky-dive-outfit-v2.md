@@ -112,3 +112,36 @@ The outfit is now complete exactly as in the end image; he puts his hands in his
 smiles at the camera as the camera slows and gently pushes in. Same face in every frame,
 realistic fabric physics, no distortion.
 ```
+
+## v3(1本で作る案)— ユーザー指示: 2本つなぎは不自然になりそうなので1本で
+
+### 方針
+- 服3点を「背景の中を通過する物」ではなく **ショットの主役(被写体)** として書く。
+  カメラは服3点の真後ろについて追いかける追跡ショットにし、宇宙・雲・街・ビル・男性はすべて
+  服の向こう側を流れていく「背景」として描写する。
+- 「服が画面から外れない」「男性にぶつかるまで画面の下半分〜中央に映り続ける」を冒頭と末尾で繰り返す。
+- モデル: minimax_h3 / 10秒 / 9:16 / 2K / 20クレジット。start=`da3e5df0-…`、end=`47219cff-…`
+
+```
+A single continuous 10-second vertical tracking shot with no cuts. The SUBJECT of the entire
+shot is a group of three flying garments: a black long-sleeve top with white text print, grey
+washed wide-leg denim trousers, and a pair of chunky white-and-black sneakers. The camera flies
+right behind them and follows them the whole way, keeping all three garments large and clearly
+visible in the lower half and center of the frame in EVERY frame until they reach the man.
+The garments never leave the frame, never shrink to dots, and never disappear.
+0-1s: Low Earth orbit; the garments float in front of the lens above the curved Earth.
+1-3s: The garments rocket downward with the camera chasing them through the glowing atmosphere
+and a thick layer of white clouds; sleeves and trouser legs flap violently in the wind.
+3-5s: Still right in front of the lens, the garments streak down over a dusk city and weave
+between glass skyscrapers, the buildings rushing past behind them.
+5-7s: The garments level out above a white elevated pedestrian bridge. Ahead of them, framed
+between the flying garments, a young man (the same man as in the end image: same face,
+hairstyle and glasses) stands on the bridge in only a white tank top and black boxer briefs,
+barefoot, waiting. The garments keep flying straight at him, growing larger as they approach.
+7-9s: The garments hit him one after another and dress him instantly: the denim trousers wrap
+onto his legs, the sneakers snap onto his feet, the long-sleeve top drops over his head and
+slides down over the tank top, with a gust of wind.
+9-10s: The outfit is complete exactly as in the end image; he puts his hands in his pockets
+and smiles at the camera as the camera slows and gently pushes in.
+Photorealistic, cinematic, realistic fabric physics, same face in every frame, no distortion.
+```
