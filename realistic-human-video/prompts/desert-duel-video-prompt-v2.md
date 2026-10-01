@@ -65,9 +65,9 @@ SHOT LIST
 [ACT 1 — THE STANDOFF: build tension]
 
 SHOT 01 (0.0–2.0s) — Opening: muzzle to camera, rack focus to the man
-  Extreme close-up from the grandmother's point of view: the muzzle of the young man's antique
-  Western prop revolver points straight into the lens, in razor-sharp focus, filling the
-  center of the frame; behind it the young man himself is a soft, out-of-focus shape holding
+  Extreme close-up: the muzzle of the young man's antique Western prop revolver points straight
+  at the viewer — directly into the camera lens, dead center of the frame — in razor-sharp
+  focus, as if the audience is looking down the barrel; behind it the young man himself is a soft, out-of-focus shape holding
   the gun. After about 0.8 seconds the focus quickly racks from the muzzle to his face: the
   muzzle melts into blur and his face becomes sharp and clearly recognizable, eyes locked on
   his opponent. Wind hisses. Stylized playful action-comedy, harmless.
