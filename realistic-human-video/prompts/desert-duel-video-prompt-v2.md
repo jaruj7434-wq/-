@@ -168,3 +168,9 @@ SOUND DESIGN
 - Transformations: a satisfying fabric swoosh plus a sparkling shimmer.
 - Fall: soft comedic thud into sand. Final wink: a single playful guitar sting.
 ```
+
+## 生成ログ
+| 内容 | job_id | 備考 |
+|---|---|---|
+| Seedance 2.5 お試し版(draft) | ― | 2回とも 404「Media input not found」で未実行。クレジット消費なし |
+| 冒頭シーン静止画(銃口ピント・奥に男性ぼけ) | `928daf43-8dd6-40dc-94a1-846cdff43e42` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。男性 element `f264355d-…` |
