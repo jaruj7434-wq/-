@@ -45,9 +45,9 @@ WORLD & LOOK
   (slow motion into real time), whip pans, snap zooms and hard cuts on the beat.
 
 DIALOGUE (spoken in Japanese, exactly as written)
-- SHOT 06 (8.3s), the young man, before he fires: 「その服時代遅れだよ」
-- SHOT 13 (16.0s), the grandmother, before she fires: 「本当のおしゃれを教えてやるよ」
-- SHOT 18 (22.2s), the young man, just before he falls: 「カッコ良すぎる...」
+- SHOT 06, the young man, before he fires: 「その服時代遅れだよ」
+- SHOT 13, the grandmother, before she fires: 「本当のおしゃれを教えてやるよ」
+- SHOT 18, the young man, just before he falls: 「カッコ良すぎる...」
 
 CONTINUITY RULES (apply to every shot)
 - The two characters always face each other and look at each other — never at the camera,
