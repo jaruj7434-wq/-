@@ -47,28 +47,36 @@ with white text print, grey washed wide-leg denim trousers and a pair of chunky 
 sneakers (exactly the clothes worn by the man in the end image). Until they reach
 the man, the garments stay large, sharp and clearly visible in the lower-middle foreground of
 EVERY frame, flying together just ahead of the lens, sleeves and trouser legs fluttering; they
-never leave the frame.
+never leave the frame. The GARMENTS THEMSELVES are the ones flying and leading the motion — they
+are never static: they tumble, spin and whip through space with powerful momentum like rockets,
+cloth snapping and rippling violently, and the camera CHASES them from just behind, struggling to
+keep up (dynamic handheld-drone energy, speed lines, slight camera shake).
 THE GOAL PIN: a glossy red map location pin — the classic teardrop-shaped pin with a white circle
 in its head, like the pin on online maps — marks the destination in Tokyo. It is NOT visible in
 space at the beginning; it first appears only when the Japanese archipelago comes into view, and
-at that moment it is ALREADY standing planted in the map of Japan at Tokyo. From then on it stays
+at that moment it is ALREADY standing planted at Tokyo. The Japanese archipelago must look exactly
+like the attached map image of Japan (same shape of Hokkaido, Honshu, Shikoku, Kyushu and the
+island chains, seen from directly above, with the Korean peninsula at the upper left). From then on it stays
 visible as the goal marker ahead of the garments until they reach the man, growing as they
 approach, always exactly over the man's location.
 The man is <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> — his face, hair and age match his reference
 exactly; never beautify, reshape or swap his face.
 
-0.0–1.0s: exactly the first frame — deep black space, the ENTIRE Earth visible as a complete round
-sphere with a glowing blue atmosphere rim and a sun flare, the three garments floating large and
-sharp in the foreground, pointing toward the planet. A slight drift.
-1.0–2.0s: PUSH IN: the camera and the garments surge forward toward the planet, the globe growing
-until it fills the frame and its curved horizon wraps around them.
-2.0–4.0s: ORBIT AROUND THE GLOBE: close to the planet, the camera flies one full fast lap around the
-globe — oceans, continents, swirling cloud bands and the day/night terminator streak past, city
-lights sparkle on the night side, the sun flares across the lens. Motion blur on the planet; the
-garments stay sharp in the foreground.
-4.0–4.8s: STOP OVER JAPAN: the orbit eases to a stop with the whole Japanese archipelago clearly in
-view below, in daylight. A giant red map pin is ALREADY standing planted at Tokyo on the map of
-Japan, glowing with a soft pulsing ring. The camera holds on it for a beat and locks on.
+0.0–0.6s: exactly the first frame — deep black space, the ENTIRE Earth as a complete round sphere
+with a glowing blue atmosphere rim and a sun flare, the three garments in the foreground.
+0.6–2.0s: THE GARMENTS LAUNCH: the garments suddenly shoot forward AWAY from the camera toward the
+planet like three rockets, spinning and fluttering, leaving faint light trails; the camera bursts
+after them in pursuit. The Earth grows quickly as the garments pull it closer, until its curved
+horizon fills the lower frame.
+2.0–3.8s: THE GARMENTS RACE AROUND THE GLOBE: the garments skim low over the planet and swing around
+it in one full fast lap, banking and barrel-rolling through the turns, cloth whipping; the camera
+chases right behind them. Oceans, continents, swirling cloud bands and the day/night terminator
+streak past below, city lights sparkle on the night side, the sun flares across the lens.
+3.8–4.8s: STOP OVER JAPAN: the garments brake hard and hang above the North Pacific; directly below,
+seen from straight above in daylight, the whole Japanese archipelago is clearly visible, exactly
+like the attached map image of Japan. A giant glossy red map pin is ALREADY standing planted in
+Japan at Tokyo (on the Pacific side of central Honshu), glowing with a soft pulsing ring. The
+garments turn to face it.
 4.8–6.5s: THE DIVE: the camera tips straight down and the garments rocket toward the pin through
 the glowing atmosphere with orange re-entry streaks, then punch through a thick layer of white
 clouds, the red pin still glowing ahead below them.
@@ -108,3 +116,4 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 | 新・開始画像(地球全体の球体+服3点、高コントラスト) | `f01b3c8b-799a-4f46-8814-f00003677e84` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。参照: 完成コーデ `47219cff-…`(服の見本) |
 - 新しい開始画像 f01b3c8b(取り込み直し media `f8071088-d3a7-4711-9e3c-e2f88eed69f4`)をユーザーOK。冒頭を「地球全体の球体(開始コマ)→寄る→一周→日本で停止」に変更。medias: start=`f8071088-…`、end=`47219cff-…`。
 | Part1 新版 v4(720p・15秒・新開始画像=地球全体から) | `934a185a-3617-464c-b75a-93d9253535e1` | seedance_2_5 omni_reference / 9:16 / 720p / 105クレジット。start=`f8071088-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
+- 934a185a 結果(ユーザー): 最初の3秒で服が止まったまま、カメラだけが動いて躍動感がない → 服そのものが地球へ飛び、カメラが追いかける形に変更。日本列島が出てこない → ユーザー提供の日本地図画像 `bfffaaf2-af97-4316-ae2d-12d1dff9884d` を参照に追加し、その日本列島の東京にピン。medias: start=`f8071088-…`、end=`47219cff-…`、image_references=`bfffaaf2-…`(720p 105 クレジット)
