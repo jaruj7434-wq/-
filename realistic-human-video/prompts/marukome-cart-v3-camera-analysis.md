@@ -102,3 +102,8 @@ No captions, no on-screen credits, no text anywhere except "MARUKOME" on the bil
 - seedance_2_5 / omni_reference / 15秒 / 9:16。参照: 看板 `7ea7deb8-1528-4214-a6d2-0a4b58f1d648`(f669d81c を取り込み直し)、服装① `b10936fb-…`、慶太 element
 - 費用(プレフライト): 480p 45 / 720p 105 / 1080p 180 クレジット
 | 動画(看板画像参照・480p) | `7e0fc637-c17b-4529-ba9c-928402ef565c` | seedance_2_5 omni_reference / 15秒 / 9:16 / 480p / 45クレジット。参照: 看板 `7ea7deb8-…`、服装① `b10936fb-…`、慶太 element。プリセット IN THE DARK は辞退 |
+- 動画 `7e0fc637-…` 完了(480×854)。ユーザー確認: 青いアウターの中がワイシャツ+ネクタイになってしまった。
+
+## 服装②(服装①の中を変更)
+- 紺トラックジャケット(前開き)+**無地の白Tシャツ(丸首)**+**金のチェーンネックレス**+濃紺極太ワイドカーゴ+黒ローファー。ワイシャツ・ネクタイ・ストライプシャツは禁止。
+| 慶太×服装② 全身画像 | `514c99e6-0b40-45fe-8db7-6c8d3d1ceeb4` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+服装① `b10936fb-…`(ジャケット・パンツ・靴のみ参照) |
