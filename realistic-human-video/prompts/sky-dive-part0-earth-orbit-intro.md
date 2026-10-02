@@ -107,3 +107,4 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 - ユーザー指摘: 地球全体(球体)から寄って一周するには開始画像を変える必要がある → 地球全体+服3点の新しい開始画像を作成。
 | 新・開始画像(地球全体の球体+服3点、高コントラスト) | `f01b3c8b-799a-4f46-8814-f00003677e84` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。参照: 完成コーデ `47219cff-…`(服の見本) |
 - 新しい開始画像 f01b3c8b(取り込み直し media `f8071088-d3a7-4711-9e3c-e2f88eed69f4`)をユーザーOK。冒頭を「地球全体の球体(開始コマ)→寄る→一周→日本で停止」に変更。medias: start=`f8071088-…`、end=`47219cff-…`。
+| Part1 新版 v4(720p・15秒・新開始画像=地球全体から) | `934a185a-3617-464c-b75a-93d9253535e1` | seedance_2_5 omni_reference / 9:16 / 720p / 105クレジット。start=`f8071088-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
