@@ -82,8 +82,12 @@ terminator streak past below, city lights sparkle on the night side, the sun fla
 4.2–5.2s: JAPAN IN SIGHT — NO STOP: still moving, the garments ease their speed slightly and curve
 over the North Pacific; below, seen from above in daylight, the whole Japanese archipelago sweeps
 into view, exactly like the attached map image of Japan, with a giant glossy red map pin ALREADY
-standing planted at Tokyo (Pacific side of central Honshu), glowing with a soft pulsing ring.
-Without any pause, the garments bend their path smoothly downward and accelerate toward the pin.
+standing planted at Tokyo — PIN POSITION: on the archipelago as seen in the frame, the pin stands
+slightly RIGHT of the center of the Japanese islands and slightly toward the LOWER side (the
+Pacific coast of central Honshu, where Tokyo is on the attached map) — not in the middle of the
+islands, not on the Sea of Japan side. It glows with a soft pulsing ring.
+Without any pause, the garments bend their path smoothly downward and accelerate straight toward
+that pin position (slightly right of center, lower side of the islands).
 5.2–6.5s: THE DIVE: one continuous smooth dive straight down toward the pin through the glowing
 blue atmosphere (no fire, no flames), then punching through a thick layer of white clouds, the red
 pin still glowing ahead below them.
@@ -127,3 +131,4 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 | Part1 新版 v5(480p・15秒・服が自ら飛ぶ/日本地図参照) | `bb1cbb04-faa1-43b9-9e19-0d8213fb5eb8` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`f8071088-…`、end=`47219cff-…`、ref=日本地図 `bfffaaf2-…`、慶太 element。プリセット ELEVATE は辞退 |
 - bb1cbb04 結果(ユーザー): 服のスピード感は良い。修正: ロケットのような火は出さない/宇宙で靴が消えて服とボトムだけになった→3点を常に映す/日本列島で止まって一拍置いてから突っ込む→開始〜急降下まで緩急はあっても止まらずスムーズに動く。大気圏突入のオレンジの光も火に見えるため削除。
 | Part1 新版 v6(480p・15秒・火なし/靴を常に映す/止まらない) | `3d83f6e2-c3f4-49fb-be99-dde663484657` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`f8071088-…`、end=`47219cff-…`、ref=日本地図 `bfffaaf2-…`、慶太 element。プリセット ELEVATE は辞退 |
+- 3d83f6e2 結果(ユーザー): 動きは全て完璧。修正: 日本列島の真ん中より少し右・下側に赤いピンを立て、そこへ急降下 → 720p で作成。
