@@ -107,3 +107,64 @@ temple bell layered softly under each location. No text, no captions, no waterma
 | 内容 | job_id | 備考 |
 |---|---|---|
 | Part2 動画(480p) | `4efa4837-972b-446f-96c5-76f431096446` | seedance_2_5 omni_reference / 8秒 / 9:16 / 480p / 24クレジット。プリセット IN THE DARK は辞退。注意: 受付記録では start_image も reference_images の先頭に並んでいたため、「attached image 1〜5」の番号が1つずれて解釈される可能性あり |
+- 4efa4837 結果(ユーザー): 服装・風景は良い。ただし男性が突っ立ったまま切り替わるだけでつまらない → カメラが回転しながら風景を見せ、服も変わっていく案へ。
+
+## v2 案: 回り込みカメラ(オービット)+ 隠しトランジション(12秒)
+- カメラは最初から最後まで止まらず時計回りに彼の周りを回り続ける。回り込みの途中で「彼の背中/手前の草・波しぶき・雲・滝の霧・桜吹雪」が画面を一瞬覆った瞬間に、場所と服が切り替わる(ワンカット風)。
+- 場所ごとに高さと動きを変える(低い位置→上昇→ドローン的な俯瞰→水面すれすれ→正面に着地して寄る)。彼も歩く・振り返る・襟を直すなど動く。
+- 服は番号ではなく特徴で指定(参照番号のずれ対策)。
+- 費用: 480p 36 / 720p 84 クレジット(12秒、プレフライト)
+
+```
+A 12-second vertical (9:16) photorealistic fashion film shot as ONE continuous, unbroken orbiting
+camera move — an outfit-and-location change edit with invisible transitions.
+ONE CHARACTER ONLY: the young man <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>>. His face, hair and age
+match his reference exactly in every frame, including profiles and fast motion; never beautify,
+reshape or swap his face, no facial distortion. The attached headless outfit images are clothing
+references only — use only their clothes, shoes and accessories, never their backgrounds.
+
+CAMERA RULE: the camera NEVER stops. It keeps circling him clockwise on a smooth gimbal/drone
+orbit for the whole film, with speed ramps (fast whip through each transition, easing into slow
+motion as each new location is revealed). Each location change is an INVISIBLE TRANSITION: as the
+camera sweeps behind him, his back or a foreground element (grass, wave spray, cloud, waterfall
+mist, cherry petals) fills the frame for a few frames, and when it clears, the location AND his
+whole outfit have changed while the orbit continues seamlessly. Every location is breathtaking,
+fantastical and beautiful with strong contrast and glowing highlights: rim light on his hair and
+shoulders, sparkling highlights on fabric, metal and water, deep rich shadows, vivid colors.
+
+0.0–2.0s — WHITE PEDESTRIAN BRIDGE AT DUSK (from the first frame): he stands in the black
+long-sleeve top with white chest text, grey wide-leg denim and chunky white-and-black sneakers,
+hands in pockets, smiling. The camera starts orbiting to the right at chest height; glass towers
+and city lights slide past behind him. He pulls his hands out of his pockets. The camera whips
+behind his back — transition.
+2.0–4.0s — GOLDEN MEADOW: the camera comes around low, skimming through tall glowing grass in the
+foreground, the low golden sun flaring behind his head, god rays through towering clouds,
+sparkling pollen. He walks slowly forward through the grass. Outfit: dark raw-denim cropped zip-up
+work jacket with contrast stitching, white collared shirt, black belt with a silver star buckle,
+two silver wallet chains (one pearl), very wide dark raw-denim jeans, brown lace-up work boots.
+Tall grass sweeps across the lens — transition.
+4.0–6.0s — SUNSET SEA: the orbit continues while the camera rises slightly; a pure white-sand beach,
+turquoise waves, a violet-pink-gold sunset mirrored on the wet sand. He spins on his heel to face
+the camera, sand kicking up. Outfit: navy satin varsity jacket with yellow script lettering and
+yellow-striped ribbed cuffs and hem, light-grey zip hoodie, light-grey wide sweatpants,
+grey-and-white sneakers. A burst of wave spray fills the frame — transition.
+6.0–8.0s — MOUNTAIN RIDGE ABOVE A SEA OF CLOUDS: the camera soars up and circles him from above like
+a drone, revealing jagged snow peaks glowing pink and orange in alpenglow and an endless sea of
+clouds under an indigo sky. He looks out over the view, wind in his hair. Outfit: dark-olive waxed
+cotton jacket with a brown corduroy collar, white-and-blue striped button-down shirt with the hem
+out, black backpack, wide pleated mid-blue denim, black-grey-white sneakers. The camera dives
+through a cloud — transition.
+8.0–10.0s — GIANT WATERFALL: the camera sweeps around him low, just above the water's surface, a
+towering waterfall behind him, a vivid rainbow in the glowing mist, sunbeams through the spray.
+He stands on a wet rock and flips up his jacket collar. Outfit: oversized cropped mid-blue denim
+trucker jacket, very baggy faded blue jeans with a silver carabiner keychain, chunky white
+sneakers. Mist washes over the lens — transition.
+10.0–12.0s — JAPANESE SHRINE: the orbit slows and lands in front of him; a towering vermilion torii
+gate, glowing stone lanterns, giant cedars, cherry-blossom petals swirling around him in golden
+light. Outfit: cobalt-blue fleece zip hoodie, white graphic T-shirt, gold rectangular pendant
+necklace, white-and-grey snow-camo baggy cargo pants, cobalt-blue sneakers. The camera pushes in
+as he looks straight into the lens with a cool confident smile. Freeze on the last frame.
+
+SOUND: a driving beat; a whoosh on every transition; wind, waves, waterfall and a temple bell
+layered softly under each location. No text, no captions, no watermarks.
+```
