@@ -98,3 +98,4 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 |---|---|---|
 | Part1 新版(地球一周→東京ピン→着替え、480p・15秒) | `b4f05df4-f7a9-4774-86fe-baef13ee41a4` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
 - b4f05df4 結果(ユーザー): めちゃくちゃいい感じ。修正: 男性の前にカメラが届いた瞬間に服がまとめてドンとぶつかり、一瞬で着替える(1点ずつではなく)→ 9.0〜14.4 を変更。
+| Part1 新版 v2(720p・15秒・一瞬でドンと着替え) | `60ea645c-ffa6-49a2-b9c6-c3ee3e07b637` | seedance_2_5 omni_reference / 9:16 / 720p / 105クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
