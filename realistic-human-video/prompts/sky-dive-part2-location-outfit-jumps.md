@@ -45,3 +45,60 @@
 - 手順: 5枚を media_upload_widget でアップロード → 各画像を参照に、慶太 element+場所のプロンプトで全身キーフレームを作り直し(nano_banana_pro / 2k / 各2クレジット、計10)。生成はユーザーの許可後。
 - プロンプト共通: "<<<慶太>>> wearing EXACTLY the outfit in the attached image (the image has no head — use only the clothes, shoes and accessories; the face comes only from his reference)"
 - アップロード済み(中身を確認して対応付け): 草原① `60cd028b-36d0-4401-9f5a-9a138039f490`(11.png)/ 海② `38e6db50-1b17-48db-ab6c-0d862e729956`(22.png)/ 山③ `55ce8cba-417c-4be3-a895-43f0f7934a98`(33.png)/ 滝④ `29c3be30-1cb6-4b95-832f-714388a3ca59`(44.png)/ 神社⑤ `ea41ff23-d5be-4ff8-84cc-f10d2b4fb063`(55.png)
+
+## 動画プロンプト(キーフレーム画像なし・コーデ画像を直接参照)
+- seedance_2_5 / omni_reference / 8秒 / 9:16 / 音声あり。費用: 480p 24 / 720p 56(プレフライト)
+- medias: start_image=前作の完成コーデ `47219cff-…`、image_references(順番固定)= 1:草原① `60cd028b-…` 2:海② `38e6db50-…` 3:山③ `55ce8cba-…` 4:滝④ `29c3be30-…` 5:神社⑤ `ea41ff23-…`、慶太 element
+
+```
+An 8-second vertical (9:16) photorealistic fashion film — a "location jump" outfit-change edit.
+ONE CHARACTER ONLY: the young man <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>>. His face, hair and age
+match his reference exactly in every frame; never beautify, reshape or swap his face, no facial
+distortion. The five attached outfit images are headless clothing references — use ONLY their
+clothes, shoes and accessories, never their backgrounds; his face comes only from his reference.
+
+CAMERA (identical in every location): locked-off, straight-on, eye level, 35mm lens. He stands
+in the center of the frame facing the camera, full body head to toe, always the same size and
+the same position in the frame. Only the location and his outfit change; he never moves out of
+place. Every change happens on the beat as a hard match cut with a 2-frame white light flash, a
+gust of wind and a few floating light particles. Every location is breathtaking, fantastical and
+beautiful, with strong contrast and glowing specular highlights: rim light on his hair and
+shoulders, sparkling highlights on fabric, metal and water, deep rich shadows, vivid saturated
+colors, cinematic HDR look.
+
+0.0–1.4s — WHITE PEDESTRIAN BRIDGE AT DUSK (continuing from the first frame): he stands in the
+outfit of the first frame — black long-sleeve top with white chest text, grey wide-leg denim,
+chunky white-and-black sneakers — hands in pockets, smiling. Glass towers glitter behind him.
+1.4s — FLASH CUT.
+1.4–2.7s — GOLDEN MEADOW: an endless rolling meadow of tall glowing grass and wildflowers, low
+golden sun backlighting him, god rays through towering clouds, sparkling pollen. Outfit = attached
+image 1: dark raw-denim cropped zip-up work jacket with contrast stitching, white collared shirt,
+black leather belt with a silver star buckle, two silver wallet chains (one pearl), very wide
+dark raw-denim jeans, brown lace-up work boots, silver rings.
+2.7s — FLASH CUT.
+2.7–4.0s — SUNSET SEA: a pure white-sand beach at the water's edge, crystal turquoise waves,
+a violet-pink-gold sunset sky mirrored on the wet sand, sun glitter on the sea. Outfit = attached
+image 2: navy satin varsity jacket with yellow script lettering on the chest and yellow-striped
+ribbed cuffs and hem, light heather-grey zip hoodie, light-grey wide sweatpants, grey-and-white
+sneakers.
+4.0s — FLASH CUT.
+4.0–5.3s — MOUNTAIN RIDGE ABOVE A SEA OF CLOUDS: jagged snow peaks glowing pink and orange in
+alpenglow, a deep indigo sky with the first stars, crisp cold light. Outfit = attached image 3:
+dark-olive waxed cotton jacket with a brown corduroy collar, white-and-blue striped button-down
+shirt with the hem out, black backpack, wide pleated mid-blue denim, black-grey-white sneakers.
+5.3s — FLASH CUT.
+5.3–6.6s — GIANT WATERFALL: he stands on a dark wet rock in front of a towering waterfall falling
+into an emerald pool, a vivid rainbow in the glowing mist, sunbeams piercing the spray, lush
+jungle. Outfit = attached image 4: oversized cropped mid-blue denim trucker jacket, very baggy
+faded blue jeans with a silver carabiner keychain, chunky white sneakers.
+6.6s — FLASH CUT.
+6.6–8.0s — JAPANESE SHRINE: a towering vermilion torii gate behind him, a stone path lined with
+glowing stone lanterns, giant cedars, cherry-blossom petals drifting in golden light and soft
+mist. Outfit = attached image 5: cobalt-blue fleece zip hoodie, white graphic T-shirt, gold
+rectangular pendant necklace, silver rings, white-and-grey snow-camo baggy cargo pants, cobalt-blue
+sneakers. Final beat: he looks straight into the lens with a cool confident smile, the camera
+pushes in slightly, freeze on the last frame.
+
+SOUND: a punchy beat with a whoosh and shimmer on every cut; wind, waves, waterfall roar and a
+temple bell layered softly under each location. No text, no captions, no watermarks.
+```
