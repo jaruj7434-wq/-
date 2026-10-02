@@ -50,4 +50,4 @@
     人物は慶太の写真4枚(element の media_input `9e6a89ba-…`/`31b7f853-…`/`9c65a534-…`/`2522a957-…`)+慶太×服装①画像 `09ebbfc1-…`+服装① `b10936fb-…` を直接参照。480p 15秒で45クレジット。
   - B: Genjutsu モーション転写(hf_mult_motion_control)。動きだけを元動画から取り、人物は画像から。105クレジット。
   - 参考: Genjutsu 人物差し替え(hf_mult_replace_object)は112クレジット。
-| 慶太版リメイク動画 A案(作り直し) | `e9aa4c85-0c58-4b3d-9800-fdc16ad3573b` | seedance_2_5 omni_reference / 480p / 15秒 / 45クレジット。元動画は動き・カメラの参考のみ。慶太の写真4枚(element の media_input)+慶太×服装① `09ebbfc1-…`+服装① `b10936fb-…` を直接参照。元動画の人物は使わない指定。プリセット IN THE DARK は辞退 |
+| 慶太版リメイク動画 A案(作り直し) | `e9aa4c85-0c58-4b3d-9800-fdc16ad3573b`(**NSFW判定で失敗**) | seedance_2_5 omni_reference / 480p / 15秒 / 45クレジット。元動画は動き・カメラの参考のみ。慶太の写真4枚(element の media_input)+慶太×服装① `09ebbfc1-…`+服装① `b10936fb-…` を直接参照。元動画の人物は使わない指定。プリセット IN THE DARK は辞退 |
