@@ -49,24 +49,27 @@ the man, the garments stay large, sharp and clearly visible in the lower-middle 
 EVERY frame, flying together just ahead of the lens, sleeves and trouser legs fluttering; they
 never leave the frame.
 THE GOAL PIN: a glossy red map location pin — the classic teardrop-shaped pin with a white circle
-in its head, like the pin on online maps — marks the destination. From the very first frame until
-the garments reach the man, this red pin is ALWAYS visible somewhere in the frame as a small
-glowing goal marker ahead of the garments (like a navigation waypoint): first as a tiny red pin
-glowing on the Earth over Tokyo (peeking over the horizon when Tokyo is on the far side), then
-growing as they approach, always hovering exactly over the man's location. It never disappears.
+in its head, like the pin on online maps — marks the destination in Tokyo. It is NOT visible in
+space at the beginning; it first appears only when the Japanese archipelago comes into view, and
+at that moment it is ALREADY standing planted in the map of Japan at Tokyo. From then on it stays
+visible as the goal marker ahead of the garments until they reach the man, growing as they
+approach, always exactly over the man's location.
 The man is <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> — his face, hair and age match his reference
 exactly; never beautify, reshape or swap his face.
 
 0.0–0.8s: exactly the first frame — low Earth orbit, the curved blue horizon with a glowing
-atmosphere line, the three garments floating weightless in front of the lens; a tiny red goal pin
-glows far away on the planet's edge.
-0.8–3.5s: HIGH-SPEED LAP AROUND THE EARTH: the camera and the garments race around the planet in
-one full sweeping orbit at incredible speed — oceans, continents, swirling cloud bands and the
-day/night terminator streak past, city lights sparkle on the night side, the sun flares across the
-lens. The small red goal pin stays visible on the globe the whole time. The garments stay sharp.
-3.5–4.6s: THE TARGET: the camera slows and banks over the North Pacific; Japan comes into view and
-the red pin, now clearly visible, stands over Tokyo with a soft pulsing glow ring. The camera locks on.
-4.6–6.5s: THE DIVE: the camera tips straight down and the garments rocket toward the pin through
+atmosphere line, the three garments floating weightless in front of the lens.
+0.8–2.0s: PULL BACK TO THE WHOLE EARTH: the camera (with the garments still floating in the
+foreground) pulls far back into space until the ENTIRE Earth is visible as a complete round blue
+sphere hanging in black space, with clouds, oceans and continents, the sun rim-lighting one edge.
+2.0–4.0s: ORBIT AROUND THE GLOBE: the camera pushes back in toward the planet and flies one full
+fast lap around the globe — oceans, continents, swirling cloud bands and the day/night terminator
+streak past, city lights sparkle on the night side, the sun flares across the lens. Motion blur on
+the planet; the garments stay sharp.
+4.0–4.8s: STOP OVER JAPAN: the orbit eases to a stop with the whole Japanese archipelago clearly in
+view below, in daylight. A giant red map pin is ALREADY standing planted at Tokyo on the map of
+Japan, glowing with a soft pulsing ring. The camera holds on it for a beat and locks on.
+4.8–6.5s: THE DIVE: the camera tips straight down and the garments rocket toward the pin through
 the glowing atmosphere with orange re-entry streaks, then punch through a thick layer of white
 clouds, the red pin still glowing ahead below them.
 6.5–9.0s: TOKYO AT DUSK: still right in front of the lens, the garments streak down over the
@@ -99,3 +102,4 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 | Part1 新版(地球一周→東京ピン→着替え、480p・15秒) | `b4f05df4-f7a9-4774-86fe-baef13ee41a4` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
 - b4f05df4 結果(ユーザー): めちゃくちゃいい感じ。修正: 男性の前にカメラが届いた瞬間に服がまとめてドンとぶつかり、一瞬で着替える(1点ずつではなく)→ 9.0〜14.4 を変更。
 | Part1 新版 v2(720p・15秒・一瞬でドンと着替え) | `60ea645c-ffa6-49a2-b9c6-c3ee3e07b637` | seedance_2_5 omni_reference / 9:16 / 720p / 105クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
+- 60ea645c 結果(ユーザー): ドンと一瞬で着替えはバッチリ。修正: 冒頭で一度地球全体(球体)が見える視点 → 寄って地球を一周 → 日本列島が見える視点で止まる。赤いピンは日本列島が見えた時点で東京にすでに立っている(宇宙のうちは出さない)。
