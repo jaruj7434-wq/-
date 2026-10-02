@@ -126,3 +126,4 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 - 934a185a 結果(ユーザー): 最初の3秒で服が止まったまま、カメラだけが動いて躍動感がない → 服そのものが地球へ飛び、カメラが追いかける形に変更。日本列島が出てこない → ユーザー提供の日本地図画像 `bfffaaf2-af97-4316-ae2d-12d1dff9884d` を参照に追加し、その日本列島の東京にピン。medias: start=`f8071088-…`、end=`47219cff-…`、image_references=`bfffaaf2-…`(720p 105 クレジット)
 | Part1 新版 v5(480p・15秒・服が自ら飛ぶ/日本地図参照) | `bb1cbb04-faa1-43b9-9e19-0d8213fb5eb8` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`f8071088-…`、end=`47219cff-…`、ref=日本地図 `bfffaaf2-…`、慶太 element。プリセット ELEVATE は辞退 |
 - bb1cbb04 結果(ユーザー): 服のスピード感は良い。修正: ロケットのような火は出さない/宇宙で靴が消えて服とボトムだけになった→3点を常に映す/日本列島で止まって一拍置いてから突っ込む→開始〜急降下まで緩急はあっても止まらずスムーズに動く。大気圏突入のオレンジの光も火に見えるため削除。
+| Part1 新版 v6(480p・15秒・火なし/靴を常に映す/止まらない) | `3d83f6e2-c3f4-49fb-be99-dde663484657` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`f8071088-…`、end=`47219cff-…`、ref=日本地図 `bfffaaf2-…`、慶太 element。プリセット ELEVATE は辞退 |
