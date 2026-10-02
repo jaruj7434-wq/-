@@ -54,3 +54,11 @@ SHOT 7 (14.5–15.0s) — He reaches toward the lens and covers it with his open
 Sound: wheels rattling on asphalt, wind rush, a big comedic crash on the billboard, upbeat music sting.
 No text overlays or captions besides the billboard.
 ```
+
+## 生成ログ
+| 内容 | job_id | 備考 |
+|---|---|---|
+| K1 開始シーン | `5858dd5b-7b10-4d94-89ab-a5bc70797375` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+`09ebbfc1-…`+`b10936fb-…` |
+| K2 カートで爆走 | `e7e5b561-aa88-4791-83ab-4f68b5adf311` | 同上 |
+| K3 MARUKOME 看板 | `52226aef-f6e8-47a4-9190-34e7d94c94d7` | 同上 |
+- 動画化はユーザーの確認待ち(まだ生成しない)。
