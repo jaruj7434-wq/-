@@ -104,3 +104,5 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 | Part1 新版 v2(720p・15秒・一瞬でドンと着替え) | `60ea645c-ffa6-49a2-b9c6-c3ee3e07b637` | seedance_2_5 omni_reference / 9:16 / 720p / 105クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
 - 60ea645c 結果(ユーザー): ドンと一瞬で着替えはバッチリ。修正: 冒頭で一度地球全体(球体)が見える視点 → 寄って地球を一周 → 日本列島が見える視点で止まる。赤いピンは日本列島が見えた時点で東京にすでに立っている(宇宙のうちは出さない)。
 | Part1 新版 v3(720p・15秒・地球全体→一周→日本で停止、ピンは日本が見えてから) | `0e7fa8bf-da98-4334-b6d9-4f917874dd1c` | seedance_2_5 omni_reference / 9:16 / 720p / 105クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
+- ユーザー指摘: 地球全体(球体)から寄って一周するには開始画像を変える必要がある → 地球全体+服3点の新しい開始画像を作成。
+| 新・開始画像(地球全体の球体+服3点、高コントラスト) | `f01b3c8b-799a-4f46-8814-f00003677e84` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。参照: 完成コーデ `47219cff-…`(服の見本) |
