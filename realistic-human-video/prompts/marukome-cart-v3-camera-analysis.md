@@ -101,3 +101,4 @@ No captions, no on-screen credits, no text anywhere except "MARUKOME" on the bil
 ## 動画生成案(承認待ち)
 - seedance_2_5 / omni_reference / 15秒 / 9:16。参照: 看板 `7ea7deb8-1528-4214-a6d2-0a4b58f1d648`(f669d81c を取り込み直し)、服装① `b10936fb-…`、慶太 element
 - 費用(プレフライト): 480p 45 / 720p 105 / 1080p 180 クレジット
+| 動画(看板画像参照・480p) | `7e0fc637-c17b-4529-ba9c-928402ef565c` | seedance_2_5 omni_reference / 15秒 / 9:16 / 480p / 45クレジット。参照: 看板 `7ea7deb8-…`、服装① `b10936fb-…`、慶太 element。プリセット IN THE DARK は辞退 |
