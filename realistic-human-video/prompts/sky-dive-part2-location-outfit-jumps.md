@@ -176,3 +176,4 @@ layered softly under each location. No text, no captions, no watermarks.
 | Part2 v2 回り込みカメラ(480p・12秒) | `ff84fa5e-1ab5-455f-80b5-2ccd3c3fd377` | seedance_2_5 omni_reference / 12秒 / 9:16 / 480p / 36クレジット。参照は前回と同じ。プリセット IN THE DARK は辞退 |
 - ff84fa5e 結果(ユーザー): 惜しい。草原で男性が後ろ向きなのに服が前向きになった → 草原はカメラを前側(斜め前〜斜め前)に限定し、体・顔・服の向きを一致させる指示を追加。他はOK。
 | Part2 v3(720p・12秒・草原の向き修正) | `506e9a87-8942-4dd5-94cb-3fc56731ffcd` | seedance_2_5 omni_reference / 12秒 / 9:16 / 720p / 84クレジット。参照は前回と同じ。プリセット IN THE DARK は辞退 |
+- **v3 `506e9a87-…`(720p・12秒)をユーザーがOK。Part2 完成。**
