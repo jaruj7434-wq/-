@@ -73,24 +73,28 @@ clouds, the red pin still glowing ahead below them.
 sprawling Tokyo skyline at dusk, lights coming on, weaving between glass skyscrapers, always
 heading for the red pin, which now floats above a white elevated pedestrian bridge between the
 towers. They level out just above the bridge.
-9.0–11.0s: On the bridge, right under the red pin, stands the young man, barefoot, wearing only a
+9.0–10.5s: On the bridge, right under the red pin, stands the young man, barefoot, wearing only a
 plain white tank top and black boxer briefs, waiting and facing the camera; the red pin floats
-just above his head. The garments fly straight at him, growing larger as they approach.
-11.0–13.5s: The garments hit him one after another and dress him instantly with a gust of wind:
-the grey denim trousers wrap onto his legs, the sneakers snap onto his feet, the black long-sleeve
-top drops over his head and slides down over the tank top.
-13.5–14.4s: The outfit is complete, exactly as in the end image: he puts his hands in his pockets
-and smiles at the camera as it slows and gently pushes in. The red map pin floats and gently bobs
-right above his head, glowing softly, like a map marker pinned on him — "destination reached".
+just above his head. The camera and the garments rush straight at him without slowing down.
+10.5s — THE IMPACT ("DON!"): the instant the camera arrives right in front of him, ALL THREE
+garments slam into him together at the same moment in one big hit — a punchy shockwave of wind,
+a flash of light and a burst of dust, his hair blown back, a short camera shake. In that single
+instant he is FULLY dressed in the complete outfit: black long-sleeve top, grey wide-leg denim and
+chunky white-and-black sneakers. No gradual dressing, no pieces arriving one by one — it is one
+instant transformation.
+10.6–14.4s: The outfit is complete, exactly as in the end image: he puts his hands in his pockets
+and smiles at the camera as it settles and gently pushes in. The red map pin floats and gently
+bobs right above his head, glowing softly, like a map marker pinned on him — "destination reached".
 14.4–15.0s: the red pin pops with a tiny sparkle and vanishes. The LAST FRAME matches the end image
 exactly — no pin, no sparkle left.
 
 Photorealistic, realistic fabric physics, no distortion. No text, no labels, no brand logos, no
 watermarks. SOUND: deep whoosh, rising wind, a soft "ping" whenever the pin glows, city ambience, a
-fabric whoosh on each hit, a bright "ping" when the pin settles above his head and a soft "pop" when it vanishes.
+one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin settles above his head and a soft "pop" when it vanishes.
 ```
 
 ## 生成ログ
 | 内容 | job_id | 備考 |
 |---|---|---|
 | Part1 新版(地球一周→東京ピン→着替え、480p・15秒) | `b4f05df4-f7a9-4774-86fe-baef13ee41a4` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
+- b4f05df4 結果(ユーザー): めちゃくちゃいい感じ。修正: 男性の前にカメラが届いた瞬間に服がまとめてドンとぶつかり、一瞬で着替える(1点ずつではなく)→ 9.0〜14.4 を変更。
