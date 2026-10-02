@@ -36,15 +36,15 @@ the red pin appears.
 ```
 
 ## 変更(ユーザー指定): つながずに1本で、着替え完了まで作る(15秒)
-- medias: start_image=宇宙コマ `3c6eea98-…`、image_references=完成コーデ全身 `47219cff-…`(服と歩道橋の見本)、慶太 element
-- 追加指定(ユーザー): 赤いピンは宇宙から男性に届くまで常にゴールとして小さく映る/最後は男性の頭上に赤いピンが浮かぶ → 最後のコマにピンが入るため end_image は使わない
+- medias: start_image=宇宙コマ `3c6eea98-…`、end_image=完成コーデ全身 `47219cff-…`、慶太 element
+- 追加指定(ユーザー): 赤いピンは宇宙から男性に届くまで常にゴールとして小さく映る/最後は男性の頭上に赤いピンが浮かぶ → ピンは頭上に浮かんだ後、最後の0.6秒で弾けて消え、最後のコマは完成コーデ画像と一致(end_image 使用 → Part2 に継ぎ目なくつながる)
 - 費用: 480p 45 / 720p 105(プレフライト)
 
 ```
 A 15-second vertical (9:16) photorealistic cinematic film, ONE continuous camera move with no cuts.
 The SUBJECT for most of the film is a group of three flying garments — a black long-sleeve top
 with white text print, grey washed wide-leg denim trousers and a pair of chunky white-and-black
-sneakers (exactly the clothes worn by the man in the attached full-body image). Until they reach
+sneakers (exactly the clothes worn by the man in the end image). Until they reach
 the man, the garments stay large, sharp and clearly visible in the lower-middle foreground of
 EVERY frame, flying together just ahead of the lens, sleeves and trouser legs fluttering; they
 never leave the frame.
@@ -79,12 +79,13 @@ just above his head. The garments fly straight at him, growing larger as they ap
 11.0–13.5s: The garments hit him one after another and dress him instantly with a gust of wind:
 the grey denim trousers wrap onto his legs, the sneakers snap onto his feet, the black long-sleeve
 top drops over his head and slides down over the tank top.
-13.5–15.0s: The outfit is complete, exactly as in the attached full-body image: he puts his hands
-in his pockets and smiles at the camera as it slows and gently pushes in. FINAL FRAME: the red map
-pin floats and gently bobs right above his head, glowing softly, like a map marker pinned on him —
-"destination reached".
+13.5–14.4s: The outfit is complete, exactly as in the end image: he puts his hands in his pockets
+and smiles at the camera as it slows and gently pushes in. The red map pin floats and gently bobs
+right above his head, glowing softly, like a map marker pinned on him — "destination reached".
+14.4–15.0s: the red pin pops with a tiny sparkle and vanishes. The LAST FRAME matches the end image
+exactly — no pin, no sparkle left.
 
 Photorealistic, realistic fabric physics, no distortion. No text, no labels, no brand logos, no
 watermarks. SOUND: deep whoosh, rising wind, a soft "ping" whenever the pin glows, city ambience, a
-fabric whoosh on each hit, and a final bright "ping" when the pin settles above his head.
+fabric whoosh on each hit, a bright "ping" when the pin settles above his head and a soft "pop" when it vanishes.
 ```
