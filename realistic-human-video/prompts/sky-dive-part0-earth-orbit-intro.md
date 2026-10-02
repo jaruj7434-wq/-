@@ -57,15 +57,15 @@ approach, always exactly over the man's location.
 The man is <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> — his face, hair and age match his reference
 exactly; never beautify, reshape or swap his face.
 
-0.0–0.8s: exactly the first frame — low Earth orbit, the curved blue horizon with a glowing
-atmosphere line, the three garments floating weightless in front of the lens.
-0.8–2.0s: PULL BACK TO THE WHOLE EARTH: the camera (with the garments still floating in the
-foreground) pulls far back into space until the ENTIRE Earth is visible as a complete round blue
-sphere hanging in black space, with clouds, oceans and continents, the sun rim-lighting one edge.
-2.0–4.0s: ORBIT AROUND THE GLOBE: the camera pushes back in toward the planet and flies one full
-fast lap around the globe — oceans, continents, swirling cloud bands and the day/night terminator
-streak past, city lights sparkle on the night side, the sun flares across the lens. Motion blur on
-the planet; the garments stay sharp.
+0.0–1.0s: exactly the first frame — deep black space, the ENTIRE Earth visible as a complete round
+sphere with a glowing blue atmosphere rim and a sun flare, the three garments floating large and
+sharp in the foreground, pointing toward the planet. A slight drift.
+1.0–2.0s: PUSH IN: the camera and the garments surge forward toward the planet, the globe growing
+until it fills the frame and its curved horizon wraps around them.
+2.0–4.0s: ORBIT AROUND THE GLOBE: close to the planet, the camera flies one full fast lap around the
+globe — oceans, continents, swirling cloud bands and the day/night terminator streak past, city
+lights sparkle on the night side, the sun flares across the lens. Motion blur on the planet; the
+garments stay sharp in the foreground.
 4.0–4.8s: STOP OVER JAPAN: the orbit eases to a stop with the whole Japanese archipelago clearly in
 view below, in daylight. A giant red map pin is ALREADY standing planted at Tokyo on the map of
 Japan, glowing with a soft pulsing ring. The camera holds on it for a beat and locks on.
@@ -106,3 +106,4 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 | Part1 新版 v3(720p・15秒・地球全体→一周→日本で停止、ピンは日本が見えてから) | `0e7fa8bf-da98-4334-b6d9-4f917874dd1c` | seedance_2_5 omni_reference / 9:16 / 720p / 105クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
 - ユーザー指摘: 地球全体(球体)から寄って一周するには開始画像を変える必要がある → 地球全体+服3点の新しい開始画像を作成。
 | 新・開始画像(地球全体の球体+服3点、高コントラスト) | `f01b3c8b-799a-4f46-8814-f00003677e84` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。参照: 完成コーデ `47219cff-…`(服の見本) |
+- 新しい開始画像 f01b3c8b(取り込み直し media `f8071088-d3a7-4711-9e3c-e2f88eed69f4`)をユーザーOK。冒頭を「地球全体の球体(開始コマ)→寄る→一周→日本で停止」に変更。medias: start=`f8071088-…`、end=`47219cff-…`。
