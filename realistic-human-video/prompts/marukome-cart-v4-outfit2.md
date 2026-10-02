@@ -62,9 +62,11 @@ on. The billboard is EXACTLY the one in attached image 2 — same wide cream pan
 half-body photo of him, same navy "MARUKOME" lettering, same steel legs and catwalk — standing on
 the roadside verge behind the sidewalk, parallel to the road, never in the road. Its text must
 stay exactly "MARUKOME" (M-A-R-U-K-O-M-E) in every frame. At 8.0s the empty shopping cart flies
-in from the sky and crashes onto the billboard's catwalk, where it gets stuck. From 8.5s only a
-pair of wide navy cargo trousers dangles from the catwalk, swinging — nobody is inside them. The
-camera holds perfectly still.
+in from the sky together with his clothes and crashes onto the billboard's catwalk, where it gets
+stuck. From 8.5s BOTH garments hang from the stuck cart and catwalk, clearly visible and swinging:
+the navy track jacket with white piping (top) AND the very wide dark navy cargo trousers (bottom) —
+the jacket draped over the cart's edge, the trousers dangling below it. Nobody is inside the
+clothes. The camera holds perfectly still.
 
 SHOT 6 (10.0–14.6s) — Same shot continues: he pops up
 At 10.0s the top of his head rises into the bottom of the frame right in front of the lens. He
@@ -72,7 +74,7 @@ stands up into a medium close-up, the billboard behind him over his shoulder, co
 and fully dressed in the outfit. 10.5–11.5s: he smooths his hair with one hand and looks straight
 into the lens with a huge relieved expression. 12.0–13.0s: he breathes out, mutters something,
 glances down. 13.0–14.0s: he turns his head and looks back over his right shoulder at the
-billboard and the dangling trousers. 14.0–14.6s: he turns back to the camera. Slight handheld
+billboard and the dangling jacket and trousers. 14.0–14.6s: he turns back to the camera. Slight handheld
 float from here on.
 
 SHOT 7 (14.6–15.0s) — Hand covers the lens
@@ -88,3 +90,5 @@ No captions, no on-screen credits, no text anywhere except "MARUKOME" on the bil
 | 内容 | job_id | 備考 |
 |---|---|---|
 | 動画 v4(480p) | `bda22ef0-a8c6-41b0-9ec5-e77d31b9fa36` | seedance_2_5 omni_reference / 15秒 / 9:16 / 480p / 45クレジット。参照: 慶太×服装② `452bbba9-…`、看板 `7ea7deb8-…`、慶太 element。プリセット IN THE DARK は辞退 |
+- v4 480p 完了。ユーザー評価「いい感じ」。修正: 看板に刺さる服がズボンだけ → ジャケット(上)とカーゴ(下)の両方がぶら下がるよう SHOT 5/6 を変更(上のプロンプトは変更後)。
+| 動画 v4.1(720p・看板にジャケット+パンツ) | `beb1ef42-ce07-4ab3-964c-fb524937a6d8` | seedance_2_5 omni_reference / 15秒 / 9:16 / 720p / 105クレジット。参照は v4 と同じ |
