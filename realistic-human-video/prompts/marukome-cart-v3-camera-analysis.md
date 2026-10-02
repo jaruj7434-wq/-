@@ -96,3 +96,4 @@ No captions, no on-screen credits, no text anywhere except "MARUKOME" on the bil
 |---|---|---|
 | 看板単体(青ネオンの電光掲示板・MARUKOME・慶太の全身写真・お昼) | `7fa86f01-646f-4b95-9ed0-b1e6edb701f3` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+服装① `b10936fb-…`。動画で看板文字が MARUKUME になったための対策 |
 | 看板単体 v2(アメカジ風・ネオンなし・慶太は頭〜太ももの半身・リアルな印刷広告) | `92be1641-26a8-4673-8d72-ca1251de3f79` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+服装① `b10936fb-…` |
+| 看板単体 v3(少し横長・ブランド広告風・歩道奥に道路と平行に設置・慶太は半身) | `f669d81c-d333-42e2-8aa3-c96b465325ba` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+服装① `b10936fb-…` |
