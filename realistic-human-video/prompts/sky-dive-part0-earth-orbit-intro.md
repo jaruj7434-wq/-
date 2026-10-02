@@ -89,3 +89,8 @@ Photorealistic, realistic fabric physics, no distortion. No text, no labels, no 
 watermarks. SOUND: deep whoosh, rising wind, a soft "ping" whenever the pin glows, city ambience, a
 fabric whoosh on each hit, a bright "ping" when the pin settles above his head and a soft "pop" when it vanishes.
 ```
+
+## 生成ログ
+| 内容 | job_id | 備考 |
+|---|---|---|
+| Part1 新版(地球一周→東京ピン→着替え、480p・15秒) | `b4f05df4-f7a9-4774-86fe-baef13ee41a4` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`3c6eea98-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
