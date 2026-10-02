@@ -61,12 +61,20 @@ Camera on the opposite sidewalk at head height, looking across the road at the b
 on. The billboard is EXACTLY the one in attached image 2 — same wide cream panel, same
 half-body photo of him, same navy "MARUKOME" lettering, same steel legs and catwalk — standing on
 the roadside verge behind the sidewalk, parallel to the road, never in the road. Its text must
-stay exactly "MARUKOME" (M-A-R-U-K-O-M-E) in every frame. At 8.0s the empty shopping cart flies
-in from the sky together with his clothes and crashes onto the billboard's catwalk, where it gets
-stuck. From 8.5s BOTH garments hang from the stuck cart and catwalk, clearly visible and swinging:
-the navy track jacket with white piping (top) AND the very wide dark navy cargo trousers (bottom) —
-the jacket draped over the cart's edge, the trousers dangling below it. Nobody is inside the
-clothes. The camera holds perfectly still.
+stay exactly "MARUKOME" (M-A-R-U-K-O-M-E) in every frame.
+7.5–8.0s: the billboard stands still; nothing falls from the sky.
+8.0s — THE CRASH COMES FROM THE LEFT: the empty red shopping cart shoots into the frame from the
+LEFT EDGE, flying almost horizontally at very high speed (NOT falling from above), carrying his
+navy track jacket and his wide navy cargo trousers with it, and slams sideways into the left part
+of the billboard. The front of the cart punches through and gets IMPALED, stuck deep in the
+billboard panel at an angle, with a burst of splinters, dust and paper shreds and a hard shake of
+the whole billboard.
+8.5–10.0s: TWO separate garments are clearly visible stuck with the cart, both easy to read:
+(1) the navy TRACK JACKET with white piping, impaled with the cart — draped over the cart's handle
+with both sleeves spread out and flapping; and (2) the very wide dark navy CARGO TROUSERS hanging
+down below the cart, swinging. The jacket and the trousers are the same size on screen and both
+stay in view; it must never be only the trousers. Nobody is inside the clothes. The camera holds
+perfectly still.
 
 SHOT 6 (10.0–14.6s) — Same shot continues: he pops up
 At 10.0s the top of his head rises into the bottom of the frame right in front of the lens. He
@@ -92,3 +100,5 @@ No captions, no on-screen credits, no text anywhere except "MARUKOME" on the bil
 | 動画 v4(480p) | `bda22ef0-a8c6-41b0-9ec5-e77d31b9fa36` | seedance_2_5 omni_reference / 15秒 / 9:16 / 480p / 45クレジット。参照: 慶太×服装② `452bbba9-…`、看板 `7ea7deb8-…`、慶太 element。プリセット IN THE DARK は辞退 |
 - v4 480p 完了。ユーザー評価「いい感じ」。修正: 看板に刺さる服がズボンだけ → ジャケット(上)とカーゴ(下)の両方がぶら下がるよう SHOT 5/6 を変更(上のプロンプトは変更後)。
 | 動画 v4.1(720p・看板にジャケット+パンツ) | `beb1ef42-ce07-4ab3-964c-fb524937a6d8` | seedance_2_5 omni_reference / 15秒 / 9:16 / 720p / 105クレジット。参照は v4 と同じ |
+- v4.1 720p 完了。ユーザー指摘: カートが上から落ちてきた(→左から勢いよく突き刺さるように)/刺さった服がボトムだけ(→ジャケットとボトム両方)。返答は日本語のみ徹底。
+- v4.2 案: SHOT 5 を「左端からほぼ水平に高速で飛び込み、看板に斜めに突き刺さる」「ジャケット(袖を広げてカートの持ち手に掛かる)とカーゴパンツ(カートの下に垂れる)の2点が同じくらいの大きさで見え続ける」に変更(上のプロンプトは変更後)。
