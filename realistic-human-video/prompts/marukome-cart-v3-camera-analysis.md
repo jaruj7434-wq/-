@@ -25,6 +25,8 @@ with very tall palm trees in a sunny Southern California-style city, parked cars
 Time: bright midday the whole film — clear blue sky, strong high sun, crisp highlights, vivid
 natural colors.
 
+REFERENCES: attached image 1 = the MARUKOME billboard (use it exactly); attached image 2 = the
+outfit.
 ONE CHARACTER ONLY: the young man <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>>. His face, hair and
 age must match his reference exactly in every shot, including close-ups and fast motion; never
 beautify, reshape or swap his face. No cap, no hat. Outfit (the fashion focus): a navy track
@@ -62,16 +64,14 @@ Same rig: the cart is flying high in the air. The caster wheels dangle against t
 far below are the street, a traffic light and palm trees. A brief weightless moment. Hard cut.
 
 SHOT 5 (7.5–10.0s) — Locked-off billboard wide (no cut until the end of the film)
-Camera on the opposite side of the road, at head height, looking up at a huge roadside billboard
-standing on two tall steel legs with a catwalk. The billboard is a fashion ad: on the left half,
-a large full-body photo of <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> (the same young man, his
-exact face, clearly recognizable even at billboard size) standing in the same outfit — navy
-track jacket, striped shirt, wide navy cargo trousers, black loafers; on the right half, the
-giant bold white text "MARUKOME" (spelled exactly M-A-R-U-K-O-M-E, no other words or logos) on a
-dark navy background. At 8.0s the empty shopping cart
-drops in from the sky and crashes onto the billboard's catwalk, where it gets stuck. From 8.5s
-only a pair of wide navy cargo trousers dangles from the catwalk, swinging — nobody is inside
-them. The camera holds perfectly still.
+Camera on the opposite sidewalk at head height, looking across the road at the billboard straight
+on. The billboard is EXACTLY the one in the first attached image — same wide cream panel, same
+half-body photo of him, same navy "MARUKOME" lettering, same steel legs and catwalk — standing on
+the roadside verge behind the sidewalk, parallel to the road, never in the road. Its text must
+stay exactly "MARUKOME" (M-A-R-U-K-O-M-E) in every frame. At 8.0s the empty shopping cart flies
+in from the sky and crashes onto the billboard's catwalk, where it gets stuck. From 8.5s only a
+pair of wide navy cargo trousers dangles from the catwalk, swinging — nobody is inside them. The
+camera holds perfectly still.
 
 SHOT 6 (10.0–14.6s) — Same shot continues: he pops up
 At 10.0s the top of his head rises into the bottom of the frame right in front of the lens. He
@@ -97,3 +97,7 @@ No captions, no on-screen credits, no text anywhere except "MARUKOME" on the bil
 | 看板単体(青ネオンの電光掲示板・MARUKOME・慶太の全身写真・お昼) | `7fa86f01-646f-4b95-9ed0-b1e6edb701f3` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+服装① `b10936fb-…`。動画で看板文字が MARUKUME になったための対策 |
 | 看板単体 v2(アメカジ風・ネオンなし・慶太は頭〜太ももの半身・リアルな印刷広告) | `92be1641-26a8-4673-8d72-ca1251de3f79` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+服装① `b10936fb-…` |
 | 看板単体 v3(少し横長・ブランド広告風・歩道奥に道路と平行に設置・慶太は半身) | `f669d81c-d333-42e2-8aa3-c96b465325ba` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+服装① `b10936fb-…` |
+
+## 動画生成案(承認待ち)
+- seedance_2_5 / omni_reference / 15秒 / 9:16。参照: 看板 `7ea7deb8-1528-4214-a6d2-0a4b58f1d648`(f669d81c を取り込み直し)、服装① `b10936fb-…`、慶太 element
+- 費用(プレフライト): 480p 45 / 720p 105 / 1080p 180 クレジット
