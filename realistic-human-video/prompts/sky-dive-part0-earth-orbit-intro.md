@@ -117,3 +117,4 @@ one heavy "DON" impact boom when the clothes hit, a bright "ping" when the pin s
 - 新しい開始画像 f01b3c8b(取り込み直し media `f8071088-d3a7-4711-9e3c-e2f88eed69f4`)をユーザーOK。冒頭を「地球全体の球体(開始コマ)→寄る→一周→日本で停止」に変更。medias: start=`f8071088-…`、end=`47219cff-…`。
 | Part1 新版 v4(720p・15秒・新開始画像=地球全体から) | `934a185a-3617-464c-b75a-93d9253535e1` | seedance_2_5 omni_reference / 9:16 / 720p / 105クレジット。start=`f8071088-…`、end=`47219cff-…`、慶太 element。プリセット ELEVATE は辞退 |
 - 934a185a 結果(ユーザー): 最初の3秒で服が止まったまま、カメラだけが動いて躍動感がない → 服そのものが地球へ飛び、カメラが追いかける形に変更。日本列島が出てこない → ユーザー提供の日本地図画像 `bfffaaf2-af97-4316-ae2d-12d1dff9884d` を参照に追加し、その日本列島の東京にピン。medias: start=`f8071088-…`、end=`47219cff-…`、image_references=`bfffaaf2-…`(720p 105 クレジット)
+| Part1 新版 v5(480p・15秒・服が自ら飛ぶ/日本地図参照) | `bb1cbb04-faa1-43b9-9e19-0d8213fb5eb8` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。start=`f8071088-…`、end=`47219cff-…`、ref=日本地図 `bfffaaf2-…`、慶太 element。プリセット ELEVATE は辞退 |
