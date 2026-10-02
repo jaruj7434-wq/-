@@ -168,3 +168,4 @@ as he looks straight into the lens with a cool confident smile. Freeze on the la
 SOUND: a driving beat; a whoosh on every transition; wind, waves, waterfall and a temple bell
 layered softly under each location. No text, no captions, no watermarks.
 ```
+| Part2 v2 回り込みカメラ(480p・12秒) | `ff84fa5e-1ab5-455f-80b5-2ccd3c3fd377` | seedance_2_5 omni_reference / 12秒 / 9:16 / 480p / 36クレジット。参照は前回と同じ。プリセット IN THE DARK は辞退 |
