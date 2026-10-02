@@ -63,9 +63,12 @@ far below are the street, a traffic light and palm trees. A brief weightless mom
 
 SHOT 5 (7.5–10.0s) — Locked-off billboard wide (no cut until the end of the film)
 Camera on the opposite side of the road, at head height, looking up at a huge roadside billboard
-standing on two tall steel legs with a catwalk. The billboard shows a full-body photo of the same
-young man in the same outfit on the left, and the giant bold white text "MARUKOME" (spelled
-exactly M-A-R-U-K-O-M-E) on a dark navy background on the right. At 8.0s the empty shopping cart
+standing on two tall steel legs with a catwalk. The billboard is a fashion ad: on the left half,
+a large full-body photo of <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> (the same young man, his
+exact face, clearly recognizable even at billboard size) standing in the same outfit — navy
+track jacket, striped shirt, wide navy cargo trousers, black loafers; on the right half, the
+giant bold white text "MARUKOME" (spelled exactly M-A-R-U-K-O-M-E, no other words or logos) on a
+dark navy background. At 8.0s the empty shopping cart
 drops in from the sky and crashes onto the billboard's catwalk, where it gets stuck. From 8.5s
 only a pair of wide navy cargo trousers dangles from the catwalk, swinging — nobody is inside
 them. The camera holds perfectly still.
