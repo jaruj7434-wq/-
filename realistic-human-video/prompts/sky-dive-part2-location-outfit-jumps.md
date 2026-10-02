@@ -102,3 +102,8 @@ pushes in slightly, freeze on the last frame.
 SOUND: a punchy beat with a whoosh and shimmer on every cut; wind, waves, waterfall roar and a
 temple bell layered softly under each location. No text, no captions, no watermarks.
 ```
+
+## 動画 生成ログ
+| 内容 | job_id | 備考 |
+|---|---|---|
+| Part2 動画(480p) | `4efa4837-972b-446f-96c5-76f431096446` | seedance_2_5 omni_reference / 8秒 / 9:16 / 480p / 24クレジット。プリセット IN THE DARK は辞退。注意: 受付記録では start_image も reference_images の先頭に並んでいたため、「attached image 1〜5」の番号が1つずれて解釈される可能性あり |
