@@ -90,3 +90,8 @@ SOUND: shopping-cart wheels rattling on asphalt, wind rush, a wooden ramp thump,
 metal crash on the billboard, then a quiet relieved exhale; an upbeat music sting at the end.
 No captions, no on-screen credits, no text anywhere except "MARUKOME" on the billboard.
 ```
+
+## 生成ログ
+| 内容 | job_id | 備考 |
+|---|---|---|
+| 看板単体(青ネオンの電光掲示板・MARUKOME・慶太の全身写真・お昼) | `7fa86f01-646f-4b95-9ed0-b1e6edb701f3` | nano_banana_pro 指定(記録上 nano_banana_2)/ 9:16 / 2k / 2クレジット。慶太 element+服装① `b10936fb-…`。動画で看板文字が MARUKUME になったための対策 |
