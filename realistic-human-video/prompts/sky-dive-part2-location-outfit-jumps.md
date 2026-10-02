@@ -44,3 +44,4 @@
 | 神社 | ⑤(ユーザー画像5) | コバルトブルーのフリースジップパーカー、白のグラフィックT、金の四角いペンダントネックレス、シルバーリング、白×グレーのスノーカモ柄ワイドカーゴ、コバルトブルーのスニーカー |
 - 手順: 5枚を media_upload_widget でアップロード → 各画像を参照に、慶太 element+場所のプロンプトで全身キーフレームを作り直し(nano_banana_pro / 2k / 各2クレジット、計10)。生成はユーザーの許可後。
 - プロンプト共通: "<<<慶太>>> wearing EXACTLY the outfit in the attached image (the image has no head — use only the clothes, shoes and accessories; the face comes only from his reference)"
+- アップロード済み(中身を確認して対応付け): 草原① `60cd028b-36d0-4401-9f5a-9a138039f490`(11.png)/ 海② `38e6db50-1b17-48db-ab6c-0d862e729956`(22.png)/ 山③ `55ce8cba-417c-4be3-a895-43f0f7934a98`(33.png)/ 滝④ `29c3be30-1cb6-4b95-832f-714388a3ca59`(44.png)/ 神社⑤ `ea41ff23-d5be-4ff8-84cc-f10d2b4fb063`(55.png)
