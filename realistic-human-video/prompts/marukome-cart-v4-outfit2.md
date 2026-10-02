@@ -83,3 +83,8 @@ SOUND: shopping-cart wheels rattling on asphalt, wind rush, a wooden ramp thump,
 metal crash on the billboard, then a quiet relieved exhale; an upbeat music sting at the end.
 No captions, no on-screen credits, no text anywhere except "MARUKOME" on the billboard.
 ```
+
+## 生成ログ
+| 内容 | job_id | 備考 |
+|---|---|---|
+| 動画 v4(480p) | `bda22ef0-a8c6-41b0-9ec5-e77d31b9fa36` | seedance_2_5 omni_reference / 15秒 / 9:16 / 480p / 45クレジット。参照: 慶太×服装② `452bbba9-…`、看板 `7ea7deb8-…`、慶太 element。プリセット IN THE DARK は辞退 |
