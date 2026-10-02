@@ -34,3 +34,49 @@ Photorealistic NASA-style Earth imagery, realistic lighting and fabric physics. 
 labels, no brand logos, no watermarks. SOUND: deep whoosh, rising wind, a satisfying "ping" when
 the red pin appears.
 ```
+
+## 変更(ユーザー指定): つながずに1本で、着替え完了まで作る(15秒)
+- medias: start_image=宇宙コマ `3c6eea98-…`、end_image=完成コーデ全身 `47219cff-…`(Part2 の開始コマと同じ → Part2 にそのままつながる)、慶太 element
+- 費用: 480p 45 / 720p 105(プレフライト)
+
+```
+A 15-second vertical (9:16) photorealistic cinematic film, ONE continuous camera move with no cuts.
+The SUBJECT for most of the film is a group of three flying garments — a black long-sleeve top
+with white text print, grey washed wide-leg denim trousers and a pair of chunky white-and-black
+sneakers (exactly the clothes worn in the end image). Until they reach the man, the garments stay
+large, sharp and clearly visible in the lower-middle foreground of EVERY frame, flying together
+just ahead of the lens, sleeves and trouser legs fluttering; they never leave the frame.
+The man is <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> — his face, hair and age match his reference
+exactly; never beautify, reshape or swap his face.
+
+0.0–0.8s: exactly the first frame — low Earth orbit, the curved blue horizon with a glowing
+atmosphere line, the three garments floating weightless in front of the lens.
+0.8–3.5s: HIGH-SPEED LAP AROUND THE EARTH: the camera and the garments accelerate and race around
+the planet in one full sweeping orbit at incredible speed — oceans, continents, swirling cloud
+bands and the day/night terminator streak past below, city lights sparkle on the night side, the
+sun flares across the lens as they come back into daylight. Motion blur on the planet; the
+garments stay sharp.
+3.5–4.6s: THE TARGET: the camera slows and banks over the North Pacific; Japan comes into view and
+a GIANT glossy red map location pin — the classic teardrop-shaped pin with a white circle in its
+head, like the pin on online maps — is stuck into the Earth right at Tokyo, towering above the
+clouds, with a soft pulsing glow ring at its point. The camera locks on.
+4.6–6.5s: THE DIVE: the camera tips straight down and the garments rocket toward the pin through
+the glowing atmosphere with orange re-entry streaks, then punch through a thick layer of white
+clouds.
+6.5–9.0s: TOKYO AT DUSK: still right in front of the lens, the garments streak down over the
+sprawling Tokyo skyline at dusk, lights coming on, weaving between glass skyscrapers; the red pin's
+glow marks the spot ahead — a white elevated pedestrian bridge between the towers. They level out
+just above the bridge.
+9.0–11.0s: On the bridge stands the young man, barefoot, wearing only a plain white tank top and
+black boxer briefs, waiting and facing the camera. The garments fly straight at him, growing
+larger as they approach.
+11.0–13.5s: The garments hit him one after another and dress him instantly with a gust of wind:
+the grey denim trousers wrap onto his legs, the sneakers snap onto his feet, the black long-sleeve
+top drops over his head and slides down over the tank top.
+13.5–15.0s: The outfit is complete, exactly as in the end image: he puts his hands in his pockets
+and smiles at the camera as it slows and gently pushes in. Match the end image as the last frame.
+
+Photorealistic, realistic fabric physics, no distortion. No text, no labels, no brand logos, no
+watermarks. SOUND: deep whoosh, rising wind, a "ping" when the red pin appears, city ambience, a
+fabric whoosh on each hit.
+```
