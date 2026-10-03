@@ -367,3 +367,4 @@ SOUND: driving, soaring cinematic music cut to the beat, wind rush, fast footste
 whoosh as each cloud swallows him, a burst of wingbeats for the flock, a door creak and a bright
 shimmer as the light pours out. No text, no logos, no watermarks.
 ```
+| v4(480p・25秒・扉はるか遠く/隠れて現れる着替え) | `c1112e79-3ae2-45d9-8628-4fa35012d4fd` | seedance_2_5 omni_reference / 9:16 / 480p / 75クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
