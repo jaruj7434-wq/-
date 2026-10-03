@@ -369,3 +369,85 @@ shimmer as the light pours out. No text, no logos, no watermarks.
 ```
 | v4(480p・25秒・扉はるか遠く/隠れて現れる着替え) | `c1112e79-3ae2-45d9-8628-4fa35012d4fd` | seedance_2_5 omni_reference / 9:16 / 480p / 75クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
 - v4 自己確認(取り込み直し media `da22894f-…`、0.5秒ごと): 階段は最後まで段のある石段○。景色(雲・海)○。扉は最初から小さく見えるが「光の点」ほど遠くはなく、階段はほぼ一直線。着替え1(6〜7秒・雲に入って消える→②)○、着替え2(11.5〜12.5秒・雲→③)○ ※手前を横切る雲ではなく再び雲に入る形、着替え3(17.5〜18秒・白い鳥の群れ→④)○。現れた直後の斜め前ショットで、走らずに横向きで立ち止まって見えるコマがある。②のパンツはマスタードではなくクリーム色。扉→ホワイトアウト→別世界○。
+
+## v4 へのユーザー指摘 → v5 方針(15秒)
+- 着替えの時に立ち止まらない。ずっと走り続け、着替えの瞬間だけスローモーション(緩急)。
+- 3回のカメラワークが一辺倒 → 全部変えて飽きさせない。隠すものは 1 雲 / 2 雷 / 3 大量の鳥。
+- 尺は15秒(480p 45 / 720p 105)。
+- カメラ設計: 1 雲=背後から雲へ→雲の中でクレーンアップして雲の上を越え、正面上方から見下ろして飛び出す瞬間を捉える / 2 雷=石段の横を並走する低いサイドトラッキング、一瞬空が暗くなり雷光で真っ白→横から③ / 3 鳥=正面はるか前方から空撮ドローンが彼に向かって突っ込み、群れの中を突き抜けて正面アップで④。
+
+## 英語プロンプト v5(15秒)
+```
+A 15-second vertical (9:16) PHOTOREALISTIC live-action fashion film — real person, real light,
+shot on a cinema camera with the editing rhythm of a high-end fashion commercial; absolutely no
+anime, no cartoon, no illustration, no CGI look.
+ONE CHARACTER ONLY: the young man <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> — his face, hair and age
+match his reference exactly in every frame, including fast motion; never beautify, reshape or
+swap his face, no facial distortion.
+
+ENVIRONMENT LOCK (identical in every frame): a STAIRCASE of separate, real weathered sandstone
+STEPS — each step a distinct block with a flat tread and a vertical riser, floating high in the open
+sky with air beneath — winding in long S-curves from a sheer sea cliff far up into the sky. ALWAYS a
+staircase with visible individual steps: never a ramp, slope, road, path or bridge. The whole sky is
+filled with scattered cumulus clouds of many sizes, tops glowing with bright sunlit highlights and
+golden rim light against a deep blue sky; far below, a deep blue ocean glittering in the sun.
+Breathtaking, dreamlike, high contrast.
+THE DOOR IS EXTREMELY FAR AWAY: at the start, the white arched door at the end of the endless
+staircase is only a tiny glinting speck high in the distant sky; it grows slowly and only becomes
+close after the third outfit change.
+
+HIS MOTION — NEVER STOPS: he sprints up the steps at a thrilling, very fast speed the entire time —
+powerful strides, arms pumping, clothes whipping in the wind. He NEVER stops, never stands still,
+never pauses, never turns sideways: even during and right after every outfit change his legs keep
+running up the steps. The ONLY change of pace is the footage itself: normal fast speed everywhere,
+and a brief SLOW-MOTION speed ramp only at the instant of each outfit change, snapping back to full
+speed right after.
+BASE CAMERA (between changes): a fast FPV-drone chase from directly behind at back height.
+
+OUTFITS (the four attached headless outfit images are clothing references only — use only their
+clothes, shoes and accessories, never their backgrounds), in this order:
+LOOK 1: black leather varsity jacket with white script lettering, brown hoodie, gold cross
+necklace, very wide brown jeans with curved seams, wheat nubuck work boots.
+LOOK 2: washed navy work jacket with a shearling collar, black zip layer, very baggy jeans in a
+vivid MUSTARD-YELLOW wash (clearly yellow, not cream), wheat work boots.
+LOOK 3: beige cropped work jacket, white T-shirt, gold pendant necklace, very wide olive camouflage
+cargo pants, wheat work boots.
+LOOK 4: dark brown leather bomber jacket, grey hoodie layer, very wide light-grey sweatpants, black
+leather loafers.
+Each outfit changes only while he is completely hidden, and appears already changed when he is seen
+again. Body, head and clothes always face the same direction.
+
+0.0–1.0s — LOOK 1. Tilted high-angle shot from behind: he stands at the edge of the sea cliff, the
+endless staircase winding away into the sky, the door a tiny speck; he launches onto the first step.
+1.0–3.0s — Fast FPV chase from behind up the steps.
+3.0–4.6s — CHANGE 1 "CLOUD" (CRANE-OVER): he sprints straight into a big glowing cloud lying across the
+stairs and vanishes in the white; the camera does NOT follow him in — it cranes up and sweeps over
+the top of the cloud, then tilts down from high in front of it just as he bursts out of the cloud in
+LOOK 2, still running, cloud wisps streaming off him — seen from above and in front in slow motion —
+then speed snaps back and the camera drops in behind him again.
+4.6–6.3s — Fast FPV chase from behind; the staircase curves over the ocean.
+6.3–7.9s — CHANGE 2 "LIGHTNING" (LOW SIDE TRACKING): the camera now races alongside him at step
+level, tracking his running profile from the side; a single dark storm cloud flickers overhead and a
+crackling bolt of lightning strikes the step he is running on in a blinding white flash that hides
+him completely — harmless and magical, sparks of light, no injury — the flash fades in slow motion
+and he is in LOOK 3, still sprinting in profile, faint glowing sparks drifting off his jacket; speed
+ramps back and the camera swings behind him.
+7.9–9.4s — Fast FPV chase from behind, rising above a sea of clouds; the door is now visible ahead.
+9.4–11.0s — CHANGE 3 "BIRDS" (HEAD-ON DRONE FLY-THROUGH): cut to a drone far ahead and above him, diving
+straight toward him down the staircase; a huge flock of hundreds of white birds erupts from below
+the stairs and swarms around him until he is completely hidden; the camera flies right through the
+flock and, as the birds burst apart, comes face to face with him in LOOK 4 sprinting toward the lens in
+slow motion, the leather bomber gleaming; speed snaps back as the camera whips around behind him.
+11.0–12.4s — He races up the last steps to the door, now close and towering: a tall white arched door
+in a white stone frame with a gold handle, standing on a cloud. Without stopping he grabs the handle
+and pushes it open; brilliant white light pours out.
+12.4–13.0s — The camera follows him straight into the light; full white-out.
+13.0–15.0s — ANOTHER WORLD: medium shot from behind him (LOOK 4), framed by the open door edge: a golden
+sunrise sky with two suns and small distant planets, an endless sea of clouds, floating green
+islands with waterfalls, lens flares. He finally stands still and takes it in as the camera slowly
+pushes in.
+
+SOUND: driving cinematic music cut to the beat, wind rush, fast footsteps on stone, a soft whoosh into
+the cloud, a sharp thunder crack, a roar of wingbeats, a door creak and a bright shimmer. No text,
+no logos, no watermarks.
+```
