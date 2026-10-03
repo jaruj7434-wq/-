@@ -191,3 +191,87 @@ outfit change, a door creak and a bright shimmer as the light pours out. No text
 watermarks.
 ```
 | v2(480p・20秒) | `1842235c-09d6-4713-852c-7d7453745aa6` | seedance_2_5 omni_reference / 9:16 / 480p / 60クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
+
+## v2 へのユーザー指摘 → v3 方針
+- 1回目の着替えの後、階段がただの坂道になった → 階段と景色は絶対に変えない(全フレームで段のある浮遊石段+空一面の雲+海)。
+- 回り込んで服が変わるだけでは面白くない → プロのカメラワークで、動画の雰囲気(空・雲・風・光・スピード)に合ったおしゃれなトランジションに。
+  1. 雲突破+バレルロール: 背後から低く追い、雲の壁に突っ込む→白の中で速度が上がり、カメラが360°ロールしながら雲を突き破って出ると②
+  2. 足元マッチカット: ブーツが石段を踏む足元のマクロ寄り(スロー)→ 次の一歩で新しい靴が同じ位置に着地 → そのまま一気にティルトアップして全身③を見せ、背後追従へ戻る
+  3. ローアングル+ドリーズーム+太陽フレア: 石段のふちすれすれの低い位置から見上げ、ドリーズームで背景の空がうねる中、太陽が頭の後ろに重なり光で白く飛ぶ → ヒーローショットで④、スピードランプで通常速度へ
+- 合間は背後からの高速追従(v2のまま)。
+
+## 英語プロンプト v3(20秒)
+```
+A 20-second vertical (9:16) PHOTOREALISTIC live-action fashion film — real person, real light,
+shot on a cinema camera with the editing style of a high-end fashion commercial; absolutely no
+anime, no cartoon, no illustration, no CGI look.
+ONE CHARACTER ONLY: the young man <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> — his face, hair and age
+match his reference exactly in every frame, including fast motion; never beautify, reshape or
+swap his face, no facial distortion.
+
+ENVIRONMENT LOCK (identical in EVERY frame, from first to last, before and after every outfit
+change): a STAIRCASE of separate, real weathered sandstone STEPS — each step a distinct block with
+a flat tread and a vertical riser, floating high in the open sky with air visible beneath them —
+climbing in a gentle S-curve from a sheer sea cliff up to a white arched door standing on a cloud
+far above. It is ALWAYS a staircase with clearly visible individual steps: NEVER a ramp, never a
+slope, never a road, never a path, never a bridge. Around it, the WHOLE sky is filled with
+scattered, separate cumulus clouds of many sizes floating everywhere — near and far, above and
+below the stairs — their tops glowing with bright sunlit highlights and golden rim light against
+a deep saturated blue sky; far below, a deep blue ocean glittering in the sun. Breathtaking,
+dreamlike, high contrast. The staircase and scenery continue unchanged through every transition.
+
+HIS MOTION: he SPRINTS straight up the steps at a thrilling, very fast speed — powerful long
+strides landing on each step, arms pumping, clothes whipping in the wind, small stones crumbling
+off the steps. He always runs straight up the stairs; never turns sideways, never leaves the
+stairs, never slows or stops until the door.
+
+BASE CAMERA (between transitions): a fast FPV-drone chase from directly behind at back height,
+close, slight shake, the steps rushing toward the lens, clouds streaking past.
+
+OUTFITS (the four attached headless outfit images are clothing references only — use only their
+clothes, shoes and accessories, never their backgrounds), in this order:
+LOOK 1: black leather varsity jacket with white script lettering, brown hoodie, gold cross
+necklace, very wide brown jeans with curved seams, wheat nubuck work boots.
+LOOK 2: washed navy work jacket with a shearling collar, black zip layer, very baggy jeans in a
+strong MUSTARD-YELLOW wash, wheat work boots.
+LOOK 3: beige cropped work jacket, white T-shirt, gold pendant necklace, very wide olive camouflage
+cargo pants, wheat work boots.
+LOOK 4: dark brown leather bomber jacket, grey hoodie layer, very wide light-grey sweatpants, black
+leather loafers.
+Whenever his front is shown, body, head and clothes face the same direction.
+
+0.0–1.0s — LOOK 1. Tilted high-angle shot from behind his shoulder: he stands at the edge of the sea
+cliff; the floating stone staircase climbs into the cloud-filled sky, the tiny white door far above.
+1.0–2.0s — He launches onto the first step and the camera drops in right behind him.
+2.0–4.6s — Fast FPV chase from behind up the steps.
+4.6–6.2s — TRANSITION 1 "CLOUD PUNCH + BARREL ROLL": a wall of glowing cloud drifts across the
+staircase ahead; he charges straight into it and the camera follows him into pure white; inside,
+the speed ramps up and the camera begins a smooth 360° barrel roll; it bursts out of the cloud
+mid-roll, levels out on his front three-quarter side, and he is now in LOOK 2, sprinting up the
+steps toward the lens in a brief slow-motion beat — then the camera swings back behind him at full speed.
+6.2–8.8s — Fast FPV chase from behind; the staircase curves over the glittering ocean.
+8.8–10.6s — TRANSITION 2 "FOOTSTEP MATCH CUT": a low macro shot beside the steps in slow motion: his
+wheat work boot slams onto a stone step, dust puffing up; match cut on the very next stride — a boot
+of LOOK 3 lands on the next step in the same spot of the frame; the camera then tilts up fast from
+his feet to his face in one sweeping move, revealing the full LOOK 3 from the front three-quarter
+side as he sprints up the steps, then speed ramps back and the camera returns behind him.
+10.6–12.6s — Fast FPV chase from behind, rising above a sea of clouds; the steps continue straight
+toward the glowing white door.
+12.6–14.4s — TRANSITION 3 "SUN FLARE DOLLY ZOOM": the camera drops to the edge of a step in front of
+him, looking up low; a dolly zoom makes the sky and clouds swell behind him as the sun slides
+exactly behind his head and a burst of light flashes white across the frame; as the glare fades he
+is in LOOK 4, a heroic low-angle slow-motion shot of him sprinting up the steps toward the lens, the
+leather bomber gleaming — then a speed ramp and the camera whips back behind him.
+14.4–16.4s — He races up the last steps to the door: a tall white arched door in a white stone frame
+with a gold handle, standing on a cloud. Without stopping he grabs the handle and pushes it open;
+brilliant white light pours out.
+16.4–17.2s — The camera follows him straight into the light; full white-out.
+17.2–20.0s — ANOTHER WORLD: medium shot from behind him (LOOK 4), framed by the open door edge on the
+right: a golden sunrise sky with two suns and small distant planets, an endless sea of clouds,
+floating green islands with waterfalls pouring into the clouds, lens flares. He finally stands
+still and takes it in as the camera slowly pushes in.
+
+SOUND: driving, soaring cinematic music cut to the beat, wind rush, fast footsteps on stone, a deep
+whoosh and riser into each transition, a heavy boot thud on the match cut, a door creak and a
+bright shimmer as the light pours out. No text, no logos, no watermarks.
+```
