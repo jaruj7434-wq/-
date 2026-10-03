@@ -190,3 +190,4 @@ SOUND: driving, soaring cinematic music, wind rush, fast footsteps on stone, a w
 outfit change, a door creak and a bright shimmer as the light pours out. No text, no logos, no
 watermarks.
 ```
+| v2(480p・20秒) | `1842235c-09d6-4713-852c-7d7453745aa6` | seedance_2_5 omni_reference / 9:16 / 480p / 60クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
