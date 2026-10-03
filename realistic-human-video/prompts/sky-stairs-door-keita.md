@@ -275,3 +275,4 @@ SOUND: driving, soaring cinematic music cut to the beat, wind rush, fast footste
 whoosh and riser into each transition, a heavy boot thud on the match cut, a door creak and a
 bright shimmer as the light pours out. No text, no logos, no watermarks.
 ```
+| v3(480p・20秒・階段固定+プロのトランジション) | `e3af2072-7db4-464a-91fa-6d0b8df443ac` | seedance_2_5 omni_reference / 9:16 / 480p / 60クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
