@@ -368,3 +368,4 @@ whoosh as each cloud swallows him, a burst of wingbeats for the flock, a door cr
 shimmer as the light pours out. No text, no logos, no watermarks.
 ```
 | v4(480p・25秒・扉はるか遠く/隠れて現れる着替え) | `c1112e79-3ae2-45d9-8628-4fa35012d4fd` | seedance_2_5 omni_reference / 9:16 / 480p / 75クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
+- v4 自己確認(取り込み直し media `da22894f-…`、0.5秒ごと): 階段は最後まで段のある石段○。景色(雲・海)○。扉は最初から小さく見えるが「光の点」ほど遠くはなく、階段はほぼ一直線。着替え1(6〜7秒・雲に入って消える→②)○、着替え2(11.5〜12.5秒・雲→③)○ ※手前を横切る雲ではなく再び雲に入る形、着替え3(17.5〜18秒・白い鳥の群れ→④)○。現れた直後の斜め前ショットで、走らずに横向きで立ち止まって見えるコマがある。②のパンツはマスタードではなくクリーム色。扉→ホワイトアウト→別世界○。
