@@ -102,3 +102,8 @@ takes it in as the camera slowly pushes in.
 SOUND: soaring cinematic music, wind rush, footsteps on stone, a whoosh on each outfit change, a
 deep door creak and a bright shimmer as the light pours out. No text, no logos, no watermarks.
 ```
+
+## 生成ログ
+| 内容 | job_id | 備考 |
+|---|---|---|
+| v1(480p・20秒) | `886bb078-7b3b-4064-b053-63e45fed72a5` | seedance_2_5 omni_reference / 9:16 / 480p / 60クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
