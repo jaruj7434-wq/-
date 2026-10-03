@@ -451,3 +451,4 @@ SOUND: driving cinematic music cut to the beat, wind rush, fast footsteps on sto
 the cloud, a sharp thunder crack, a roar of wingbeats, a door creak and a bright shimmer. No text,
 no logos, no watermarks.
 ```
+| v5(480p・15秒・雲/雷/鳥) | `524fe185-8743-4ab0-a14e-496a04495645` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
