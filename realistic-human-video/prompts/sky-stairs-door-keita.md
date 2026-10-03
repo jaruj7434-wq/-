@@ -109,3 +109,84 @@ deep door creak and a bright shimmer as the light pours out. No text, no logos, 
 | v1(480p・20秒) | `886bb078-7b3b-4064-b053-63e45fed72a5` | seedance_2_5 omni_reference / 9:16 / 480p / 60クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
 - v1 自己確認(コマ抜き、取り込み直し media `95d74403-…` 経由で取得): 実写○。①○。雲トランジション→②○(ただしパンツがマスタードより淡いカーキ寄り)。空中ジャンプはあるが、その場で③に変わらず、③は11〜12秒ごろに背中側だけで登場(前向きの見せ場なし)。太陽フレア→④は正面で○。扉→ホワイトアウト→別世界(太陽2つ・惑星・浮遊島の滝)○。階段は「離れた石板」ではなく連続した石段になった。
 - メモ: d8j0 の生成物 URL は media_import_url で取り込み直すと d2ol7 から取得でき、こちらでもコマ確認が可能。
+
+## v1 へのユーザー指摘 → v2 方針
+- トランジション後のカメラワークと男性の動きが不自然 → カメラは常に背後から追いかける。着替えの瞬間だけカメラが回転して正面へ回り込み(緩急:回り込み中はスロー気味→背後へ戻ると加速)、また背後に戻る。
+- 男性は常にまっすぐ階段を駆け上がる(横を向かない・跳ばない・止まらない。扉まで)。
+- 雲は階段まわりだけでなく、空全体にまばらに浮かべ、ハイライトを効かせて幻想的に。
+- 駆け上がるスピードをもっと速く、引き込まれる速さに。
+- (自主修正)②のパンツをはっきりマスタードイエローに。
+
+## 英語プロンプト v2(20秒)
+```
+A 20-second vertical (9:16) PHOTOREALISTIC live-action fashion film — real person, real light,
+shot on a cinema camera; absolutely no anime, no cartoon, no illustration, no CGI look.
+ONE CHARACTER ONLY: the young man <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> — his face, hair and age
+match his reference exactly in every frame, including fast motion; never beautify, reshape or
+swap his face, no facial distortion.
+
+THE WORLD: a long staircase of real weathered sandstone steps floating high in the open sky,
+climbing in a gentle S-curve from a sheer sea cliff up to a white arched door standing on a cloud
+far above. Far below: a deep blue ocean and a tiny coastal town. The WHOLE sky is filled with
+scattered, separate cumulus clouds of many sizes floating everywhere — near and far, above and
+below the staircase, not only around the stairs — their tops glowing with bright sunlit
+highlights and soft golden rim light against a deep saturated blue sky; sun glitter on the sea,
+crisp contrast, breathtaking and dreamlike.
+
+HIS MOTION (whole film): he SPRINTS straight up the staircase at a thrilling, very fast speed —
+powerful long strides, arms pumping, jacket and trousers whipping in the wind, small stones
+crumbling off the steps behind him. He always runs straight forward up the stairs: he never turns
+sideways, never jumps off the stairs, never slows down or stops until he reaches the door.
+
+CAMERA RULE: the camera chases him from DIRECTLY BEHIND at back height, close and fast, like a
+drone racing right behind a runner, slight shake, wind speed, staircase rushing toward the lens.
+ONLY at each outfit change does the camera break away: it swings smoothly in an arc around him to
+his FRONT (ease-in, a moment of slow motion as it reaches his front three-quarter side so the
+new outfit is clearly visible while he keeps sprinting toward the lens), then whips back around
+behind him and speeds up again (ease-out). Body, head and clothes always face the same
+direction; never front-facing clothes on a back-turned body.
+
+OUTFITS (the four attached headless outfit images are clothing references only — use only their
+clothes, shoes and accessories, never their backgrounds), in this order:
+LOOK 1: black leather varsity jacket with white script lettering, brown hoodie, gold cross
+necklace, very wide brown jeans with curved seams, wheat nubuck work boots.
+LOOK 2: washed navy work jacket with a shearling collar, black zip layer, very baggy jeans in a
+strong MUSTARD-YELLOW wash, wheat work boots.
+LOOK 3: beige cropped work jacket, white T-shirt, gold pendant necklace, very wide olive camouflage
+cargo pants, wheat work boots.
+LOOK 4: dark brown leather bomber jacket, grey hoodie layer, very wide light-grey sweatpants, black
+leather loafers.
+
+0.0–1.0s — LOOK 1. Tilted high-angle shot from behind his shoulder: he stands at the edge of the sea
+cliff, the floating staircase climbing into the cloud-filled sky, the tiny white door far above.
+1.0–2.0s — He launches onto the stairs and the camera drops in right behind him.
+2.0–4.8s — Fast chase from directly behind as he sprints up; clouds rush past on both sides.
+4.8–6.4s — CHANGE 1 "CLOUD CROSSING": he bursts straight through a drifting cloud on the stairs, the
+frame washes white for a few frames; as the cloud clears the camera is already arcing around to
+his front — he is in LOOK 2, sprinting toward the lens in slow motion for a beat — then the camera
+whips back behind him and speed snaps back.
+6.4–9.0s — Fast chase from behind, the staircase curving over the ocean, scattered glowing clouds
+above and below.
+9.0–10.6s — CHANGE 2 "ORBIT WIPE": without breaking his stride, the camera sweeps in a fast 180° arc
+around him; as his body passes across the lens and fills the frame for an instant, he changes into
+LOOK 3; the camera lands on his front three-quarter side in slow motion showing the new outfit as he
+sprints toward it, then whips back behind him.
+10.6–12.8s — Fast chase from behind above a sea of clouds; the staircase straightens toward the
+glowing white door ahead.
+12.8–14.4s — CHANGE 3 "SUN FLARE": the camera arcs low around to his front as the sun lines up
+exactly behind his head, a burst of light flares across the frame; as it fades he is in LOOK 4,
+the leather bomber gleaming in the light, shown from the front in slow motion; the camera whips
+back behind him.
+14.4–16.4s — He races up the last steps to the door: a tall white arched door in a white stone frame
+with a gold handle, standing on a cloud. Without stopping he grabs the handle and pushes it open;
+brilliant white light pours out.
+16.4–17.2s — The camera follows him straight into the light; full white-out.
+17.2–20.0s — ANOTHER WORLD: medium shot from behind him (LOOK 4), framed by the open door edge on the
+right: a golden sunrise sky with two suns and small distant planets, an endless sea of clouds,
+floating green islands with waterfalls pouring into the clouds, lens flares. He finally stands
+still and takes it in as the camera slowly pushes in.
+
+SOUND: driving, soaring cinematic music, wind rush, fast footsteps on stone, a whoosh on each
+outfit change, a door creak and a bright shimmer as the light pours out. No text, no logos, no
+watermarks.
+```
