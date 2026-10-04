@@ -508,3 +508,5 @@ SOUND: soaring cinematic music with a beat hit and whoosh on each slow-motion ch
 on stone, a door creak and a bright shimmer. No text, no logos, no watermarks.
 ```
 | v6(480p・15秒・参考動画を参照して忠実に実写化) | `61df6b03-a136-4bd0-aaa9-d86bd4417aa2` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。video_ref=参考動画 `06ca390e-…`、ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
+- v6 自己確認(取り込み直し media `8a32c71d-…`、参考動画と上下に並べて0.5秒ごと比較): 構図・カメラ・タイミング・階段・雲・扉・別世界は参考動画とほぼ一致(非常に忠実)。しかし**画風がアニメのまま**で実写になっていない(参考動画の画風に引っ張られた)→ 顔も慶太にならずアニメ顔。服の順番も混ざった(①→③の上着+②寄りのパンツ→②の上着+③のパンツ→④)。
+- 結論: 参考動画を video_references に入れると画風まで写る。次は参考動画を渡さず、実写の開始コマ画像(慶太×①、参考動画1コマ目の構図)を作って start_image にし、テキストで参考動画のカット割りを忠実に書く方式を提案。
