@@ -507,3 +507,4 @@ following the reference camera path. Body, head and clothes always face the same
 SOUND: soaring cinematic music with a beat hit and whoosh on each slow-motion change, wind, footsteps
 on stone, a door creak and a bright shimmer. No text, no logos, no watermarks.
 ```
+| v6(480p・15秒・参考動画を参照して忠実に実写化) | `61df6b03-a136-4bd0-aaa9-d86bd4417aa2` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。video_ref=参考動画 `06ca390e-…`、ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
