@@ -453,3 +453,57 @@ no logos, no watermarks.
 ```
 | v5(480p・15秒・雲/雷/鳥) | `524fe185-8743-4ab0-a14e-496a04495645` | seedance_2_5 omni_reference / 9:16 / 480p / 45クレジット。ref=①②③④、慶太 element。プリセット IN THE DARK は辞退 |
 - v5 自己確認(取り込み直し media `d5ff0d89-…`、0.25秒ごと): 全編走り続ける○(立ち止まりなし)。雲(2.5〜3.8秒)→ 正面やや上からのカメラで雲から飛び出す②○ ※パンツはまたマスタードでなくベージュ。雷(6.5〜8秒)→ 横から並走、暗雲と落雷の白い閃光→③を横から○。鳥(9.5〜11秒)→ 高い位置からの引きで群れが覆い④になる○ ※正面からではなく背後からの見せ方。3回ともカメラ位置が違う○。階段は最後まで石段○。扉は最初から形が見える程度(光の点ほど遠くない)。扉→白→別世界○。
+
+## v5 へのユーザー指摘 → v6 方針(原点回帰)
+- 指定しすぎて参考動画からかけ離れた → 参考動画(`06ca390e-…`)を忠実にリアル化することを最優先。
+- 着替えのたびに雲をくぐるなどの演出は不要。着替えるタイミングだけ緩急(スロー→速く)をつけてカッコよく。
+- 方法: 参考動画を video_references として渡し、カメラワーク・構図・タイミング・景色を写させる(画風はアニメではなく実写)。服は4枚の画像、顔は慶太 element。参考動画の少年の顔・服は使わない。
+- 費用: 15秒 480p 45 / 720p 105(動画参照ありでも同額)
+
+## 英語プロンプト v6(15秒・参考動画を参照)
+```
+Recreate the attached reference video SHOT FOR SHOT as a 15-second vertical (9:16) PHOTOREALISTIC
+live-action film — same camera moves, same framing, same timing, same staircase, same clouds, same
+door and same final world — but filmed for real with a cinema camera: real person, real stone, real
+sky and ocean, natural sunlight. Absolutely no anime, no cartoon, no illustration, no CGI look.
+Do NOT copy the boy, his face or his clothes from the reference video.
+THE PERSON: the young man <<<f6c17cc9-ae3d-4123-a642-79d2882414bd>>> — his face, hair and age match his
+reference exactly in every frame; never beautify, reshape or swap his face, no distortion.
+
+Follow the reference exactly:
+0.0–0.6s — tilted high-angle shot from above and behind: he stands at the edge of a sea cliff; a
+staircase of separate floating sandstone slabs winds up in an S-curve into a deep blue sky full of
+towering white cumulus clouds, toward a small white door on a cloud far above; ocean and coastline
+far below.
+0.6–2.0s — the camera arcs from his side to directly behind him while leveling out; he leaps onto the
+first floating slab and starts running.
+2.0–6.5s — tracking right behind him at back height, slightly low, as he sprints up the floating
+slabs; small stones crumble and fall; wind; the staircase curves left and right; clouds slide past.
+6.5–8.0s — he runs through a cloud, the white fills the frame.
+8.0–10.0s — above the clouds the staircase goes straight up toward the door, which glints.
+10.0–11.5s — the white arched door with a gold handle, standing on a cloud, grows to fill the frame
+as he reaches it.
+11.5–12.5s — he grabs the handle and pushes the door open; white light pours out.
+12.5–13.3s — white-out as he steps through.
+13.3–15.0s — from behind him, the open door frame on the right: another world with a golden sunrise,
+several suns and small planets, a sea of clouds and floating green islands with waterfalls; he
+stands and looks out; lens flares.
+
+FASHION — THREE OUTFIT CHANGES WHILE HE RUNS (the four attached headless outfit images are clothing
+references only — use only their clothes, shoes and accessories, never their backgrounds):
+LOOK 1 (start): black leather varsity jacket with white script lettering, brown hoodie, gold cross
+necklace, very wide brown jeans, wheat work boots.
+LOOK 2 (from about 3.5s): washed navy work jacket with a shearling collar, black zip layer, very
+baggy mustard-yellow jeans, wheat work boots.
+LOOK 3 (from about 6.0s): beige cropped work jacket, white T-shirt, gold pendant, very wide olive
+camouflage cargo pants, wheat work boots.
+LOOK 4 (from about 9.0s, through the door and the final world): dark brown leather bomber, grey
+hoodie layer, very wide light-grey sweatpants, black leather loafers.
+HOW EACH CHANGE LOOKS: nothing covers him and no extra effects are added. He never stops running. At
+each change the footage ramps into slow motion for about half a second at the top of a stride — the
+outfit snaps to the next look in that instant — then ramps back hard to full speed. The camera keeps
+following the reference camera path. Body, head and clothes always face the same direction.
+
+SOUND: soaring cinematic music with a beat hit and whoosh on each slow-motion change, wind, footsteps
+on stone, a door creak and a bright shimmer. No text, no logos, no watermarks.
+```
