@@ -95,3 +95,27 @@ A版はカット1-A、B版はカット1-B を参照画像にして生成。
 | 8 | a20e6732-2923-4bd7-816c-19bbe99c7426 | 845b8e6a-2c3a-49d0-8024-fad716d93214 |
 | 9 | 41d55b69-25a0-4539-a6a9-6f5d71affd3c | e7baf614-a20e-4383-a0f2-9d4a1d6e201f |
 | 10 | 0eee368c-7ff5-4f20-980e-f63b774cc000 | 7b0e5398-e7e7-46a6-a9b6-58eb3158ebf0 |
+
+## Seedance 2.5 版(画像を使わない text-to-video・1本30秒)
+
+- model: `seedance_2_5` / mode: `t2v` / duration: 30 / resolution: 480p / aspect_ratio: 16:9 / generate_audio: true
+- 1本の動画の中でカットを切り替える(人物・車の見た目がそろいやすい)
+
+```
+A 30-second cinematic Japanese comedy short film, multiple shots with hard cuts, shot on 35mm film with an anamorphic lens, natural film grain, slightly faded warm color grade, overcast late afternoon light, shallow depth of field, photorealistic. Location: a quiet rural road in Japan running alongside a narrow concrete irrigation canal (about 1.5 m wide), rice fields and utility poles. No animal sounds, no crows, no birds. No background music. No subtitles or on-screen text.
+
+Characters (keep identical in every shot):
+- THE WOMAN: Japanese, early 60s, short permed hair, beige cardigan, floral apron, sandals. Her white Japanese kei box car has slid nose-first into the irrigation canal and is tilted diagonally, front wheels in the canal, rear wheels lifted, hazard lights blinking.
+- THE MAN: Japanese, late 60s, short graying hair, gentle kind face, light blue polo shirt, driving an old silver sedan.
+
+Shot 1 (0-3s): Extreme wide high-angle drone shot slowly pushing in. The white kei car tilted in the canal, hazard lights blinking, the woman standing beside it holding her head with both hands. Cicadas and wind only.
+Shot 2 (3-6s): Medium handheld shot. The woman sighs, shakes her head while holding it, and mutters quietly in Japanese: "どうしよう…"
+Shot 3 (6-9s): Low-angle telephoto shot from road level. The old silver sedan approaches slowly from the far end of the road. Distant engine sound.
+Shot 4 (9-12s): Slow push-in close-up on the woman's face. She notices the approaching car, lowers her hands, and her face lights up with hope and relief, a small expectant smile.
+Shot 5 (12-14s): Over-the-shoulder shot from behind the woman. The silver sedan gently stops right beside her. Soft brake squeak.
+Shot 6 (14-17s): Close-up of the sedan's driver window. The window slowly rolls down, revealing the kind man with a worried, caring expression, leaning toward her.
+Shot 7 (17-20s): Medium close-up of the man over the woman's shoulder. With sincere concern and a soft, gentle, kind voice, he says in Japanese: "そこは駐車禁止ですよ!"
+Shot 8 (20-24s): Close-up of the woman. Her hopeful face freezes, a beat of silence, her eye twitches, then a fast zoom-in as she explodes and shouts loudly in Kansai dialect Japanese: "わかっとるわぼけぇ!"
+Shot 9 (24-27s): Medium shot of the man in the driver's seat. He blinks with a puzzled face, then calmly rolls the window up while the car starts moving and pulls away. Power window sound, engine starting.
+Shot 10 (27-30s): Static wide shot. The silver sedan calmly drives away into the distance, leaving the woman standing alone with clenched fists next to her tilted car in the canal. Engine sound fades, only cicadas remain.
+```
