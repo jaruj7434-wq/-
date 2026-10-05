@@ -140,3 +140,5 @@ Shot 8 (20-24s): Close-up of the woman, static. Her hopeful smile freezes, one s
 Shot 9 (24-27s): Medium shot of the man in the driver's seat through the open window, static. He blinks once with a blank puzzled face, then calmly rolls the window up while the car starts moving and pulls out of frame. Power window whir, engine starting.
 Shot 10 (27-30s): Locked-off extreme wide shot, symmetrical composition, slowly craning up. The silver sedan calmly drives away down the long straight road into the distance, leaving the tiny figure of the woman standing alone with clenched fists next to her tilted car in the canal. Engine sound fades away, only cicadas remain. Deadpan comedic silence.
 ```
+
+- 生成ジョブ(2026-10-05): `779ca46b-dd95-49c4-944c-42689e04f692`(seedance_2_5 / t2v / 30秒 / 480p / 16:9 / 音声あり / 90クレジット)
