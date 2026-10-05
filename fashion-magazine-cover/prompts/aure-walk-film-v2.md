@@ -12,3 +12,8 @@ Shot 3: close-up of her sleeve-covered fingertips brushing her hair back.
 Shot 4: side tracking shot of her full silhouette walking, the denim moving.
 Shot 5: waist-up, she turns to the camera, settles into the exact pose of the end image and holds still as the magazine cover.
 No text anywhere until the final frame. Cinematic, photorealistic, smooth camera motion.
+
+## 生成記録
+- 10秒 / 480p / 30クレジット: 完成 — job 9d8641cf-84bc-4f53-88dd-4db2a11fd6a6
+- 注: 送信時は end_image 指定だったが、ジョブ記録上は reference_images として扱われていた
+  (最後のコマが表紙に完全一致しない可能性あり)
