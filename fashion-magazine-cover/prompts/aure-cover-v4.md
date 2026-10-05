@@ -29,3 +29,7 @@ Keep the photograph exactly the same: same woman, face, hair, makeup, outfit, po
 6. "COLLARBONE · SILVER · SOFT KNIT" — small wide-tracked sans-serif caps
 7. "Effortlessly Beautiful" — thin italic serif
 Strong size contrast, generous spacing, text never overlapping her face, clean luxurious editorial layout.
+
+## 生成記録(count 2、計5.5クレジット)
+- 案1: 完成 — job 1f3fd772-7302-4c5f-8f4e-29d517acb1e4
+- 案2: 完成 — job 0d3633dc-b49a-4b45-aa2d-76e62c2d560c
