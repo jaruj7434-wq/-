@@ -22,3 +22,7 @@
 - 黒髪ウェーブが、ベージュの世界にコントラストを
 - Quiet Luxury, Street Soul.
 - 誰よりも、自然体がいちばん美しい。
+
+## 生成記録
+- パリ版: 完成 — job ebaf0b85-82ae-4f7e-ae7b-0f0fb9a873be
+- ポジターノ版: 完成 — job a3327ed9-66a7-43a2-8e3f-96ae2da6c9b9
