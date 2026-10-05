@@ -13,3 +13,8 @@ Luxury fashion commercial. The video opens exactly on the start image: a magazin
 7.5-10s: Elegant side tracking shot of her full silhouette walking, light washed denim moving, ending with her glancing over her shoulder at the camera.
 Style: high-end luxury brand commercial, anamorphic cinematic look, shallow depth of field, soft bokeh, warm highlights with cool blue shadows, smooth gimbal and dolly camera moves, slight slow motion, elegant rhythm.
 Identity: keep her face exactly identical to the reference photos in every shot — same eyes, see-through bangs, pink blush makeup, lips; no face distortion, no morphing. Same outfit in every shot. No extra text after the page turn.
+
+## 生成記録
+- 9:16 / 480p / 10秒: 失敗(status: nsfw)— job 7b8ebf92-6e6e-4aa8-91db-2d6532573fa2
+  - 前回成功した v2(表紙のみ参照)との差分は「本人写真3枚の追加」と「9:16」。
+    写真1枚目(脚の露出が多い)が判定に影響した可能性が高い。
