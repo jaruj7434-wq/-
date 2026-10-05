@@ -119,3 +119,24 @@ Shot 8 (20-24s): Close-up of the woman. Her hopeful face freezes, a beat of sile
 Shot 9 (24-27s): Medium shot of the man in the driver's seat. He blinks with a puzzled face, then calmly rolls the window up while the car starts moving and pulls away. Power window sound, engine starting.
 Shot 10 (27-30s): Static wide shot. The silver sedan calmly drives away into the distance, leaving the woman standing alone with clenched fists next to her tilted car in the canal. Engine sound fades, only cicadas remain.
 ```
+
+### 監督版プロンプト(実際に生成に使用)
+
+```
+A 30-second cinematic Japanese deadpan comedy short film, ten shots joined by hard cuts, directed like an arthouse film. Shot on 35mm Kodak film with vintage anamorphic lenses, natural film grain, soft halation, slightly faded warm color grade, overcast late afternoon light, shallow depth of field, photorealistic, 2.39:1 framing feel inside 16:9. Location: a quiet rural road in Japan running alongside a narrow concrete irrigation canal (about 1.5 m wide), rice fields, utility poles, distant mountains. Sound: diegetic only, cicadas and light wind. No animal calls, no crows, no birds. No background music. No subtitles or on-screen text.
+
+Characters (keep identical in every shot):
+- THE WOMAN: Japanese, early 60s, short permed hair, beige cardigan, floral apron, sandals. Her white Japanese kei box car has slid nose-first into the irrigation canal and is tilted diagonally, front wheels in the canal, rear wheels lifted, hazard lights blinking.
+- THE MAN: Japanese, late 60s, short graying hair, gentle kind face, light blue polo shirt, driving an old silver sedan.
+
+Shot 1 (0-3s) ESTABLISHING: Extreme wide high-angle drone shot, slow crane-down and push-in toward the tilted white kei car in the canal, hazard lights blinking, the tiny figure of the woman beside it holding her head. Calm, still, almost beautiful. Cicadas and wind.
+Shot 2 (3-6s): Medium shot, 50mm handheld, slight breathing movement. The woman holds her head with both hands, sighs, and mutters quietly in Japanese: "どうしよう…"
+Shot 3 (6-9s): Low-angle 200mm telephoto shot from road level, heat shimmer on the asphalt, the out-of-focus tilted car in the foreground edge. Far down the straight road, the old silver sedan slowly appears and approaches. Distant engine hum.
+Shot 4 (9-12s): Slow dolly-in close-up on the woman's face, 85mm. She hears the car, lowers her hands, and her face slowly lights up with hope and relief, a small expectant smile, eyes shining.
+Shot 5 (12-14s): Over-the-shoulder shot from behind the woman, 35mm, locked off. The silver sedan glides into frame and gently stops right beside her. Soft brake squeak.
+Shot 6 (14-17s): Tight insert close-up on the sedan's driver window from outside, rice fields reflected in the glass. The window slowly rolls down with a power window whir, revealing the kind man with a worried, caring expression, leaning toward her.
+Shot 7 (17-20s): Reverse shot, medium close-up of the man framed in the open window, 50mm, static. With sincere concern, soft eyebrows, and a gentle, warm, kind voice, he says in Japanese: "そこは駐車禁止ですよ!"
+Shot 8 (20-24s): Close-up of the woman, static. Her hopeful smile freezes, one second of dead silence, her eye twitches, then a sudden crash zoom into her face as she explodes and shouts loudly in Kansai dialect Japanese: "わかっとるわぼけぇ!" Her voice echoes over the rice fields.
+Shot 9 (24-27s): Medium shot of the man in the driver's seat through the open window, static. He blinks once with a blank puzzled face, then calmly rolls the window up while the car starts moving and pulls out of frame. Power window whir, engine starting.
+Shot 10 (27-30s): Locked-off extreme wide shot, symmetrical composition, slowly craning up. The silver sedan calmly drives away down the long straight road into the distance, leaving the tiny figure of the woman standing alone with clenched fists next to her tilted car in the canal. Engine sound fades away, only cicadas remain. Deadpan comedic silence.
+```
