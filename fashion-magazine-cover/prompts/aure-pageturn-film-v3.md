@@ -21,3 +21,5 @@ Identity: keep her face exactly identical to the reference photos in every shot 
 - 再試行(写真1を除外・鎖骨表現を削除): 再び失敗(status: nsfw)— job 3d8a8d3e-9b27-452b-a773-53bbc7c0ea9b
   - 1回目の失敗分30クレジットは返金済みを確認。
   - 残る差分は「写真2・3の参照」「start_image 指定」「9:16」。成功した v2 は表紙のみ参照。
+- 3回目(9:16表紙 v5 のみを start_image、本人写真なし): 再び失敗(status: nsfw)— job 8a2eba46-30f9-47f9-a3b2-806a825f1e9e
+  - Seedance 2.5 の start_image 経由ではこの表紙が通らない模様。次案: Kling 3.0(9:16ネイティブ)で試す
