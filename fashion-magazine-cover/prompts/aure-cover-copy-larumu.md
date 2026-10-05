@@ -37,3 +37,9 @@
 - Effortless. Feminine. A little bit wild.
 - Shoulders Out, Season In.
 - ISSUE No.01 / OCTOBER 2026
+
+## 生成記録
+- AURE 表紙 v1(nano_banana_pro / 3:4 / 2k / count 2)
+  - パターン1: 完成 — job 6bc116a5-9a71-4696-ad63-ee11411fa49b
+  - パターン2: 失敗 — job 1f7672ac-a60c-44b4-87d5-6bcad321c462
+  - プロンプト: larumu-cover-01.md ① の誌名を "AURE"(centered)に変更し、★のカバーライン8本を明示
