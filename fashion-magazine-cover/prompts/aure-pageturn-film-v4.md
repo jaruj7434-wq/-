@@ -16,3 +16,6 @@ Shot 7 (11-13s): Elegant side tracking shot of her full silhouette walking past 
 Shot 8 (13-15s): Medium shot, she stops, turns and glances over her shoulder at the camera with a gentle smile, wind in her hair, slow push-in.
 Style: high-end luxury brand commercial, anamorphic cinematic look, shallow depth of field, soft bokeh, warm highlights with cool blue shadows, smooth gimbal and dolly camera moves, slight slow motion, elegant rhythm.
 Identity: keep her face exactly identical to the start image in every shot — same eyes, see-through bangs, pink blush makeup, lips; no face distortion, no morphing. Same outfit in every shot. No text after the page turn.
+
+## 生成記録
+- Kling 3.0 pro / 15秒 / 9:16 / 音なし: 完成 — job c6201d75-5d02-4ee2-a675-80deed67f490(26.25クレジット)
