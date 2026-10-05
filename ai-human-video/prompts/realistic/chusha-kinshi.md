@@ -1,20 +1,21 @@
 # 「そこは駐車禁止ですよ!」— 絵コンテ & プロンプト
 
 - ジャンル: リアル実写風コメディ(ショートコント)
-- 尺: 約30秒 / 9カット
+- 尺: 約34秒 / 10カット
 - アスペクト比: 16:9(シネマ。SNS用に 9:16 版も可)
 - ルック: 35mmフィルム、アナモルフィックレンズ、粒子感、やや褪せた色(曇りの夕方)、浅い被写界深度
 - 制作方法:
   1. 各カットの「最初のコマ」を静止画で生成(`gpt_image_2_5`)。
      カット1を基準画像にして、以降のカットはこれを参照し、人物・車・場所をそろえる。
   2. 静止画を `kling3_0`(mode: pro、sound: on)で動画化(image-to-video)。
-  3. 9カットをつないで1本にする(video-montage)。
+  3. 10カットをつないで1本にする(video-montage)。
 
 ## 演出メモ
 
 - 笑いの構造は「絶望 → 助けが来た!(期待)→ 優しく心配そうな顔で的外れな一言 → 間 → 爆発」。
 - おばさんの**期待顔**(カット4)をしっかり見せることで、その後の裏切りが効く。
 - おじさんは**本気で心配している優しい顔**で言う。悪気がないのがポイント。
+- オチは、キレられたおじさんが何事もなかったように窓を閉めながら走り去り、おばさんが一人取り残されること。
 - 効果音は最小限。カラスなどの動物の声は入れない(虫の声・風のみ)。
 
 ## 共通設定(全プロンプトに含める)
@@ -47,7 +48,8 @@ alongside a narrow concrete irrigation canal (about 1.5 m wide) next to rice fie
 | 6 | 4秒 | 運転席の窓のアップ / 固定 | 窓がゆっくり下がり、心配そうな優しい顔のおじさんが現れ、身を乗り出す | パワーウィンドウの音 |
 | 7 | 4秒 | おじさんのバストショット(おばさんの肩なめ) | 眉を下げた心配顔で、優しく「そこは駐車禁止ですよ!」 | セリフ(穏やか・心配そう) |
 | 8 | 3秒 | おばさんの顔アップ / 固定 → 一気にズームイン | 期待顔が固まり、目が据わる(間)→「わかっとるわぼけぇ!」と大声でキレる | 一瞬の無音 → 怒鳴り声 |
-| 9 | 4秒 | 引きのワイド / 固定 | 心配顔のままキョトンと固まるおじさん。窓が静かに上がる | 虫の声だけが戻る |
+| 9 | 4秒 | 運転席の窓のミディアム / 固定 | 一瞬キョトンとしたおじさんが、窓をスーッと閉めながら車を発進させる | パワーウィンドウの音、発進音 |
+| 10 | 4秒 | 引きのワイド / 固定 | セダンが静かに走り去り、傾いた軽の横におばさんだけがポツンと取り残される | 遠ざかるエンジン音 → 虫の声だけ |
 
 ## 静止画プロンプト(最初のコマ)
 
@@ -59,7 +61,8 @@ alongside a narrow concrete irrigation canal (about 1.5 m wide) next to rice fie
 6. `Close-up of the driver's side window of the old silver sedan, window closed, reflection of rice fields, a kind-looking Japanese man in his late 60s (short graying hair, gentle face, light blue polo shirt) behind the glass with a concerned expression.` + 共通設定
 7. `Medium close-up over the woman's shoulder. The kind man sits in the driver's seat with the window fully down, leaning slightly toward her, eyebrows raised in sincere concern, gentle caring expression.` + 共通設定
 8. `Close-up of the woman's face, her hopeful expression frozen, eyes narrowing, mouth corner twitching with suppressed anger.` + 共通設定
-9. `Wide static shot. The silver sedan stopped next to the tilted white kei car in the canal, the man frozen in the driver's seat with a puzzled concerned face, the woman standing with fists clenched, dusk sky over the rice fields.` + 共通設定
+9. `Medium shot of the silver sedan's open driver's window from the woman's side. The kind man in the driver's seat with a slightly puzzled, blank expression, hands on the steering wheel.` + 共通設定
+10. `Wide static shot. The rural road beside the canal, the tilted white kei car in the canal, the woman standing alone with fists clenched, the silver sedan driving away in the distance, dusk sky over the rice fields.` + 共通設定
 
 ## 動画プロンプト(kling3_0)
 
@@ -73,4 +76,5 @@ alongside a narrow concrete irrigation canal (about 1.5 m wide) next to rice fie
 6. `The driver's window slowly rolls down, revealing the kind man with a worried, caring expression, leaning toward the window. Power window motor sound.`
 7. `The man looks at her with sincere concern, eyebrows raised, and says softly and kindly in Japanese, in a worried gentle voice: "そこは駐車禁止ですよ!" Static camera.`
 8. `The woman's hopeful face freezes, a beat of silence, her eye twitches, then a fast zoom-in as she explodes with anger and shouts loudly in Kansai dialect: "わかっとるわぼけぇ!"`
-9. `Static wide shot. The man stays frozen with a puzzled, concerned face, then the car window slowly rolls back up. Only cicadas remain. Comedic silence.`
+9. `The man blinks with a puzzled face, then calmly rolls the window up while the car starts moving forward and pulls away out of frame. Power window motor sound, engine starting. Static camera.`
+10. `Static wide shot. The silver sedan calmly drives away down the rural road into the distance, leaving the woman standing alone next to her tilted car in the canal. Engine sound fading, then only cicadas. Comedic silence.`
