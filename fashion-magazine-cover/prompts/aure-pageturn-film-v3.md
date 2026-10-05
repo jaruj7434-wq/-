@@ -18,3 +18,6 @@ Identity: keep her face exactly identical to the reference photos in every shot 
 - 9:16 / 480p / 10秒: 失敗(status: nsfw)— job 7b8ebf92-6e6e-4aa8-91db-2d6532573fa2
   - 前回成功した v2(表紙のみ参照)との差分は「本人写真3枚の追加」と「9:16」。
     写真1枚目(脚の露出が多い)が判定に影響した可能性が高い。
+- 再試行(写真1を除外・鎖骨表現を削除): 再び失敗(status: nsfw)— job 3d8a8d3e-9b27-452b-a773-53bbc7c0ea9b
+  - 1回目の失敗分30クレジットは返金済みを確認。
+  - 残る差分は「写真2・3の参照」「start_image 指定」「9:16」。成功した v2 は表紙のみ参照。
