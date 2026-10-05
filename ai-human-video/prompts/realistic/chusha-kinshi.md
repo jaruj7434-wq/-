@@ -78,3 +78,20 @@ alongside a narrow concrete irrigation canal (about 1.5 m wide) next to rice fie
 8. `The woman's hopeful face freezes, a beat of silence, her eye twitches, then a fast zoom-in as she explodes with anger and shouts loudly in Kansai dialect: "わかっとるわぼけぇ!"`
 9. `The man blinks with a puzzled face, then calmly rolls the window up while the car starts moving forward and pulls away out of frame. Power window motor sound, engine starting. Static camera.`
 10. `Static wide shot. The silver sedan calmly drives away down the rural road into the distance, leaving the woman standing alone next to her tilted car in the canal. Engine sound fading, then only cicadas. Comedic silence.`
+
+## 生成済み静止画(2026-10-05、gpt_image_2_5 / 16:9 / quality low / 1k)
+
+A版はカット1-A、B版はカット1-B を参照画像にして生成。
+
+| カット | A版 job_id | B版 job_id |
+|---|---|---|
+| 1 | 9cc0f231-82ea-49e9-a7b8-ffd84558f09d | 3ac390e4-ae6e-4614-b876-8262700a4979 |
+| 2 | 76e5f50d-fbf0-4f6f-a817-0c9938a0a492 | fdb53f70-f941-49cf-a6a3-10e3c3bdf689 |
+| 3 | 62dde0d1-de8e-4ff5-9b7f-8fa0d90c3ba1 | e9014573-1c89-4a91-822a-cd6bca516ee8 |
+| 4 | d5afccb8-02e2-49f9-919e-5ea3305a533f | 80d8450b-c56d-48a5-95e2-4d8c853bb7ec |
+| 5 | 5c36cf59-186a-4352-a405-32907df899f0 | 2c88be97-2e61-434c-8f32-6615e81ccdfc |
+| 6 | c779e79a-242e-4a31-8e68-27cbb6225f17 | 292c269d-d10a-4949-8e79-f771b04ca303 |
+| 7 | 637a242d-174f-4637-ac12-7021aa98e4dd | d217598b-9ee1-44a4-a69a-8e7512950a87 |
+| 8 | a20e6732-2923-4bd7-816c-19bbe99c7426 | 845b8e6a-2c3a-49d0-8024-fad716d93214 |
+| 9 | 41d55b69-25a0-4539-a6a9-6f5d71affd3c | e7baf614-a20e-4383-a0f2-9d4a1d6e201f |
+| 10 | 0eee368c-7ff5-4f20-980e-f63b774cc000 | 7b0e5398-e7e7-46a6-a9b6-58eb3158ebf0 |
