@@ -18,3 +18,7 @@ Background: Paris at blue hour, Haussmann buildings with wrought-iron balconies,
 
 ## パターンB:イタリア・ポジターノ(アクセントカラー=コーラルピンク)
 Background: Positano on the Amalfi Coast at golden hour, pastel cliffside houses cascading to the turquoise sea, bougainvillea, warm sunlight. Shallow depth of field.
+
+## 生成記録
+- パターンA(パリ): 完成 — job 4f09e4e3-8219-4f52-b9f1-d9bd0781ca47
+- パターンB(ポジターノ): 完成 — job 7a67d5fe-47cb-471a-bcb3-9fd558a00a37
