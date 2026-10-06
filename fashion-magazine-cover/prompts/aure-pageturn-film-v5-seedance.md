@@ -17,3 +17,7 @@ Shot 7 (11.5-13s): Elegant side tracking shot of her full silhouette walking pas
 Shot 8 (13-15s): Medium shot, she stops, turns and glances over her shoulder at the camera with a gentle smile, wind in her hair, slow push-in.
 Style: high-end luxury brand commercial, anamorphic cinematic look, shallow depth of field, soft bokeh, warm highlights with cool blue shadows, smooth gimbal and dolly camera moves, slight slow motion, elegant rhythm. Fully clothed, elegant and tasteful.
 Identity: keep her face exactly identical to the reference image in every shot — same eyes, see-through bangs, pink blush makeup, lips; no face distortion, no morphing. Same outfit in every shot. No text after the page turn.
+
+## 生成記録
+- 15秒 / 480p / 9:16(表紙v5を image_references): 失敗(status: nsfw)— job 029a0bbc-3246-4e71-ae54-f3afdd11320c
+  - Seedance で表紙 v5 を使うと役割に関係なく4回連続 nsfw。v4(3:4)を end_image にした v2 のみ成功。
