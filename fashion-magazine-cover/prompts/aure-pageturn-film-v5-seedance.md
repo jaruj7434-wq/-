@@ -25,3 +25,4 @@ Identity: keep her face exactly identical to the reference image in every shot �
 ## MiniMax H3 版(提案中)
 - モデル: minimax_h3 / 15秒 / 9:16 / 2K(解像度は2Kのみ)— 30クレジット(10秒=20)
 - start_image: 表紙 v5。プロンプトは上記と同一(冒頭を "The video opens exactly on the start image" に変更)
+- MiniMax H3 / 15秒 / 9:16 / 2K: 完成 — job 53c1d3f1-f3ff-4fa9-bc34-b9db9f0f5118(30クレジット)
