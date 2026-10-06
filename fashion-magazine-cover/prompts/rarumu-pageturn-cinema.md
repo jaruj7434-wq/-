@@ -42,3 +42,8 @@
 - 文字入れ: gpt_image_2_5 flare / high / 4k / 4.25クレジット — job 1e65273d-c990-4032-87d5-c26ea7cf736e
   - 文字: AURE / 藤川らるむ / RARUMU FUJIKAWA / Pure White Night / 白のリブミニ一枚で、夜景をひとりじめ。
     / 細リブが描く、美しいボディライン / 胸元のクロス刺繍が、さりげない主役 / Effortlessly Stunning / その白、反則級。
+
+## 動画(表紙 v4 → ページめくり → モナコの港を歩く)
+- cinematic_studio_3_0 / 15秒 / 480p / 9:16 / 音なし / 52.5クレジット
+- start_image: 表紙 v4(1e65273d)/ image: 文字なし写真(5ade589c)/ 顔: Element rarumu
+- 送信 — job 0faae199-b221-44af-863b-891c50bd9e80
