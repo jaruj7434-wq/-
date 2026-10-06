@@ -46,4 +46,4 @@
 ## 動画(表紙 v4 → ページめくり → モナコの港を歩く)
 - cinematic_studio_3_0 / 15秒 / 480p / 9:16 / 音なし / 52.5クレジット
 - start_image: 表紙 v4(1e65273d)/ image: 文字なし写真(5ade589c)/ 顔: Element rarumu
-- 送信 — job 0faae199-b221-44af-863b-891c50bd9e80
+- 完成 — job 0faae199-b221-44af-863b-891c50bd9e80
