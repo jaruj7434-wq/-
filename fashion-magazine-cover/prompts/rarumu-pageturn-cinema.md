@@ -36,3 +36,9 @@
 - 手順2 文字入れ: gpt_image_2_5 flare / high / 2k(写真は変更しないよう指示)— job 26e9999e-fff0-4cc6-899a-41d13807e6e3(2.75クレジット)
   - 文字: AURE / 藤川らるむ(ゴールド下線)/ RARUMU FUJIKAWA / Monaco Nights(ゴールド筆記体)/ 白×グレー、引き算の抜け感。
     / リブミニに、肩掛けパーカーで大人スポーティー / Silver & Sneakers / CLEAN & COOL
+
+## 表紙 v4(パーカーなし・艶髪・4K)
+- 写真: soul_2 + soul_id 5ebb33c3 / 2k / 白リブミニのみ(パーカー削除)/ 艶のあるモデル級の黒髪 / モナコの夜 — job 5ade589c-9cba-4577-8fcb-51584b40e02e
+- 文字入れ: gpt_image_2_5 flare / high / 4k / 4.25クレジット — job 1e65273d-c990-4032-87d5-c26ea7cf736e
+  - 文字: AURE / 藤川らるむ / RARUMU FUJIKAWA / Pure White Night / 白のリブミニ一枚で、夜景をひとりじめ。
+    / 細リブが描く、美しいボディライン / 胸元のクロス刺繍が、さりげない主役 / Effortlessly Stunning / その白、反則級。
