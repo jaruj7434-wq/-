@@ -23,3 +23,9 @@
 - nano_banana_pro / 9:16 / 2k / Element rarumu + 服装写真 a2b1f859 / ソウル・聖水洞の昼 / グレーパーカーは肩掛け
 - 1回目 e8a4d3ea…: 失敗(返金済み)/ 2回目: 完成 — job d4bc85ea-e13a-4c21-802e-abc5ad5b7e85(2クレジット)
 - 文字: AURE / Sporty Muse / 白×グレーの抜け感 / CLEAN & COOL
+
+## 表紙 v2(GPT Image 2.5 Flare / high / 2k / 9:16 / 2.75クレジット)
+- 参照: 表紙 d4bc85ea(顔・写真)+ 服装写真 a2b1f859。写真はそのまま、文字だけ組み直し
+- 文字: AURE(Didoneセリフ)/ 藤川らるむ(明朝・ピンク下線)/ RARUMU FUJIKAWA / Sporty Muse(筆記体・ダスティピンク)
+  / 白×グレー、引き算の抜け感。/ リブミニに、肩掛けパーカーで大人スポーティー / Silver & Sneakers / CLEAN & COOL(ピンクのラベル)
+- 完成 — job a817172a-dce7-48cb-a933-023e9e3d4269
