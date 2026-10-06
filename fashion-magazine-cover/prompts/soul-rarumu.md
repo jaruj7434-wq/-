@@ -24,4 +24,4 @@
   - 対応動画モデル: Cinema Studio Video 3.0 / Seedance 2.0(画像なしで使える)、Kling 3.0(start_image 必須)
   - 使い方: プロンプト内に <<<1cf5acdf-fc98-48f9-a443-404fa462c940>>> を入れる
 - 費用(15秒 / 9:16 / 音なし): Cinema Studio 3.0 720p=75・480p=52.5 / Seedance 2.0 720p=67.5
-- 動画A ソーホー(Cinema Studio Video 3.0 / 15秒 / 480p / 9:16 / 音なし / 52.5クレジット / Element rarumu): 送信 — job e2b56161-5b04-4602-ab35-5d4ebc3da44f
+- 動画A ソーホー(Cinema Studio Video 3.0 / 15秒 / 480p / 9:16 / 音なし / 52.5クレジット / Element rarumu): 完成 — job e2b56161-5b04-4602-ab35-5d4ebc3da44f
