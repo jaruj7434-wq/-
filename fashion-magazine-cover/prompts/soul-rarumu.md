@@ -17,3 +17,10 @@
 - 注意: Soul V2 の enhance_prompt(自動プロンプト補正)が有効で、こちらのプロンプトが参照写真の説明文に置き換わった。
   → 背景がソーホー/ロンドンではなく元写真の東京の街、構図も全身ではなくミディアムショットになった可能性が高い。
   次回は参照画像なし(服装は文章で指定)+ enhance_prompt: false で生成する。
+
+## 動画用キャラクター(Elements)
+- Soul は動画モデルで使えないため、動画用に Reference Element を作成(課金なし)
+  - element_id 1cf5acdf-fc98-48f9-a443-404fa462c940(名前: rarumu)— 顔写真4枚 1720cfe2 / 04a1a4ba / 51b35141 / 9ce5cf64
+  - 対応動画モデル: Cinema Studio Video 3.0 / Seedance 2.0(画像なしで使える)、Kling 3.0(start_image 必須)
+  - 使い方: プロンプト内に <<<1cf5acdf-fc98-48f9-a443-404fa462c940>>> を入れる
+- 費用(15秒 / 9:16 / 音なし): Cinema Studio 3.0 720p=75・480p=52.5 / Seedance 2.0 720p=67.5
