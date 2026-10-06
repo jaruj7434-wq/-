@@ -29,3 +29,10 @@
 - 文字: AURE(Didoneセリフ)/ 藤川らるむ(明朝・ピンク下線)/ RARUMU FUJIKAWA / Sporty Muse(筆記体・ダスティピンク)
   / 白×グレー、引き算の抜け感。/ リブミニに、肩掛けパーカーで大人スポーティー / Silver & Sneakers / CLEAN & COOL(ピンクのラベル)
 - 完成 — job a817172a-dce7-48cb-a933-023e9e3d4269
+
+## 表紙 v3(顔の忠実度アップ+モナコの夜)
+- 手順1 写真: soul_2 + soul_id 5ebb33c3(学習済みSoul)/ 9:16 / 参照画像なし・服は文章で指定 / enhance_prompt=false が反映
+  - 背景: モナコ・モンテカルロの夜の港(ヨット、ヤシ並木、ベル・エポック建築の灯り)— job ce49a090-f90d-4af4-af86-740bee93f8dc(約0.12クレジット)
+- 手順2 文字入れ: gpt_image_2_5 flare / high / 2k(写真は変更しないよう指示)— job 26e9999e-fff0-4cc6-899a-41d13807e6e3(2.75クレジット)
+  - 文字: AURE / 藤川らるむ(ゴールド下線)/ RARUMU FUJIKAWA / Monaco Nights(ゴールド筆記体)/ 白×グレー、引き算の抜け感。
+    / リブミニに、肩掛けパーカーで大人スポーティー / Silver & Sneakers / CLEAN & COOL
