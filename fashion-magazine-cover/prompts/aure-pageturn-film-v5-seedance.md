@@ -21,3 +21,7 @@ Identity: keep her face exactly identical to the reference image in every shot �
 ## 生成記録
 - 15秒 / 480p / 9:16(表紙v5を image_references): 失敗(status: nsfw)— job 029a0bbc-3246-4e71-ae54-f3afdd11320c
   - Seedance で表紙 v5 を使うと役割に関係なく4回連続 nsfw。v4(3:4)を end_image にした v2 のみ成功。
+
+## MiniMax H3 版(提案中)
+- モデル: minimax_h3 / 15秒 / 9:16 / 2K(解像度は2Kのみ)— 30クレジット(10秒=20)
+- start_image: 表紙 v5。プロンプトは上記と同一(冒頭を "The video opens exactly on the start image" に変更)
