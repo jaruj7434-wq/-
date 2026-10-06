@@ -32,7 +32,7 @@
 - B ロンドン(1ff34c7f ファーコート): 完成 — job bfe1a3e8-ccf5-4f5c-8ace-a27e3bac0ecb
 
 ## 動画(MiniMax H3 / 15秒 / 9:16 / 2K / 各30クレジット)
-- A ソーホー: 送信済み — job 534bbce4-b2e2-4e68-b931-285b75d4e9e9(start_image: 0b4d378f…)
-- B ロンドン: 送信済み — job 1bb519a5-e8ac-4dbf-8a84-4e88e7523553(start_image: bfe1a3e8…)
+- A ソーホー: 完成 — job 534bbce4-b2e2-4e68-b931-285b75d4e9e9(start_image: 0b4d378f…)
+- B ロンドン: 完成 — job 1bb519a5-e8ac-4dbf-8a84-4e88e7523553(start_image: bfe1a3e8…)
 - カット: 全身正面 → 小物①(A キャップ / B サングラス+マフラー)→ 小物②(A 星バックル+チェーン / B リボン+ファー)
   → ボトムス・裾 → 足元 → 横からシルエット → 振り返り
