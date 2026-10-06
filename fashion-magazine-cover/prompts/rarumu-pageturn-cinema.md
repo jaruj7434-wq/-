@@ -47,3 +47,7 @@
 - cinematic_studio_3_0 / 15秒 / 480p / 9:16 / 音なし / 52.5クレジット
 - start_image: 表紙 v4(1e65273d)/ image: 文字なし写真(5ade589c)/ 顔: Element rarumu
 - 完成 — job 0faae199-b221-44af-863b-891c50bd9e80
+
+## 修正案(ラストカット)
+- 旧 Shot 8: 振り返り+顔へのゆっくりプッシュイン(アップが近すぎ)
+- 新 Shot 8 (13-15s): Medium-wide shot from a few meters away (knees-up / three-quarter framing), she stops, turns toward the camera and gives a gentle, natural smile. The camera stays at a distance with only a very slight push-in; no close-up of the face. End on this framing.
