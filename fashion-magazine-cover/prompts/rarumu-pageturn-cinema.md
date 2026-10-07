@@ -58,3 +58,6 @@
 - 新 Shot 1 (0-3.5s): The woman INSIDE the cover herself does the page turn — no other hands, no giant hand from outside the frame. She steps toward the right side of the cover, crouches down gracefully, pinches the bottom-right corner/edge of the page between her own fingers, then stands up while lifting it high and pulling it across in a big sweeping motion, turning the whole page. Her body and hand stay at natural human scale inside the picture. Underneath the turning page the live walking scene at the Monte-Carlo night harbor is already visible (no blank/white page).
 - 修正版2(本人がしゃがんで端をつまみ大きくめくる)/ 15秒 / 480p / 52.5クレジット: 完成 — job ddd96afb-1db6-4c50-9afc-18be08ddc256
 - 修正版3(めくった下はすでに歩いている別シーン)/ 15秒 / 1080p / 150クレジット: 完成 — job 5ec1e23d-38b8-489f-8a6c-8b4949ea0a3b
+
+## 修正案(しゃがむ動作の品位)
+- Shot 1 追記: She crouches modestly and elegantly with her knees kept together, body angled slightly sideways; while her right hand pinches and lifts the page corner, her left hand holds the hem of her mini dress down in front of her thighs so nothing under the skirt is ever visible. Tasteful, ladylike posture throughout.
