@@ -62,3 +62,4 @@
 ## 修正案(しゃがむ動作の品位)
 - Shot 1 追記: She crouches modestly and elegantly with her knees kept together, body angled slightly sideways; while her right hand pinches and lifts the page corner, her left hand holds the hem of her mini dress down in front of her thighs so nothing under the skirt is ever visible. Tasteful, ladylike posture throughout.
 - 修正版4(しゃがむ時に左手でスカートを押さえる)/ 15秒 / 480p / 52.5クレジット: 完成 — job 3e3f1a50-c2a1-4a3f-b164-3fb59a6a2fec
+- 修正版4 の 1080p 本番 / 15秒 / 150クレジット: 送信 — job 622deb82-9f1a-42c5-bd6e-fb4a4cb1aa20

@@ -86,6 +86,12 @@ Shot 8 (13-15s) FINAL: medium-wide shot from a few meters away, knees-up framing
 Style: high-end luxury commercial, realistic, cinematic night lighting, shallow depth of field, sparkling bokeh, smooth gimbal moves, slight slow motion. Tasteful. No text after the page turn.
 ```
 
+## 応用:表紙なしの「街を歩くだけ」の動画
+- 同じ顔固定の考え方が有効(夜のパリ作り直しでユーザーOK)。
+  1. soul_2 + soul_id で「歩いてくる全身写真」を作る(参照画像なし・服は文章、約0.12クレジット)
+  2. cinematic_studio_3_0 に `start_image` と `image` の両方でその写真を渡し、服装写真も `image` で追加、Element も指定
+- 記録: `fashion-magazine-cover/prompts/rarumu-outfit-films-v2.md`(job 4bc69693…)
+
 ## 参考になる過去の記録
 - `fashion-magazine-cover/prompts/rarumu-pageturn-cinema.md`(このフローの全履歴と job ID)
 - `fashion-magazine-cover/prompts/soul-rarumu.md`(Soul / Element の作成記録)
