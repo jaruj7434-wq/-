@@ -66,3 +66,6 @@
   - ページめくり・切り替わり・顔は完璧。ただしアップのカット(ネックレス・髪・裾・足元)が省略された。
   - Cinema Studio 3.0 は multi_shots / multi_prompt 非対応(get_cost の adjustments で確認)。カット割りはプロンプト頼みで毎回ぶれる。
   - 対策案: 「hard cut」「8 separate shots」「必ず含める」を強調し、ページめくり時間を短縮、各カットを明確化。
+- 修正版5(アップのカット必須化)/ 15秒 / 1080p / 150クレジット: 生成中 — job bb140d44-bf89-4967-bb74-b7e9a050460d
+  - 冒頭に「EDITED MULTI-CUT … 8 SEPARATE SHOTS joined by HARD CUTS. All 8 shots MUST appear」、アップ4カットに「CLOSE-UP (required)」と各ショット末尾に「HARD CUT.」
+  - ページめくりを 0–3.5s → 0–3s に短縮。DROWN IN MUSIC プリセットは declined_preset_id で辞退
