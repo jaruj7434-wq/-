@@ -24,3 +24,7 @@
   - 顔: Element rarumu をプロンプトに埋め込み / 服: 服装写真 70f82506 を参照画像(role: image)として併用+文章で全アイテム指定
 - コーデ2 夜のパリ・サンジェルマン(cinematic_studio_3_0 / 10秒 / 1080p / 9:16 / 音なし / 100クレジット): 完成 — job 073218f5-43cb-4d02-b263-e52958282ddc
   - 顔: Element rarumu / 服: 服装写真 0d9d648e を参照画像+文章で指定
+
+## コーデ2 夜のパリ 作り直し(顔の忠実度アップ)
+- 最初のコマ: soul_2 + soul_id 5ebb33c3 / 9:16 / 2k / 参照画像なし・服は文章指定 — job a6ce28ed-d1b8-4dd6-8ca8-f5082967922d(約0.12クレジット)
+- 動画案: cinematic_studio_3_0 / start_image=a6ce28ed / image=a6ce28ed+服装写真 0d9d648e / Element rarumu / 10秒 / 9:16
