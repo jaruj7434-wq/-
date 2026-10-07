@@ -52,3 +52,7 @@
 - 旧 Shot 8: 振り返り+顔へのゆっくりプッシュイン(アップが近すぎ)
 - 新 Shot 8 (13-15s): Medium-wide shot from a few meters away (knees-up / three-quarter framing), she stops, turns toward the camera and gives a gentle, natural smile. The camera stays at a distance with only a very slight push-in; no close-up of the face. End on this framing.
 - 修正版(ラストを少し遠目の微笑みに変更)/ 15秒 / 480p / 52.5クレジット: 完成 — job 744b40a9-68f5-4951-9ba0-223a6508cab5
+
+## 修正案(ページめくりの主体)
+- 問題: 画面外から大きな手が出てきてめくっていた
+- 新 Shot 1 (0-3.5s): The woman INSIDE the cover herself does the page turn — no other hands, no giant hand from outside the frame. She steps toward the right side of the cover, crouches down gracefully, pinches the bottom-right corner/edge of the page between her own fingers, then stands up while lifting it high and pulling it across in a big sweeping motion, turning the whole page. Her body and hand stay at natural human scale inside the picture. Underneath the turning page the live walking scene at the Monte-Carlo night harbor is already visible (no blank/white page).
