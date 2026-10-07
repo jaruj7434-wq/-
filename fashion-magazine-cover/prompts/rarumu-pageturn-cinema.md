@@ -51,4 +51,4 @@
 ## 修正案(ラストカット)
 - 旧 Shot 8: 振り返り+顔へのゆっくりプッシュイン(アップが近すぎ)
 - 新 Shot 8 (13-15s): Medium-wide shot from a few meters away (knees-up / three-quarter framing), she stops, turns toward the camera and gives a gentle, natural smile. The camera stays at a distance with only a very slight push-in; no close-up of the face. End on this framing.
-- 修正版(ラストを少し遠目の微笑みに変更)/ 15秒 / 480p / 52.5クレジット: 送信 — job 744b40a9-68f5-4951-9ba0-223a6508cab5
+- 修正版(ラストを少し遠目の微笑みに変更)/ 15秒 / 480p / 52.5クレジット: 完成 — job 744b40a9-68f5-4951-9ba0-223a6508cab5
