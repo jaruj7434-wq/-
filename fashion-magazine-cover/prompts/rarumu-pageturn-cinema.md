@@ -1,0 +1,71 @@
+# らるむ 表紙→ページめくり→ウォーキング(Cinema Studio Video 3.0)計画
+
+## 手順
+1. 新しい AURE 表紙(9:16): nano_banana_pro / 2k — 2クレジット
+   - 顔: Element rarumu(1cf5acdf…)/ 服: コーデ2 写真(0d9d648e)/ 背景: 夜のパリ
+   - 誌名 AURE 固定+服装の説明文(大きく短い日本語+英語)
+2. 動画: cinematic_studio_3_0 / start_image=1の表紙 / 9:16 / 音なし
+   - 15秒 1080p=150 / 15秒 720p=75 / 10秒 1080p=100
+   - めくった下に最初から歩くシーンが映っている(白紙ページ禁止)
+
+## 既存表紙を使う場合
+- 表紙 v5(6eda80c8…)は Soul/Element 導入前の顔・服(トープのニット)なので非推奨
+
+## 指定コーデ(a2b1f859-21bf-42fe-9146-6912fd5c01d1)
+- オフホワイトのリブ素材ノースリーブ・タンクミニワンピース(胸元に小さな黒のクロス刺繍)
+- 細いシルバーのネックレス
+- グレーのニット(フード付きジップアップ)— 手に持つ/肩掛け
+- 黒のクルーソックス
+- 黒×シルバーのボリュームスニーカー(ロゴなしで再現)
+- 雰囲気: スポーティー×フェミニンなストリート
+
+## 表紙(生成済み)
+- nano_banana_pro / 9:16 / 2k / Element rarumu + 服装写真 a2b1f859 / ソウル・聖水洞の昼 / グレーパーカーは肩掛け
+- 1回目 e8a4d3ea…: 失敗(返金済み)/ 2回目: 完成 — job d4bc85ea-e13a-4c21-802e-abc5ad5b7e85(2クレジット)
+- 文字: AURE / Sporty Muse / 白×グレーの抜け感 / CLEAN & COOL
+
+## 表紙 v2(GPT Image 2.5 Flare / high / 2k / 9:16 / 2.75クレジット)
+- 参照: 表紙 d4bc85ea(顔・写真)+ 服装写真 a2b1f859。写真はそのまま、文字だけ組み直し
+- 文字: AURE(Didoneセリフ)/ 藤川らるむ(明朝・ピンク下線)/ RARUMU FUJIKAWA / Sporty Muse(筆記体・ダスティピンク)
+  / 白×グレー、引き算の抜け感。/ リブミニに、肩掛けパーカーで大人スポーティー / Silver & Sneakers / CLEAN & COOL(ピンクのラベル)
+- 完成 — job a817172a-dce7-48cb-a933-023e9e3d4269
+
+## 表紙 v3(顔の忠実度アップ+モナコの夜)
+- 手順1 写真: soul_2 + soul_id 5ebb33c3(学習済みSoul)/ 9:16 / 参照画像なし・服は文章で指定 / enhance_prompt=false が反映
+  - 背景: モナコ・モンテカルロの夜の港(ヨット、ヤシ並木、ベル・エポック建築の灯り)— job ce49a090-f90d-4af4-af86-740bee93f8dc(約0.12クレジット)
+- 手順2 文字入れ: gpt_image_2_5 flare / high / 2k(写真は変更しないよう指示)— job 26e9999e-fff0-4cc6-899a-41d13807e6e3(2.75クレジット)
+  - 文字: AURE / 藤川らるむ(ゴールド下線)/ RARUMU FUJIKAWA / Monaco Nights(ゴールド筆記体)/ 白×グレー、引き算の抜け感。
+    / リブミニに、肩掛けパーカーで大人スポーティー / Silver & Sneakers / CLEAN & COOL
+
+## 表紙 v4(パーカーなし・艶髪・4K)
+- 写真: soul_2 + soul_id 5ebb33c3 / 2k / 白リブミニのみ(パーカー削除)/ 艶のあるモデル級の黒髪 / モナコの夜 — job 5ade589c-9cba-4577-8fcb-51584b40e02e
+- 文字入れ: gpt_image_2_5 flare / high / 4k / 4.25クレジット — job 1e65273d-c990-4032-87d5-c26ea7cf736e
+  - 文字: AURE / 藤川らるむ / RARUMU FUJIKAWA / Pure White Night / 白のリブミニ一枚で、夜景をひとりじめ。
+    / 細リブが描く、美しいボディライン / 胸元のクロス刺繍が、さりげない主役 / Effortlessly Stunning / その白、反則級。
+
+## 動画(表紙 v4 → ページめくり → モナコの港を歩く)
+- cinematic_studio_3_0 / 15秒 / 480p / 9:16 / 音なし / 52.5クレジット
+- start_image: 表紙 v4(1e65273d)/ image: 文字なし写真(5ade589c)/ 顔: Element rarumu
+- 完成 — job 0faae199-b221-44af-863b-891c50bd9e80
+
+## 修正案(ラストカット)
+- 旧 Shot 8: 振り返り+顔へのゆっくりプッシュイン(アップが近すぎ)
+- 新 Shot 8 (13-15s): Medium-wide shot from a few meters away (knees-up / three-quarter framing), she stops, turns toward the camera and gives a gentle, natural smile. The camera stays at a distance with only a very slight push-in; no close-up of the face. End on this framing.
+- 修正版(ラストを少し遠目の微笑みに変更)/ 15秒 / 480p / 52.5クレジット: 完成 — job 744b40a9-68f5-4951-9ba0-223a6508cab5
+
+## 修正案(ページめくりの主体)
+- 問題: 画面外から大きな手が出てきてめくっていた
+- 新 Shot 1 (0-3.5s): The woman INSIDE the cover herself does the page turn — no other hands, no giant hand from outside the frame. She steps toward the right side of the cover, crouches down gracefully, pinches the bottom-right corner/edge of the page between her own fingers, then stands up while lifting it high and pulling it across in a big sweeping motion, turning the whole page. Her body and hand stay at natural human scale inside the picture. Underneath the turning page the live walking scene at the Monte-Carlo night harbor is already visible (no blank/white page).
+- 修正版2(本人がしゃがんで端をつまみ大きくめくる)/ 15秒 / 480p / 52.5クレジット: 完成 — job ddd96afb-1db6-4c50-9afc-18be08ddc256
+- 修正版3(めくった下はすでに歩いている別シーン)/ 15秒 / 1080p / 150クレジット: 完成 — job 5ec1e23d-38b8-489f-8a6c-8b4949ea0a3b
+
+## 修正案(しゃがむ動作の品位)
+- Shot 1 追記: She crouches modestly and elegantly with her knees kept together, body angled slightly sideways; while her right hand pinches and lifts the page corner, her left hand holds the hem of her mini dress down in front of her thighs so nothing under the skirt is ever visible. Tasteful, ladylike posture throughout.
+- 修正版4(しゃがむ時に左手でスカートを押さえる)/ 15秒 / 480p / 52.5クレジット: 完成 — job 3e3f1a50-c2a1-4a3f-b164-3fb59a6a2fec
+- 修正版4 の 1080p 本番 / 15秒 / 150クレジット: 完成(アップのカットが入らず)— job 622deb82-9f1a-42c5-bd6e-fb4a4cb1aa20
+  - ページめくり・切り替わり・顔は完璧。ただしアップのカット(ネックレス・髪・裾・足元)が省略された。
+  - Cinema Studio 3.0 は multi_shots / multi_prompt 非対応(get_cost の adjustments で確認)。カット割りはプロンプト頼みで毎回ぶれる。
+  - 対策案: 「hard cut」「8 separate shots」「必ず含める」を強調し、ページめくり時間を短縮、各カットを明確化。
+- 修正版5(アップのカット必須化)/ 15秒 / 1080p / 150クレジット: 完成(ユーザー確認待ち)— job bb140d44-bf89-4967-bb74-b7e9a050460d
+  - 冒頭に「EDITED MULTI-CUT … 8 SEPARATE SHOTS joined by HARD CUTS. All 8 shots MUST appear」、アップ4カットに「CLOSE-UP (required)」と各ショット末尾に「HARD CUT.」
+  - ページめくりを 0–3.5s → 0–3s に短縮。DROWN IN MUSIC プリセットは declined_preset_id で辞退
