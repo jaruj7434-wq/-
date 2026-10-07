@@ -96,3 +96,7 @@ fashion-magazine-cover/
 ```
 
 - 生成物(画像・動画ファイル)はコミットしない。プロンプトや企画書などのテキストのみコミットする。
+
+## 定番フォーマット:表紙ページめくり動画
+- 表紙のモデル本人がページをめくり、歩くシーンに切り替わってアイテムのアップを見せる動画は、
+  スキル `.claude/skills/magazine-pageturn-film/SKILL.md`(`magazine-pageturn-film`)の手順に従って作る。
