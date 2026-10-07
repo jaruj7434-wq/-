@@ -28,4 +28,4 @@
 ## コーデ2 夜のパリ 作り直し(顔の忠実度アップ)
 - 最初のコマ: soul_2 + soul_id 5ebb33c3 / 9:16 / 2k / 参照画像なし・服は文章指定 — job a6ce28ed-d1b8-4dd6-8ca8-f5082967922d(約0.12クレジット)
 - 動画案: cinematic_studio_3_0 / start_image=a6ce28ed / image=a6ce28ed+服装写真 0d9d648e / Element rarumu / 10秒 / 9:16
-- 動画(1080p / 10秒 / 100クレジット): 送信 — job 4bc69693-b3d9-42b3-88d2-fbd6994c9581
+- 動画(1080p / 10秒 / 100クレジット): 完成 — job 4bc69693-b3d9-42b3-88d2-fbd6994c9581
