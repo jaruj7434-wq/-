@@ -69,3 +69,4 @@
 - 学習画像8枚: 元の顔 `0fffd2b9-…` + 顔のみ7枚(`de377b1c` `92cf06dc` `17d8a461` `5f08b34f` `312264e6` `be09e636` `3e95b092`)。
 - 学習費用: 取引履歴で **Soul ID -25 クレジット**(2026-10-08 12:59)。残高 115.02。※同時間帯に「Higgsfield Genjutsu - Motion Transfer」(-140〜-165)が複数あるが、このセッションでは実行していない。
 - 使えるのは soul_2 / soul_cinematic の画像生成のみ。動画では Soul 画像を開始コマにする。
+- 学習完了(2026-10-08 13:36 UTC 確認): status=ready。以後、レオの画像は soul_2 / soul_cinematic + soul_id `0af4cd8b-c8f7-4e84-be09-934a893b60ad` で生成する。
