@@ -71,7 +71,8 @@ The dog only eats from its own bowl. No brand names other than milkygreek.
 - 参照: KV-03, 11068f24(紅茶), cc7bba55, 49869036, 614b820e
 - 修正理由: KV-03 で飲み物の参照画像を渡し忘れ、写真と違うドリンクになっていた
 
-## V-v5 本編(seedance_2_5 / omni_reference / 30秒 / 9:16 / 480p draft)— 未生成・承認待ち
+## V-v5 本編(seedance_2_5 / omni_reference / 30秒 / 9:16 / 480p draft)— 生成 2026-10-10
+- job_id: 47d5d395-8c6e-45e0-a77b-a030f615c11f / 90クレジット(draft: 1080p 仕上げ可)
 参照: KV-04(4ee4cd4f), a39bf732(入り口サイン), cc7bba55(ワンちゃんOKスペース), 49869036(ベリーベリーデトックス), 614b820e(犬用の器), 11068f24(紅茶), 0cdf1fba(ロゴ)
 
 ```
