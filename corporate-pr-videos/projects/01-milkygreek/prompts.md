@@ -61,3 +61,26 @@ Same woman, same cream toy poodle, same female staff and same cafe as the keyfra
 25-30s: The poodle wags its tail wildly and dives its face into the bowl, eating eagerly with happy munching sounds. The woman and the staff look at each other and smile warmly.
 The dog only eats from its own bowl. No brand names other than milkygreek.
 ```
+
+## KV-03 キービジュアル(台本 v5 用・ワンちゃんOKスペース)— 生成済み 2026-10-10
+- job_id: 96503352-4043-46fe-850e-ec374ab4284a(表示上のモデル名 nano_banana_2)/ 2クレジット
+- 参照: KV-02, cc7bba55(ワンちゃんOKスペース), 49869036(ベリーベリーデトックス), 614b820e(犬用の器), 0cdf1fba(ロゴ)
+
+## V-v5 本編(seedance_2_5 / omni_reference / 30秒 / 9:16 / 480p draft)— 未生成・承認待ち
+参照: KV-03(96503352), a39bf732(入り口サイン), cc7bba55(ワンちゃんOKスペース), 49869036(ベリーベリーデトックス), 614b820e(犬用の器), 0cdf1fba(ロゴ)
+
+```
+One continuous, fast-paced 30-second vertical comedy commercial. Photorealistic people and cafe, with playful cartoon-style comedy effects on the dog.
+Same woman, same cream toy poodle, same female staff and same dog-friendly cafe space as the keyframe reference. Natural, lively Japanese dialogue, cartoon sound effects, ambient sound, no music, no on-screen text or captions.
+0-2s: Ebisu sidewalk, low angle. The cream toy poodle yanks the leash, it slips from the woman's hand. Woman (brown bob, cream linen shirt): 「モカ!?」
+2-4s: The poodle bolts in a cartoon super-speed dash, legs spinning in a blur, a big puff of dust trailing behind. Whoosh.
+4-6s: It screeches to a stop right under the 3D "milkygreek" sign above the entrance (sign only, no posters), turns back with a cool confident face and raises one front paw like a thumbs-up. Skid, sparkle sound.
+6-9s: Inside the dog-friendly space. The woman sits in a black-framed rattan lounge chair, the poodle sits beside her. Woman to staff: 「ベリーベリーデトックスと、モカのおいもヨーグルトください!」 Beautiful female staff, bright smile: 「かしこまりました!」
+9-12s: The staff serves the berry-swirl yogurt plate and puts the sage-gray dog bowl (no lettering) of yogurt and sweet potato cubes in front of the poodle. It wags its tail and dives in, eating eagerly. The woman and the staff exchange warm smiles.
+12-14s: A burly Japanese man in his 40s storms in, angry, deep gruff voice: 「おい!犬にヨーグルトなんて大丈夫なのか!」
+14-18s: The staff answers calmly with a kind smile: 「ご安心ください。無添加なので、わんちゃんも人と一緒に食べられるんです」
+18-22s: The man softens and bows: 「すみませんでした!僕にも一つください!」 Staff, beaming: 「もちろんです!」
+22-25s: The poodle licks the bowl completely clean, lifts its head and lets out a big howl: 「ワオーーン!」
+25-30s: The poodle stands on its hind legs and breaks into a sharp, human-like hip-hop dance. The woman, the staff and the man burst out laughing together.
+The dog only eats from its own bowl. No posters, no signs with text other than the milkygreek sign, no other brand names.
+```
