@@ -21,7 +21,7 @@ No text, no captions, no posters, no menus; do not copy any overlay text from th
 ```
 
 ## V-01 本編動画(seedance_2_5 / omni_reference / 25秒 / 9:16)— 未生成・承認待ち
-参照: KV-01(998e3c1b…, 人物・犬・店の基準), 0cdf1fba(ロゴ), a39bf732(入り口サイン), 024506ff(店内)
+参照: KV-01(998e3c1b…, 人物・犬・店の基準), 0cdf1fba(ロゴ), 614b820e / f96ecef4(犬用の器), 024506ff(店内)
 
 ```
 A single continuous 25-second photorealistic vertical commercial with natural Japanese dialogue,
@@ -31,12 +31,12 @@ Handheld documentary feel, soft daylight, ambient cafe sounds, no music, no on-s
   Woman A (brown bob, cream shirt), gently: 「……そんな目で見てもダメだよ」
 4-9s: medium shot of both women; the poodle tilts its head and taps Woman A's knee with one paw.
   Woman B (black tied hair, blue knit), laughing: 「さっきからずーっと見てるね」
-9-15s: a smiling cafe staff member in a white shirt and natural apron places a small dish of plain white yogurt (no toppings) on the floor.
+9-15s: a smiling cafe staff member in a white shirt and natural apron places a pale sage-gray ceramic dog bowl, exactly like the dog bowl reference but with no lettering or embossed brand name, filled with thick white Greek yogurt, a few cut strawberries and small diced fruit, on the floor.
   Staff: 「うちのヨーグルト、わんちゃんも一緒に食べられるんですよ。無添加なので」
   Woman A, surprised: 「え、モカも一緒に食べていいの?」
-15-21s: the poodle eagerly licks the plain yogurt, tail wagging wildly, white yogurt all around its muzzle; both women burst out laughing.
+15-21s: the poodle eagerly licks the yogurt from the sage-gray dog bowl, tail wagging wildly, white yogurt all around its muzzle; both women burst out laughing.
   Woman B: 「顔、真っ白!」
 21-25s: Woman A takes a bite, eyes widening: 「……濃っ!」; the poodle looks up and barks once 「ワン!」.
   Final shot: the white takeaway cup with the blue stacked "milky greek" logo on the table, warm smiles in soft focus behind.
-The dog only eats plain yogurt; never show the dog eating fruit, chocolate, cacao nibs or grapes.
+The dog only eats from its own bowl (yogurt, strawberries, diced fruit); never show the dog eating nuts, chocolate, cacao nibs or grapes. No brand names on the dog bowl.
 ```
