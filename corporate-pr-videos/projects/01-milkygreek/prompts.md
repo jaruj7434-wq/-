@@ -96,7 +96,8 @@ The dog only eats from its own bowl. No posters, no signs with text other than t
 - 無地背景にアヤ・モカ・店員(手ぶら)・男性客。シーンの絵ではなく「見た目だけ」の参照
 
 ## V-v6 本編(seedance_2_5 / omni_reference / 30秒 / 9:16 / 480p draft)— 生成 2026-10-10
-- job_id: 3ff15938-d74c-4baf-8d14-c7698ae2ca19 / 90クレジット
+- job_id: 3ff15938-d74c-4baf-8d14-c7698ae2ca19 / 90クレジット / 完成
+- 1080p 仕上げ(draft_job_id 指定)見積もり: 60クレジット
 参照: CAST-01(2fd82ac4), a39bf732(入り口・ドア), cc7bba55(ワンちゃんOKスペース), 49869036(ベリーベリーデトックス), 614b820e(犬用の器), 11068f24(紅茶)
 
 ```
