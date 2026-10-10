@@ -1,6 +1,8 @@
 # プロンプト記録
 
-## KV-01 キービジュアル(nano_banana_pro / 9:16 / 2k) — 未生成・承認待ち
+## KV-01 キービジュアル(nano_banana_pro 指定 / 9:16 / 2k)— 生成済み 2026-10-10
+- job_id: 998e3c1b-deff-425b-a622-4a2aecac58e3(ジョブ表示上のモデル名は nano_banana_2)
+- 消費: 2クレジット / ユーザー確認待ち
 参照: 024506ff(店内), a39bf732(入り口), dc512224(ボウル), 0cdf1fba(ロゴ:青の2段組み「milky / greek」)
 
 ```
@@ -16,4 +18,25 @@ Next to the bowl stands a white takeaway yogurt cup printed with the blue stacke
 At their feet a cream-colored toy poodle sits looking up at the bowl with an intense, pleading expression.
 Real skin texture, candid, unretouched, warm and clean atmosphere.
 No text, no captions, no posters, no menus; do not copy any overlay text from the reference images.
+```
+
+## V-01 本編動画(seedance_2_5 / omni_reference / 25秒 / 9:16)— 未生成・承認待ち
+参照: KV-01(998e3c1b…, 人物・犬・店の基準), 0cdf1fba(ロゴ), a39bf732(入り口サイン), 024506ff(店内)
+
+```
+A single continuous 25-second photorealistic vertical commercial with natural Japanese dialogue,
+set in the milkygreek cafe from the reference images, same two women and same cream toy poodle as the keyframe.
+Handheld documentary feel, soft daylight, ambient cafe sounds, no music, no on-screen text or captions.
+0-4s: extreme close-up of a spoon lifting thick, creamy Greek yogurt from a glass bowl; cut to the poodle at her feet staring up intensely.
+  Woman A (brown bob, cream shirt), gently: 「……そんな目で見てもダメだよ」
+4-9s: medium shot of both women; the poodle tilts its head and taps Woman A's knee with one paw.
+  Woman B (black tied hair, blue knit), laughing: 「さっきからずーっと見てるね」
+9-15s: a smiling cafe staff member in a white shirt and natural apron places a small dish of plain white yogurt (no toppings) on the floor.
+  Staff: 「うちのヨーグルト、わんちゃんも一緒に食べられるんですよ。無添加なので」
+  Woman A, surprised: 「え、モカも一緒に食べていいの?」
+15-21s: the poodle eagerly licks the plain yogurt, tail wagging wildly, white yogurt all around its muzzle; both women burst out laughing.
+  Woman B: 「顔、真っ白!」
+21-25s: Woman A takes a bite, eyes widening: 「……濃っ!」; the poodle looks up and barks once 「ワン!」.
+  Final shot: the white takeaway cup with the blue stacked "milky greek" logo on the table, warm smiles in soft focus behind.
+The dog only eats plain yogurt; never show the dog eating fruit, chocolate, cacao nibs or grapes.
 ```
