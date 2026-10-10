@@ -90,3 +90,32 @@ Same woman, same cream toy poodle, same female staff and same dog-friendly cafe 
 25-30s: The poodle stands on its hind legs and breaks into a sharp, human-like hip-hop dance. The woman, the staff and the man burst out laughing together.
 The dog only eats from its own bowl. No posters, no signs with text other than the milkygreek sign, no other brand names.
 ```
+
+## CAST-01 キャスト参照シート — 生成済み 2026-10-10
+- job_id: 2fd82ac4-9580-4e92-b5f6-59bf7e62416d / 2クレジット
+- 無地背景にアヤ・モカ・店員(手ぶら)・男性客。シーンの絵ではなく「見た目だけ」の参照
+
+## V-v6 本編(seedance_2_5 / omni_reference / 30秒 / 9:16 / 480p draft)— 未生成・承認待ち
+参照: CAST-01(2fd82ac4), a39bf732(入り口・ドア), cc7bba55(ワンちゃんOKスペース), 49869036(ベリーベリーデトックス), 614b820e(犬用の器), 11068f24(紅茶)
+
+```
+Stylish, fast-cut 30-second vertical comedy commercial with 16 distinct shots and cinematic camera work. Photorealistic people and cafe, playful cartoon-style comedy effects on the dog. Natural lively Japanese dialogue, cartoon sound effects, ambient sound, no music, no on-screen text or captions.
+Reference images are for appearance only, NOT a starting frame: the cast sheet defines how the woman, the cream toy poodle, the female staff and the burly man look; the other images define the entrance sign and door, the dog-friendly seating space, the berry yogurt plate, the sage-gray dog bowl and the tea set. Do not open on the cast sheet or on any reference image. At the start of the cafe scenes the table is empty and the staff's hands are empty; food appears only after it is ordered.
+Shot 1 (0-1.5s): ground-level low angle, camera tracking backward. The poodle yanks the leash hard. Woman: 「モカ!?」
+Shot 2 (1.5-2.5s): macro slow motion on her hand as the leash slips out.
+Shot 3 (2.5-4s): fast side-on whip pan with speed lines: cartoon super-speed dash, legs spinning in a blur, big puff of dust. Whoosh.
+Shot 4 (4-5s): low angle looking up at the 3D "milkygreek" sign over the entrance; the poodle screeches to a stop beneath it, camera shakes. Skid sound.
+Shot 5 (5-6.5s): snap zoom to the poodle's face: it looks back with a cool face and raises one front paw like a thumbs-up. Sparkle sound.
+Shot 6 (6.5-8s): smooth gimbal dolly-in through the dog-friendly space: the woman sits in a black-framed rattan lounge chair, the poodle sits beside her; the terrazzo side table is empty.
+Shot 7 (8-10s): over-the-shoulder from behind the woman toward the staff, whose hands are empty. Woman: 「ベリーベリーデトックスと、モカのおいもヨーグルトください!」
+Shot 8 (10-11s): front medium shot of the staff, shallow depth of field, bright smile: 「かしこまりました!」
+Shot 9 (11-12.5s): top-down overhead shot: hands place the berry-swirl yogurt plate and the glass teapot with red toile cup and saucer on the side table, and the sage-gray dog bowl (no lettering) of yogurt with sweet potato cubes on the floor. Soft clink.
+Shot 10 (12.5-14s): floor-level macro slow motion: the poodle dives its face into its bowl, tail wagging wildly. Munching sounds.
+Shot 11 (14-15s): rack focus from the eating poodle in the foreground to the woman and the staff exchanging warm smiles.
+Shot 12 (15-17s): locked-off shot from inside facing the glass entrance door; the burly man pushes the door open and storms in, Dutch angle. Deep gruff voice: 「おい!犬にヨーグルトなんて大丈夫なのか!」
+Shot 13 (17-20s): close-up of the staff with a slow push-in, calm kind smile: 「ご安心ください。無添加なので、わんちゃんも人と一緒に食べられるんです」
+Shot 14 (20-23s): lateral tracking two-shot; the man softens and bows: 「すみませんでした!僕にも一つください!」 Staff, beaming: 「もちろんです!」
+Shot 15 (23-25s): overhead of the spotless empty dog bowl, tilt up to the poodle howling: 「ワオーーン!」
+Shot 16 (25-30s): 360-degree orbit around the poodle standing on its hind legs doing a sharp human-like hip-hop dance, pulling out to a wide shot of the woman, the staff and the man laughing together.
+The dog only eats from its own bowl. No posters, no signs with text other than the milkygreek sign, no other brand names.
+```
