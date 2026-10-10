@@ -14,5 +14,5 @@ On the table: a clear glass bowl of thick white Greek yogurt topped with strawbe
 banana slices and granola, exactly like the reference bowl.
 At their feet a cream-colored toy poodle sits looking up at the bowl with an intense, pleading expression.
 Real skin texture, candid, unretouched, warm and clean atmosphere.
-No text, no captions, no posters, no signage text other than nothing; do not copy any overlay text from the references.
+No text, no captions, no posters, no menus; do not copy any overlay text from the reference images.
 ```
