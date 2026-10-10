@@ -40,3 +40,24 @@ Handheld documentary feel, soft daylight, ambient cafe sounds, no music, no on-s
   Final shot: the white takeaway cup with the blue stacked "milky greek" logo on the table, warm smiles in soft focus behind.
 The dog only eats from its own bowl (yogurt, strawberries, diced fruit); never show the dog eating nuts, chocolate, cacao nibs or grapes. No brand names on the dog bowl.
 ```
+
+## KV-02 キービジュアル(台本 v4 用)— 生成済み 2026-10-10
+- job_id: 54b5f22c-7d30-4099-96a2-ff32046d06df(表示上のモデル名 nano_banana_2)/ 2クレジット
+- 参照: KV-01, 024506ff(店内), 2c45a310(ヨーグルト１), 614b820e(犬用の器), 0cdf1fba(ロゴ)
+- 内容: 椅子に座るアヤ+横におすわりのモカ+人用プレートと犬用の器(おいもヨーグルト)を運ぶ女性店員
+
+## V-P1 パート1(seedance_2_5 / omni_reference / 30秒 / 9:16 / 480p draft)— 未生成・承認待ち
+参照: KV-02(54b5f22c), a39bf732(入り口サイン), 0cdf1fba(ロゴ), 614b820e(犬用の器), 2c45a310(ヨーグルト１)
+
+```
+One continuous 30-second vertical commercial, photorealistic people and cafe, with playful cartoon-style comedy effects on the dog.
+Same woman, same cream toy poodle, same female staff and same cafe as the keyframe reference. Natural Japanese dialogue, sound effects, ambient sound, no music, no on-screen text or captions.
+0-3s: Ebisu sidewalk, low angle. The cream toy poodle pulls hard on its leash. Woman (brown bob, cream linen shirt): 「ちょっ、モカ!?」
+3-7s: The leash slips from her hand. The poodle bolts in a cartoon-like super-speed dash, legs spinning in a blur, a big puff of dust cloud trailing behind. Whoosh sound. Woman: 「モカー!!」
+7-11s: The poodle screeches to a sudden stop right under the 3D "milkygreek" sign above the cafe entrance (as in the entrance reference, sign only, no posters). Skid sound. It turns to look back at the woman, makes a confident cool face and raises one front paw like a thumbs-up. Sparkle sound.
+11-17s: Inside the cafe. The woman sits on a wooden chair, the poodle sits neatly beside her. She says to the staff: 「ベリーベリーデトックスと、モカ用のおいもヨーグルトお願いします」
+17-20s: The beautiful female staff (tied-back hair, white shirt, linen apron) smiles brightly: 「かしこまりました!」
+20-25s: The staff brings the white yogurt plate (as in the plate reference, plain biscuit with no brand) and the pale sage-gray ceramic dog bowl with no lettering, filled with white yogurt and sweet potato cubes, and places the dog bowl in front of the poodle.
+25-30s: The poodle wags its tail wildly and dives its face into the bowl, eating eagerly with happy munching sounds. The woman and the staff look at each other and smile warmly.
+The dog only eats from its own bowl. No brand names other than milkygreek.
+```
