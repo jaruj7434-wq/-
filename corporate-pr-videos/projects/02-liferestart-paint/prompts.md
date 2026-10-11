@@ -7,7 +7,8 @@
 | HOUSE-B | ビフォーの家(塗装はがれ・ひび・雨だれ・コケ、人物なし) | 5680a395-69b7-4def-bb2d-bfa14465dcd3 | なし |
 | HOUSE-A | アフターの家(同アングル、上階ネイビー/下階ホワイト) | 9197858e-8948-4458-9fff-bae67b806ccd | HOUSE-B |
 
-## V-01 本編(seedance_2_5 / omni_reference / 30秒 / 9:16 / 480p draft)— 未生成・承認待ち
+## V-01 本編(seedance_2_5 / omni_reference / 30秒 / 9:16 / 480p draft)— 生成 2026-10-11
+- job_id: e6f4b595-6f31-4f42-b3e2-40ad760fb0f3 / 90クレジット
 参照: CAST-01, HOUSE-B, HOUSE-A, e34d0551(作業着)
 
 ```
