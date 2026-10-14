@@ -233,3 +233,5 @@ inconsistent clothing, different hairstyle, glasses (unless reading scene)
 | 2026-10-14 | 顔のアップ 第2版 S2 | soul_2 | 521616 | job `d2ed9e5f-5248-4a02-9c22-3fe4877e8571` | 同上 |
 | 2026-10-14 | 顔のアップ 第2版 N1 | nano_banana_pro(表示は nano_banana_2) | — | job `0a9463ad-be8c-4fc5-828b-a1aa3f541f72` | 同上・3:4・2k |
 | 2026-10-14 | 顔のアップ 第2版 N2 | nano_banana_pro(表示は nano_banana_2) | — | job `c0d37641-cfd6-4be6-9a58-dd566160d0ed` | 同上 |
+| 2026-10-14 | 顔のアップ 強面案 K1 | soul_2 | 938673 | job `2604da61-3a14-41c8-8d3d-0000e0629e50` | 別方向の案:60代後半〜70歳前後、白髪多め、鋭い目つき・一文字の口元(怒ってはいない)。ユーザー依頼 |
+| 2026-10-14 | 顔のアップ 強面案 K2 | soul_2 | 722899 | job `582953e4-d461-4a40-80c2-134c52caaa1e` | 同上 |
