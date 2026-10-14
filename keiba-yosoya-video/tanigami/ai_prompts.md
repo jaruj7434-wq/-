@@ -227,3 +227,5 @@ inconsistent clothing, different hairstyle, glasses (unless reading scene)
 |---|---|---|---|---|---|
 | 2026-10-14 | 顔のアップ 案A | nano_banana_pro(処理上の表示は nano_banana_2) | — | job `b98c92b1-1e9d-401e-a22a-118d07a36165` | 3:4・2k。正面・シワ強調。2クレジット |
 | 2026-10-14 | 顔のアップ 案B | nano_banana_pro(処理上の表示は nano_banana_2) | — | job `62593b34-8355-4bef-9407-ade1fb701046` | 同じプロンプトの別案。2クレジット |
+| 2026-10-14 | 全身4面シート 案A | nano_banana_pro(表示は nano_banana_2) | — | job `59256524-eca7-4021-99a1-321bc7cbefb2`(参照:顔 案A) | 16:9・2k。正面/左側面/背面/右側面。2クレジット |
+| 2026-10-14 | 全身4面シート 案B | nano_banana_pro(表示は nano_banana_2) | — | job `2666aec4-40d6-4bd3-9f2b-91a495e374b6`(参照:顔 案B) | 同上。2クレジット |
