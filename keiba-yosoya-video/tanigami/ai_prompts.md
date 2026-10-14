@@ -225,7 +225,11 @@ inconsistent clothing, different hairstyle, glasses (unless reading scene)
 
 | 日付 | カット | モデル | シード | 参照ID | 結果・メモ |
 |---|---|---|---|---|---|
-| 2026-10-14 | 顔のアップ 案A | nano_banana_pro(処理上の表示は nano_banana_2) | — | job `b98c92b1-1e9d-401e-a22a-118d07a36165` | 3:4・2k。正面・シワ強調。2クレジット |
+| 2026-10-14 | 顔のアップ 案A | nano_banana_pro(処理上の表示は nano_banana_2) | — | job `b98c92b1-1e9d-401e-a22a-118d07a36165` | 3:4・2k。正面・シワ強調。2クレジット。**不採用**(年齢・シワを強調しすぎ、顔立ちを独自に指定したため設定書とずれた) |
 | 2026-10-14 | 顔のアップ 案B | nano_banana_pro(処理上の表示は nano_banana_2) | — | job `62593b34-8355-4bef-9407-ade1fb701046` | 同じプロンプトの別案。2クレジット |
-| 2026-10-14 | 全身4面シート 案A | nano_banana_pro(表示は nano_banana_2) | — | job `59256524-eca7-4021-99a1-321bc7cbefb2`(参照:顔 案A) | 16:9・2k。正面/左側面/背面/右側面。2クレジット |
-| 2026-10-14 | 全身4面シート 案B | nano_banana_pro(表示は nano_banana_2) | — | job `2666aec4-40d6-4bd3-9f2b-91a495e374b6`(参照:顔 案B) | 同上。2クレジット |
+| 2026-10-14 | 全身4面シート 案A(不採用) | nano_banana_pro(表示は nano_banana_2) | — | job `59256524-eca7-4021-99a1-321bc7cbefb2`(参照:顔 案A) | 16:9・2k。正面/左側面/背面/右側面。2クレジット |
+| 2026-10-14 | 全身4面シート 案B(不採用) | nano_banana_pro(表示は nano_banana_2) | — | job `2666aec4-40d6-4bd3-9f2b-91a495e374b6`(参照:顔 案B) | 同上。2クレジット |
+| 2026-10-14 | 顔のアップ 第2版 S1 | soul_2 | 466996 | job `7d8d15da-7dcb-4f5f-a12a-7f5eb25f429a` | 3:4(1536×2048)。character.md の外見表どおりに書き直したプロンプト。顔立ちの細部は指定なし |
+| 2026-10-14 | 顔のアップ 第2版 S2 | soul_2 | 521616 | job `d2ed9e5f-5248-4a02-9c22-3fe4877e8571` | 同上 |
+| 2026-10-14 | 顔のアップ 第2版 N1 | nano_banana_pro(表示は nano_banana_2) | — | job `0a9463ad-be8c-4fc5-828b-a1aa3f541f72` | 同上・3:4・2k |
+| 2026-10-14 | 顔のアップ 第2版 N2 | nano_banana_pro(表示は nano_banana_2) | — | job `c0d37641-cfd6-4be6-9a58-dd566160d0ed` | 同上 |
