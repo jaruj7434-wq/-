@@ -270,3 +270,11 @@ inconsistent clothing, different hairstyle, glasses (unless reading scene)
 | 2026-10-14 | H1派生 V10 | gpt_image_2_5(編集・medium・1k) | — | job `a87ee9a0-c175-4b0a-abec-7d0920a0d683` | 元:H1(`0c53f141…`、ユーザーが「イメージに近い」と選定)。ほぼ銀髪。0.5クレジット |
 | 2026-10-14 | H1派生 V11 | gpt_image_2_5(編集・medium・1k) | — | job `117f9860-de65-4583-b87b-57a15dcb3647` | 元:H1(`0c53f141…`、ユーザーが「イメージに近い」と選定)。白髪6割+こわめ。0.5クレジット |
 | 2026-10-14 | H1派生 V12 | gpt_image_2_5(編集・medium・1k) | — | job `77a61026-f678-44f5-8b2c-c69d31202bfb` | 元:H1(`0c53f141…`、ユーザーが「イメージに近い」と選定)。ダークブラウン髪+やさしめ・茶レンズ。0.5クレジット |
+| 2026-10-14 | 確定顔の角度違い A1 | nano_banana_pro(表示は nano_banana_2) | — | job `c5b1d390-46af-48e9-b771-bec1a0696330` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。正面。3:4・2k・2クレジット |
+| 2026-10-14 | 確定顔の角度違い A2 | nano_banana_pro(表示は nano_banana_2) | — | job `80c821b6-dcca-4cc5-9d1c-2e86c48d6658` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。左斜め45度。3:4・2k・2クレジット |
+| 2026-10-14 | 確定顔の角度違い A3 | nano_banana_pro(表示は nano_banana_2) | — | job `4fcc6848-d616-4b0c-9d15-fe3406b747b6` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。右斜め45度。3:4・2k・2クレジット |
+| 2026-10-14 | 確定顔の角度違い A4 | nano_banana_pro(表示は nano_banana_2) | — | job `34b48611-a9c5-4b78-8f05-e9250baaebe8` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。左の真横。3:4・2k・2クレジット |
+| 2026-10-14 | 確定顔の角度違い A5 | nano_banana_pro(表示は nano_banana_2) | — | job `d1603b8d-abef-4ad0-b1d4-344ffaf83d69` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。右の真横。3:4・2k・2クレジット |
+| 2026-10-14 | 確定顔の角度違い A6 | nano_banana_pro(表示は nano_banana_2) | — | job `0cb68d4c-13b9-4412-a624-2a646a0d79eb` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。下から見上げる。3:4・2k・2クレジット |
+| 2026-10-14 | 確定顔の角度違い A7 | nano_banana_pro(表示は nano_banana_2) | — | job `4736cfe0-da5a-4a49-a72a-d3f51297d663` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。上から見下ろす(新聞を読む目線)。3:4・2k・2クレジット |
+| 2026-10-14 | 確定顔の角度違い A8 | nano_banana_pro(表示は nano_banana_2) | — | job `ee8c80d0-f9c1-4b8f-a524-76b233fdbff1` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。斜め後ろから振り返る。3:4・2k・2クレジット |
