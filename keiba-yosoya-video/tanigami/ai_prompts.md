@@ -279,3 +279,5 @@ inconsistent clothing, different hairstyle, glasses (unless reading scene)
 | 2026-10-14 | 確定顔の角度違い A7 | nano_banana_pro(表示は nano_banana_2) | — | job `4736cfe0-da5a-4a49-a72a-d3f51297d663` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。上から見下ろす(新聞を読む目線)。3:4・2k・2クレジット |
 | 2026-10-14 | 確定顔の角度違い A8 | nano_banana_pro(表示は nano_banana_2) | — | job `ee8c80d0-f9c1-4b8f-a524-76b233fdbff1` | 元:確定顔(media `a71d9d49-8fb4-42a7-8d4f-623b1a528725`)。斜め後ろから振り返る。3:4・2k・2クレジット |
 | 2026-10-14 | 試作動画用キーフレーム(喫茶店・柄シャツ) | nano_banana_pro(表示は nano_banana_2) | — | job `f631a787-f081-4f78-ac31-d7a9b5e7a98f` | 参照:A1・A2・A7。9:16・2k。レトロなペイズリー柄の開襟シャツ、昭和の喫茶店、競馬新聞・赤鉛筆・灰皿のタバコ・コーヒー。2クレジット |
+| 2026-10-14 | キーフレーム修正版(灰皿は空) | nano_banana_pro(表示は nano_banana_2) | — | job `4ab75dc6-0705-4764-8bb6-16f724262d58` | 右手に赤鉛筆・左手でタバコを吸う。ユーザーが途中で止めたが送信済みだったため生成された。2クレジット |
+| 2026-10-14 | キーフレーム修正版(吸い殻山盛り) | nano_banana_pro(表示は nano_banana_2) | — | job `fa9f3ae0-ff35-492d-8cad-7a9876fc9f58` | 右手に赤鉛筆・左手でタバコを吸う・灰皿に大量の吸い殻。参照:前キーフレーム+A1。2クレジット |
