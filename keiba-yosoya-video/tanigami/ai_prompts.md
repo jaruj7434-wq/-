@@ -321,3 +321,7 @@ inconsistent clothing, different hairstyle, glasses (unless reading scene)
 | 2026-10-15 | 表情 E5 | nano_banana_pro(表示は nano_banana_2) | — | job `1e6a8bae-f5e2-4cf2-a0a2-2b590d00d097` | 話している途中。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
 | 2026-10-15 | 表情 E6 | nano_banana_pro(表示は nano_banana_2) | — | job `8a66572c-a3df-49db-9b99-353c81220f16` | ガムを噛んでいる。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
 | 2026-10-15 | Soul キャラクター「谷上」学習開始 | show_characters(soul_2) | — | soul_id `bf3b5939-8514-4b3e-9f79-1c81b0fc8c72` | W1〜W12+E1〜E6の18枚(後ろ姿2枚を含む、ユーザー指定)。学習費用25クレジット(取引履歴で確認) |
+| 2026-10-15 | 半生#1 前半A 案1 | soul_2(Soul「谷上」) | — | job `41150956-36ae-46e8-b77b-6d311cc930a2` | 現在の谷上・喫茶店・新聞越しにカメラを見る顔のアップ。9:16 |
+| 2026-10-15 | 半生#1 前半A 案2 | soul_2(Soul「谷上」) | — | job `28302862-684e-42c5-a8f6-52abe8ab2ce8` | 同上 |
+| 2026-10-15 | 半生#1 後半B 案1 | nano_banana_pro(表示は nano_banana_2) | — | job `df6d16e3-3f7b-483a-902a-87cc3789a3d3` | セピア。昭和の茶の間、テレビの光で口元がゆるむ父の横顔シルエットと見上げる少年(後ろ姿)。9:16・2k・2クレジット |
+| 2026-10-15 | 半生#1 後半B 案2 | nano_banana_pro(表示は nano_banana_2) | — | job `49f4830c-9102-4424-8ae9-242b2f5a8343` | 同上 |
