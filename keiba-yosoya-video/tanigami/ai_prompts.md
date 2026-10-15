@@ -314,3 +314,9 @@ inconsistent clothing, different hairstyle, glasses (unless reading scene)
 | 2026-10-15 | 白背景リファレンス W10 | nano_banana_pro(表示は nano_banana_2) | — | job `3d9a2e54-3607-45b5-a00d-209cac65a43d` | 顔アップ・右側面。背景は真っ白のみ。服装O2。全身9:16/顔3:4・2k・2クレジット |
 | 2026-10-15 | 白背景リファレンス W11 | nano_banana_pro(表示は nano_banana_2) | — | job `6a309490-7aeb-43c2-8dcf-f4a4e9ac2e9a` | 顔アップ・左斜め45度。背景は真っ白のみ。服装O2。全身9:16/顔3:4・2k・2クレジット |
 | 2026-10-15 | 白背景リファレンス W12 | nano_banana_pro(表示は nano_banana_2) | — | job `8b1e70f4-796a-4602-b813-50e43d3404ac` | 顔アップ・右斜め45度。背景は真っ白のみ。服装O2。全身9:16/顔3:4・2k・2クレジット |
+| 2026-10-15 | 表情 E1 | nano_banana_pro(表示は nano_banana_2) | — | job `1a84fe0c-d385-4928-8349-7df78724dd3c` | 喜(歯を見せて笑う)。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
+| 2026-10-15 | 表情 E2 | nano_banana_pro(表示は nano_banana_2) | — | job `474b9ac0-693c-4995-b2f3-0bcabc6c497c` | 怒(眉間にシワ・睨む)。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
+| 2026-10-15 | 表情 E3 | nano_banana_pro(表示は nano_banana_2) | — | job `09b37772-e2fa-49f1-8340-78e0d7095340` | 哀(目を伏せる)。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
+| 2026-10-15 | 表情 E4 | nano_banana_pro(表示は nano_banana_2) | — | job `e3070460-41ee-42ee-951a-e6ee05ee9079` | 楽(口の端で笑う)。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
+| 2026-10-15 | 表情 E5 | nano_banana_pro(表示は nano_banana_2) | — | job `1e6a8bae-f5e2-4cf2-a0a2-2b590d00d097` | 話している途中。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
+| 2026-10-15 | 表情 E6 | nano_banana_pro(表示は nano_banana_2) | — | job `8a66572c-a3df-49db-9b99-353c81220f16` | ガムを噛んでいる。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
