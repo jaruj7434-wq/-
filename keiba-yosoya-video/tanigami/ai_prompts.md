@@ -320,3 +320,4 @@ inconsistent clothing, different hairstyle, glasses (unless reading scene)
 | 2026-10-15 | 表情 E4 | nano_banana_pro(表示は nano_banana_2) | — | job `e3070460-41ee-42ee-951a-e6ee05ee9079` | 楽(口の端で笑う)。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
 | 2026-10-15 | 表情 E5 | nano_banana_pro(表示は nano_banana_2) | — | job `1e6a8bae-f5e2-4cf2-a0a2-2b590d00d097` | 話している途中。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
 | 2026-10-15 | 表情 E6 | nano_banana_pro(表示は nano_banana_2) | — | job `8a66572c-a3df-49db-9b99-353c81220f16` | ガムを噛んでいる。白背景・顔アップ3:4・2k。Soul学習用。2クレジット |
+| 2026-10-15 | Soul キャラクター「谷上」学習開始 | show_characters(soul_2) | — | soul_id `bf3b5939-8514-4b3e-9f79-1c81b0fc8c72` | W1〜W12+E1〜E6の18枚(後ろ姿2枚を含む、ユーザー指定) |
