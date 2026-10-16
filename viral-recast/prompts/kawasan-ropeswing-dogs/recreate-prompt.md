@@ -44,4 +44,4 @@ Natural daylight, realistic water physics, slight handheld shake, authentic trav
 
 ## 生成 #2(2026-10-16)
 - 上記プロンプトそのまま / seedance_2_5 omni_reference / 19秒 / 9:16 / 480p / 音声あり / 57 クレジット
-- job_id: `c2a20817-0593-436f-b39e-a0243d7860db`
+- job_id: `c2a20817-0593-436f-b39e-a0243d7860db`(完了・品質未確認)
