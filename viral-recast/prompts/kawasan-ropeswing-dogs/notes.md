@@ -19,3 +19,10 @@
 | 3 | 黄色ヘルメットの仲間 | フレンチブルドッグ | 1d558d6d-96d8-40fe-97a7-374fc794e689 |
 | 4 | 蛍光グリーンのガイド | ボーダーコリー(紫ヘルメット) | af7c22c1-3d1a-4e54-8292-85af2c7fc102 |
 | 5 | その他の仲間 | コーギー | 1ae44d8d-5899-4877-a658-75aa1b140b91 |
+
+## 生成 #1(2026-10-16)
+- 動画: 19秒版 `9698992d-d20a-4bfa-b78e-3e1997ac96c3` / 480p / 60 クレジット
+- 参照: @Image1〜@Image5 = 上表 #1〜#5 の順
+- job_id: `d09d64b5-c5aa-4a59-b60a-2bdb05797186`
+- プロンプト:
+  > Replace every person in the video with a realistic dog, keeping the original motion, camera movement, timing, background, waterfall and water exactly the same. The person who swings on the rope first (dark top, blue shorts) becomes the Shiba Inu from @Image1. The person who swings second (white T-shirt, patterned shorts) becomes the Golden Retriever from @Image2. The friend in the yellow helmet becomes the French Bulldog from @Image3. The guide in the neon yellow-green vest and lavender helmet becomes the Border Collie from @Image4. All other people on the ledge become the Corgi from @Image5. Every dog keeps wearing its helmet and life vest. No human remains visible anywhere in the video.
