@@ -41,3 +41,7 @@ All characters are real dogs, never humans: realistic dog heads, dog faces, muzz
 
 Natural daylight, realistic water physics, slight handheld shake, authentic travel-vlog look, sound of the waterfall, rushing water, excited dog barks.
 ```
+
+## 生成 #2(2026-10-16)
+- 上記プロンプトそのまま / seedance_2_5 omni_reference / 19秒 / 9:16 / 480p / 音声あり / 57 クレジット
+- job_id: `c2a20817-0593-436f-b39e-a0243d7860db`
