@@ -23,6 +23,6 @@
 ## 生成 #1(2026-10-16)
 - 動画: 19秒版 `9698992d-d20a-4bfa-b78e-3e1997ac96c3` / 480p / 60 クレジット
 - 参照: @Image1〜@Image5 = 上表 #1〜#5 の順
-- job_id: `d09d64b5-c5aa-4a59-b60a-2bdb05797186`
+- job_id: `d09d64b5-c5aa-4a59-b60a-2bdb05797186`(完了・品質未確認)
 - プロンプト:
   > Replace every person in the video with a realistic dog, keeping the original motion, camera movement, timing, background, waterfall and water exactly the same. The person who swings on the rope first (dark top, blue shorts) becomes the Shiba Inu from @Image1. The person who swings second (white T-shirt, patterned shorts) becomes the Golden Retriever from @Image2. The friend in the yellow helmet becomes the French Bulldog from @Image3. The guide in the neon yellow-green vest and lavender helmet becomes the Border Collie from @Image4. All other people on the ledge become the Corgi from @Image5. Every dog keeps wearing its helmet and life vest. No human remains visible anywhere in the video.
