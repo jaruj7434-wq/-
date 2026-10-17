@@ -96,3 +96,18 @@ A Japanese man aged 50 with light warm skin and natural fine wrinkles, round fri
 ```
 A Japanese man aged 29 with fair neutral skin, slim oval face with a defined jaw, thoughtful dark eyes behind thin black rectangular glasses, natural dark eyebrows, short black hair with a pronounced M-shaped receding hairline — deep bare temples on both sides with a small tuft remaining at the front center, slightly thin on top, clean-shaven, slim lanky build. Wearing a heather-gray hoodie over a white T-shirt, black slim jeans, gray running sneakers, a black smartwatch, no bag.
 ```
+
+## 生成結果(2026-10-17、gpt_image_2_5 / high / 2k / 16:9)
+
+| # | 名前 | job_id |
+|---|---|---|
+| W1 | さくら | 98d9e778-07bd-4d67-8b29-9a81e44d0a17 |
+| W2 | ひなた | bec1f6ea-2269-4d84-ba6c-a98b4d97e398 |
+| W3 | 美月 | 5334f596-9395-424e-9268-16dd5533eaac |
+| W4 | 玲奈 | 94c0569a-2236-44f3-b519-829bdc7c48c1 |
+| W5 | 梨花 | 5d0dcfe5-9d5d-48b5-8dc5-f3ae04544ee6 |
+| M1 | 光 | 81ce7a7b-3acd-41fd-b8c9-b5702bebef27 |
+| M2 | 毛利 | 3ed19639-06bc-4c7a-8e72-7e1a18b0f025 |
+| M3 | 剛 | 3ddd46ab-ca5c-40ea-bc93-fcc0f185a085 |
+| M4 | 晴彦 | dd804a87-1ffd-4918-9cb8-a67dd5fa9842 |
+| M5 | 拓海 | cb446c3f-300c-4641-9b5d-ba0790fa93bf |
