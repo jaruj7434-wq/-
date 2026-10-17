@@ -1,18 +1,16 @@
-# ハゲの村 〜Hage Village〜 台本(第2稿)
+# ハゲの村 〜Hage Village〜 台本(第3稿)
 
-恋愛ドキュメンタリー予告編(『あいの里』系)のオマージュ。
-薄毛の大人たちだけが暮らす山奥の「ハゲの村」で、本気の恋が始まる。
+恋愛リアリティーショーの予告編(『あいの里』系)のオマージュ。
+山奥の村で共同生活を送る**可愛い女性たち**と**ハゲの男性たち**が、本気の純愛を育んでいく。
 
 ## コンセプト
 
-- 演出はどこまでも本家どおり**静かでエモく、真剣**に。中身はハゲネタ全開。
-- 笑いの軸は3つ。
-  1. **真顔のギャップ**: 感動的な演出で、頭の反射・風・抜け毛など頭の話しかしない
-  2. **村のルール**: 「髪がないのが当たり前」の村なので、髪がある方が異常事態
-  3. **最後のどんでん返し**: 村全体が輝いてタイトル『ハゲの村』。さらにオチで「生えた者は追放」
-- ハゲ本人たちが誇りを持って生きている村として描く。笑いは「真剣すぎる本人たち」に向け、
-  見下す視点にはしない。
-- 出演者はすべて AI 生成の架空の人物。実在の番組名・ロゴ・出演者には似せない。
+- 前提はあくまで**恋愛リアリティーショー**。映像・演出・展開は王道の純愛で、
+  出会い → デート → ライバル → 告白 という流れをまっすぐ描く。
+- 笑いは**セリフだけ**で取る。ロマンチックな場面で交わされる言葉が、すべてハゲネタになっている。
+- 女性たちはハゲを笑わず、心から好きになっていく。男性たちも誇りを持っている。
+  「ハゲが真剣に愛される」ことで、笑えて少し泣ける純愛にする。
+- 出演者はすべて AI 生成の架空の人物(全員成人)。実在の番組名・ロゴ・出演者には似せない。
 
 ## 基本仕様
 
@@ -21,59 +19,72 @@
 | 尺 | 約62秒 |
 | 形式 | 縦型 9:16 |
 | カット数 | 13 |
-| トーン | ピアノ+ストリングスのしっとりBGM、柔らかい自然光、浅い被写界深度 |
-| 字幕 | 白の明朝体、画面下部。本家風の控えめなテロップ |
-| 効果音 | 頭が光る瞬間に「キラーン」、雨粒が頭に当たる「ピチョン」など控えめに |
+| トーン | 爽やかなピアノ+アコースティックギターの恋愛BGM、柔らかい自然光、浅い被写界深度、淡いパステル寄りの色調 |
+| 字幕 | 白の丸ゴシック、画面下部。リアリティーショー風の控えめなテロップ |
+| 効果音 | 頭が光る瞬間に小さく「キラッ」程度。演出はあくまで真面目に |
 
-## 登場人物(すべて架空)
+## 登場人物(すべて架空・全員成人)
+
+### 女性
 
 | 名前 | 年齢 | 設定 | 見た目 |
 |---|---|---|---|
-| 光男(みつお) | 54 | 入村したばかり。20年間帽子で隠してきた | 頭頂部が完全につるつる、サイドに少し髪。優しい目、無精ひげ |
-| 毛利 進(もうり すすむ) | 58 | 村で唯一のバーコード。残りの髪を命がけで守っている | 大柄。薄い髪を横から丁寧になでつけている |
-| 村長・照男(てるお) | 72 | 村の精神的支柱。誰よりも輝く | 完全なスキンヘッド、長い白ひげ、作務衣 |
-| 美雪(みゆき) | 49 | 村に花を届けに来た花屋。光男に惹かれていく | 肩までの黒髪、ナチュラルメイク、ベージュのニット |
-| 佳代子(かよこ) | 52 | 村の食堂の料理人。毛利のよき理解者 | ショートボブ、エプロン姿 |
+| さくら | 24 | 保育士。素直で涙もろい | 胸元までの明るい茶髪、ふんわりした笑顔、白いニット |
+| ひなた | 23 | カフェ店員。明るく天真爛漫 | ポニーテール、そばかす、黄色いカーディガン |
+
+### 男性
+
+| 名前 | 年齢 | 設定 | 見た目 |
+|---|---|---|---|
+| 光(ひかる) | 32 | 若ハゲ。22歳で全部抜けた。誠実で優しい | 完全なスキンヘッド、整った顔立ち、白いTシャツにデニムジャケット |
+| 毛利 進(もうり すすむ) | 45 | 残り少ない髪を横から流すバーコード。まだ諦めていない | がっしり体型、丁寧になでつけた薄い髪、チェックシャツ |
+
+### その他
+
+| 名前 | 役割 | 見た目 |
+|---|---|---|
+| スタジオ・コメンテーター | 映像を見守るMC役。真顔で名言を言う | 濃いサングラス、黒いジャケット |
 
 ## カット表
 
 | # | 秒 | シーン | 映像 | セリフ / テロップ |
 |---|---|---|---|---|
-| 1 | 0–4 | オープニング空撮 | 朝の富士山麓。ドローンが畑の上を進むと、畑のあちこちで小さな光がキラキラ反射している。寄ると、農作業でかがんでいる村人たちの頭 | テロップ「その村には、髪がなかった。」 |
-| 2 | 4–8 | 入村審査 | 木造の門の前。村長が懐中電灯で光男の頭を真剣に照らし、反射を確かめてから深くうなずく | 村長「…合格じゃ」 |
-| 3 | 8–13 | 焚き火 | 夜、焚き火の前で寄り添う光男と美雪。美雪がそっと光男の頭に手をかざして温まる。煙越しのスローモーション | 美雪(ささやき)「…あなたの頭、あったかい」 |
-| 4 | 13–17 | 告白インタビュー(光男) | 薄暗い木造の部屋で椅子に座る光男。天井のランプが頭頂部に反射してきらりと光る | 光男「この村に来て…初めて、風が直接来るのを怖くないと思えました」 |
-| 5 | 17–21 | 突風 | 屋外ウッドデッキでの食事中、突風が吹く。毛利のバーコードの髪が根元から持ち上がり、旗のようにはためく。全員がスローモーションで振り向く | (セリフなし。ストリングスが最高潮に) |
-| 6 | 21–26 | 事件 | 食堂。佳代子が配ったうどんの中に、1本の髪の毛。全員が凍りつき、ゆっくりと顔を見合わせる | 村長「この村に…髪の毛が、あるはずがない」 |
-| 7 | 26–30 | 告白インタビュー(毛利) | 夜、毛利がピンセットと虫眼鏡で、自分の頭の髪を1本ずつ数えている。目に涙 | 毛利「…昨日より、1本少ない」 |
-| 8 | 30–35 | キス未遂 | 夕暮れ、光男と美雪が見つめ合い、顔が近づく。美雪の目線が光男の頭に移り、頭を鏡代わりにして口紅を直す | 美雪「…ちょっと待って」光男、静かに目を閉じて待つ |
-| 9 | 35–39 | スタジオ | 「Hage Village」と書かれたスタジオセット。サングラスの男性コメンテーターが真顔で映像を見ている | コメンテーター「…これは、反射ですね」 |
-| 10 | 39–45 | 山場 | 小雨の草原。雨粒が光男の頭で弾ける。風で帽子が飛び、光男が追う。美雪が先に拾い、返さずに胸に抱える | 美雪「…もう、隠さなくていいよ」光男、泣き崩れる。2人がハグ |
-| 11 | 45–50 | 富士山 | 夕暮れ、富士山を見つめる2人の後ろ姿。光男の頭と富士山の雪の頂が同じ高さに並び、夕日で両方が光る | テロップ「ふたつの頂」 |
-| 12 | 50–56 | タイトル(どんでん返し) | 夕日の広場に村人全員が整列。村長の合図で一斉に帽子を取ると、全員の頭が夕日を反射し、まぶしさで画面が真っ白に。光が収まるとキラキラの粒子が集まりタイトルが現れる | 「ハゲの村 〜Hage Village〜」/「この秋、全村が照らされた。」 |
-| 13 | 56–62 | ポストクレジットのオチ | 早朝の洗面所。毛利が鏡を見て、口を押さえて震える。背後の扉が開き、村長が無言で立っている | 毛利「…3本、生えてる」村長(静かに)「…出て行ってもらう」 テロップ「10月6日(火)独占反射スタート」 |
+| 1 | 0–4 | オープニング | 富士山麓の草原と木造の家を空撮。村の入口に「Hage Village」の木製看板 | テロップ「髪がなくても、恋はできるのか。」 |
+| 2 | 4–9 | 出会い | 村の入口でスーツケースを持ったさくらが、出迎えた光と向かい合う。逆光で光の頭が輝く | さくら「はじめまして…なんか、まぶしいですね」 光「よく言われます。…主に太陽に」 |
+| 3 | 9–13 | 告白インタビュー(さくら) | 木造の部屋で椅子に座り、頬を赤らめるさくら | さくら「第一印象は…頭に、私の顔が映ってたんです。運命だと思いました」 |
+| 4 | 13–18 | 初デート・星空 | 夜、丘の上で並んで座り星空を見上げる光とさくら | さくら「星、きれい…」 光「うん。…僕の頭にも映ってるでしょ」 さくら(覗き込んで)「…ほんとだ。2倍きれい」 |
+| 5 | 18–22 | 共同生活・食卓 | 全員でのにぎやかな食卓。ひなたが毛利の隣に座り、笑い合う | ひなた「毛利さんの髪、いつも7:3でキマってますね!」 毛利「…正確には、9.5:0.5なんだ」 |
+| 6 | 22–27 | 告白インタビュー(毛利) | 薄暗い部屋で、毛利が拳を握りしめて語る | 毛利「光はもう悟ってる。でも俺は…まだ戦ってるんです」 |
+| 7 | 27–32 | プレゼント | 夕暮れのベンチ。ひなたがリボン付きの箱を渡し、毛利が開けると育毛剤。毛利、涙ぐむ | 毛利「…俺の未来を考えてくれた人、初めてだ」 ひなた「一緒に、育てましょう」 |
+| 8 | 32–36 | スタジオ | 「Hage Village」のスタジオセット。サングラスのコメンテーターが真顔でモニターを見つめる | コメンテーター「帽子を取れるかどうか。…それが、男です」 |
+| 9 | 36–41 | すれ違い | 雨の日、帽子を深くかぶって縁側に座る光。さくらが隣に座り、そっと帽子を取る | さくら「隠さないで。…あなたの頭、雨の日でも明るいから好き」 |
+| 10 | 41–46 | 告白(毛利) | 夕日の草原。毛利がひなたの前で告白しようとした瞬間、突風でバーコードが全部めくれ上がる | 毛利「最後の1本まで、君を守…」(髪がめくれる) ひなた(笑顔で涙)「…やっと、全部見せてくれましたね」 |
+| 11 | 46–52 | 告白(光) | 富士山の見える丘。光がさくらに手を差し出す。夕日で頭が輝き、さくらの顔を照らす | 光「僕には髪はない。でも、君の未来を照らすことはできる」 さくら「…はい。一生、照らしてください」 |
+| 12 | 52–57 | 成立 | さくらが背伸びして、光の頭のてっぺんにそっとキス。2人の後ろ姿と、富士山の頂が並んで夕日に光る | テロップ「ふたつの頂」 |
+| 13 | 57–62 | タイトル | キラキラの粒子が集まり、タイトルが現れる | 「ハゲの村 〜Hage Village〜」/「髪はなくても、愛はある。」/「10月6日(火)独占反射スタート」 |
 
 ## 生成用プロンプト案(英語)
 
-人物の一貫性のため、先に5人のキャラクター参照画像を作って Elements に登録し、
-各カットで参照する想定。
+人物の一貫性のため、先に4人(さくら・ひなた・光・毛利)とコメンテーターの参照画像を作って
+Elements に登録し、各カットで参照する想定。女性は全員「20代半ばの成人女性」として指定する。
 
-- **Cut 1**: Cinematic aerial drone shot over farm fields at the foot of Mount Fuji in the morning. Dozens of small bright glints sparkle across the fields; the drone moves closer to reveal they are the shiny bald heads of villagers bending over to work. Documentary style, 9:16 vertical.
-- **Cut 2**: In front of a rustic wooden village gate, an elderly Japanese village chief in his 70s with a completely shaved head, long white beard and samue robe shines a flashlight onto the bald head of a Japanese man in his 50s, inspecting the reflection with utmost seriousness, then nods solemnly.
-- **Cut 3**: Night, a bald Japanese man in his 50s sits close to a Japanese woman in her late 40s by a campfire. She gently holds her hands over the top of his bald head as if warming them, with a tender expression. Firelight glows on his head, smoke drifts across the lens, slow motion, intimate reality-show documentary style.
-- **Cut 4**: Confessional interview shot. The same bald man sits alone on a wooden chair in a dimly lit rustic cabin, warm lamp behind him making a glint on top of his head. He speaks earnestly to the camera with an emotional expression. Static camera.
-- **Cut 5**: Outdoor wooden deck, a group of bald Japanese adults eating at a long table. A sudden gust of wind lifts a large man's long comb-over hair straight up from its roots, flapping like a flag. Everyone turns to look in dramatic slow motion.
-- **Cut 6**: Rustic village dining hall. A woman in an apron serves bowls of udon to bald villagers. One villager discovers a single hair in his noodles; everyone freezes and slowly exchanges suspicious, shocked glances. Tense dramatic lighting.
-- **Cut 7**: Night, confessional style. A large Japanese man in his late 50s with a thin comb-over counts his remaining hairs one by one with tweezers and a magnifying glass, tears welling in his eyes. Warm desk lamp.
-- **Cut 8**: Golden hour. A bald man and a woman gaze at each other and lean in for a kiss. Midway, she glances at his shiny head and uses it as a mirror to touch up her lipstick, while he waits with eyes closed. Romantic soft focus.
-- **Cut 9**: Bright TV studio set with large decorative letters and plants. A man in dark sunglasses watches a monitor with a completely serious, analytical expression and makes a comment.
-- **Cut 10**: Light rain on a grassy field, raindrops bouncing off a bald man's head. Wind blows his cap away; he chases it desperately. A woman picks it up first and holds it to her chest instead of returning it. He breaks down in tears and they embrace. Emotional slow motion.
-- **Cut 11**: Sunset, a man and a woman seen from behind, gazing at Mount Fuji. The man's bald head aligns perfectly with the snowy summit of Mount Fuji in the frame, both glowing in the evening sun. Wide cinematic shot.
-- **Cut 12**: Sunset village square, dozens of villagers lined up in rows wearing caps. On the chief's signal they all remove their caps at once; their bald heads reflect the sunset so intensely that the screen flares to pure white, then golden glittering particles swirl into a title reveal.(タイトル文字は後から編集で合成する)
-- **Cut 13**: Early morning bathroom. A large Japanese man in his late 50s stares into the mirror, covers his mouth and trembles in shock. Behind him the door slowly opens and an elderly bald village chief with a long white beard stands silently, expressionless.
+- **Cut 1**: Cinematic aerial drone shot over a grassy highland at the foot of Mount Fuji, a cozy wooden house and a rustic wooden village entrance sign. Bright morning, soft pastel color grading, romantic reality-show style, 9:16 vertical.
+- **Cut 2**: At a rustic village entrance, a cute Japanese woman in her mid-20s with long light-brown hair and a white knit sweater, holding a suitcase, meets a handsome Japanese man in his early 30s with a completely shaved bald head, white T-shirt and denim jacket. Backlit sunlight makes his head glow. They smile shyly at each other. Romantic reality-show style.
+- **Cut 3**: Confessional interview. The same young woman sits on a wooden chair in a warm cabin room, blushing and smiling shyly as she talks to the camera. Soft lighting, static camera.
+- **Cut 4**: Night on a hilltop, the young woman and the bald man sit side by side gazing at a starry sky. She leans over to look at the top of his head, where the stars are reflected, and smiles in delight. Dreamy, romantic.
+- **Cut 5**: Lively shared dinner at a long wooden table in a cozy cabin. A cheerful Japanese woman in her early-to-mid 20s with a ponytail, freckles and a yellow cardigan sits next to a sturdy Japanese man in his mid-40s with a thin carefully combed-over hairstyle and a checked shirt; they laugh together. Warm lighting.
+- **Cut 6**: Confessional interview. The sturdy man with the comb-over sits in a dim cabin room, clenching his fist with determination as he speaks earnestly to the camera.
+- **Cut 7**: Sunset on a wooden bench. The ponytail woman hands the comb-over man a gift box with a ribbon; he opens it to find a bottle of hair tonic and his eyes fill with tears as she smiles warmly at him.
+- **Cut 8**: Bright TV studio set with large decorative letters and plants. A man in dark sunglasses and a black jacket watches a monitor with a completely serious expression and makes a solemn comment.
+- **Cut 9**: Rainy day, the bald man sits on a wooden veranda wearing a cap pulled down low, looking down. The long-haired young woman sits beside him and gently lifts the cap off his head, smiling tenderly. Soft melancholic light turning warm.
+- **Cut 10**: Golden hour on a grassy field. The comb-over man stands facing the ponytail woman, about to confess his love, when a sudden gust of wind lifts his entire comb-over straight up. She laughs with tears in her eyes, moved. Slow motion.
+- **Cut 11**: A hill overlooking Mount Fuji at sunset. The bald man offers his hand to the long-haired young woman; the sunset reflects off his head and lights up her face. She takes his hand, tearful and smiling. Cinematic, romantic.
+- **Cut 12**: Sunset, the young woman stands on tiptoe and gently kisses the top of the bald man's head. Then a wide shot from behind: the couple and the snowy summit of Mount Fuji side by side, his head and the summit both glowing in the evening sun.
+- **Cut 13**: Pastel background, glittering golden and pink particles swirl and gather into an elegant romantic title card reveal.(タイトル文字は後から編集で合成する)
 
 ## メモ
 
 - 日本語のセリフ・テロップは、生成後に字幕(`subtitles` ワークフロー)か編集で入れる想定。
+  セリフを口パクで話させる場合は、音声付き動画モデルの利用を別途検討する。
 - 生成は、ワークフロー確認 → キャラクター参照画像 → 各カット動画の順で行い、
   **各段階で内容とコストを提示して許可を得てから**実行する。
