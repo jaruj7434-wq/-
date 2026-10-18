@@ -17,3 +17,7 @@ Japanese romance reality-show documentary, vertical 9:16, 18 seconds. Outdoors a
 
 Audio: soft sad solo piano, quiet crackling fire, only the Japanese lines above.
 ```
+
+## 生成記録
+
+- 2026-10-18 720p で生成(126 クレジット)。job_id `e138133d-e143-4ee0-bc2e-92a3e21f4753`
