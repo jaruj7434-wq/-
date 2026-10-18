@@ -65,3 +65,7 @@ Shot 9 (13-15s): Close-up of HARUHIKO crying, both hands pressed against his che
 
 Audio: upbeat acoustic guitar from shot 2 to shot 6, then fading into quiet melancholic piano from shot 7; natural ambient sounds (laughter, sawing, clinking glasses); Japanese dialogue only as written above.
 ```
+
+## 生成記録
+
+- 冒頭画像(門を開ける4人): job_id `2def1ca2-e59d-4c45-b550-c8221d8a17a0`(gpt_image_2 / high / 2k / 9:16、2026-10-18)
