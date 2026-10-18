@@ -30,3 +30,7 @@
 |---|---|
 | 涙ぐんで話す女性(左、カメラ向き) | 毛利(バーコード) |
 | 聞いて語りかける男性(右手前) | ひなた |
+
+## 生成記録
+
+- 開始シーン画像(カット1): `gpt_image_2` / high / 2k / 9:16、Elements `hage-mouri`・`hage-hinata` 参照。job_id `f0a9dabf-c438-4dbd-aab9-ed4eec5cf7b0`(2026-10-18)
