@@ -34,3 +34,4 @@
 ## 生成記録
 
 - 開始シーン画像(カット1): `gpt_image_2` / high / 2k / 9:16、Elements `hage-mouri`・`hage-hinata` 参照。job_id `f0a9dabf-c438-4dbd-aab9-ed4eec5cf7b0`(2026-10-18)
+- 開始シーン画像 リテイク(ベンチに並んで座り、ひなたは体が正面・顔だけ毛利へ): job_id `fa5c07a2-b5af-4273-b3ed-330867688c05`(2026-10-18)
