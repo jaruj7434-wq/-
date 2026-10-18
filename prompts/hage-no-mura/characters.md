@@ -111,3 +111,12 @@ A Japanese man aged 29 with fair neutral skin, slim oval face with a defined jaw
 | M3 | 剛 | 3ddd46ab-ca5c-40ea-bc93-fcc0f185a085 |
 | M4 | 晴彦 | dd804a87-1ffd-4918-9cb8-a67dd5fa9842 |
 | M5 | 拓海 | cb446c3f-300c-4641-9b5d-ba0790fa93bf |
+
+## 主人公(唯一のフサフサ男性)
+
+| 名前 | 設定 | ソース |
+|---|---|---|
+| 慶太(けいた) | 予告編で一番映る主人公。ハゲの村で唯一、髪がフサフサの男性 | Higgsfield 登録済み。Element `f6c17cc9-ae3d-4123-a642-79d2882414bd` / Soul `dc8dd4bc-7e3c-4058-977b-d239a2b1fb40` |
+
+- 見た目: 黒髪のボリュームあるセンターパート、縁なし眼鏡。白オックスフォードシャツ+ネイビーニット肩掛け、ベージュチノパン、白レザースニーカー
+- キャラクターシート: `gpt_image_2` / high / 2k / 16:9、Element 参照。job_id `38677a4b-ada6-43d0-889d-eb3407ec222f`(2026-10-18)
