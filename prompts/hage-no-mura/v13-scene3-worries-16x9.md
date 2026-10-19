@@ -107,7 +107,7 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen film-traile
 
 ## 差し替え:カット7 を光×さくらに変更(2026-10-19)
 
-毛利・ひなたの出演回数が多いため、まだセリフのない光(左右:右)×さくら(左)に交代。
+毛利・ひなたの出演回数が多いため、まだセリフのない光(右)×さくら(左)に交代。
 セリフ: 光「みんなじゃなくて二人きりで育毛剤を塗り合いたいなと思って」
 
 - 開始画像(gpt_image_2 / high / 2k / 16:9、Elements hage-sakura・hage-hikaru): `602ad236-15e7-4945-841d-4c9961091979`
