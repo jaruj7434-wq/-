@@ -35,3 +35,7 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen film-traile
 
 Audio: soft sad solo piano, quiet crackling fire, only the Japanese lines above.
 ```
+
+## 生成記録
+
+- 2026-10-19 生成(720p・16:9・16秒・112 クレジット)。job_id `162c5cc6-a82c-42ef-acfe-7568fdd7e5af`
