@@ -43,3 +43,12 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds,
 ```
 Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds, single continuous slightly high-angle medium shot. Continue from the first frame: in a bright farmhouse room with light wooden floors, HARUHIKO (bald crown, gray hair on the sides, navy samue), TAKUMI (M-shaped receding hairline, glasses, gray hoodie), REINA (ash-brown bob, lavender knit vest) and RIKA (round glasses, sage-green knit dress) carry a very large full-length mirror in a wooden frame together, walking in step and chanting in rhythm in Japanese: 「えっほ、えっほ、えっほ」 Keep faces and outfits as in the reference images; each person appears only once. Focused but happy, documentary realism, no other people, no text. Audio: their rhythmic chant, footsteps on wooden floor, upbeat acoustic guitar music.
 ```
+
+## 生成記録(2026-10-19、各 720p・16:9・4秒、合計 112 クレジット)
+
+| カット | job_id |
+|---|---|
+| 門 | `61778987-d791-456b-9e78-3d309abb837d` |
+| 乾杯 | `2be5aed7-5242-4ec5-afdb-633c022e77da` |
+| A1 頭を磨く | `aa45f2d4-0327-4538-bd6a-ce662c254042` |
+| B2 姿見を運ぶ | `7993407d-a768-4120-845c-532f96101220` |
