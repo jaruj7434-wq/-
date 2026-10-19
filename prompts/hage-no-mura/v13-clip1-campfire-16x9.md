@@ -34,3 +34,7 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen film-traile
 
 Audio: soft sad solo piano, quiet crackling fire, only HINATA's two Japanese lines above. MOURI does not speak.
 ```
+
+## 生成記録
+
+- 2026-10-19 生成(720p・16:9・9秒・63 クレジット)。job_id `b37269da-6de6-44f6-8c8d-b52189251788`
