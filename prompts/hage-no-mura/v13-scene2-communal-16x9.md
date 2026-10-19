@@ -19,3 +19,27 @@ A1(美月・剛)と B2(晴彦・拓海・玲奈・梨花)は人物が重なら�
 | 乾杯 | `9d84ae47-b75e-40f5-9d62-cf268e373b38` |
 | A1 頭を磨く | `98e99029-6596-4c34-8799-6fd8c0920b02` |
 | B2 姿見を運ぶ | `818c5b2f-de91-48bd-8c80-e2af6d219d03` |
+
+## 動画プロンプト(各4秒・編集で約2秒に切り詰め)
+
+共通設定: `seedance_2_5` / omni_reference / 4秒 / 16:9 / 720p / 音声あり。各 28 クレジット × 4 = 112 クレジット
+
+### 1. 門(start_image `79bfabfa-…`、参照: さくら・ひなた・玲奈・梨花のシート)
+```
+Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds, single continuous shot. Continue from the first frame: low-angle wide shot of four young Japanese women pushing open a massive rustic wooden village gate with carved animal silhouettes on the arch, under a vivid blue sky, red barn on the right. Keep faces and outfits as in the reference images. They shout together cheerfully in Japanese: 「せーの!」 and the heavy gate doors swing open as they lean into them. Bright sunlight, natural documentary realism, no other people, no text. Audio: the women's shout, creaking wooden gate, upbeat acoustic guitar music starting.
+```
+
+### 2. 乾杯(start_image `9d84ae47-…`、参照: 光・毛利・拓海・さくら・ひなた・玲奈のシート)
+```
+Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds, single continuous handheld shot. Continue from the first frame: in a rustic farmhouse kitchen with green cabinets, six people lean over a wooden kitchen island and clink their glasses together in the center, laughing. The three bald men in the foreground and three young women facing the camera keep their faces and outfits as in the reference images; each person appears only once. They all shout together in Japanese: 「かんぱーい!」 Sunlight from the windows glints on the men's scalps. Natural documentary realism, no other people, no text. Audio: everyone's cheer, clinking glasses, laughter, upbeat acoustic guitar music.
+```
+
+### 3. A1 頭を磨く(start_image `98e99029-…`、参照: 美月・剛のシート)
+```
+Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds, single continuous medium close-up. Continue from the first frame: under a rustic wooden patio, GOU (muscular bald Japanese man with a short black beard, navy henley, purple work gloves) bends over a wooden workbench with his shaved head lowered, and MITSUKI (young woman with long straight black hair, red work gloves) carefully polishes the top of his bald head with a soft cloth in circular motions, like polishing wood. Keep faces and outfits as in the reference images. She leans in to check the shine, sees her reflection, and says brightly in Japanese: 「…ピカピカ!」 They both burst out laughing. Natural daylight, green field and white fence in the background, documentary realism, only these two people, no text. Audio: soft rubbing sound, her line, their laughter, upbeat acoustic guitar music.
+```
+
+### 4. B2 姿見を運ぶ(start_image `818c5b2f-…`、参照: 晴彦・拓海・玲奈・梨花のシート)
+```
+Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds, single continuous slightly high-angle medium shot. Continue from the first frame: in a bright farmhouse room with light wooden floors, HARUHIKO (bald crown, gray hair on the sides, navy samue), TAKUMI (M-shaped receding hairline, glasses, gray hoodie), REINA (ash-brown bob, lavender knit vest) and RIKA (round glasses, sage-green knit dress) carry a very large full-length mirror in a wooden frame together, walking in step and chanting in rhythm in Japanese: 「えっほ、えっほ、えっほ」 Keep faces and outfits as in the reference images; each person appears only once. Focused but happy, documentary realism, no other people, no text. Audio: their rhythmic chant, footsteps on wooden floor, upbeat acoustic guitar music.
+```
