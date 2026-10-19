@@ -112,3 +112,4 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen film-traile
 
 - 開始画像(gpt_image_2 / high / 2k / 16:9、Elements hage-sakura・hage-hikaru): `602ad236-15e7-4945-841d-4c9961091979`
 - 旧カット7の動画 `e6dea12c-…` は不採用
+- 動画(5秒・720p・35 クレジット、参照: 光・さくらのシート): `623b4176-9f92-4d2d-9015-45fc07d0c5c2`
