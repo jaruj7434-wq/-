@@ -22,3 +22,7 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen film-traile
 ```
 
 (以降のショット指示・セリフ・音声は 9:16 版と同じ)
+
+## 生成記録
+
+- 開始画像 16:9(毛利が最初から泣いている): job_id `fd3f385e-2cc7-4a71-a603-a99570800bab`(2026-10-19)
