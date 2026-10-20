@@ -118,3 +118,4 @@ Visible fine skin texture with natural pores, subtle asymmetries, no digital smo
 | 彼女(ギャル・ボタン留め) | 94e9c860-dedb-49a6-8527-94a9c281e48b | Higgsfield 側で NSFW 判定され生成されず |
 | 彼氏(普段・学ラン) | 7c181b10-b946-43cb-9172-a6a6eefe47a8 | 完成 |
 | 彼氏(覚醒後・学ラン) | 72d43bb4-448b-4319-9c39-bf316cd1223b | 完成(上半身は裸にせず、学ランが裂ける表現に変更) |
+| 彼氏(覚醒後・上半身裸) | 76af9032-fa59-4990-bcd4-d39ba94667f1 | Higgsfield 側で NSFW 判定され生成されず |
