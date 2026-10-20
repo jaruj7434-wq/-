@@ -64,3 +64,13 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds,
 - job_id: `8bb31b06-ffeb-4dac-a18f-917a925005b0`(6.5 クレジット)
 - 開始画像 `8bb31b06-…` をユーザーが承認
 - 動画(5秒・720p・35 クレジット、参照: 登録写真+キャラクターシート、参考の動きを詳細指定): `079ea7f9-bc1c-43e6-9c3d-e9c1b618a028`
+
+## 鐘の効果音(2026-10-20)
+
+Seedance の生成音では激しい鐘の連打が再現できなかったため、鐘の音だけを別に作成。
+Higgsfield には単体の効果音生成モデルがない(音声生成は読み上げ専用)ため、参考動画の音を解析し、
+`scripts/bell_sfx.py`(numpy のみ)でローカル合成した。クレジット消費なし。
+
+- 解析値: 打撃 約3回/秒、間隔 0.13〜0.55 秒の不規則な連打、倍音 約 560 / 930 / 1420 / 2210 / 3170 Hz
+- 出力: `assets/output/audio/bell_frantic_5s.wav`(動画に合わせた5秒)、`bell_frantic_8s.wav`(予備の8秒)※ git 管理外
+- 再生成: `python3 scripts/bell_sfx.py <出力.wav> <秒数> [seed]`(seed を変えると連打のパターンが変わる)
