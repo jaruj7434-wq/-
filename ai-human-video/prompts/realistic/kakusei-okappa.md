@@ -11,7 +11,8 @@
 - 構成は「幸せな日常 → 絡まれる → 屈辱(メガネが落ちる)→ 静寂 → 覚醒 → 一瞬で制圧 → 何事もなかったように戻る」。
 - 覚醒の直前に音を抜く(心臓の音だけ)。そこから一気に爆発させる。
 - 格闘は血を見せない、スタイリッシュな映画的アクション。スピードランプ(スロー ↔ 等速)で見せる。
-- オチは、メガネをかけ直して元のおとなしい顔に戻るが、体はムキムキのまま。
+- オチは、メガネをかけ直すと体もしぼんで元の細身のおとなしいおかっぱ男子に戻り、照れながら「…行こうか」。
+- 彼女は惚れ直した表情で、彼氏の腕にぎゅっとくっつく。
 
 ## 世界観
 
@@ -41,8 +42,8 @@
 | 7 | 15〜19秒 | ローアングル、ゆっくりクレーンアップ | 立ち上がりながら筋肉が一気に膨れ上がり、カーディガンとシャツが裂ける。体から湯気、ネオンがチカチカ | 低い地鳴り、布が裂ける音 |
 | 8 | 19〜23秒 | 回り込むトラッキング、スピードランプ | 3人を一瞬で制圧。パンチ、受け流し、投げ。スロー ↔ 等速 | 打撃音、風切り音 |
 | 9 | 23〜25秒 | 俯瞰 | 濡れた路面にのびている3人組 | うめき声 |
-| 10 | 25〜28秒 | ミディアム → 彼女の顔 | 彼氏がメガネを拾ってかけ直し、指でクイッと上げる。元のおとなしい顔で「…行こうか」。彼女はポカン | 小さなセリフ |
-| 11 | 28〜30秒 | 後ろからのワイド | ムキムキの腕に彼女がそっと腕を組み、2人はネオンの中を歩き去る | 街の音が戻る |
+| 10 | 25〜28秒 | ミディアム | 彼氏がメガネを拾ってかけ直すと、筋肉がしゅるしゅるとしぼみ、元の細身のおかっぱ男子に戻る(破れたシャツがぶかぶか)。頬を赤らめ、照れながら頭をかいて「…行こうか」 | 小さなセリフ |
+| 11 | 28〜30秒 | 彼女のアップ → 後ろからのワイド | 惚れ直した潤んだ目で微笑み、彼氏の腕にぎゅっと抱きついて肩に頭を寄せる。2人はネオンの中を歩き去る | 街の音が戻る |
 
 ## プロンプト(seedance_2_5 / t2v / 30秒 / 16:9)
 
@@ -63,6 +64,6 @@ Shot 6 (12-15s): Extreme close-up of the boyfriend's eye slowly opening, calm an
 Shot 7 (15-19s): Low-angle shot, camera slowly craning up as he rises to his feet: his body transforms, muscles swelling massively, the cardigan and shirt tearing apart at the seams, steam rising from his skin, the neon signs flickering. Deep rumbling bass, fabric ripping.
 Shot 8 (19-23s): Orbiting tracking shot with speed ramps between slow motion and real time: in a few precise moves he defeats all three thugs, a palm strike, a parry and a shoulder throw, the thugs flying backward into trash bags and a puddle. Powerful whooshes and impact sounds.
 Shot 9 (23-25s): Top-down shot: the three thugs lie groaning on the wet asphalt.
-Shot 10 (25-28s): Medium shot: the muscular boyfriend calmly picks up his cracked glasses, puts them on, and pushes them up with one finger, his face instantly back to shy and gentle. He says softly in Japanese: "…行こうか". Cut to the girlfriend, frozen with her mouth open in disbelief.
-Shot 11 (28-30s): Wide shot from behind: she slowly links her arm with his huge muscular arm and the two walk away into the neon-lit street. City ambience returns.
+Shot 10 (25-28s): Medium shot: the boyfriend picks up his cracked glasses and puts them on; instantly his muscles deflate and he shrinks back to his original slim, timid bowl-cut self, the torn shirt hanging loosely on him. Blushing, scratching the back of his head and looking down shyly, he mumbles softly in Japanese: "…行こうか".
+Shot 11 (28-30s): Close-up of the girlfriend gazing at him with sparkling, smitten eyes and a soft smile, falling in love with him all over again; then a wide shot from behind as she happily hugs his slim arm tightly and leans her head on his shoulder, and the two walk away into the neon-lit street. City ambience returns.
 ```
