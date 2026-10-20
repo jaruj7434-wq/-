@@ -22,3 +22,31 @@
 ## コスト見込み
 - 開始画像: gpt_image_2 / high / 2k / 16:9 × 5枚 = 約 32.5 クレジット
 - 動画: seedance_2_5 / 720p / 4秒 × 5本 = 140 クレジット
+
+## 改訂2:8秒1本にまとめる(ユーザー指定、タイトルは別途作成のため除外)
+
+クレジット節約のため、5カットを Seedance 2.5 の8秒1本(カット割りをプロンプトで指定)で生成する。
+人物の参照が多すぎると不安定になるため、2 の奥の2人(毛利・ひなた)は外し、手前の拓海・玲奈だけにする。
+
+- 開始画像(1枚): 鐘のあおりのアップ(gpt_image_2 / high / 2k / 16:9、6.5 クレジット)
+- 動画: seedance_2_5 / omni_reference / 8秒 / 16:9 / 720p / 音声あり(56 クレジット、プレフライト確認済み)
+- image_references: 拓海 `cb446c3f-…`、玲奈 `94c0569a-…`、さくら `98d9e778-…`、剛 `3ddd46ab-…`、慶太シート `38677a4b-…`、慶太の登録写真 `9e6a89ba-…`
+- 合計 約 62.5 クレジット
+
+### 開始画像プロンプト
+```
+Cinematic 16:9 widescreen still from a Japanese romance reality-show documentary. Extreme low-angle shot looking straight up from directly below a pink metal bell: on the LEFT a tall mossy gray stone pillar with ivy, a thick dark wooden beam crossing diagonally from it toward the upper right, and the pink bell hanging from the beam with a thin white rope dangling down, tilted mid-swing. Behind it, deep green forest canopy and a bright overcast sky. Natural documentary color grade. No people, no text, no logos, no watermark.
+```
+
+### 動画プロンプト(8秒)
+```
+Cinematic Japanese romance reality-show trailer, 16:9 widescreen, 8 seconds, five quick cuts with hard cuts between them. Keep every face, hair and outfit exactly as in the reference images; each person appears only in their own cut, never duplicated. Realistic acting, documentary look, no text, no subtitles.
+
+CUT 1 (0-1.2s): continue from the first frame, low angle under the pink bell by the mossy stone pillar: the bell suddenly starts clanging violently, swinging wildly, the rope jerking hard from below.
+CUT 2 (1.2-3.2s): hard cut indoors against a wooden wall, handheld medium two-shot: TAKUMI (M-shaped receding hairline, thin black glasses, gray hoodie) and REINA (ash-brown bob, lavender knit vest) stand side by side staring at the same point off-screen, eyes wide in total shock, and both shout at the same time, overlapping, in Japanese: TAKUMI 「えー!はげてない!」 REINA 「髪あるじゃん!」 (pronounce はげ as "ha-ge" with a hard G).
+CUT 3 (3.2-4.6s): hard cut to a medium shot of SAKURA (long light-brown wavy hair, cream cable-knit sweater) standing in the doorway of a wooden cabin, both hands flying up to her mouth, and she screams in Japanese: 「フサフサ!」
+CUT 4 (4.6-5.4s): hard cut to a close-up of GOU (shaved bald head, short black beard, navy henley) in front of a red plank wall, eyes wide in disbelief, slowly covering his face with one hand.
+CUT 5 (5.4-8s): hard cut to an extreme long telephoto shot from far away across the forest: the same mossy stone pillar and pink bell are small in the distance between the trees, and KEITA (voluminous dark-brown center-parted hair, rimless glasses, white oxford shirt, navy knit over his shoulders) is a small figure frantically yanking the rope with his whole body, his thick hair bouncing, the bell swinging wildly. Slight handheld telephoto shake.
+
+Audio: loud frantic metallic bell clanging through cuts 1 and 5 (distant and echoing in cut 5), the overlapping shocked shouts in cuts 2 and 3, a dramatic music sting under cut 4. Only the Japanese lines above.
+```
