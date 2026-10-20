@@ -52,3 +52,4 @@ Audio: loud frantic metallic bell clanging through cuts 1 and 5 (distant and ech
 ```
 - 開始画像 job_id: `879d9a06-67ab-4f2d-bd93-04a432e96616`(2026-10-20)
 - 動画(8秒・720p・56 クレジット): `6ef5e729-bdec-4cfc-9431-3b52f2cb40e4`
+  - 完成(2026-10-20)
