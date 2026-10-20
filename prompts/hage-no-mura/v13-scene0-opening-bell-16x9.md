@@ -45,3 +45,6 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds,
 - 方針変更: 動画は 4 秒 1 本のみ(28 クレジット)
 - 開始画像1(引き): `2efd6ac0-c806-455f-bbb5-f3655d8aad1c` 完成
 - 開始画像2(あおりのアップ): `28868c53-fd75-4b7c-9fe8-4260e03be740` は安全フィルター(nsfw 判定)で失敗。誤判定とみられる
+- 動画(4秒・720p・28 クレジット): `01770d12-6b2c-4b12-805a-e2512834d7d3`
+  - start_image = 開始画像1。image_references = 慶太の登録写真(Element 元画像 `9e6a89ba-8fd6-4530-b720-06e29d9e7a3a`)+キャラクターシート `38677a4b-…`
+  - 顔崩れ・別人化を防ぐため、プロンプト冒頭に IDENTITY LOCK(同一人物・顔はブラさない)を追加
