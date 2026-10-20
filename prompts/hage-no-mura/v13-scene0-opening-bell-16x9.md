@@ -60,3 +60,5 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds,
 - job_id: `e23d230f-bee2-4ee1-a4c5-5b3b39c2219f`(6.5 クレジット)
 - 再生成 B `b707bf0e-…` は完成(28 クレジット)。ただし旧開始画像(顔が慶太とかけ離れている)から作ったため不採用候補
 - 新しい開始画像 `e23d230f-…` 完成
+- ユーザー確認: 顔は OK。ただし鐘と慶太の距離が近すぎる → 参考の引き(鐘は画面左上で遠く、人物は画面下で胸から上)を忠実に再現して作り直し
+- job_id: `8bb31b06-ffeb-4dac-a18f-917a925005b0`(6.5 クレジット)
