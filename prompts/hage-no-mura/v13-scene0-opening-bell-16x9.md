@@ -50,3 +50,4 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds,
   - 顔崩れ・別人化を防ぐため、プロンプト冒頭に IDENTITY LOCK(同一人物・顔はブラさない)を追加
   - → 生成失敗(理由の表示なし)。28 クレジットは返金済み。あおりのアップ画像の 6.5 クレジットも返金済み
   - 推定原因: 慶太の実写の登録写真(`9e6a89ba-…`)を Seedance に直接渡したため、実在人物の顔チェックで弾かれた可能性
+- 再生成(B: 同設定のまま再送、ユーザー指定): `b707bf0e-2f76-41e0-b249-44603dc4db47`
