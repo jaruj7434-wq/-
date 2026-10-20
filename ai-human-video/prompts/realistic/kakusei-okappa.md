@@ -89,3 +89,14 @@ Visible fine skin texture with natural pores, subtle asymmetries, no digital smo
 4. **チンピラ・リーダー**: `Japanese man around 30, cocky sleazy smirk, sharp narrow eyes, thin trimmed eyebrows, bleached blond slicked-back hair with dark roots, light stubble, lean wiry build, wearing a loud red and gold paisley patterned short-sleeve open-collar shirt over a black tank top, a thick gold chain necklace, black slim pants, pointed white leather shoes, a gold ring.`
 5. **チンピラ・坊主頭**: `Japanese man in his late 20s, intimidating scowl, shaved head buzz cut, thick eyebrows, small scar on the eyebrow, stocky heavy-set build, wearing a black tracksuit jacket with white stripes on the sleeves zipped halfway, matching black track pants, black and white slide sandals with white socks, a silver chain bracelet.`
 6. **チンピラ・のっぽ**: `Very tall lanky Japanese man in his mid 20s, long thin face, droopy lazy eyes, messy dark brown medium-length hair, wearing a red satin sukajan souvenir jacket with a gold embroidered tiger on the back, a white t-shirt, baggy black cargo pants, black high-top sneakers, hands relaxed at the sides.`
+
+### 生成済みキャラクターシート(2026-10-20)
+
+| # | キャラクター | job_id |
+|---|---|---|
+| 1 | 彼女 | 55793822-60d3-47bd-9b98-9f643a8496bb |
+| 2 | 彼氏(普段) | ee058d76-3a8a-41c6-a14b-da27f0a91295 |
+| 3 | 彼氏(覚醒後) | 0d71a263-9714-474f-98b7-39cd68faa0ba |
+| 4 | チンピラ・リーダー | b4ea5f29-0ed5-4429-a6f8-2e5e3eda96db |
+| 5 | チンピラ・坊主頭 | 02935b72-2fe4-4545-838c-fc9587c2186f |
+| 6 | チンピラ・のっぽ | 4497dcaf-c7ef-4d48-b606-2c974fc03c79 |
