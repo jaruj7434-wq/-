@@ -48,3 +48,5 @@ Cinematic Japanese romance reality-show documentary, 16:9 widescreen, 4 seconds,
 - 動画(4秒・720p・28 クレジット): `01770d12-6b2c-4b12-805a-e2512834d7d3`
   - start_image = 開始画像1。image_references = 慶太の登録写真(Element 元画像 `9e6a89ba-8fd6-4530-b720-06e29d9e7a3a`)+キャラクターシート `38677a4b-…`
   - 顔崩れ・別人化を防ぐため、プロンプト冒頭に IDENTITY LOCK(同一人物・顔はブラさない)を追加
+  - → 生成失敗(理由の表示なし)。28 クレジットは返金済み。あおりのアップ画像の 6.5 クレジットも返金済み
+  - 推定原因: 慶太の実写の登録写真(`9e6a89ba-…`)を Seedance に直接渡したため、実在人物の顔チェックで弾かれた可能性
