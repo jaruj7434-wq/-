@@ -127,3 +127,4 @@ Visible fine skin texture with natural pores, subtle asymmetries, no digital smo
 | 彼女(金髪ギャル・ミニスカート) | d1c54dd5-2f5f-4b54-9e50-8fed50e0307e | 完成 |
 | 彼氏(普段・学ラン風) | c0c66e97-34ad-4d3c-b63f-1c09628fb980 | 完成 |
 | 彼氏(覚醒後・上半身裸) | 65753db4-0503-4103-809a-aa06ac96edc9 | gpt_image_2_5 で NSFW 判定され生成されず |
+| 彼氏(覚醒後・学ラン全開+破れたシャツ、覚醒前の顔を参照) | 3c965403-937d-4e2a-a225-a497f4ba9878 | 完成(参照: c0c66e97…) |
