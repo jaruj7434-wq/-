@@ -67,3 +67,25 @@ Shot 9 (23-25s): Top-down shot: the three thugs lie groaning on the wet asphalt.
 Shot 10 (25-28s): Medium shot: the boyfriend picks up his cracked glasses and puts them on; instantly his muscles deflate and he shrinks back to his original slim, timid bowl-cut self, the torn shirt hanging loosely on him. Blushing, scratching the back of his head and looking down shyly, he mumbles softly in Japanese: "…行こうか".
 Shot 11 (28-30s): Close-up of the girlfriend gazing at him with sparkling, smitten eyes and a soft smile, falling in love with him all over again; then a wide shot from behind as she happily hugs his slim arm tightly and leans her head on his shoulder, and the two walk away into the neon-lit street. City ambience returns.
 ```
+
+## キャラクターシート(gpt_image_2_5 / 16:9 / medium / 2k)
+
+構成: 左に首から上の顔アップ、右に全身の4方向(正面・左側面・右側面・背面)。
+各プロンプトの先頭に【共通・前半】、末尾に【共通・後半】を付ける。
+
+【共通・前半】
+```
+Character reference sheet on a pure white seamless studio background, professional character sheet presentation. Left panel: a tight close-up portrait of the head only, from the neck up, facing the camera, face clearly visible and sharp. Right side: four full-body views of the exact same character standing upright in a neutral pose with arms relaxed, head-to-toe with both feet visible, evenly spaced in a row: front view, left side profile view, right side profile view, back view. Identical original character in all five views, same face, same hair, same outfit.
+```
+
+【共通・後半】
+```
+Visible fine skin texture with natural pores, subtle asymmetries, no digital smoothing, no beauty filter, no AI-airbrushed look, matte natural complexion, eyes with naturally muted catchlights, mature adult facial structure, natural anatomy, soft diffused studio lighting without harsh reflections, high-end but unretouched commercial photography style, cinematic realism, sharp focus. Single character only, no other people, no props, no furniture, no background objects, no text, no labels, no watermark, no logos, no frame borders, no extra fingers. Original character, not resembling any real celebrity.
+```
+
+1. **彼女**: `Japanese woman in her early 20s, beautiful, fair natural skin, oval face with defined jawline, delicate nose, natural rosy-nude lips with soft matte finish, dark brown almond eyes, softly arched natural brows, long straight glossy black hair past the shoulders with a center part, natural light makeup, slim balanced figure, wearing a cream white chunky knit crew-neck sweater, an open beige knee-length trench coat with belt hanging loose, light blue straight-leg jeans, white leather sneakers, small silver stud earrings, a thin silver necklace, no bag.`
+2. **彼氏(普段)**: `Japanese man in his mid 20s, quiet and timid look, gentle soft-spoken expression, slim narrow-shouldered build, fair skin, neat glossy black bowl-cut hair with straight heavy bangs just above the eyebrows, round thin black-framed glasses, small mouth, slightly shy downcast eyes, wearing a beige knit cardigan buttoned over a crisp white button-up shirt, slim beige chino pants, brown leather loafers, a simple black wristwatch, no bag.`
+3. **彼氏(覚醒後)**: `The same Japanese man in his mid 20s with the same face, same neat black bowl-cut hair with straight bangs and same round thin black-framed glasses, but with a massive heroic bodybuilder physique: huge broad shoulders, thick muscular arms, defined chest and abs, the beige cardigan and white shirt torn apart and hanging in shreds from his shoulders, slim beige chino pants now tight on muscular legs, brown leather loafers, calm intense focused expression.`
+4. **チンピラ・リーダー**: `Japanese man around 30, cocky sleazy smirk, sharp narrow eyes, thin trimmed eyebrows, bleached blond slicked-back hair with dark roots, light stubble, lean wiry build, wearing a loud red and gold paisley patterned short-sleeve open-collar shirt over a black tank top, a thick gold chain necklace, black slim pants, pointed white leather shoes, a gold ring.`
+5. **チンピラ・坊主頭**: `Japanese man in his late 20s, intimidating scowl, shaved head buzz cut, thick eyebrows, small scar on the eyebrow, stocky heavy-set build, wearing a black tracksuit jacket with white stripes on the sleeves zipped halfway, matching black track pants, black and white slide sandals with white socks, a silver chain bracelet.`
+6. **チンピラ・のっぽ**: `Very tall lanky Japanese man in his mid 20s, long thin face, droopy lazy eyes, messy dark brown medium-length hair, wearing a red satin sukajan souvenir jacket with a gold embroidered tiger on the back, a white t-shirt, baggy black cargo pants, black high-top sneakers, hands relaxed at the sides.`
