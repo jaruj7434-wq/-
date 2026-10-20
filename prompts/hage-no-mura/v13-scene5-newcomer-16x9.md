@@ -50,3 +50,4 @@ CUT 5 (5.4-8s): hard cut to an extreme long telephoto shot from far away across 
 
 Audio: loud frantic metallic bell clanging through cuts 1 and 5 (distant and echoing in cut 5), the overlapping shocked shouts in cuts 2 and 3, a dramatic music sting under cut 4. Only the Japanese lines above.
 ```
+- 開始画像 job_id: `879d9a06-67ab-4f2d-bd93-04a432e96616`(2026-10-20)
