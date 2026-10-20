@@ -110,3 +110,11 @@ Visible fine skin texture with natural pores, subtle asymmetries, no digital smo
 1. **彼女(ギャル)**: `Japanese high school girl around 17, trendy outgoing gyaru style, confident cheerful grin, bleached blonde long hair with loose waves and a few face-framing strands, light tan skin, bold but natural gyaru makeup with defined eyeliner, wearing a Japanese school uniform: a white short-sleeve school blouse worn loosely with only the top collar button undone and a loosened red ribbon tie, a navy cardigan tied around her waist, a short navy pleated school skirt above the knee, white loose socks slouched at the ankles, brown penny loafers, colorful hair clips, a few beaded bracelets, nail art, no bag. Modest, non-revealing, age-appropriate.`
 2. **彼氏(普段・陰キャ)**: `Japanese high school boy around 17, shy introverted nerdy look, timid downcast eyes, slight hunched posture, slim narrow-shouldered build, fair skin, neat glossy black bowl-cut hair with straight heavy bangs just above the eyebrows, round thin black-framed glasses, wearing a traditional black gakuran school uniform with gold buttons fully buttoned up to the stand-up collar, the gakuran jacket and sleeves slightly too short so the wrists show, black uniform trousers slightly too short showing white socks at the ankles, black leather school shoes, no bag.`
 3. **彼氏(覚醒後)**: `The same Japanese high school boy around 17 with the same face, same neat black bowl-cut hair with straight bangs and same round thin black-framed glasses, but with a massive heroic bodybuilder physique: huge broad shoulders, thick muscular arms, the black gakuran jacket burst open with gold buttons popped off and the sleeves torn at the seams, a torn white undershirt, black uniform trousers stretched tight on muscular legs, black leather school shoes, calm intense focused expression. Non-sexual action-hero look.`
+
+### 高校生版の生成結果(2026-10-20)
+
+| キャラクター | job_id | 結果 |
+|---|---|---|
+| 彼女(ギャル・ボタン留め) | 94e9c860-dedb-49a6-8527-94a9c281e48b | Higgsfield 側で NSFW 判定され生成されず |
+| 彼氏(普段・学ラン) | 7c181b10-b946-43cb-9172-a6a6eefe47a8 | 完成 |
+| 彼氏(覚醒後・学ラン) | 72d43bb4-448b-4319-9c39-bf316cd1223b | 完成(上半身は裸にせず、学ランが裂ける表現に変更) |
