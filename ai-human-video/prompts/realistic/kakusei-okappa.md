@@ -100,3 +100,13 @@ Visible fine skin texture with natural pores, subtle asymmetries, no digital smo
 | 4 | チンピラ・リーダー | b4ea5f29-0ed5-4429-a6f8-2e5e3eda96db |
 | 5 | チンピラ・坊主頭 | 02935b72-2fe4-4545-838c-fc9587c2186f |
 | 6 | チンピラ・のっぽ | 4497dcaf-c7ef-4d48-b606-2c974fc03c79 |
+
+### カップル修正版(高校生・制服)— チンピラ3人は上記のまま確定
+
+- 設定変更: カップルは高校生(17〜18歳)。制服。
+- 未成年のため、性的・過度に露出した表現にはしない(胸元・下着・脚の強調なし)。ギャル感はファッションで出す。
+- 【共通・後半】の `mature adult facial structure` は `natural teenage facial structure` に置き換える。
+
+1. **彼女(ギャル)**: `Japanese high school girl around 17, trendy outgoing gyaru style, confident cheerful grin, bleached blonde long hair with loose waves and a few face-framing strands, light tan skin, bold but natural gyaru makeup with defined eyeliner, wearing a Japanese school uniform: a white short-sleeve school blouse worn loosely with only the top collar button undone and a loosened red ribbon tie, a navy cardigan tied around her waist, a short navy pleated school skirt above the knee, white loose socks slouched at the ankles, brown penny loafers, colorful hair clips, a few beaded bracelets, nail art, no bag. Modest, non-revealing, age-appropriate.`
+2. **彼氏(普段・陰キャ)**: `Japanese high school boy around 17, shy introverted nerdy look, timid downcast eyes, slight hunched posture, slim narrow-shouldered build, fair skin, neat glossy black bowl-cut hair with straight heavy bangs just above the eyebrows, round thin black-framed glasses, wearing a traditional black gakuran school uniform with gold buttons fully buttoned up to the stand-up collar, the gakuran jacket and sleeves slightly too short so the wrists show, black uniform trousers slightly too short showing white socks at the ankles, black leather school shoes, no bag.`
+3. **彼氏(覚醒後)**: `The same Japanese high school boy around 17 with the same face, same neat black bowl-cut hair with straight bangs and same round thin black-framed glasses, but with a massive heroic bodybuilder physique: huge broad shoulders, thick muscular arms, the black gakuran jacket burst open with gold buttons popped off and the sleeves torn at the seams, a torn white undershirt, black uniform trousers stretched tight on muscular legs, black leather school shoes, calm intense focused expression. Non-sexual action-hero look.`
