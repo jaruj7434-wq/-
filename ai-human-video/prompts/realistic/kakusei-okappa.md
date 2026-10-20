@@ -251,3 +251,33 @@ Visible fine skin texture with natural pores, subtle asymmetries, no digital smo
 - C2〜C6: 寒色(不穏・屈辱)
 - C7〜C10: 高コントラスト、ネオンのピンクと青(覚醒・アクション)
 - C11〜C12: 暖色に戻る(ハッピーエンド)
+
+## 本番生成(2026-10-20)
+
+- ジョブ: `007e7d7b-ad4e-49a3-908e-4eb53c732844`(seedance_2_5 / omni_reference / 30秒 / 720p / 16:9 / 音声あり / 210クレジット)
+- 参照画像(順番どおり): ノボル c0c66e97… / ノボル覚醒 3c965403… / リナ d1c54dd5… / リュウジ b4ea5f29… / ゴウ 02935b72… / ヒョロ 4497dcaf…
+
+```
+A 30-second cinematic Japanese live-action short film, twelve shots joined by hard cuts, directed like a stylish action movie with deadpan comedy. Shot on 35mm film with anamorphic lenses, natural film grain, shallow depth of field, photorealistic. Setting: a narrow back street of a Japanese downtown entertainment district at night after rain, wet asphalt reflecting pink and blue neon signs, steam from vents. No background music, no subtitles, no on-screen text. The fight is stylized movie choreography with no blood and no weapons. All characters are adults around 20 or older.
+
+Characters - match the reference images exactly (faces, hair, outfits):
+- NOBORU (reference image 1): shy nerdy young man, neat black bowl-cut hair with heavy bangs, round black-framed glasses, black gakuran-style stand-up-collar jacket slightly too short at the wrists and ankles.
+- NOBORU AWAKENED (reference image 2): the same face without glasses, massive muscular superhero body, jacket burst open with buttons popped, torn white shirt.
+- RINA (reference image 3): his girlfriend, blonde wavy-haired gyaru, white blouse with loosened red ribbon, navy pleated mini skirt, loose socks.
+- RYUJI (reference image 4): thug leader, bleached blond slicked-back hair, red and gold paisley shirt, gold chain.
+- GO (reference image 5): shaved-head stocky thug in a black tracksuit.
+- HYORO (reference image 6): very tall lanky thug in a red sukajan jacket.
+
+C1 (0-3s): Wide shot, dolly moving backward in front of Noboru and Rina walking side by side through the neon back street, warm color grade. Rina pokes his arm and says cheerfully in Japanese: "ねぇノボル、さっきのクレープ超うまかったね!" Noboru looks down shyly: "う、うん…よかった". City ambience, footsteps on wet asphalt.
+C2 (3-5s): Low-angle static shot backlit by neon: Ryuji, Go and Hyoro step out of a side alley and block the path, dark silhouettes with neon rim light. Color grade turns cold blue. Heavy footsteps.
+C3 (5-8s): Handheld medium shot. Ryuji grabs Rina's wrist with a sleazy grin: "ねーちゃん、そんなダサ男より俺らと遊ぼうぜ". Rina tries to pull free: "は? 離してよ!" Noboru small and helpless at the edge of frame.
+C4 (8-10s): Static medium shot. Noboru timidly steps forward: "や、やめてください…". Go silently shoves him in the chest and he falls onto the wet asphalt with a splash.
+C5 (10-12s): Slow-motion insert at ground level: Noboru's round glasses fly through the air and land in a puddle, one lens cracking, neon rippling. Hyoro sneers off-screen: "ダッセ". Then all sound fades away.
+C6 (12-15s): Extreme close-up of Noboru's eye, then close-up of his face without glasses slowly lifting, his bangs stirring though there is no wind, his eyes turning calm and intense. Total silence except a slow heavy heartbeat.
+C7 (15-19s): Low-angle shot, camera slowly craning up as Noboru rises: he transforms into his awakened muscular form, muscles swelling massively, gold buttons popping off, sleeves splitting, shirt tearing, steam rising from his body, neon signs flickering. In a low voice: "…触るな". Deep rumbling bass, fabric ripping, a button clinking on the asphalt.
+C8 (19-20s): Quick whip pan across the three thugs' faces turning pale; Ryuji lets go of Rina's wrist.
+C9 (20-23s): Orbiting tracking shot with speed ramps: Noboru catches Go's punch with one hand and twists, throws Hyoro over his shoulder into a pile of trash bags, dodges Ryuji's punch and blows him away with the air pressure of a stopped palm strike. Whooshes, heavy impacts, water splashes.
+C10 (23-25s): Top-down static shot: the three thugs lie spread out on the wet asphalt reflecting neon. Ryuji groans: "う…うそだろ…".
+C11 (25-28s): Static medium shot: Noboru picks his cracked glasses out of the puddle and puts them on; instantly his muscles deflate with a comic whoosh and he shrinks back to his slim timid bowl-cut self, the torn jacket hanging loose. Blushing, scratching his head and looking away, he mumbles: "…い、行こうか". Color grade warms again.
+C12 (28-30s): Close-up of Rina gazing at him with teary, smitten eyes: "…ノボル、かっこよすぎ". She hugs his arm tightly and leans her head on his shoulder; wide shot from behind as the couple walks away into the neon street, the knocked-out thugs' feet blurred in the foreground. City ambience returns.
+```
