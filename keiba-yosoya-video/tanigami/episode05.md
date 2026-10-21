@@ -112,7 +112,7 @@
 
 | # | 話す人 | プロンプトに入れるひらがな | 1音ずつのローマ字 | 間違えやすいところ |
 |---|---|---|---|---|
-| A | 女の子 | へんなひと いるー! | he-n-na hi-to i-ru-u! | NOT hennahito-iruu を一息で速く言わない |
+| A | 女の子 | へんなひと いるー! | he-n-na hi-to i-ru-u! | 無邪気に大きな声で、はっきり |
 | B | 母親 | やめなさい! | ya-me-na-sa-i! | |
 | 1 | king万(電話の声) | たにがみさん、 はじめての よそう、 みんな まってますよ | ta-ni-ga-mi sa-n, ha-ji-me-te no yo-so-u, mi-n-na ma-t-te-ma-su yo | **NOT tanagami** |
 | 2 | 谷上 | ……わかってる。 | wa-ka-t-te-ru. | |
