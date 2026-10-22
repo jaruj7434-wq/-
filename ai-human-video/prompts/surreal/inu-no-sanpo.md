@@ -66,3 +66,30 @@
 | C7 | 紳士のようにうなずく犬 | 8087d4d6-03c3-43b0-8f2e-81d7876114d8 |
 | C8 | 犬を撫でるミサキ、手前で固まるおじさん | 5bac57ad-98e2-4d27-8bbf-9b498b94e0a4 |
 | C9 | 「いや、そっちかい!」ツッコミ、ドヤ顔の犬 | 76f1c0f8-82f5-4f5c-b92c-eaf18b4e728e |
+
+## 本番生成(2026-10-22)
+
+- ジョブ: `7e969537-ea09-4480-a37c-6608071b7f39`(seedance_2_5 / omni_reference / 20秒 / 720p / 16:9 / 音声あり / 140クレジット)
+- 参照画像(順番どおり): ミサキ 0516eed0… / 年配の女性 e85d4b6f… / ゴールデンレトリバー d102da9c… / おじさん 97ab6509…
+
+```
+A 20-second cinematic Japanese live-action surreal comedy short film, nine shots joined by hard cuts, directed by a top comedy film director with precise comic timing. Shot on 35mm film, natural bright morning sunlight, warm and clean color grade, shallow depth of field, photorealistic, natural acting. Setting: a quiet, sunny Japanese residential street with houses, hedges, utility poles and birds chirping. No background music, no subtitles, no on-screen text. Wholesome lighthearted slapstick comedy.
+
+Characters - faces, hair, outfits and the dog must match the reference images exactly in every shot, consistent identity:
+- MISAKI (reference image 1): cheerful Japanese woman in her late 20s, light brown hair in a low ponytail, oversized white hoodie, jeans, walking a small brown toy poodle on a leash.
+- OLDER WOMAN (reference image 2): elegant Japanese woman in her 60s, short permed gray-streaked hair, lavender cardigan, beige apron, walking a shiba inu on a leash.
+- GOLDEN RETRIEVER (reference image 3): a large photorealistic golden retriever that walks upright on its hind legs like a dignified gentleman, holding a red leash in its front paw.
+- THE MAN (reference image 4): chubby cheerful Japanese man in his 50s, thinning combed-over hair, light green polo shirt, gray slacks, wearing a red pet collar; the red leash from the golden retriever is clipped to his collar and he happily walks on all fours like a playful pet.
+
+Dialogue rules: all dialogue is spoken in natural native Japanese with correct pronunciation, exactly as written, word for word, no extra words, no changed words, no other dialogue, with clear lip sync and genuine emotion. Romaji is only a pronunciation guide.
+
+C1 (0-3s): Wide shot, slow lateral dolly along the sunny residential street. The older woman with her shiba inu and Misaki with her toy poodle stand chatting on the sidewalk while the two small dogs sniff each other. OLDER WOMAN (gentle, refined, warm): "まあ〜、かわいい わんちゃん ですね〜" (romaji: "Maa~, kawaii wanchan desu ne~"). Birds chirping.
+C2 (3-5s): Low dog's-eye-level shot: the shiba inu and the toy poodle happily wag their tails. MISAKI off-screen (bright and friendly): "ありがとう ございます〜! そちらの しばちゃんも!" (romaji: "Arigatou gozaimasu~! Sochira no Shiba-chan mo!").
+C3 (5-8s): Close-up of Misaki's face as she suddenly freezes mid-smile, then a rack focus over her shoulder to the far end of the street: in slow motion, the golden retriever walks toward camera upright on its hind legs like a proud gentleman, holding the red leash, and the man trots happily behind on all fours, panting. Ambient sound fades, only the soft patter of paws and the man's happy panting.
+C4 (8-10s): Static frontal medium-wide shot: Misaki, the older woman, the shiba inu and the toy poodle all frozen in shock with mouths wide open, completely silent. A beat of awkward comedic silence.
+C5 (10-12s): Side tracking shot moving alongside: the golden retriever strides past upright with its chest out like a dignified gentleman; the man follows on all fours, smiling proudly, tongue slightly out.
+C6 (12-15s): Medium shot of Misaki, her eyes sparkling, stepping forward with hands clasped. MISAKI (excited, high-pitched, delighted): "かわいい〜! さわっても いいですか?" (romaji: "Kawaii~! Sawattemo ii desu ka?"). Quick cut to the man on all fours looking up at her with a huge hopeful beaming grin.
+C7 (15-16s): Close-up of the golden retriever slowly and solemnly nodding once, like a dignified gentleman giving permission.
+C8 (16-18s): Deep-focus shot: in the foreground, the man on all fours, hopeful grin; behind him, Misaki walks right past him and happily hugs and ruffles the golden retriever's head, which closes its eyes in bliss. MISAKI (sweet, cooing): "よしよし〜" (romaji: "Yoshi yoshi~"). Focus racks to the man in the foreground, his grin frozen.
+C9 (18-20s): Static close-up of the man rising to his knees, doing a sharp Japanese manzai tsukkomi gesture with the back of his hand, shouting loudly in Kansai dialect with exasperated comic energy: "いや、そっちかい!" (romaji: "Iya, socchi kai!"). His voice echoes down the quiet street. Final beat: the golden retriever turns and looks straight into the camera with a smug proud face.
+```
