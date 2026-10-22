@@ -99,3 +99,54 @@
 
 - 前編30秒と後編30秒の2回に分けて生成する(Seedance 2.5 は1回30秒まで)。
 - 後編は、前編の動画の続きを作る「延長」モード(video_extension)を使うと、人物・場所・光がつながりやすい。使えない場合は、同じ参照画像3枚で後編を別に生成してつなぐ。
+
+## 本番生成(2026-10-22 / Kling 4.0)
+
+- 前編ジョブ: `f55d571f-7fe3-4232-a00a-3fba9b0b4e1e`(kling4_0 / reference-to-video / 30秒 / 1080p / 16:9 / 30クレジット)
+- 後編ジョブ: `81ecb67a-cc35-4ddf-907d-d483e7cfb3c7`(同上)
+- 参照画像(順番どおり): ノボル c0c66e97… / リナ d1c54dd5… / レイカ 1c554de1…
+- プロンプト = 共通部分 + 各編の部分
+
+### 共通部分
+```
+Cinematic Japanese live-action romantic comedy, directed by a top film director with precise comic timing and rich emotional acting. Shot on 35mm film with anamorphic lenses, natural film grain, warm sunlight through trees, shallow depth of field, photorealistic, expressive natural performances with clear facial emotions. Setting: a university campus courtyard at lunchtime, a wooden bench under leafy trees with dappled sunlight, students in the background. No background music, no subtitles, no on-screen text. All characters are adults around 20.
+
+Characters - faces, hair and outfits must match the reference images exactly in every shot:
+- NOBORU (reference image 1): shy nerdy young Japanese man, neat black bowl-cut hair with heavy bangs, round thin black-framed glasses, black gakuran-style stand-up-collar jacket slightly too short at the wrists.
+- RINA (reference image 2): his girlfriend, Japanese gyaru with bleached blonde long wavy hair, tan skin, white blouse with loosened red ribbon, navy pleated mini skirt, loose socks.
+- REIKA (reference image 3): elegant refined ojousama rival, long straight black hair with straight bangs and a white headband, navy dress with white collar, beige cardigan.
+
+Dialogue rules: all dialogue is spoken in natural native Japanese with correct pronunciation, exactly as written, word for word, no extra words, no changed words, no other dialogue, with clear lip sync and genuine emotion. Romaji is only a pronunciation guide.
+```
+
+### 前編
+```
+A 30-second film, part 1 of 2, eleven shots joined by hard cuts.
+
+H (0-2s) COLD OPEN FLASH-FORWARD: an explosive fast push-in to an extreme close-up: Rina and Reika glare at each other nose to nose, blue electric sparks crackling between their eyes, leaves swirling, Noboru squeezed between them, glasses askew, face pale. A thunderous boom. Then the image rapidly rewinds backward like a VHS tape rewind with a whirring sound.
+C1 (2-4s): Calm wide shot slowly pushing in: the peaceful sunlit courtyard, Noboru alone on the bench eating a convenience-store rice ball. Birds chirping.
+C2 (4-7s): Tilt up from Reika's black strap shoes to her face as she walks gracefully over, sits beside Noboru and offers a bento wrapped in a furoshiki cloth. REIKA (elegant, slightly shy): "のぼるくん、おべんとう、つくってきたの" (romaji: "Noboru-kun, obentou, tsukutte kita no").
+C3 (7-9s): Close-up of Noboru turning bright red, flustered. NOBORU (stammering): "え、ぼ、ぼくに…?" (romaji: "E, bo, boku ni...?").
+C4 (9-12s): Low angle from behind the bench: Rina stands with arms crossed behind them, crushing a juice carton in her fist with a loud crunch. RINA (low, menacing): "は? だれ、このおんな" (romaji: "Ha? Dare, kono onna").
+C5 (12-14s): Close-up of Reika slowly turning with a calm, provocative smile. REIKA: "あら、のぼるくんの…おともだち?" (romaji: "Ara, Noboru-kun no... otomodachi?").
+C6 (14-17s): Western-duel style alternating extreme close-ups of Rina's and Reika's eyes with snap zooms, blue sparks crackling between their eyes, a sudden gust of wind lifting the leaves, only Noboru's hair blowing between them. Deep rumble, crackling sparks.
+C7 (17-20s): Static frontal wide shot: both women grab Noboru's arms and pull him in opposite directions. RINA (fierce, loud): "のぼるは、あたしのだから!" (romaji: "Noboru wa, atashi no dakara!"). REIKA (quiet but firm): "いいえ、わたくしの、です" (romaji: "Iie, watakushi no, desu").
+C8 (20-23s): Close-up of Noboru stretched between them, glasses crooked, eyes spinning. NOBORU (pathetic, desperate): "ちょ、ちょっと、ふたりとも…!" (romaji: "Cho, chotto, futari tomo...!"). Then his stomach growls loudly "guuu" and all sound stops.
+C9 (23-27s): Quick alternating close-ups of the two women snapping to attention, then frontal shot: Rina thrusts a convenience-store sandwich and Reika thrusts a luxurious three-tier jubako bento right in front of Noboru's face. RINA and REIKA (in perfect unison, forceful): "どっちの!?" (romaji: "Docchi no!?").
+C10 (27-30s): Close-up of Noboru frozen and sweating between the food, then a fast zoom out revealing every student in the courtyard staring at them. Only birdsong.
+```
+
+### 後編
+```
+A 30-second film, part 2 of 2, continuing directly from part 1, nine shots joined by hard cuts. The same bench, same lighting, same outfits. Rina holds a sandwich and Reika holds a three-tier jubako bento in front of Noboru.
+
+D1 (0-3s): Extreme close-up of Noboru closing his eyes and taking a deep breath, a glint of light flashing across his glasses as if he is about to transform. The wind stops. A single heavy heartbeat.
+D2 (3-6s): Low-angle hero shot, camera slowly craning up as Noboru quietly stands up. He does NOT transform: he stays slim, but his back is straight and his eyes are calm and determined. A building bass note fades to silence.
+D3 (6-10s): Medium shot from Reika's side: Noboru turns to Reika and bows deeply, sincere and clear. NOBORU: "れいかさん、ありがとう。…でも、ごめんなさい" (romaji: "Reika-san, arigatou. ...Demo, gomennasai").
+D4 (10-13s): Insert close-up of Noboru firmly taking Rina's hand, then his face: bright red but eyes steady and strong. NOBORU (firm, heartfelt): "ぼくには、りなが、いるから" (romaji: "Boku ni wa, Rina ga, iru kara").
+D5 (13-16s): Slow push-in close-up on Rina: her eyes well up, her face turns red, she looks away to hide her happiness. RINA (small, embarrassed, happy): "…ばか" (romaji: "...Baka").
+D6 (16-20s): Close-up of Reika: a flicker of sadness, then a graceful smile; she gently places the three-tier bento on the bench. REIKA (a little wistful, elegant): "…ふふ。そういうと、おもってました。これは、おふたりで" (romaji: "...Fufu. Sou iu to, omotte mashita. Kore wa, ofutari de").
+D7 (20-23s): Reika walks away, her long black hair flowing in the breeze; she stops and glances back over her shoulder with a mischievous smile. REIKA (teasing): "でも…あきらめたわけじゃ、ありませんから" (romaji: "Demo... akirameta wake ja, arimasen kara"). RINA (off-screen, shouting): "はぁ!?" (romaji: "Haa!?").
+D8 (23-27s): Frontal medium shot of Noboru and Rina side by side on the bench opening the gorgeous three-tier bento; Rina sulkily bites a piece of rolled omelet. RINA (grudging, surprised): "…うま" (romaji: "...Uma"). Noboru bursts out laughing and Rina laughs too.
+D9 (27-30s): Extreme wide shot slowly craning up: all the students in the courtyard break into applause and cheers; Noboru and Rina laugh together in the dappled sunlight; far in the background, Reika peeks from behind a building corner, smiling softly. Applause, cheers, birdsong.
+```
