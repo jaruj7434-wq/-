@@ -115,3 +115,30 @@
 | C7 | リナ | え? なんて? | え? なんて? | E? Nante? | きょとんと首をかしげて |
 | C8 | ノボル | だ、だから! す—— | だ、だから! す—— | Da, dakara! Su— | 必死に大声で(「す」で花火にかき消される) |
 | C9 | リナ | …知ってるよ。あたしも | …しってるよ。あたしも | ...Shitteru yo. Atashi mo. | 耳元でやさしくささやく |
+
+## 本番生成(2026-10-22)
+
+- ジョブ: `7aafdd59-833a-4199-b877-99f09ed5072e`(seedance_2_5 / omni_reference / 30秒 / 720p / 16:9 / 音声あり / 210クレジット)
+- 参照画像(順番どおり): ノボル c0c66e97… / リナ d1c54dd5…
+
+```
+A 30-second cinematic Japanese live-action romantic comedy short film, eleven shots joined by hard cuts, directed by a top film director. Shot on 35mm film with anamorphic lenses, natural film grain, shallow depth of field with beautiful bokeh, photorealistic, natural acting. Setting: night, a summer fireworks festival on a grassy riverbank embankment in Japan, distant festival stall lanterns, fireworks reflected on the river. All lighting comes from the fireworks, colored light flickering on the faces. No background music, no subtitles, no on-screen text. Both characters are adults around 20.
+
+Characters - their faces, hair and outfits must match the reference images exactly in every shot, consistent identity:
+- NOBORU (reference image 1): shy nerdy young Japanese man, neat black bowl-cut hair with heavy straight bangs, round thin black-framed glasses, black gakuran-style stand-up-collar jacket with gold buttons.
+- RINA (reference image 2): his girlfriend, Japanese gyaru with bleached blonde long wavy hair, tan skin, gyaru makeup, white blouse with loosened red ribbon, navy pleated mini skirt, loose socks.
+
+Dialogue rules: all dialogue is spoken in natural native Japanese with correct pronunciation, exactly as written, word for word, no extra words, no changed words, with clear lip sync and genuine emotion. Romaji is given only as a pronunciation guide.
+
+C1 (0-3s): Low-angle wide shot looking up the embankment stairs; the first firework blooms in the sky. Rina pulls Noboru by the sleeve, running up the stairs, excited and bright. RINA (cheerful, urging): "はやく はやく! はじまっちゃう!" (romaji: "Hayaku hayaku! Hajimacchau!"). Firework whistle and boom, distant crowd cheering.
+C2 (3-6s): Static medium side shot of the two sitting on the grassy slope; Rina gazes up with sparkling eyes, Noboru sits slightly apart hugging his knees. Firework light changes their faces red, green, gold. RINA (shouting joyfully to the sky, drawn out): "たまや〜!" (romaji: "Tamaya~!").
+C3 (6-8s): Insert close-up: inside his jacket pocket, Noboru's trembling hand tightly grips a small white gift box. His heartbeat thumps under the fireworks.
+C4 (8-10s): Insert close-up on the grass: Noboru's hand inches toward Rina's hand, pulls back, then inches forward again. Tense, frustrating pause.
+C5 (10-13s): Slow push-in close-up on Noboru's face, fireworks reflected in his glasses. He takes a deep nervous breath and turns to her. NOBORU (quiet, stammering, nervous): "り、りな…あの…ぼ、ぼく…" (romaji: "Ri, Rina... ano... bo, boku..."). RINA (still looking at the sky, casual): "ん〜?" (romaji: "Nn~?").
+C6 (13-16s): Static chest-up shot of Noboru. He squeezes his eyes shut and shouts with all his courage: "ずっと まえから——" (romaji: "Zutto mae kara—") and at that exact moment a huge firework explodes overhead with a deafening BOOM that completely drowns out his voice; his mouth keeps moving silently, the frame flashes white with firework light. Do not add any more words.
+C7 (16-18s): Static close-up of Rina turning to him, tilting her head, puzzled and innocent. RINA: "え? なんて?" (romaji: "E? Nante?").
+C8 (18-22s): Quick shot-reverse-shot. Noboru slumps in defeat, then gathers himself, takes a big breath and shouts desperately: "だ、だから! す——" (romaji: "Da, dakara! Su—") and instantly a barrage of fireworks goes BOOM BOOM BOOM, drowning him out again. Same framing as C6. Noboru freezes, pale and soulless, comedic. Do not add any more words.
+C9 (22-25s): Two-shot, slow push-in. Rina smiles mischievously and leans close to Noboru's ear. ALL SOUND CUTS TO TOTAL SILENCE, fireworks keep blooming silently, soft pink and gold light. Only her gentle whisper is heard clearly. RINA (soft, tender whisper in his ear): "…しってるよ。あたしも" (romaji: "...Shitteru yo. Atashi mo.").
+C10 (25-27s): Static extreme close-up of Noboru's face: his eyes go wide, his face turns bright red, his glasses fog up slightly, a giant firework reflected in his lenses. Silence, then one firework BOOM returns.
+C11 (27-30s): Extreme wide shot from behind, camera slowly craning up: the silhouettes of the two sitting on the embankment, Rina resting her head on Noboru's shoulder, their hands overlapping on the grass, the small white box still peeking from his pocket. The grand finale of fireworks fills the whole sky and reflects on the river. Fireworks booming, distant cheers.
+```
