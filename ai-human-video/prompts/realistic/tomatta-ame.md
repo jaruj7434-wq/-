@@ -346,3 +346,47 @@ C10 (28-30s): Drone shot rocketing straight up into the rain: a sea of colorful 
 - Kling 4.0、reference-to-video(ノボル・リナのキャラクターシートのみ参照。静止画を最初のコマには使わない)。
 - 10秒 × 3パートを生成し、つないで30秒にする。
 - 各パートのプロンプトの冒頭に、共通の「場所・位置関係・天気(土砂降りと強風が全編で続く)・車の色と形」を毎回同じ文章で入れる。
+
+## 第5稿 本番生成(2026-10-23 / kling4_0 / reference-to-video / 10秒×3 / 1080p / 16:9 / 約30クレジット)
+
+| パート | job_id |
+|---|---|
+| 1 | 067ca13e-b96c-4ebb-bce8-1c2dbe79cbbb |
+| 2 | 97815044-b044-4dcc-a420-5fe852c45366 |
+| 3 | 2293d6da-af18-49ec-b764-7fe73ecc3844 |
+
+### 共通部分
+```
+Real live-action footage shot on ARRI Alexa with anamorphic lenses, real 35mm film grain, natural motion blur, realistic physics of water, wind and vehicles, real skin texture, not CGI, no morphing, stable faces and hands. One continuous scene with consistent geography. No background music, no subtitles, no on-screen text, no brand logos.
+
+SETTING (identical in every part): night, a wide sidewalk along a big Tokyo road with neon signs; a large intersection is in the right background. A torrential downpour and a violent gusting wind continue through the entire shot without stopping: heavy rain streaks everywhere, puddles, wet asphalt mirroring pink and blue neon. VEHICLES: a white compact sedan and a large silver box truck. Nobody inside the vehicles is shown and nobody is injured.
+
+CHARACTERS - faces, hair and outfits must match the reference images exactly (adults):
+- NOBORU (reference image 1): shy young Japanese man, neat black bowl-cut, round black-framed glasses, black stand-up-collar gakuran-style jacket, black trousers. He holds a black umbrella.
+- RINA (reference image 2): Japanese gyaru, long wavy blonde hair, white blouse with red ribbon, navy pleated skirt, loose socks. She holds a clear vinyl umbrella.
+Camera framing on Rina stays at chest or waist height; opaque clothing; nothing sexual.
+```
+
+### パート1
+```
+PART 1 (10 seconds):
+0-4s: Medium shot from the front, waist up, slowly dollying backward: Noboru and Rina walk side by side on the sidewalk toward camera, each under their own umbrella, Rina on the road side. The violent wind bends their umbrellas almost inside out; Rina's blonde hair, her skirt hem and Noboru's jacket flap hard; both grip their umbrellas with two hands and squint against the rain. Pounding rain and howling wind.
+4-7s: The camera quickly whips to the right toward the intersection in the background: the white sedan skids on the wet road and crashes sideways into the large silver box truck with a burst of sparks and water spray. Screeching tires, loud crash.
+7-10s: Telephoto over Rina's shoulder: knocked away by the impact, the white sedan spins and slides across the wet road straight toward Rina on the sidewalk, headlights glaring through the rain. Rina freezes in shock.
+```
+
+### パート2
+```
+PART 2 (10 seconds), continuing directly: the white sedan is sliding toward Rina.
+0-3s: Static two-shot: Noboru, calm, gently hands his black umbrella to Rina; she now holds both umbrellas and stares at him, confused. The rain sound slightly fades.
+3-4s: Same framing: Noboru's body blurs and vanishes in a split second; a straight tunnel opens through the falling rain toward the sedan, leaving a trail of water spray. A sharp whoosh.
+4-10s: Static low-angle shot facing the sliding white sedan: Noboru suddenly appears in front of it, plants his feet and presses both hands onto the hood; a fan of water sprays up from his feet as his shoes skid backward across the wet asphalt; the hood dents slightly and the sedan stops dead right in front of him. Groaning metal, water spray, the engine cutting out. Heavy rain continues.
+```
+
+### パート3
+```
+PART 3 (10 seconds), continuing directly: the white sedan has been stopped; in the intersection the silver box truck is still spinning.
+0-2s: Wide shot of the intersection: the large silver box truck spins sliding across the wet road, one side of its wheels lifting off the ground as it starts to tip over. Heavy tires groaning.
+2-6s: Static medium shot beside the truck: Noboru's body blurs and he appears instantly beside the tipping truck, catches its side with both hands and pushes it back upright; the truck slams down onto all its wheels and water explodes around it. A heavy thud, water spray.
+6-10s: Close-up of Rina holding both umbrellas, her cheeks flushing, eyes shining, gazing at him, completely falling for him again. Then a two-shot as Noboru walks back to her through the rain, shy again, pushing his glasses up. NOBORU (shy, worried), in natural native Japanese, exactly these words only: "…だ、だいじょうぶ?" (romaji: "...Da, daijoubu?"). Rina hugs his arm tightly and holds her umbrella over him. RINA (softly, smitten): "…うん" (romaji: "...Un"). No other dialogue, clear lip sync. Rain and a distant siren.
+```
