@@ -57,3 +57,33 @@
 
 - 2026-10-23 / gpt_image_2_5 / 16:9 / high / 4k / 4.25クレジット
 - job_id: `e8804279-51f4-4d30-abc2-6f9550544c0d`(参照: ノボル c0c66e97… / リナ d1c54dd5…)
+
+## 本番生成(2026-10-23 / Kling 4.0)
+
+- ジョブ: `da690365-7e69-4b55-92ce-1344f2feb180`(kling4_0 / reference-to-video / 30秒 / 1080p / 16:9 / 30クレジット)
+- 参照画像(順番どおり): ノボル c0c66e97… / リナ d1c54dd5…
+
+```
+A 30-second live-action Japanese cinematic short film, ten shots joined by hard cuts, directed by a top action-fantasy film director. It must look like real footage shot by a professional camera crew, not AI: shot on ARRI Alexa with vintage anamorphic lenses, real 35mm film grain, natural motion blur, realistic physics of rain and water, real skin texture with pores, natural imperfect hair, no plastic or airbrushed look, no morphing, stable faces and hands. Gritty, powerful, high-impact visuals with strong contrast and deep blacks.
+
+Setting: a huge Tokyo scramble crossing at night in heavy rain, wet asphalt mirroring pink and blue neon, steam, crowds with umbrellas, no real brand logos, no text or subtitles on screen. No background music; sound design only.
+
+Characters - faces, hair and outfits must match the reference images exactly in every shot (all adults):
+- NOBORU (reference image 1): shy young Japanese man, neat black bowl-cut with heavy bangs, round thin black-framed glasses, black gakuran-style stand-up-collar jacket.
+- RINA (reference image 2): Japanese gyaru, long wavy bleached blonde hair, tan skin, white blouse with loosened red ribbon, navy pleated mini skirt, loose socks.
+
+Story premise: time does NOT stop. Noboru moves at superhuman speed, so from his point of view the world looks almost frozen. Raindrops never fully stop; they keep falling extremely slowly. Pedestrians blink and move extremely slowly.
+
+Dialogue rules: only the two lines below, spoken in natural native Japanese with correct pronunciation, exactly as written, word for word, no extra words, no other dialogue, clear lip sync, natural emotion. Romaji is only a pronunciation guide.
+
+C1 (0-3s): Top-down drone shot descending over the rainy crossing, a sea of colorful umbrellas flowing in all directions, neon reflections rippling on the wet asphalt. Heavy rain, city noise, crossing signal chirps.
+C2 (3-6s): Backward dolly in front of Noboru and Rina walking under one clear vinyl umbrella; Rina laughs, Noboru smiles shyly. Raindrops drumming on the umbrella.
+C3 (6-8s): Low-angle slow-motion shot: a violent gust rips the clear umbrella out of Rina's hand and it tumbles into the air; she reaches up as heavy raindrops fall toward her face. Wind howl stretching out.
+C4 (8-10s): Extreme close-up of Noboru pushing his glasses up with one finger, a sharp neon glint across the lens, his eyes turning intense. A crisp "click", then all ambient sound drops into a deep, slowed-down, stretched rumble.
+C5 (10-15s): Sweeping 360-degree bullet-time orbit around the crossing seen from Noboru's super-speed perspective: millions of raindrops hanging almost motionless in the air, each one catching pink and blue neon like a crystal bead, still drifting down imperceptibly; pedestrians frozen mid-stride, slowly blinking; Rina frozen with her hand reaching for the umbrella. Only Noboru moves at normal speed. Low stretched rumble and faint crystalline chimes.
+C6 (15-19s): Steadicam following Noboru from behind as he walks through the hanging rain; the air he displaces blasts the raindrops he passes into fine misty vapor trails streaming behind him; he flicks a single drop with his finger and it ripples like liquid glass. Glassy crystalline sounds.
+C7 (19-23s): Slow push-in on Rina, frozen: Noboru plucks the floating umbrella out of the air and opens it gently over her head, then gathers glowing raindrops with his fingertips and arranges them into a small floating heart in front of her face.
+C8 (23-25s): Close-up of Noboru back in his original spot beside Rina, pushing his glasses up again. "Click."
+C9 (25-28s): Two-shot as normal speed snaps back: a delayed shockwave of wind tears through the crossing, whipping Rina's hair and nearby umbrellas; the rain crashes down at full speed; the raindrop heart bursts into a sparkling spray of neon droplets; thin smoke curls up from Noboru's shoes and his glasses are slightly fogged. Rina blinks, looks up at the umbrella and then at Noboru. RINA (puzzled): "…え? いま、なにした?" (romaji: "...E? Ima, nani shita?"). NOBORU (looking away, playing innocent): "…なにも" (romaji: "...Nani mo"). Full rain and city sound returns.
+C10 (28-30s): Drone shot rocketing straight up into the rain: a sea of colorful umbrellas, with their single clear umbrella in the center glowing with neon.
+```
