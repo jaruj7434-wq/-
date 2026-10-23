@@ -1,4 +1,7 @@
-"""「ギリギリ物理」のアカウント用画像(アイコン・YouTube バナー・ショート用カバー)を作る。
+"""「どうなる物理」のアカウント用画像(アイコン・YouTube バナー)と、動画ごとのカバー画像を作る。
+
+アイコンとバナーは特定の動画の形式(リング脱出など)に寄せず、
+「ネオンの?(下の点がボール)+ 飛び交うボール」という汎用的な絵柄にしている。
 
 使い方:
     python make_branding.py
@@ -16,6 +19,9 @@ from ball_escape import hue_rgb, text  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "output", "branding")
 YELLOW = (1, 0.86, 0.2)
+NAME_JA = "どうなる物理"
+NAME_EN = "DOUNARU PHYSICS"
+TAGLINE = "成功か、失敗か。結末は最後まで分からない物理シミュレーション"
 
 
 def bg(ctx, w, h, cx, cy):
@@ -26,28 +32,21 @@ def bg(ctx, w, h, cx, cy):
     ctx.paint()
 
 
-def rings(ctx, cx, cy, r0, step, n, gap_deg=40, rot=0.0, width=8):
-    """すき間が一直線にそろったリング群(=ボールが抜けていく道)を描く。"""
+def flying_ball(ctx, x0, y0, vx, vy, g, t_end, r, color, width):
+    """放物線を描いて飛ぶボールと、その軌跡を描く。"""
+    pts = [(x0 + vx * t, y0 + vy * t + 0.5 * g * t * t)
+           for t in (t_end * k / 60 for k in range(61))]
     ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-    for i in range(n):
-        r = r0 + i * step
-        gap = math.radians(gap_deg) * (1 - i * 0.03)
-        a = rot + i * 0.10  # 少しずつずらして回転感を出す
-        for wdt, al in ((width * 3.4, 0.08), (width * 2.2, 0.16), (width, 1.0)):
+    for i in range(1, len(pts)):
+        a = i / len(pts)
+        for wdt, al in ((width * 3, 0.10), (width, 0.9)):
             ctx.new_path()
-            ctx.arc(cx, cy, r, a + gap / 2, a - gap / 2 + 2 * math.pi)
-            ctx.set_source_rgba(*hue_rgb(i / max(n, 1)), al)
-            ctx.set_line_width(wdt)
+            ctx.move_to(*pts[i - 1])
+            ctx.line_to(*pts[i])
+            ctx.set_source_rgba(*color, al * a)
+            ctx.set_line_width(wdt * (0.3 + 0.7 * a))
             ctx.stroke()
-
-
-def ball(ctx, x, y, r, dx, dy, color=(1, 0.3, 0.6)):
-    """ボールと、進んできた方向の軌跡を描く。"""
-    for k in range(14, 0, -1):
-        ctx.new_path()
-        ctx.arc(x - dx * k, y - dy * k, r * (1 - k / 18), 0, 2 * math.pi)
-        ctx.set_source_rgba(*color, 0.3 * (1 - k / 14))
-        ctx.fill()
+    x, y = pts[-1]
     for rr, al in ((r * 2.6, 0.15), (r * 1.7, 0.3)):
         ctx.new_path()
         ctx.arc(x, y, rr, 0, 2 * math.pi)
@@ -59,17 +58,51 @@ def ball(ctx, x, y, r, dx, dy, color=(1, 0.3, 0.6)):
     ctx.fill()
 
 
+def balls_motif(ctx, cx, cy, s):
+    """4色のボールが中央に向かって飛び交う絵(s は全体の大きさ)。"""
+    specs = [  # 開始位置(中心からの比率), 速度, 終了時刻, 色の色相
+        ((-0.62, 0.45), (0.95, -1.75), 0.78, 0.00),
+        ((0.62, 0.48), (-0.85, -1.85), 0.82, 0.58),
+        ((-0.55, -0.05), (1.20, -1.10), 0.70, 0.30),
+        ((0.58, 0.05), (-1.05, -1.25), 0.62, 0.80),
+    ]
+    for (sx, sy), (vx, vy), te, hue in specs:
+        flying_ball(ctx, cx + sx * s, cy + sy * s, vx * s, vy * s, 3.2 * s, te,
+                    s * 0.045, hue_rgb(hue), s * 0.018)
+
+
+def neon_question(ctx, cx, cy, s, color=YELLOW):
+    """ネオン管風の「?」。下の点はボール(s は高さの目安)。"""
+    r = s * 0.22
+    hx, hy = cx, cy - s * 0.18
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    for wdt, al in ((s * 0.16, 0.10), (s * 0.10, 0.22), (s * 0.055, 1.0)):
+        ctx.new_path()
+        ctx.arc(hx, hy, r, math.radians(195), math.radians(400))
+        ctx.curve_to(hx + r * 0.25, hy + r * 1.05, cx, hy + r * 1.05, cx, cy + s * 0.12)
+        ctx.line_to(cx, cy + s * 0.16)
+        ctx.set_source_rgba(*color, al)
+        ctx.set_line_width(wdt)
+        ctx.stroke()
+    # 点の代わりのボール(左上から飛んできた軌跡つき)
+    by = cy + s * 0.36
+    flying_ball(ctx, cx - s * 0.55, by - s * 0.30, s * 1.4, -s * 0.6, s * 4.8, 0.393,
+                s * 0.055, (1, 0.3, 0.6), s * 0.025)
+
+
 def icon(path, size=800):
     s = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
     c = cairo.Context(s)
     cx = cy = size / 2
     bg(c, size, size, cx, cy)
+    # 背景の飛び交うボール(控えめ)
+    flying_ball(c, cx - size * 0.38, cy + size * 0.25, size * 0.45, -size * 1.1, size * 2.2, 0.62,
+                size * 0.022, hue_rgb(0.55), size * 0.010)
+    flying_ball(c, cx + size * 0.38, cy + size * 0.30, -size * 0.40, -size * 1.0, size * 2.2, 0.55,
+                size * 0.022, hue_rgb(0.30), size * 0.010)
     # 丸く切り抜かれても欠けないよう、中心から半径 0.42 以内に収める
-    rot = -math.pi / 4
-    rings(c, cx, cy, size * 0.10, size * 0.052, 6, gap_deg=48, rot=rot, width=size * 0.016)
-    r_out = size * 0.10 + 5 * size * 0.052
-    bx, by = cx + math.cos(rot) * (r_out + size * 0.05), cy + math.sin(rot) * (r_out + size * 0.05)
-    ball(c, bx, by, size * 0.035, math.cos(rot) * size * 0.022, math.sin(rot) * size * 0.022)
+    neon_question(c, cx, cy - size * 0.04, size * 0.78)
     s.write_to_png(path)
 
 
@@ -78,30 +111,45 @@ def banner(path):
     s = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
     c = cairo.Context(s)
     bg(c, w, h, w / 2, h / 2)
-    # 左右の飾りリング(パソコン表示でだけ見える範囲)
-    rings(c, 330, h / 2, 60, 34, 9, gap_deg=40, rot=0.2, width=7)
-    rings(c, w - 330, h / 2, 60, 34, 9, gap_deg=40, rot=math.pi + 0.2, width=7)
-    ball(c, 330 + 400, h / 2 + 90, 18, 14, 3)
+    # 左右の飾り(パソコン表示でだけ見える範囲)
+    for x in (330, w - 330):
+        balls_motif(c, x, h / 2 + 40, 420)
+    neon_question(c, w / 2 - 640, h / 2 - 10, 330)
+    neon_question(c, w / 2 + 640, h / 2 - 10, 330)
     # 全端末で表示される中央 1546x423 の安全範囲に文字を収める
-    text(c, "ギリギリ物理", w / 2, h / 2 + 20, 150, rgb=YELLOW, sw=18)
-    text(c, "GIRIGIRI PHYSICS", w / 2, h / 2 + 100, 56, sw=8)
-    text(c, "毎日、ギリギリで決着する物理シミュレーション", w / 2, h / 2 + 175, 48,
-         rgb=(0.85, 0.85, 0.92), sw=6)
+    text(c, NAME_JA, w / 2, h / 2 + 20, 150, rgb=YELLOW, sw=18)
+    text(c, NAME_EN, w / 2, h / 2 + 100, 56, sw=8)
+    text(c, TAGLINE, w / 2, h / 2 + 175, 44, rgb=(0.85, 0.85, 0.92), sw=6)
     s.write_to_png(path)
 
 
-def cover(path, hook="ラスト1秒で…!?"):
-    """ショート動画のカバー画像(TikTok / Instagram でアップロード用)。"""
+def ring_art(ctx, cx, cy, r0, step, n, gap_deg, rot, width):
+    """リング脱出回のカバー用の絵。"""
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    for i in range(n):
+        r = r0 + i * step
+        gap = math.radians(gap_deg) * (1 - i * 0.03)
+        a = rot + i * 0.10
+        for wdt, al in ((width * 3.4, 0.08), (width * 2.2, 0.16), (width, 1.0)):
+            ctx.new_path()
+            ctx.arc(cx, cy, r, a + gap / 2, a - gap / 2 + 2 * math.pi)
+            ctx.set_source_rgba(*hue_rgb(i / max(n, 1)), al)
+            ctx.set_line_width(wdt)
+            ctx.stroke()
+
+
+def cover_ball_escape(path, hook="ラスト1秒で…!?"):
+    """リング脱出回のカバー画像(TikTok / Instagram でアップロード用)。動画ごとに作る。"""
     w, h = 1080, 1920
     s = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
     c = cairo.Context(s)
     cx, cy = w / 2, 1130
     bg(c, w, h, cx, cy)
     rot = -math.pi / 4
-    rings(c, cx, cy, 100, 30, 10, gap_deg=40, rot=rot, width=9)
+    ring_art(c, cx, cy, 100, 30, 10, 40, rot, 9)
     r_out = 100 + 9 * 30
-    ball(c, cx + math.cos(rot) * (r_out + 60), cy + math.sin(rot) * (r_out + 60), 22,
-         math.cos(rot) * 18, math.sin(rot) * 18)
+    flying_ball(c, cx + math.cos(rot) * (r_out - 40), cy + math.sin(rot) * (r_out - 40),
+                math.cos(rot) * 300, math.sin(rot) * 300, 0, 0.35, 22, (1, 0.3, 0.6), 8)
     # Instagram のグリッド表示(中央の 1080x1350)からはみ出さない位置に大きな文字を置く
     text(c, "30秒以内に", cx, 430, 96, sw=16)
     text(c, "全部脱出", cx, 580, 170, rgb=YELLOW, sw=22)
@@ -114,5 +162,5 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     icon(os.path.join(OUT, "icon_800.png"))
     banner(os.path.join(OUT, "youtube_banner_2560x1440.png"))
-    cover(os.path.join(OUT, "cover_ball_escape_136.png"))
+    cover_ball_escape(os.path.join(OUT, "cover_ball_escape_136.png"))
     print("完成:", os.path.abspath(OUT))
