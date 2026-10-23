@@ -22,11 +22,15 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "ball_escape"))
 from ball_escape import hue_rgb, midi_hz, noise, text, tone  # noqa: E402
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
+from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
+
 W, H = 1080, 1920
 FPS = 60
 SUBSTEPS = 8
 TIME_LIMIT = 30.0
-OUTRO = 3.0
+OUTRO = 3.0 + 1.25   # 失敗時は幽霊の出ている時間ぶん長くする
+SCARE = True        # 失敗したときに幽霊を出すか
 SR = 48000
 
 AX0, AX1, AY0, AY1 = 70, 1010, 540, 1420   # 枠
@@ -234,6 +238,7 @@ def render(seed):
         stdin=subprocess.PIPE)
 
     rng = np.random.default_rng(seed + 999)
+    ghost = GhostScare(W, H, seed) if SCARE and clear_t is None else None
     particles = []
     last_hit = {}
     trails = {}
@@ -252,10 +257,15 @@ def render(seed):
                     particles.append([ex, ey, math.cos(a) * sp, math.sin(a) * sp, 0, rng.uniform(0.4, 0.9), col])
             ev_i += 1
 
-        ctx.set_source_surface(bg, 0, 0)
-        ctx.paint()
         over = t >= end_t
         fail = over and clear_t is None
+        if ghost is not None and 0 <= t - end_t < SCARE_DUR:
+            ghost.draw(surf, t - end_t)
+            ff.stdin.write(surf.get_data())
+            continue
+        after = t - end_t - (SCARE_DUR if ghost is not None else 0)  # 結果表示が始まってからの秒数
+        ctx.set_source_surface(bg, 0, 0)
+        ctx.paint()
 
         # ブロック
         for i, br in enumerate(bricks):
@@ -265,7 +275,7 @@ def render(seed):
             flash = max(0.0, 1 - (t - last_hit.get(i, -9)) / 0.12)
             col = (0.3, 1, 0.5) if br["plus"] else hp_color(hp)
             if fail:  # 最後に残ったブロックを点滅で強調
-                pulse = 0.5 + 0.5 * math.sin((t - end_t) * 12)
+                pulse = 0.5 + 0.5 * math.sin(after * 12)
                 col = (1, 0.25 + 0.3 * pulse, 0.25 + 0.3 * pulse)
             c2 = tuple(v + (1 - v) * flash * 0.8 for v in col)
             rounded(ctx, br["x"], br["y"], CW, CH, 12)
@@ -328,8 +338,10 @@ def render(seed):
         text(ctx, f"ボール ×{len(balls)}", AX0 + 10, 1500, 52, sw=10, align="left")
         if not over:
             text(ctx, f"残り {remain} ブロック", W / 2 + 150, 1500, 60, sw=12)
+            if ghost is not None or (SCARE and clear_t is not None):
+                text(ctx, "※失敗すると…アレが出ます", W / 2, 1590, 50, rgb=(1, 0.35, 0.35), sw=10)
         elif fail:
-            k = min(1.0, (t - end_t) / 0.25)
+            k = min(1.0, after / 0.25)
             text(ctx, "時間切れ…", W / 2, 1180, 150 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
             left_hp = sum(hp for hp in hps if hp > 0)
             text(ctx, f"残り{remain}ブロック、耐久あと{left_hp}", W / 2, 1310, 64, sw=12)
@@ -347,9 +359,10 @@ def render(seed):
     ff.wait()
     duration = len(frames) / FPS
     synth_audio(events, end_t, clear_t is None, duration, wav)
+    # 叫び声の大きさを残すため、音量の自動調整(loudnorm)はかけない
     subprocess.run(
         ["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", wav,
-         "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-c:v", "copy", "-c:a", "aac",
+         "-c:v", "copy", "-c:a", "aac",
          "-b:a", "192k", "-ar", "48000", "-shortest", "-movflags", "+faststart", final],
         check=True)
     os.remove(silent)
@@ -393,15 +406,22 @@ def synth_audio(events, end_t, fail, duration, path):
     for s in range(25, 30):
         if s < end_t:
             add(noise(0.06, 0.5, 60, rng) + tone(1800, 0.06, 0.2, 40), s)
+    scare = np.zeros_like(out)
     if fail:
-        # ブザー + 下がっていく「残念」の音
-        n = int(0.6 * SR)
-        tt = np.arange(n) / SR
-        buzz = 0.35 * np.sign(np.sin(2 * np.pi * 110 * tt)) * np.exp(-tt * 2.5)
-        add(buzz, end_t)
+        sad_t = end_t
+        if SCARE:
+            sig = scream(SR)
+            scare[int(end_t * SR):int(end_t * SR) + len(sig)] += sig[: len(scare) - int(end_t * SR)]
+            sad_t = end_t + SCARE_DUR + 0.1
+        else:
+            n = int(0.6 * SR)
+            tt = np.arange(n) / SR
+            add(0.35 * np.sign(np.sin(2 * np.pi * 110 * tt)) * np.exp(-tt * 2.5), end_t)
+            sad_t = end_t + 0.55
+        # 下がっていく「残念」の音
         for k, m in enumerate((64, 63, 62)):
-            add(tone(midi_hz(m), 0.45, 0.35, 3) + tone(midi_hz(m - 12), 0.45, 0.25, 3), end_t + 0.55 + k * 0.42)
-        add(tone(midi_hz(61), 1.4, 0.35, 1.5) + tone(midi_hz(49), 1.4, 0.25, 1.5), end_t + 1.81)
+            add(tone(midi_hz(m), 0.45, 0.35, 3) + tone(midi_hz(m - 12), 0.45, 0.25, 3), sad_t + k * 0.42)
+        add(tone(midi_hz(61), 1.4, 0.35, 1.5) + tone(midi_hz(49), 1.4, 0.25, 1.5), sad_t + 1.26)
     else:
         for iv in (0, 4, 7, 12, 16):
             add(tone(midi_hz(69 + iv), 2.5, 0.25, 1.2), end_t)
@@ -411,7 +431,9 @@ def synth_audio(events, end_t, fail, duration, path):
         k = int(d * SR)
         wet[k:] += out[:-k] * g
     wet = wet[: int(duration * SR)]
-    wet /= max(1e-9, np.max(np.abs(wet))) / 0.9
+    # 通常部分は軽く圧縮して聞こえやすくし、叫び声との差は約10dBに抑える(驚かせつつ耳に痛くない)
+    wet = np.tanh(2.5 * wet / max(1e-9, np.max(np.abs(wet)))) / np.tanh(2.5) * 0.7
+    wet = np.clip(wet + 0.95 * scare[: len(wet)], -0.98, 0.98)
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
