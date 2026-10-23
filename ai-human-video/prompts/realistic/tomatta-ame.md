@@ -264,3 +264,22 @@ C10 (28-30s): Drone shot rocketing straight up into the rain: a sea of colorful 
 | S6 | e7dde126-3b56-428a-9c7e-b34f6fd4d991 | 生成中 |
 | S7 | 818678e7-8c6a-4d18-8b60-f77a4773db52 | 生成中 |
 | S8 | 1da32dc0-74b1-44a4-ad98-487cb2226329 | 生成中 |
+
+## 第4稿 動画(ショット別生成、2026-10-23 / kling4_0 / 1080p / 16:9)
+
+- 静止画は「カット割りの参考」のみ。動画の最初のコマには使わない(静止画のAI感が強かったため)。
+- 人物の出るショットは reference-to-video(キャラクターシートのみ参照)、人物の出ないショットは text-to-video。
+- 合計37秒分を生成(約37クレジット)。つなぐときに30秒に整える。
+
+| # | 秒数 | モード | job_id |
+|---|---|---|---|
+| H1 | 3 | text-to-video | 724fb711-59d0-43ef-b0b4-b1a624b573fa |
+| H2 | 3 | reference(ノボル) | b164a47c-c932-418f-8b1c-08a8bfe29e44 |
+| S1 | 3 | text-to-video | c4c5a64b-c9de-4b6e-b5ae-3c9bf515f51c |
+| S2 | 4 | reference(ノボル・リナ) | 21b81411-99f5-4221-b15c-b94282485e52 |
+| S3 | 3 | text-to-video | 83aa9254-760d-4b3c-954c-a114a1dbdd99 |
+| S4 | 3 | reference(リナ) | 16a2e10f-73fd-48ef-9bd2-2333a5ef883c |
+| S5 | 3 | reference(ノボル) | e9050c33-7bf0-411e-bfa7-015bd2efbbc7 |
+| S6 | 6 | reference(ノボル・リナ) | 9d2b47ee-c8f6-485d-af43-b6fee21e3bbf |
+| S7 | 3 | reference(ノボル・リナ) | 248fa086-9276-41c4-9672-7a016cfb64a9 |
+| S8 | 6 | reference(ノボル・リナ) | 208f1103-8cf1-4ddb-8b2c-f064236c0470 |
