@@ -1,0 +1,29 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Tel,Noto Sans JP,70,&H00FFFFFF,&H00FFFFFF,&H00000000,&H96000000,1,0,0,0,100,100,2,0,1,4,3,5,70,70,0,1
+Style: End,Noto Sans JP,90,&H00FFFFFF,&H00FFFFFF,&H00000000,&H96000000,1,0,0,0,100,100,8,0,1,5,3,5,70,70,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:03.89,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}俺の人生と共に歩んだ馬が、一頭いる。
+Dialogue: 0,0:00:03.94,0:00:05.67,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}トウカイテイオー。
+Dialogue: 0,0:00:05.72,0:00:10.84,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}父は七冠馬、シンボリルドルフ。\Nその最初の世代の子だ。
+Dialogue: 0,0:00:10.89,0:00:17.03,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}1988年4月20日。\N北海道・新冠町の長浜牧場で生まれた。
+Dialogue: 0,0:00:17.08,0:00:18.72,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}母は、トウカイナチュラル。
+Dialogue: 0,0:00:18.77,0:00:23.47,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}本当は、姉のトウカイローマンに\Nつけるはずの種付けだった。
+Dialogue: 0,0:00:23.52,0:00:27.69,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}姉の現役が延びて、\Nその一回が妹に回ってきたんだ。
+Dialogue: 0,0:00:27.74,0:00:30.74,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}父が「皇帝」なら、息子は「帝王」。
+Dialogue: 0,0:00:30.79,0:00:36.29,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}脚は長くて、細い。\N最初は、それほど期待されてなかったらしい。
+Dialogue: 0,0:00:36.34,0:00:39.37,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}だが走らせると、\N体がとにかく柔らかい。
+Dialogue: 0,0:00:39.42,0:00:45.34,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}1990年の秋、\N栗東の松元省一厩舎に入った。
+Dialogue: 0,0:00:45.39,0:00:50.23,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}12月、中京でデビュー。\N鞍上は、安田隆行。
+Dialogue: 0,0:00:50.28,0:00:54.57,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}そのまま4連勝。\N鞭は、一度も使われなかった。
+Dialogue: 0,0:00:54.62,0:00:57.32,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}強すぎて、底が見えなかった。
+Dialogue: 0,0:00:57.37,0:00:59.86,Tel,,0,0,0,,{\pos(540,1180)\fad(80,80)}そして春。無敗のまま、クラシックへ。
+Dialogue: 0,0:00:59.91,0:01:01.21,End,,0,0,0,,{\pos(540,960)\fad(200,0)}つづく

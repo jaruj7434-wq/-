@@ -59,3 +59,10 @@
 | 13 | 5 | a5d13a3d-48c8-4739-af1a-56836eb46669 |
 | 14 | 3 | 43ba4c24-0ffa-4049-bca9-09775b6f1d9c |
 | 15 | 4 | 50b73cd3-315d-4a52-bfe9-4b6774a8545e |
+
+## 完成版
+- 61.3秒/1080×1920/30fps/AAC 48kHz。テロップは Noto Sans JP Bold(自前の ASS で焼き込み)
+- 2番は最初の生成(36dc089a)が遅れて完了したため、それを採用。並行して再依頼した f463bdf0 は不採用
+- Higgs Field media_id: `01aa8921-b79f-43e3-8849-bbecfdf6f365`
+- 編集スクリプト: `edit/tokai-teio/ep01/build.sh`、テロップ: `edit/tokai-teio/ep01/captions.ass`
+- BGM は未使用(未指定のため)
