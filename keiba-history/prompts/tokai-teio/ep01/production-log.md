@@ -66,3 +66,10 @@
 - Higgs Field media_id: `01aa8921-b79f-43e3-8849-bbecfdf6f365`
 - 編集スクリプト: `edit/tokai-teio/ep01/build.sh`、テロップ: `edit/tokai-teio/ep01/captions.ass`
 - BGM は未使用(未指定のため)
+
+## v2: 谷上さんの音読カットを追加(1・8・15番を差し替え)
+- 静止画(nano_banana_pro + 要素「谷上」b0bf8884-7e0b-4337-a4c7-40db6c805c32): 1=f2a8b636-5bf4-43c7-8bb1-3121b186250c / 8=3a769a4d-7dc4-4fdc-816c-e9930b4159ab / 15=fb89773d-34f5-40ae-8cf4-47678f8774d0
+- 口の動きの同期用ナレーション(media): 1=e8e202d2-bf22-40fd-8087-b40c51c507aa / 8=f828e38c-15a7-4f64-9df2-c23bf22f5f8f / 15=2c2b4123-a23a-470d-9db4-67049fe12f4e(末尾に1.3秒の無音)
+- 動画(wan2_7 / 1080p / start_image + audio_references): 1=f7e7b36a-f36c-46a7-b3d8-8b1241bf6887 / 8=03709fe3-5f03-4e56-821c-b01c28d25ff4 / 15=ef3f79d0-427a-4b97-814b-145a4fdb0426
+- 差し替え前の馬のカット(1・8・15)は未使用素材として保持
+- 完成版 v2: media_id `3ede1252-b0b0-468b-ac56-b094954237fe`(61.3秒)
