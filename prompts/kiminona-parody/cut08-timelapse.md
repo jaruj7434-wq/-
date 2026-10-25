@@ -25,3 +25,13 @@
 - 各カット: 開始画像(A=夜、B=昼)と終了画像(A=朝、B=夕暮れ)を作り、間をタイムラプスで生成
 - 画像 4枚: Nano Banana 2.1 / 4K / 3 クレジット × 4 = 12
 - 動画 2本: Cinema Studio Video 2 / pro / 3秒 / 6 クレジット × 2 = 12(編集で 2.6秒・2.4秒に)
+
+## 決定(ユーザー指定): A1 + B1
+- A: オフィス街 → 「食べ放題」の巨大看板とネオンで埋まった飲食店ビルのグルメ街(店名は架空・読めない文字)。夜はネオン、朝日が昇っても光っている
+- B: 神社 → 森の中の老舗ラーメン屋。鳥居の位置に朱色の看板と暖簾の店先、石灯籠の代わりに赤ちょうちん、湯気。夕焼けでちょうちんが灯る
+
+## 構図ガイド(git 管理外)
+- A 開始(夜): `assets/source/kiminona/cut08a-city-guide-night.png`
+- A 終了(朝): `assets/source/kiminona/cut08a-city-guide-morning.png`
+- B 開始(昼): `assets/source/kiminona/cut08b-ramen-guide-day.png`
+- B 終了(夕暮れ): `assets/source/kiminona/cut08b-ramen-guide-dusk.png`
