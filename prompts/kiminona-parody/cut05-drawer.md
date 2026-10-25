@@ -19,3 +19,6 @@
 ## 構図ガイド画像(git 管理外)
 - 開く前: `assets/source/kiminona/cut05-drawer-guide-before.png`(引き出し3分の1開き、太い腕が取っ手に指をかける)
 - 開いた後: `assets/source/kiminona/cut05-drawer-guide-after.png`(左下へ引き出しきり、お菓子がぎっしり)
+- ガイドのアップロード: 開く前 `ec76035b-4fe5-4ae5-9c12-37c1af925662`、開いた後 `ae60f569-a305-4735-87cd-58bcf7e769ba`
+- 追加指定: 開いた後のお菓子はあふれんばかりに大量、ひと目でチョコやお菓子とわかる見た目
+- 開始画像(Nano Banana 2.1 / 4K / 3 クレジット): `0ab37cdc-351b-4bba-89b8-61ed097a3450`
