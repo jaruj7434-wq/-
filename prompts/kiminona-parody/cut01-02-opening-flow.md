@@ -45,3 +45,4 @@ Cinematic live-action opening of a romantic fantasy film trailer, 16:9, 9 second
 6.8-9.0s: The camera settles into a wide low-angle shot: the huge cyan-to-white band arcs across the sky with magenta, pink and violet fringes like a single ribbon of aurora; the heroine stands small in the lower right corner in profile, gazing up in wonder, her ponytail fluttering in the breeze. End exactly on the final frame.
 Audio: quiet, mysterious solo piano and high-altitude wind; a soft whoosh as the camera passes through the clouds; calm night ambience. No dialogue.
 ```
+- 生成(Cinema Studio Video 2 / pro / 9秒 / 16:9 / ジャンル spectacle / 音あり / 18 クレジット): `903ae1fe-1a8e-40bc-8c59-844ea7542f7e`
