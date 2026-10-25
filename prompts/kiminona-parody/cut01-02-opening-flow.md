@@ -46,3 +46,19 @@ Cinematic live-action opening of a romantic fantasy film trailer, 16:9, 9 second
 Audio: quiet, mysterious solo piano and high-altitude wind; a soft whoosh as the camera passes through the clouds; calm night ambience. No dialogue.
 ```
 - 生成(Cinema Studio Video 2 / pro / 9秒 / 16:9 / ジャンル spectacle / 音あり / 18 クレジット): `903ae1fe-1a8e-40bc-8c59-844ea7542f7e`
+
+## リテイク案(ユーザー指摘)
+1. 雲の上の唐揚げ隕石は、もう少し速いスピードで落ちる
+2. 雲を抜けて夜空のカットに入ったら、ヒロインの後頭部から華麗なカメラワークで終了画像へ
+   - 本予告の再確認: 6.25秒は真後ろ・やや下 → 8.75秒には少女が画面右下で横顔になる。
+     つまりカメラは上へティルトしながら、少女の左側へ弧を描いて回り込み、後ろへ引いて広角のあおりになる
+3. オーロラ(シアン〜白の光の帯+マゼンタ・紫の縁)は、最初から夜空にすでに出ている。降ってくるのは隕石(白い線と赤く光る唐揚げ)だけ
+
+### 修正プロンプト(英語)
+```
+Cinematic live-action opening of a romantic fantasy film trailer, 16:9, 9 seconds, one continuous camera move from the first frame to the last frame (the end image), realistic and photographic, calm natural colors, no text.
+0-3.5s: Continue from the first frame: high above an endless sea of clouds at dusk, the tiny sun on the horizon with dotted vertical and horizontal lens flares and a faint halo ring. The thin sharp white meteor trail with the small karaage fried-chicken meteor at its tip falls FAST, streaking quickly and almost straight down toward the horizon. Meanwhile the camera tilts down and descends toward the clouds; the horizon rises in the frame, the foreground clouds grow larger and darker, and a chain of soft orange lens-flare orbs drifts toward the lower right.
+3.5-4.2s: The camera plunges straight into a huge cloud mass; the whole frame is engulfed in white-gray mist, then briefly a dark blue blur as it breaks through below the clouds.
+4.2-9.0s: Night on the ground. The shot begins as a close low angle directly behind the heroine's head (very large plus-size young woman, long black ponytail with a red hair tie, white blouse and mustard-yellow-brown sleeveless knit vest), her ponytail and round broad shoulders filling the lower center of the frame. The AURORA IS ALREADY IN THE SKY from the start: a huge, still, luminous cyan-to-white band arcing across the starry sky with magenta, pink and violet fringes like a single ribbon of aurora - it does not fall or move in. Then an elegant, graceful, sweeping camera move: the camera smoothly rises and tilts up while gliding in a wide arc around to her left side and pulling back, revealing more and more of the aurora and the starry sky, until it settles into a wide low-angle shot with the heroine small in the lower right corner, in profile, gazing up in wonder, her ponytail fluttering in the breeze. Only the meteor is falling: the thin white line with the red-hot glowing karaage at its tip descends beneath the aurora. End exactly on the final frame.
+Audio: quiet, mysterious solo piano and high-altitude wind; a soft whoosh as the camera passes through the clouds; calm night ambience. No dialogue.
+```
