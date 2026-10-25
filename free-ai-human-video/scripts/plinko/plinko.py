@@ -40,11 +40,11 @@ GOAL = 100
 
 BALL_R = 11
 PEG_R = 7
-PEG_TOP, PEG_ROWS, PEG_DY, PEG_DX = 660, 9, 62, 84
+PEG_TOP, PEG_ROWS, PEG_DY, PEG_DX = 660, 7, 62, 84
 DROP_Y = 590
-DROP_EVERY = 0.18          # 成功率がおよそ半々になる値(300回中168回成功)
+DROP_EVERY = 0.15          # 成功率がおよそ半々になる値
 DROPPER2_AT, GATE3_AT, FAST_AT = 8.0, 16.0, 24.0
-CUP_Y, CUP_W, CUP_H = 1400, 220, 70
+CUP_Y, CUP_W, CUP_H = 1450, 164, 330   # 縦長のコップ。玉が約100個でいっぱいになる大きさ
 CUP_AMP, CUP_PERIOD, CUP_PERIOD_FAST = 330.0, 4.0, 2.3
 MAX_BALLS = 500
 
@@ -88,15 +88,16 @@ class Game:
             sp.add(s)
         self.cup_phase = 0.0
         # 増殖ゲート [x, y, 幅, 倍率, 出現時刻]
-        gy = [PEG_TOP + PEG_DY * 2.5, PEG_TOP + PEG_DY * 5.5]
+        gy = [PEG_TOP + PEG_DY * 1.5, PEG_TOP + PEG_DY * 3.5]
         self.gates = [
             {"x": self.rng.uniform(220, W - 220), "y": gy[0], "w": 170, "mul": 2, "at": 0.0},
             {"x": self.rng.uniform(220, W - 220), "y": gy[1], "w": 170, "mul": 2, "at": 0.0},
-            {"x": self.rng.uniform(260, W - 260), "y": PEG_TOP + PEG_DY * 7.5, "w": 150, "mul": 3, "at": GATE3_AT},
+            {"x": self.rng.uniform(260, W - 260), "y": PEG_TOP + PEG_DY * 5.5, "w": 150, "mul": 3, "at": GATE3_AT},
         ]
         self.balls = []    # {"body", "id", "used": set(), "hue"}
         self.next_id = 0
         self.count = 0
+        self.c10 = None
         self.events = []
         self.droppers = [W / 2 + self.rng.uniform(-60, 60)]
         self.next_drop = 0.3
@@ -113,7 +114,7 @@ class Game:
         c = pymunk.Circle(b, BALL_R)
         c.elasticity, c.friction = 0.45, 0.2
         self.space.add(b, c)
-        self.balls.append({"body": b, "shape": c, "id": self.next_id, "used": set(used or ()),
+        self.balls.append({"body": b, "shape": c, "id": self.next_id, "used": set(used or ()), "in": False,
                            "hue": self.rng.uniform() if hue is None else hue})
         self.next_id += 1
 
@@ -163,12 +164,15 @@ class Game:
                                       vx * math.cos(a) - vy * math.sin(a), vx * math.sin(a) + vy * math.cos(a),
                                       used=ball["used"], hue=ball["hue"])
                     self.events.append(("multiply", t, (gi, g["mul"])))
-            cx = self.cup.position.x
-            if self.result is None and abs(x - cx) < CUP_W / 2 - 4 and CUP_Y - CUP_H + 10 < y < CUP_Y:
-                self.count += 1
+            # コップの中にいるか(入った玉は消さずにそのまま溜まる。こぼれたら数から外れる)
+            inside = abs(x - self.cup.position.x) < CUP_W / 2 - 4 and CUP_Y - CUP_H < y < CUP_Y
+            if inside and not ball["in"]:
+                ball["in"] = True
                 self.events.append(("goal", t, (x, y, ball["hue"])))
-                gone = True
-            elif y > H + 40:
+            elif not inside and ball["in"] and y < CUP_Y - CUP_H:
+                ball["in"] = False
+                self.events.append(("spill", t, (x, y)))
+            if y > H + 40:
                 gone = True
             if gone:
                 self.remove(ball)
@@ -176,6 +180,9 @@ class Game:
                 keep.append(ball)
         self.balls = keep
         if self.result is None:
+            self.count = sum(1 for b in self.balls if b["in"])   # 決着後は数を固定する
+            if self.c10 is None and t >= 10:
+                self.c10 = self.count
             if self.count >= GOAL:
                 self.result, self.result_t = "success", t
                 self.events.append(("success", t, None))
@@ -201,8 +208,7 @@ def simulate(seed, record=False):
             extra = OUTRO + (SCARE_DUR if g.result == "fail" else 0)
             if not record or g.t > g.result_t + extra:
                 break
-    # 10秒時点の数(序盤の苦戦の度合い)
-    c10 = sum(1 for e in g.events if e[0] == "goal" and e[1] <= 10)
+    c10 = g.c10 or 0   # 10秒時点の数(序盤の苦戦の度合い)
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t,
             "count": g.count, "c10": c10, "gates": g.gates, "pegs": g.pegs}
 
@@ -350,6 +356,12 @@ def render(seed):
             ctx.close_path()
             ctx.set_source_rgb(0.5, 0.95, 1.0)
             ctx.fill()
+        # コップのガラス(玉より奥に描く)
+        cxg = fr["cup_x"]
+        ctx.new_path()
+        ctx.rectangle(cxg - CUP_W / 2, CUP_Y - CUP_H, CUP_W, CUP_H)
+        ctx.set_source_rgba(1, 0.9, 0.6, 0.07)
+        ctx.fill()
         # 玉
         for bx, by, hue in fr["balls"]:
             col = hue_rgb(hue, 0.6, 1.0)
@@ -382,7 +394,16 @@ def render(seed):
             ctx.set_source_rgba(*ccol, al)
             ctx.set_line_width(wdt)
             ctx.stroke()
-        text(ctx, "GOAL", cx, CUP_Y - 18, 36, rgb=ccol, sw=6)
+        # 縁の「満タン」ライン(約100個でここまで溜まる)
+        ctx.set_dash([10, 8])
+        ctx.new_path()
+        ctx.move_to(cx - hw - 26, CUP_Y - CUP_H)
+        ctx.line_to(cx + hw + 26, CUP_Y - CUP_H)
+        ctx.set_source_rgba(1, 1, 1, 0.6)
+        ctx.set_line_width(3)
+        ctx.stroke()
+        ctx.set_dash([])
+        text(ctx, "GOAL", cx, CUP_Y - CUP_H - 22, 40, rgb=ccol, sw=7)
         # 粒子
         alive = []
         for p in particles:
@@ -402,7 +423,7 @@ def render(seed):
             age = t - bn[0]
             if 0 <= age < 1.4 and not over:
                 k = min(1, age / 0.15)
-                text(ctx, bn[1], W / 2, 1230, 100 * (1.4 - 0.4 * k), rgb=bn[2], sw=18,
+                text(ctx, bn[1], W / 2, 980, 100 * (1.4 - 0.4 * k), rgb=bn[2], sw=18,
                      alpha=min(1, 3 * (1.4 - age)))
 
         # 文字
@@ -422,12 +443,12 @@ def render(seed):
             text(ctx, "※失敗すると…アレが出ます", W / 2, 1580, 50, rgb=(1, 0.35, 0.35), sw=10)
         elif fail:
             k = min(1.0, after / 0.25)
-            text(ctx, "時間切れ…", W / 2, 1050, 150 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
-            text(ctx, f"あと{GOAL - count}個だった…", W / 2, 1180, 72, sw=12)
+            text(ctx, "時間切れ…", W / 2, 900, 150 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, f"あと{GOAL - count}個だった…", W / 2, 1020, 72, sw=12)
         else:
             k = min(1.0, (t - end_t) / 0.25)
-            text(ctx, f"{GOAL}個達成！", W / 2, 1050, 140 * (1.6 - 0.6 * k), rgb=GOLD, sw=20)
-            text(ctx, f"残り{TIME_LIMIT - end_t:.2f}秒", W / 2, 1180, 80, sw=12)
+            text(ctx, f"満タン{GOAL}個達成！", W / 2, 900, 140 * (1.6 - 0.6 * k), rgb=GOLD, sw=20)
+            text(ctx, f"残り{TIME_LIMIT - end_t:.2f}秒", W / 2, 1020, 80, sw=12)
 
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
@@ -465,7 +486,9 @@ def synth_audio(events, end_t, fail, duration, path):
     note_i = 0
     last_note = last_pop = -1.0
     for kind, t, data in events:
-        if kind == "goal":
+        if kind == "spill":
+            add(tone(midi_hz(55), 0.3, 0.2, 6), t)
+        elif kind == "goal":
             if t - last_note >= 0.09:   # カップに入るたびに「歓喜の歌」が進む(詰まりすぎる分はコイン音)
                 add(tone(midi_hz(MELODY[note_i % len(MELODY)]), 0.4, 0.35, 6), t)
                 note_i += 1
