@@ -17,3 +17,5 @@
 ## 構図ガイド画像(git 管理外)
 - 開始: `assets/source/kiminona/cut06-bike-guide-before.png`(足がペダルの横で浮いている、タイヤは潰れて横にふくらむ)
 - 終了: `assets/source/kiminona/cut06-bike-guide-after.png`(足が地面に下りる)
+- ガイドのアップロード: 開始 `a1f1ed5d-45fc-42a7-b027-1356c5f88c61`、終了 `397f3955-01d0-4fd4-9a19-46adda49cb98`
+- 開始画像(Nano Banana 2.1 / 4K / 3 クレジット): `6b27f42e-dcb5-4181-929e-67d5a781aced`
