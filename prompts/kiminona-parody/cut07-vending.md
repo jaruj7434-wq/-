@@ -18,3 +18,5 @@
 - 開始: `assets/source/kiminona/cut07-vending-guide-before.png`(空の取り出し口)
 - 終了: `assets/source/kiminona/cut07-vending-guide-after.png`(特大コーラが横倒しで取り出し口いっぱいに詰まる)
 - ※ 注意書きの文字は実写化では読めないぼかしにする
+- ガイドのアップロード: 開始 `9aef9d07-6596-4028-bbc6-bbc793f1e19f`、終了 `cf130415-a0e4-4452-9403-0c0a84edc196`
+- 開始画像(Nano Banana 2.1 / 4K / 3 クレジット): `4721780c-39fb-4ff9-95c5-76c91087038e`
