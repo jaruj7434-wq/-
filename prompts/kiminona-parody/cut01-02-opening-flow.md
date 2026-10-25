@@ -29,3 +29,19 @@
 ## 決定事項と生成記録
 - ヒロインの衣装: 制服(黄茶色のノースリーブのニットベスト)
 - カットB の終了画像のみ作成(gpt_image_2 / medium / 2k / 16:9、2 クレジット、Element debu-heroine): `217656eb-7234-4462-8219-9ad51787592f`
+
+## 動画(冒頭 約9秒を1本で)— 案(未生成)
+- start_image: 雲海と唐揚げの隕石 `aa3bc47a-bc39-4346-8fa4-ce7fe89a2ad5`
+- end_image: 星空・オーロラ・横顔のヒロイン `217656eb-7234-4462-8219-9ad51787592f`
+- 9秒、16:9。コスト(プレフライト): Cinema Studio Video 2 標準 13.5 / pro 18、Seedance 2.5 720p 63
+
+### プロンプト(英語)
+```
+Cinematic live-action opening of a romantic fantasy film trailer, 16:9, 9 seconds, one continuous camera move from the first frame to the last frame (the end image), realistic and photographic, calm natural colors, no text.
+0-3.5s: Continue from the first frame: high above an endless sea of clouds at dusk, the tiny sun on the horizon with dotted vertical and horizontal lens flares and a faint halo ring. The thin sharp white meteor trail with the small karaage fried-chicken meteor at its tip keeps falling almost straight down toward the horizon. The camera slowly tilts down and descends toward the clouds; the horizon rises in the frame, the foreground clouds grow larger and darker, and a chain of soft orange lens-flare orbs drifts toward the lower right.
+3.5-4.2s: The camera plunges straight into a huge cloud mass; the whole frame is engulfed in white-gray mist, then briefly a dark blue blur as it breaks through below the clouds.
+4.2-5.0s: Night on the ground. Low angle directly behind the heroine (very large plus-size young woman, long black ponytail with a red hair tie, white blouse and mustard-yellow-brown sleeveless knit vest): the back of her head and her round broad shoulders fill the lower center of the frame. Above her, a starry sky with scattered small clouds and a faint violet-pink Milky Way glow in the upper left.
+5.0-6.8s: The camera slowly tilts upward; her head sinks out of the bottom of the frame. From the upper right a brilliant cyan comet band enters the sky, and below it the thin white line with the red-hot glowing karaage at its tip.
+6.8-9.0s: The camera settles into a wide low-angle shot: the huge cyan-to-white band arcs across the sky with magenta, pink and violet fringes like a single ribbon of aurora; the heroine stands small in the lower right corner in profile, gazing up in wonder, her ponytail fluttering in the breeze. End exactly on the final frame.
+Audio: quiet, mysterious solo piano and high-altitude wind; a soft whoosh as the camera passes through the clouds; calm night ambience. No dialogue.
+```
