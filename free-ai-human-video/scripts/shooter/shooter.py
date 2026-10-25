@@ -1,11 +1,12 @@
-"""「30秒でボスまで倒せる?」放物運動 + 空気抵抗 + 風のシューティング物理ショートを生成する。
+"""「30秒でボスまで倒せる?」自機UFOのシューティング物理ショートを生成する。
 
-展開:
-  1. 最初は砲身1本・遅い連射で、風に流されてなかなか当たらない
-  2. 大きいUFOを撃つと小さいUFO 2体に分裂する(敵が増える)
-  3. ★付きのUFOを撃つと砲台が強化される(砲身が増える / 連射が速くなる / 爆発弾になる)
-  4. WAVE 2 で新しいUFOの群れが飛んでくる
-  5. ボス出現。HPが半分を切ると赤くなって速くなり、子分を呼ぶ
+- 自機UFOは常に左右に動きながら真上へ撃つ。弾は自機の横の速さを受け継ぐので斜めに飛ぶ(相対運動)。
+  弾は重力で減速し、空気抵抗と風で流される。
+- 敵には「あと何回当てれば壊れるか」の数字(HP)を表示する。大きい敵は壊すと小さい敵 2体に分裂する。
+- 雑魚敵を倒すとまれにアイテムが落ちてくる(重力 + 風)。自機が拾うと強化される:
+    攻撃力UP(1発のダメージ+1) / ショットUP(同時に撃つ弾+1) / UFO+1(僚機が増える)
+  僚機はバネのように自機についてくる。アイテムは取り逃すこともある。
+- WAVE 2 → ボス出現。ボスはHPが半分を切ると赤くなって速くなり、子分を呼ぶ。
 30秒以内にボスを倒せば成功、倒せなければ失敗(幽霊が出る)。
 
 使い方:
@@ -35,33 +36,48 @@ FPS = 60
 SUBSTEPS = 4
 SR = 48000
 
-CANNON = (540.0, 1420.0)
-GROUND_Y = 1460
-SKY_TOP, SKY_BOTTOM = 640, 960   # UFOは高めを飛ぶ(砲弾の飛ぶ時間が長くなり、風の影響を受けやすい)
+GROUND_Y = 1470
+PLAYER_Y = 1360
+SKY_TOP, SKY_BOTTOM = 650, 980
 GRAVITY = 900.0
-SHELL_SPEED = 1350.0
 DRAG = 0.5                  # 空気抵抗(風に対する相対速度に比例)
-WIND_MAX = 520.0
+WIND_MAX = 450.0
 WIND_EVERY = 4.0
-AIM_JITTER_START, AIM_JITTER_MIN, AIM_LEARN = 6.0, 1.5, 0.45   # 狙いのぶれ(度)。撃つたびに慣れて小さくなる
 TIME_LIMIT = 30.0
 OUTRO = 3.0
 
-# 砲台の強化段階
-BARREL_LEVELS = [1, 2, 3, 5]
-SPREAD_DEG = {1: [0], 2: [-3, 3], 3: [-5, 0, 5], 5: [-10, -5, 0, 5, 10]}
-FIRE_LEVELS = [0.6, 0.42, 0.3]
-SHELL_R, BIG_SHELL_R, BLAST_R = 9, 15, 80
+# 自機
+SHIP_R = 40
+PATROL_SPEED = 300.0        # ふだんの左右移動の速さ
+CHASE_SPEED = 460.0         # アイテムを取りに行くときの最高速度
+SHIP_MIN_X, SHIP_MAX_X = 100, W - 100
+FIRE_EVERY = 0.32
+BULLET_SPEED = 1300.0
+BULLET_R = 8
+SPREAD_DEG = {1: [0], 2: [-4, 4], 3: [-7, 0, 7], 4: [-10, -3.5, 3.5, 10], 5: [-12, -6, 0, 6, 12]}
+MAX_SHOTS, MAX_SHIPS, MAX_ATK = 5, 3, 4
+WING_OFFSETS = [-130, 130]
+SPRING_K, SPRING_C = 40.0, 9.0     # 僚機のバネ(少し揺れが残る程度の減衰)
 
-MID_R, SMALL_R, BOSS_R = 38, 24, 92
-WAVE1 = 7
-WAVE2 = 6
-WAVE2_AT, BOSS_AT = 11.0, 19.0       # 前の群れが残っていてもこの時刻には次が来る
-BOSS_HP = 100        # 成功率がおよそ半々になる値(40回中20回成功)
+# 敵
+MID_R, SMALL_R, BOSS_R = 40, 26, 92
+WAVE1, WAVE2 = 8, 7
+WAVE2_AT, BOSS_AT = 11.0, 19.0     # 前の群れが残っていてもこの時刻には次が来る
+BOSS_HP = 60         # 成功率がおよそ半々になる値(60回中30回成功)
 BOSS_SPEED = 170.0
 
+# アイテム
+ITEM_P = 0.16               # 雑魚を倒したときにアイテムが落ちる確率
+ITEM_KINDS = ["atk", "shot", "ufo"]
+ITEM_WEIGHTS = [0.35, 0.40, 0.25]
+ITEM_R = 30
+ITEM_GRAVITY = 420.0
+ITEM_DRAG = 1.2
+ITEM_LABEL = {"atk": "攻撃力UP!", "shot": "ショットUP!", "ufo": "UFO+1!"}
+ITEM_TEXT = {"atk": "攻", "shot": "弾", "ufo": "機"}
+ITEM_COLOR = {"atk": (1, 0.35, 0.35), "shot": (1, 0.85, 0.25), "ufo": (0.35, 1, 0.6)}
+
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "output")
-POWER_LABEL = {"barrel": "砲身+1!", "rapid": "連射UP!", "big": "爆発弾!"}
 
 
 # ---------------------------------------------------------------- シミュレーション
@@ -69,186 +85,193 @@ class Game:
     def __init__(self, seed):
         self.rng = np.random.default_rng(seed)
         self.winds = [self.rng.uniform(-WIND_MAX, WIND_MAX) for _ in range(20)]
-        # 最初の4秒は必ず強い風(序盤はなかなか当たらない)
-        self.winds[0] = self.rng.choice([-1, 1]) * self.rng.uniform(0.8, 1.0) * WIND_MAX
-        self.ufos, self.shells, self.events = [], [], []
-        self.barrel_lv, self.fire_lv, self.big = 0, 0, False
-        self.next_fire = 0.8
-        self.ang = self.target_ang = math.pi / 2
-        self.last_fire_t = -9.0
-        self.volleys = 0
+        self.winds[0] = self.rng.choice([-1, 1]) * self.rng.uniform(0.8, 1.0) * WIND_MAX   # 序盤は強風
+        self.enemies, self.bullets, self.items, self.events = [], [], [], []
+        self.atk, self.shots = 1, 1
+        # 自機(先頭が本機、残りが僚機)。[x, vx]
+        self.ships = [[W / 2, PATROL_SPEED * self.rng.choice([-1, 1])]]
+        self.patrol_dir = 1 if self.ships[0][1] > 0 else -1
+        self.next_fire = 0.6
         self.wave, self.boss = 1, None
         self.t = 0.0
         self.result, self.result_t = None, None
-        powers = ["barrel", "rapid", "barrel"] + [None] * (WAVE1 - 3)
-        self.rng.shuffle(powers)
-        for p in powers:
-            self.spawn("mid", self.rng.uniform(140, W - 140), self.rng.uniform(SKY_TOP, SKY_BOTTOM - 60), p)
+        for _ in range(WAVE1):
+            self.spawn("mid", self.rng.uniform(140, W - 140), self.rng.uniform(SKY_TOP, SKY_BOTTOM),
+                       hp=int(self.rng.integers(2, 6)))
 
-    def spawn(self, kind, x, y, power=None, vx=None, enter=False):
+    def spawn(self, kind, x, y, hp, vx=None, enter=False):
         r = {"mid": MID_R, "small": SMALL_R, "boss": BOSS_R}[kind]
-        speed = {"mid": (90, 210), "small": (200, 320), "boss": (BOSS_SPEED, BOSS_SPEED)}[kind]
-        u = {"kind": kind, "x": x, "y0": y, "r": r, "power": power,
+        speed = {"mid": (90, 200), "small": (200, 300), "boss": (BOSS_SPEED, BOSS_SPEED)}[kind]
+        e = {"kind": kind, "x": x, "y0": y, "r": r, "hp": hp,
              "vx": vx if vx is not None else self.rng.uniform(*speed) * self.rng.choice([-1, 1]),
-             "bob_a": self.rng.uniform(10, 35), "bob_f": self.rng.uniform(0.4, 1.0),
+             "bob_a": self.rng.uniform(10, 30), "bob_f": self.rng.uniform(0.4, 1.0),
              "bob_p": self.rng.uniform(0, 6.28), "alive": True, "hue": self.rng.uniform(),
-             "hp": BOSS_HP if kind == "boss" else 1, "enter": enter, "enraged": False, "wave": self.wave}
-        self.ufos.append(u)
-        return u
+             "enter": enter, "enraged": False}
+        self.enemies.append(e)
+        return e
 
-    def pos(self, u, t=None):
-        t = self.t if t is None else t
-        return u["x"], u["y0"] + u["bob_a"] * math.sin(u["bob_f"] * 2 * math.pi * t + u["bob_p"])
+    def pos(self, e):
+        return e["x"], e["y0"] + e["bob_a"] * math.sin(e["bob_f"] * 2 * math.pi * self.t + e["bob_p"])
 
     def wind(self):
         return self.winds[int(self.t // WIND_EVERY)]
 
-    # 狙い:UFOの未来位置へ(重力のみ考慮、空気抵抗と風は無視)
-    def aim(self, u):
-        cx, cy = CANNON
-        T, ang = 0.6, None
-        for _ in range(6):
-            tx = u["x"] + u["vx"] * T
-            tx = min(max(tx, 80), W - 80)
-            _, ty = self.pos({**u, "x": tx}, self.t + T)
-            dx, h = tx - cx, cy - ty
-            v2 = SHELL_SPEED ** 2
-            disc = v2 * v2 - GRAVITY * (GRAVITY * dx * dx + 2 * h * v2)
-            if disc < 0:
-                return None, None
-            if abs(dx) < 1:
-                return math.pi / 2, h / SHELL_SPEED
-            th = math.atan((v2 - math.sqrt(disc)) / (GRAVITY * abs(dx)))
-            ang = th if dx > 0 else math.pi - th
-            T = abs(dx) / (SHELL_SPEED * math.cos(th))
-        return ang, T
-
-    def fire(self):
-        targets = [u for u in self.ufos if u["alive"] and not u["enter"]]
-        best = None
-        for u in targets:
-            a, T = self.aim(u)
-            if a is not None and (best is None or T < best[1]):
-                best = (a, T)
-        if best is None:
+    def damage(self, e, dmg):
+        if not e["alive"]:
             return
-        jitter = max(AIM_JITTER_MIN, AIM_JITTER_START - AIM_LEARN * self.volleys)
-        self.volleys += 1
-        base = best[0] + math.radians(self.rng.normal(0, jitter))
-        self.target_ang = base
-        n = BARREL_LEVELS[self.barrel_lv]
-        r = BIG_SHELL_R if self.big else SHELL_R
-        for off in SPREAD_DEG[n]:
-            a = base + math.radians(off)
-            self.shells.append({"x": CANNON[0] + math.cos(a) * 70, "y": CANNON[1] - math.sin(a) * 70,
-                                "vx": SHELL_SPEED * math.cos(a), "vy": -SHELL_SPEED * math.sin(a),
-                                "r": r, "big": self.big, "trail": []})
-        self.last_fire_t = self.t
-        self.events.append(("fire", self.t, n))
-
-    def damage(self, u):
-        if not u["alive"]:
-            return
-        u["hp"] -= 1
-        x, y = self.pos(u)
-        if u["kind"] == "boss":
+        e["hp"] -= dmg
+        x, y = self.pos(e)
+        if e["kind"] == "boss":
             self.events.append(("boss_hit", self.t, (x, y)))
-            if not u["enraged"] and u["hp"] <= BOSS_HP // 2:
-                u["enraged"] = True
-                u["vx"] *= 2.0
+            if not e["enraged"] and e["hp"] <= BOSS_HP // 2:
+                e["enraged"] = True
+                e["vx"] *= 2.0
                 self.events.append(("enrage", self.t, (x, y)))
-                for k in range(3):
-                    self.spawn("small", x, y - 30, vx=(-260, 0, 260)[k] or 150)
-        if u["hp"] > 0:
+                for vx in (-260, 150, 260):
+                    self.spawn("small", x, y - 30, hp=3, vx=vx)
+        elif e["hp"] > 0:
+            self.events.append(("hit", self.t, (x, y)))
+        if e["hp"] > 0:
             return
-        u["alive"] = False
-        self.events.append(("kill", self.t, (x, y, u["r"], u["hue"], u["kind"])))
-        if u["kind"] == "mid":   # 分裂して小さいUFO 2体になる
+        e["alive"] = False
+        self.events.append(("kill", self.t, (x, y, e["r"], e["hue"], e["kind"])))
+        if e["kind"] == "mid":   # 分裂して小さい敵 2体になる
             for d in (-1, 1):
-                self.spawn("small", x + d * 20, y - 20, vx=d * self.rng.uniform(220, 320))
-        if u["power"]:
-            p = u["power"]
-            if p == "barrel" and self.barrel_lv < len(BARREL_LEVELS) - 1:
-                self.barrel_lv += 1
-            elif p == "rapid" and self.fire_lv < len(FIRE_LEVELS) - 1:
-                self.fire_lv += 1
-            elif p == "big":
-                self.big = True
-            self.events.append(("power", self.t, (p, x, y)))
-        if u["kind"] == "boss" and self.result is None:
+                self.spawn("small", x + d * 20, y - 20, hp=int(self.rng.integers(1, 3)),
+                           vx=d * self.rng.uniform(220, 320))
+        if e["kind"] != "boss" and self.rng.random() < ITEM_P:   # まれにアイテムが落ちる
+            kind = ITEM_KINDS[int(self.rng.choice(3, p=ITEM_WEIGHTS))]
+            self.items.append({"kind": kind, "x": x, "y": y, "vx": 0.0, "vy": -150.0})
+            self.events.append(("drop", self.t, (kind, x, y)))
+        if e["kind"] == "boss" and self.result is None:
             self.result, self.result_t = "success", self.t
             self.events.append(("success", self.t, None))
+
+    def pickup(self, it):
+        k = it["kind"]
+        if k == "atk":
+            self.atk = min(MAX_ATK, self.atk + 1)
+        elif k == "shot":
+            self.shots = min(MAX_SHOTS, self.shots + 1)
+        elif k == "ufo" and len(self.ships) < MAX_SHIPS:
+            lead = self.ships[0][0]
+            self.ships.append([lead, 0.0])
+        self.events.append(("pickup", self.t, (k, it["x"], it["y"])))
+
+    def move_ships(self, dt):
+        lead = self.ships[0]
+        # 落ちてくるアイテムがあれば、着地しそうな位置へ向かう(間に合わないこともある)
+        target = None
+        if self.items:
+            best = None
+            for it in self.items:
+                dy = PLAYER_Y - it["y"]
+                if dy < -20:
+                    continue
+                tt = dy / max(80.0, it["vy"] + 1) if it["vy"] > 0 else 1.5
+                px = it["x"] + it["vx"] * min(tt, 2.0)
+                if best is None or tt < best[0]:
+                    best = (tt, px)
+            if best:
+                target = min(max(best[1], SHIP_MIN_X), SHIP_MAX_X)
+        if target is not None:
+            d = target - lead[0]
+            lead[1] = max(-CHASE_SPEED, min(CHASE_SPEED, d * 4))
+        else:
+            if lead[0] <= SHIP_MIN_X:
+                self.patrol_dir = 1
+            elif lead[0] >= SHIP_MAX_X:
+                self.patrol_dir = -1
+            lead[1] += (PATROL_SPEED * self.patrol_dir - lead[1]) * min(1, 4 * dt)
+        lead[0] = min(max(lead[0] + lead[1] * dt, SHIP_MIN_X), SHIP_MAX_X)
+        # 僚機はバネで本機の左右についてくる
+        for k, s in enumerate(self.ships[1:]):
+            goal = lead[0] + WING_OFFSETS[k]
+            acc = SPRING_K * (goal - s[0]) - SPRING_C * s[1]
+            s[1] += acc * dt
+            s[0] = min(max(s[0] + s[1] * dt, 40), W - 40)
+
+    def fire(self):
+        for s in self.ships:
+            for off in SPREAD_DEG[self.shots]:
+                a = math.radians(off)
+                self.bullets.append({"x": s[0], "y": PLAYER_Y - SHIP_R,
+                                     "vx": s[1] + BULLET_SPEED * math.sin(a),   # 自機の横の速さを受け継ぐ
+                                     "vy": -BULLET_SPEED * math.cos(a), "trail": []})
+        self.events.append(("fire", self.t, len(self.ships) * self.shots))
 
     def step(self, dt):
         self.t += dt
         t = self.t
         # 次の群れ・ボス
-        alive_wave = [u for u in self.ufos if u["alive"] and u["kind"] != "boss"]
-        if self.wave == 1 and (not alive_wave or t >= WAVE2_AT):
+        alive = [e for e in self.enemies if e["alive"] and e["kind"] != "boss"]
+        if self.wave == 1 and (not alive or t >= WAVE2_AT):
             self.wave = 2
             self.events.append(("wave", t, 2))
-            powers = ["big", "barrel"] + [None] * (WAVE2 - 2)
-            self.rng.shuffle(powers)
-            for k, p in enumerate(powers):
+            for k in range(WAVE2):
                 side = -1 if k % 2 == 0 else 1
-                self.spawn("mid", W / 2 + side * (W / 2 + 60 + k * 40), self.rng.uniform(SKY_TOP, SKY_BOTTOM - 60),
-                           p, vx=-side * self.rng.uniform(160, 240), enter=True)
-        elif self.wave == 2 and (not alive_wave or t >= BOSS_AT) and self.boss is None:
+                self.spawn("mid", W / 2 + side * (W / 2 + 60 + k * 40), self.rng.uniform(SKY_TOP, SKY_BOTTOM),
+                           hp=int(self.rng.integers(3, 7)), vx=-side * self.rng.uniform(160, 240), enter=True)
+        elif self.wave == 2 and (not alive or t >= BOSS_AT) and self.boss is None:
             self.wave = 3
-            self.boss = self.spawn("boss", W + 120, 790, vx=-BOSS_SPEED, enter=True)
+            self.boss = self.spawn("boss", W + 120, 790, hp=BOSS_HP, vx=-BOSS_SPEED, enter=True)
             self.boss["bob_a"] = 40
             self.events.append(("boss", t, None))
-        # UFOの移動
-        for u in self.ufos:
-            if not u["alive"]:
+        # 敵の移動
+        for e in self.enemies:
+            if not e["alive"]:
                 continue
-            u["x"] += u["vx"] * dt
-            if u["enter"]:
-                if 100 < u["x"] < W - 100:
-                    u["enter"] = False
+            e["x"] += e["vx"] * dt
+            if e["enter"]:
+                if 100 < e["x"] < W - 100:
+                    e["enter"] = False
                 continue
-            lo, hi = 40 + u["r"], W - 40 - u["r"]
-            if u["x"] < lo:
-                u["x"], u["vx"] = lo, abs(u["vx"])
-            if u["x"] > hi:
-                u["x"], u["vx"] = hi, -abs(u["vx"])
-        # 発射
+            lo, hi = 40 + e["r"], W - 40 - e["r"]
+            if e["x"] < lo:
+                e["x"], e["vx"] = lo, abs(e["vx"])
+            if e["x"] > hi:
+                e["x"], e["vx"] = hi, -abs(e["vx"])
+        self.move_ships(dt)
         if self.result is None and t >= self.next_fire:
             self.fire()
-            self.next_fire = t + FIRE_LEVELS[self.fire_lv]
-        # 決着がついたら砲弾は消して、それ以降はダメージを与えない
-        if self.result is not None:
-            self.shells = []
-        # 砲弾(重力 + 風に対する空気抵抗)
+            self.next_fire = t + FIRE_EVERY
+        if self.result is not None:   # 決着後は弾を消してダメージを与えない
+            self.bullets = []
         wind = self.wind()
-        for s in self.shells:
-            s["vx"] += -DRAG * (s["vx"] - wind) * dt
-            s["vy"] += (GRAVITY - DRAG * s["vy"]) * dt
-            s["x"] += s["vx"] * dt
-            s["y"] += s["vy"] * dt
-            for u in self.ufos:
-                if not u["alive"] or u["enter"]:
+        # 弾(重力 + 風に対する空気抵抗)
+        for b in self.bullets:
+            b["vx"] += -DRAG * (b["vx"] - wind) * dt
+            b["vy"] += (GRAVITY - DRAG * b["vy"]) * dt
+            b["x"] += b["vx"] * dt
+            b["y"] += b["vy"] * dt
+            for e in self.enemies:
+                if not e["alive"] or e["enter"]:
                     continue
-                ux, uy = self.pos(u)
-                if (s["x"] - ux) ** 2 + (s["y"] - uy) ** 2 < (u["r"] + s["r"]) ** 2:
-                    s["dead"] = True
-                    if s["big"]:   # 爆発弾:周りのUFOにもダメージ
-                        self.events.append(("blast", t, (s["x"], s["y"])))
-                        for v in self.ufos:
-                            if v["alive"] and not v["enter"]:
-                                vx_, vy_ = self.pos(v)
-                                if (vx_ - s["x"]) ** 2 + (vy_ - s["y"]) ** 2 < (BLAST_R + v["r"]) ** 2:
-                                    self.damage(v)
-                    else:
-                        self.damage(u)
+                ex, ey = self.pos(e)
+                if (b["x"] - ex) ** 2 + (b["y"] - ey) ** 2 < (e["r"] + BULLET_R) ** 2:
+                    b["dead"] = True
+                    self.damage(e, self.atk)
                     break
-            if s["y"] > GROUND_Y or s["x"] < -80 or s["x"] > W + 80:
-                s["dead"] = True
-        self.shells = [s for s in self.shells if not s.get("dead")]
+            if b["y"] > GROUND_Y or b["x"] < -60 or b["x"] > W + 60 or (b["vy"] > 0 and b["y"] > PLAYER_Y):
+                b["dead"] = True
+        self.bullets = [b for b in self.bullets if not b.get("dead")]
+        # アイテム(重力 + 風に流される)
+        for it in self.items:
+            it["vx"] += -ITEM_DRAG * (it["vx"] - wind * 0.6) * dt
+            it["vy"] += (ITEM_GRAVITY - ITEM_DRAG * 0.3 * it["vy"]) * dt
+            it["x"] = min(max(it["x"] + it["vx"] * dt, 30), W - 30)
+            it["y"] += it["vy"] * dt
+            if self.result is None and any((it["x"] - s[0]) ** 2 + (it["y"] - PLAYER_Y) ** 2 < (ITEM_R + SHIP_R) ** 2
+                                           for s in self.ships):
+                it["dead"] = True
+                self.pickup(it)
+            elif it["y"] > GROUND_Y:
+                it["dead"] = True
+                self.events.append(("miss_item", t, (it["kind"], it["x"])))
+        self.items = [it for it in self.items if not it.get("dead")]
         if self.result is None and t >= TIME_LIMIT:
             self.result, self.result_t = "fail", TIME_LIMIT
             self.events.append(("fail", t, None))
-        self.ang += (self.target_ang - self.ang) * 0.02
 
 
 def simulate(seed, record=False):
@@ -260,31 +283,35 @@ def simulate(seed, record=False):
             if g.result is None or record:
                 g.step(dt)
         if record:
-            for s in g.shells:
-                s["trail"].append((s["x"], s["y"]))
-                del s["trail"][:-12]
+            for b in g.bullets:
+                b["trail"].append((b["x"], b["y"]))
+                del b["trail"][:-8]
             frames.append({
-                "t": g.t, "wind": g.wind(), "ang": g.ang,
-                "recoil": max(0.0, 1 - (g.t - g.last_fire_t) / 0.15),
-                "barrels": BARREL_LEVELS[g.barrel_lv], "fire_lv": g.fire_lv, "big": g.big,
-                "ufos": [(g.pos(u), u["r"], u["kind"], u["hue"], u["power"], u["hp"], u["enraged"])
-                         for u in g.ufos if u["alive"]],
-                "shells": [(s["x"], s["y"], s["r"], list(s["trail"])) for s in g.shells],
+                "t": g.t, "wind": g.wind(), "atk": g.atk, "shots": g.shots,
+                "ships": [(s[0], s[1]) for s in g.ships],
+                "enemies": [(g.pos(e), e["r"], e["kind"], e["hue"], e["hp"], e["enraged"])
+                            for e in g.enemies if e["alive"]],
+                "bullets": [(b["x"], b["y"], list(b["trail"])) for b in g.bullets],
+                "items": [(it["x"], it["y"], it["kind"]) for it in g.items],
                 "boss_hp": g.boss["hp"] if g.boss else None,
             })
         if g.result is not None:
             extra = OUTRO + (SCARE_DUR if g.result == "fail" else 0)
             if not record or g.t > g.result_t + extra:
                 break
-    first_hit = next((e[1] for e in g.events if e[0] in ("kill", "boss_hit")), 99)
+    first_kill = next((e[1] for e in g.events if e[0] == "kill"), 99)
+    pickups = [e[2][0] for e in g.events if e[0] == "pickup"]
+    misses = sum(1 for e in g.events if e[0] == "miss_item")
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t,
-            "boss_hp": g.boss["hp"] if g.boss else BOSS_HP, "first_hit": first_hit,
+            "boss_hp": max(0, g.boss["hp"]) if g.boss else BOSS_HP, "first_kill": first_kill,
+            "pickups": pickups, "misses": misses,
             "boss_t": next((e[1] for e in g.events if e[0] == "boss"), None)}
 
 
 def score(seed):
     r = simulate(seed)
-    return seed, r["result"], r["result_t"], max(0, r["boss_hp"]), r["first_hit"], r["boss_t"]
+    return (seed, r["result"], r["result_t"], r["boss_hp"], r["first_kill"], r["boss_t"],
+            "".join(ITEM_TEXT[k] for k in r["pickups"]), r["misses"])
 
 
 def search(n, want):
@@ -294,16 +321,17 @@ def search(n, want):
     print(f"{n} シード中 成功 {len(succ)} 件 / 失敗 {n - len(succ)} 件")
     if want == "success":
         good = sorted(succ, key=lambda r: -r[2])
-        for seed, _, rt, _, fh, bt in good[:15]:
-            print(f"seed={seed:4d}  ボス撃破 {rt:5.2f}秒  最初の命中 {fh:4.1f}秒  ボス出現 {bt}")
+        for seed, _, rt, _, fk, bt, pk, ms in good[:15]:
+            print(f"seed={seed:4d}  ボス撃破 {rt:5.2f}秒  最初の撃破 {fk:4.1f}秒  ボス {bt}  取得 {pk}  取り逃し {ms}")
     else:
         good = sorted([r for r in rs if r[1] == "fail"], key=lambda r: r[3])
-        for seed, _, _, hp, fh, bt in good[:15]:
-            print(f"seed={seed:4d}  時間切れ ボス残りHP {hp}  最初の命中 {fh:4.1f}秒  ボス出現 {bt}")
+        for seed, _, _, hp, fk, bt, pk, ms in good[:15]:
+            print(f"seed={seed:4d}  ボス残りHP {hp}  最初の撃破 {fk:4.1f}秒  ボス {bt}  取得 {pk}  取り逃し {ms}")
 
 
 # ---------------------------------------------------------------- 描画
 GOLD = (1, 0.86, 0.2)
+SHIP_COL = (0.35, 0.95, 1.0)
 
 
 def background(rng):
@@ -357,31 +385,46 @@ def draw_ufo(ctx, x, y, r, col):
         ctx.fill()
 
 
-def draw_cannon(ctx, ang, recoil, barrels, big, fire_lv):
-    cx, cy = CANNON
-    col = [(0.75, 0.8, 0.95), (0.5, 0.95, 1.0), (1, 0.85, 0.35)][min(2, fire_lv)]
-    thick = 34 if big else 26
-    for off in SPREAD_DEG[barrels]:
-        ctx.save()
-        ctx.translate(cx, cy)
-        ctx.rotate(-(ang + math.radians(off) * 2.2))   # 砲身の広がりは見やすいよう少し大げさに描く
-        back = 16 * recoil
-        for grow, al in ((10, 0.12), (0, 1.0)):
-            ctx.new_path()
-            ctx.rectangle(-back - grow, -thick / 2 - grow, 80 + 2 * grow, thick + 2 * grow)
-            ctx.set_source_rgba(*col, al)
-            ctx.fill()
-        if recoil > 0.5:
-            ctx.new_path()
-            ctx.arc(80 - back + 16, 0, 24 * recoil, 0, 2 * math.pi)
-            ctx.set_source_rgba(1, 0.85, 0.4, 0.8 * recoil)
-            ctx.fill()
-        ctx.restore()
-    ctx.new_path()
-    ctx.arc(cx, cy + 6, 56, math.pi, 2 * math.pi)
-    ctx.close_path()
-    ctx.set_source_rgb(0.35, 0.4, 0.6)
+def draw_ship(ctx, x, vx, t, scale=1.0):
+    """自機UFO:上向きの砲口つき。進む向きに少し傾く。"""
+    r = SHIP_R * scale
+    ctx.save()
+    ctx.translate(x, PLAYER_Y)
+    ctx.rotate(max(-0.25, min(0.25, vx / 2000)))
+    flick = 0.7 + 0.3 * math.sin(t * 40)
+    ellipse(ctx, 0, r * 0.45, r * 0.35, r * 0.6 * flick)   # 下の噴射
+    ctx.set_source_rgba(1, 0.6, 0.2, 0.7)
     ctx.fill()
+    ctx.new_path()
+    ctx.rectangle(-6 * scale, -r * 0.95, 12 * scale, r * 0.6)   # 砲口
+    ctx.set_source_rgb(0.85, 0.95, 1.0)
+    ctx.fill()
+    for grow, al in ((r * 0.6, 0.12), (r * 0.3, 0.25)):
+        ellipse(ctx, 0, 0, r + grow, (r + grow) * 0.42)
+        ctx.set_source_rgba(*SHIP_COL, al)
+        ctx.fill()
+    ellipse(ctx, 0, -r * 0.2, r * 0.48, r * 0.45, math.pi, 2 * math.pi)
+    ctx.set_source_rgba(0.9, 1, 1, 0.9)
+    ctx.fill()
+    ellipse(ctx, 0, 0, r, r * 0.36)
+    ctx.set_source_rgb(*SHIP_COL)
+    ctx.fill()
+    ctx.restore()
+
+
+def draw_item(ctx, x, y, kind, t):
+    col = ITEM_COLOR[kind]
+    pulse = 1 + 0.08 * math.sin(t * 12)
+    for rr, al in ((ITEM_R * 1.7 * pulse, 0.15), (ITEM_R * 1.25, 0.3)):
+        ctx.new_path()
+        ctx.arc(x, y, rr, 0, 2 * math.pi)
+        ctx.set_source_rgba(*col, al)
+        ctx.fill()
+    ctx.new_path()
+    ctx.arc(x, y, ITEM_R, 0, 2 * math.pi)
+    ctx.set_source_rgb(*col)
+    ctx.fill()
+    text(ctx, ITEM_TEXT[kind], x, y + 13, 36, rgb=(1, 1, 1), sw=6)
 
 
 def draw_wind(ctx, wind, streaks):
@@ -394,7 +437,7 @@ def draw_wind(ctx, wind, streaks):
         ctx.set_source_rgba(0.8, 0.9, 1.0, 0.10 + 0.25 * min(1, abs(wind) / WIND_MAX))
         ctx.set_line_width(2)
         ctx.stroke()
-    y = 570
+    y = 580
     text(ctx, "風", W / 2 - 150, y + 16, 44, sw=8)
     ln = 140 * wind / WIND_MAX
     ctx.set_line_cap(cairo.LINE_CAP_ROUND)
@@ -452,17 +495,20 @@ def render(seed):
             if kind == "kill":
                 x, y, r, hue, k = data
                 col = (1, 0.3, 0.3) if k == "boss" else hue_rgb(hue)
-                burst(particles, rng, x, y, col, 160 if k == "boss" else 40, (100, 900 if k == "boss" else 600), (0.5, 1.4))
+                burst(particles, rng, x, y, col, 160 if k == "boss" else 36,
+                      (100, 900 if k == "boss" else 550), (0.5, 1.3))
                 waves.append([et, x, y, col, r])
-            elif kind == "blast":
-                waves.append([et, data[0], data[1], (1, 0.6, 0.2), BLAST_R * 0.4])
+            elif kind == "hit":
+                burst(particles, rng, data[0], data[1], (1, 1, 0.8), 4, (80, 250), (0.15, 0.3))
             elif kind == "boss_hit":
                 boss_flash = et
-                burst(particles, rng, data[0], data[1], (1, 0.9, 0.5), 6, (100, 300), (0.2, 0.4))
-            elif kind == "power":
-                p, x, y = data
-                popups.append([et, x, y, POWER_LABEL[p]])
-                burst(particles, rng, x, y, GOLD, 50, (150, 500), (0.6, 1.0))
+                burst(particles, rng, data[0], data[1], (1, 0.9, 0.5), 5, (100, 300), (0.2, 0.4))
+            elif kind == "pickup":
+                k, x, y = data
+                popups.append([et, x, PLAYER_Y - 60, ITEM_LABEL[k], ITEM_COLOR[k]])
+                burst(particles, rng, x, PLAYER_Y, ITEM_COLOR[k], 50, (150, 500), (0.5, 0.9))
+            elif kind == "miss_item":
+                popups.append([et, data[1], GROUND_Y - 40, "あっ…", (0.8, 0.8, 0.85)])
             elif kind == "wave":
                 banners.append([et, "WAVE 2", (0.5, 0.95, 1.0)])
             elif kind == "boss":
@@ -486,29 +532,29 @@ def render(seed):
         ctx.set_source_surface(bg, 0, 0)
         ctx.paint()
         draw_wind(ctx, fr["wind"], streaks)
-        for (ux, uy), r, kind, hue, power, hp, enraged in fr["ufos"]:
+        # 敵(中央に「あと何回で壊れるか」の数字)
+        for (ex, ey), r, kind, hue, hp, enraged in fr["enemies"]:
             if kind == "boss":
                 pulse = 0.5 + 0.5 * math.sin(t * 10)
                 col = (1, 0.25 + 0.2 * pulse, 0.25) if enraged else (0.65, 0.45, 1.0)
                 fl = max(0.0, 1 - (t - boss_flash) / 0.08)
                 col = tuple(v + (1 - v) * fl * 0.6 for v in col)
-                draw_ufo(ctx, ux, uy, r, col)
-                # HPバー
+                draw_ufo(ctx, ex, ey, r, col)
                 bw = 320
                 frac = max(0, hp) / BOSS_HP
                 ctx.new_path()
-                ctx.rectangle(ux - bw / 2, uy - r - 40, bw, 18)
+                ctx.rectangle(ex - bw / 2, ey - r - 40, bw, 18)
                 ctx.set_source_rgba(0, 0, 0, 0.6)
                 ctx.fill()
                 ctx.new_path()
-                ctx.rectangle(ux - bw / 2, uy - r - 40, bw * frac, 18)
+                ctx.rectangle(ex - bw / 2, ey - r - 40, bw * frac, 18)
                 ctx.set_source_rgb(*((1, 0.3, 0.3) if frac < 0.5 else (0.4, 1, 0.5)))
                 ctx.fill()
-                text(ctx, f"BOSS  HP {max(0, hp)}", ux, uy - r - 52, 34, sw=6)
+                text(ctx, f"BOSS  HP {max(0, hp)}", ex, ey - r - 52, 34, sw=6)
             else:
-                draw_ufo(ctx, ux, uy, r, hue_rgb(hue))
-                if power:
-                    text(ctx, "★", ux, uy - r * 0.6, 40, rgb=GOLD, sw=6)
+                draw_ufo(ctx, ex, ey, r, hue_rgb(hue))
+                size = 30 if kind == "mid" else 24
+                text(ctx, str(max(0, hp)), ex, ey + size * 0.36, size, sw=6)
         for wv in waves:
             age = t - wv[0]
             if 0 <= age < 0.4:
@@ -518,22 +564,28 @@ def render(seed):
                 ctx.set_source_rgba(*wv[3], 0.8 * (1 - k))
                 ctx.set_line_width(10 * (1 - k) + 2)
                 ctx.stroke()
-        for sx, sy, sr, trail in fr["shells"]:
+        # 弾(攻撃力が上がるほど大きく・赤く)
+        bcol = [(1, 1, 0.9), (1, 0.9, 0.5), (1, 0.65, 0.35), (1, 0.4, 0.4)][fr["atk"] - 1]
+        brad = BULLET_R * (1 + 0.15 * (fr["atk"] - 1))
+        for bx, by, trail in fr["bullets"]:
             for j, (tx, ty) in enumerate(trail):
                 a = (j + 1) / max(1, len(trail))
                 ctx.new_path()
-                ctx.arc(tx, ty, sr * (0.3 + 0.7 * a), 0, 2 * math.pi)
-                ctx.set_source_rgba(1, 0.75, 0.3, 0.3 * a)
+                ctx.arc(tx, ty, brad * (0.3 + 0.7 * a), 0, 2 * math.pi)
+                ctx.set_source_rgba(*bcol, 0.3 * a)
                 ctx.fill()
             ctx.new_path()
-            ctx.arc(sx, sy, sr * 1.8, 0, 2 * math.pi)
-            ctx.set_source_rgba(1, 0.8, 0.3, 0.3)
+            ctx.arc(bx, by, brad * 1.8, 0, 2 * math.pi)
+            ctx.set_source_rgba(*bcol, 0.3)
             ctx.fill()
             ctx.new_path()
-            ctx.arc(sx, sy, sr, 0, 2 * math.pi)
-            ctx.set_source_rgb(1, 1, 0.9)
+            ctx.arc(bx, by, brad, 0, 2 * math.pi)
+            ctx.set_source_rgb(*bcol)
             ctx.fill()
-        draw_cannon(ctx, fr["ang"], fr["recoil"], fr["barrels"], fr["big"], fr["fire_lv"])
+        for ix, iy, kind in fr["items"]:
+            draw_item(ctx, ix, iy, kind, t)
+        for k, (sx, svx) in enumerate(fr["ships"]):
+            draw_ship(ctx, sx, svx, t, 1.0 if k == 0 else 0.8)
         alive_p = []
         for p in particles:
             p[4] += dt
@@ -548,16 +600,16 @@ def render(seed):
             ctx.fill()
             alive_p.append(p)
         particles = alive_p
-        for pu in popups:   # 強化の文字がふわっと上がって消える
+        for pu in popups:
             age = t - pu[0]
-            if 0 <= age < 1.2:
-                text(ctx, pu[3], min(max(pu[1], 220), W - 220), pu[2] - 40 - 80 * age, 64,
-                     rgb=GOLD, sw=12, alpha=min(1, 2 * (1.2 - age)))
-        for bn in banners:  # 画面中央の大きな告知
+            if 0 <= age < 1.2 and not over:   # 決着後は結果の文字と重ならないよう出さない
+                text(ctx, pu[3], min(max(pu[1], 220), W - 220), pu[2] - 70 * age, 60,
+                     rgb=pu[4], sw=12, alpha=min(1, 2 * (1.2 - age)))
+        for bn in banners:
             age = t - bn[0]
             if 0 <= age < 1.3:
                 k = min(1, age / 0.15)
-                text(ctx, bn[1], W / 2, 1080, 130 * (1.5 - 0.5 * k), rgb=bn[2], sw=20,
+                text(ctx, bn[1], W / 2, 1090, 130 * (1.5 - 0.5 * k), rgb=bn[2], sw=20,
                      alpha=min(1, 3 * (1.3 - age)))
 
         # 文字
@@ -569,22 +621,20 @@ def render(seed):
         danger = remain <= 5 and not over
         pulse = 1 + (0.12 * max(0, 1 - (shown_t % 1) / 0.25) if danger else 0)
         tcol = (1, 0.25, 0.25) if (danger or (fail and over)) else ((0.3, 1, 0.5) if over else (1, 1, 1))
-        text(ctx, f"{remain:05.2f}", W / 2, 490, 84 * pulse, rgb=tcol, sw=12)
-        text(ctx, f"砲身×{fr['barrels']}", 50, 490, 50, sw=10, align="left")
-        lv = f"連射Lv{fr['fire_lv'] + 1}" + (" 爆発弾" if fr["big"] else "")
-        text(ctx, lv, W - 190, 490, 40, sw=10)
+        text(ctx, f"{remain:05.2f}", W / 2, 495, 84 * pulse, rgb=tcol, sw=12)
+        text(ctx, f"攻撃力×{fr['atk']}", 50, 495, 44, rgb=ITEM_COLOR["atk"], sw=10, align="left")
+        text(ctx, f"弾×{fr['shots']}  機×{len(fr['ships'])}", W - 180, 495, 44, sw=10)
         if not over:
-            text(ctx, "※失敗すると…アレが出ます", W / 2, 1560, 50, rgb=(1, 0.35, 0.35), sw=10)
+            text(ctx, "※失敗すると…アレが出ます", W / 2, 1570, 50, rgb=(1, 0.35, 0.35), sw=10)
         elif fail:
             k = min(1.0, after / 0.25)
-            text(ctx, "時間切れ…", W / 2, 1080, 150 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
-            text(ctx, f"ボスのHP あと{max(0, res['boss_hp'])}", W / 2, 1210, 72, sw=12)
-            text(ctx, "あと1発だったのに…" if res["boss_hp"] == 1 else "あと少しだったのに…",
-                 W / 2, 1560, 54, rgb=(0.9, 0.9, 0.95), sw=10)
+            text(ctx, "時間切れ…", W / 2, 1090, 150 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, f"ボスのHP あと{res['boss_hp']}", W / 2, 1220, 72, sw=12)
+            text(ctx, "あと少しだったのに…", W / 2, 1570, 54, rgb=(0.9, 0.9, 0.95), sw=10)
         else:
             k = min(1.0, (t - end_t) / 0.25)
-            text(ctx, "ボス撃破！", W / 2, 1080, 150 * (1.6 - 0.6 * k), rgb=GOLD, sw=20)
-            text(ctx, f"残り{TIME_LIMIT - end_t:.2f}秒", W / 2, 1210, 80, sw=12)
+            text(ctx, "ボス撃破！", W / 2, 1090, 150 * (1.6 - 0.6 * k), rgb=GOLD, sw=20)
+            text(ctx, f"残り{TIME_LIMIT - end_t:.2f}秒", W / 2, 1220, 80, sw=12)
 
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
@@ -607,6 +657,7 @@ def render(seed):
 # ワーグナー「ワルキューレの騎行」(1870年・パブリックドメイン)の主題(分散和音の動き)
 MELODY = [66, 71, 66, 71, 74, 71, 74, 78, 74, 78, 81, 78,
           69, 74, 69, 74, 78, 74, 73, 78, 73, 78, 81, 78]
+MIX_GAIN = 0.86  # 通常部分の音量(約 -18dB になるよう調整)
 
 
 def synth_audio(events, end_t, fail, duration, path):
@@ -619,24 +670,27 @@ def synth_audio(events, end_t, fail, duration, path):
         out[i:j] += sig[: j - i]
 
     note_i = 0
-    last_hit = -1.0
+    last_tick = -1.0
     for kind, t, data in events:
         if kind == "fire":
-            add(tone(70, 0.25, 0.5, 12) + noise(0.25, 0.25, 20, rng, smooth=8), t)
-            m = MELODY[note_i % len(MELODY)]
-            add(tone(midi_hz(m), 0.35, 0.30, 7), t)
+            add(tone(midi_hz(MELODY[note_i % len(MELODY)]), 0.3, 0.28, 8), t)
+            add(noise(0.05, 0.12, 60, rng, smooth=2), t)
             note_i += 1
         elif kind == "kill":
             big = data[4] == "boss"
-            add(noise(1.2 if big else 0.5, 0.6 if big else 0.4, 4 if big else 8, rng, smooth=3), t)
-            add(tone(50, 0.8 if big else 0.5, 0.6 if big else 0.4, 4), t)
-        elif kind == "boss_hit":
-            if t - last_hit > 0.07:
+            add(noise(1.2 if big else 0.4, 0.6 if big else 0.35, 4 if big else 9, rng, smooth=3), t)
+            add(tone(50, 0.8 if big else 0.4, 0.6 if big else 0.35, 4), t)
+        elif kind in ("hit", "boss_hit"):
+            if t - last_tick > 0.06:
                 add(tone(620, 0.08, 0.10, 40) + tone(930, 0.08, 0.06, 40), t)
-                last_hit = t
-        elif kind == "power":
-            for k, m in enumerate((72, 76, 79, 84)):
-                add(tone(midi_hz(m), 0.3, 0.25, 6), t + k * 0.06)
+                last_tick = t
+        elif kind == "drop":
+            add(tone(midi_hz(88), 0.25, 0.15, 8) + tone(midi_hz(95), 0.25, 0.10, 8), t)
+        elif kind == "pickup":
+            for k, m in enumerate((72, 76, 79, 84, 88)):
+                add(tone(midi_hz(m), 0.3, 0.25, 6), t + k * 0.05)
+        elif kind == "miss_item":
+            add(tone(midi_hz(60), 0.35, 0.25, 5) + tone(midi_hz(55), 0.35, 0.2, 5), t)
         elif kind in ("wave", "boss", "enrage"):
             for k, m in enumerate((47, 47, 54) if kind != "enrage" else (42, 41, 40)):
                 add(tone(midi_hz(m), 0.5, 0.45, 3) + noise(0.5, 0.08, 6, rng, smooth=10), t + k * 0.22)
@@ -669,9 +723,6 @@ def synth_audio(events, end_t, fail, duration, path):
         w.setsampwidth(2)
         w.setframerate(SR)
         w.writeframes((wet * 32767).astype(np.int16).tobytes())
-
-
-MIX_GAIN = 0.52  # 通常部分の音量(約 -18dB になるよう調整)
 
 
 if __name__ == "__main__":
