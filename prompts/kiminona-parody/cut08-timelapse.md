@@ -35,3 +35,8 @@
 - A 終了(朝): `assets/source/kiminona/cut08a-city-guide-morning.png`
 - B 開始(昼): `assets/source/kiminona/cut08b-ramen-guide-day.png`
 - B 終了(夕暮れ): `assets/source/kiminona/cut08b-ramen-guide-dusk.png`
+
+## 看板の文字(ユーザー指定: 「デブラーメン」「メタボ寿司」など、読める文字にする)
+- A グルメ街の看板: 「メタボ寿司」「焼肉 デブ苑 食べ放題」「ケーキバイキング 体重無制限」「揚げ物天国」「大盛り亭」「カロリー御殿」
+- B ラーメン屋: 看板「デブラーメン」、暖簾「特盛」「脂多め」「替玉無限」、赤ちょうちん「らーめん」
+- すべて架空の店名。実在の店・ロゴは使わない
