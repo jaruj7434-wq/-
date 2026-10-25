@@ -66,3 +66,4 @@
 テキストだけでは位置と角度を正確に指示できないため、この実測値で構図ガイド画像
 `assets/source/kiminona/cut01-layout-guide.png`(git 管理外)を作成。
 ユーザーにアップロードしてもらい、image_references として渡して構図を固定する方針。
+- 構図ガイド(media_id `06117196-ceaa-451b-b561-0f5da1e304c6`)を参照して作り直し(Nano Banana 2.1 / 4K / 3 クレジット): `aa3bc47a-bc39-4346-8fa4-ce7fe89a2ad5`
