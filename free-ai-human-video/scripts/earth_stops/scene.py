@@ -81,12 +81,12 @@ def make_world():
     nodes, links = world.node_tree.nodes, world.node_tree.links
     bg = nodes["Background"]
     noise = nodes.new("ShaderNodeTexNoise")
-    noise.inputs["Scale"].default_value = 450.0
+    noise.inputs["Scale"].default_value = 700.0
     noise.inputs["Detail"].default_value = 0.0
     ramp = nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].position = 0.72
+    ramp.color_ramp.elements[0].position = 0.80
     ramp.color_ramp.elements[0].color = (0.002, 0.003, 0.01, 1)
-    ramp.color_ramp.elements[1].position = 0.75
+    ramp.color_ramp.elements[1].position = 0.82
     ramp.color_ramp.elements[1].color = (1, 1, 1, 1)
     links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
     links.new(ramp.outputs["Color"], bg.inputs["Color"])
@@ -104,10 +104,10 @@ def earth_material():
     links.new(coord.outputs["Object"], noise.inputs["Vector"])
     ramp = nodes.new("ShaderNodeValToRGB")
     els = ramp.color_ramp.elements
-    els[0].position, els[0].color = 0.50, (0.01, 0.06, 0.25, 1)  # 海
+    els[0].position, els[0].color = 0.50, (0.02, 0.12, 0.45, 1)  # 海
     els[1].position, els[1].color = 0.70, (0.45, 0.38, 0.22, 1)  # 山地
     e = els.new(0.53)
-    e.color = (0.08, 0.30, 0.08, 1)  # 陸
+    e.color = (0.15, 0.45, 0.10, 1)  # 陸
     e = els.new(0.515)
     e.color = (0.03, 0.12, 0.35, 1)  # 浅瀬
     links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
@@ -148,7 +148,7 @@ def glow_material(name, color, strength):
     emit.inputs["Strength"].default_value = strength
     transp = nodes.new("ShaderNodeBsdfTransparent")
     lw = nodes.new("ShaderNodeLayerWeight")
-    lw.inputs["Blend"].default_value = 0.35
+    lw.inputs["Blend"].default_value = 0.06
     mix = nodes.new("ShaderNodeMixShader")
     links.new(lw.outputs["Facing"], mix.inputs["Fac"])
     links.new(transp.outputs[0], mix.inputs[1])
@@ -182,10 +182,14 @@ def build(t):
     make_world()
 
     sun = bpy.data.objects.new("Sun", bpy.data.lights.new("Sun", "SUN"))
-    sun.data.energy = 4.5
+    sun.data.energy = 9.0
     sun.data.angle = math.radians(2)
-    sun.rotation_euler = (math.radians(50), math.radians(-35), math.radians(-40))
+    sun.location = (-6, 1.0, 1.5)  # 左横から照らして昼夜の境目を出す
     scene.collection.objects.link(sun)
+    target = bpy.data.objects.new("SunTarget", None)
+    scene.collection.objects.link(target)
+    c = sun.constraints.new("TRACK_TO")
+    c.target, c.track_axis, c.up_axis = target, "TRACK_NEGATIVE_Z", "UP_Y"
 
     # --- 地球 ---
     tilt = bpy.data.objects.new("Tilt", None)
@@ -194,7 +198,7 @@ def build(t):
 
     earth = sphere("Earth", 1.0, earth_material(), tilt)
     clouds = sphere("Clouds", 1.025, cloud_material(), tilt)
-    sphere("Atmosphere", 1.07, glow_material("Atmo", (0.25, 0.55, 1.0), 2.5), tilt)
+    sphere("Atmosphere", 1.07, glow_material("Atmo", (0.25, 0.55, 1.0), 1.5), tilt)
     fire = sphere("Fire", 1.04, glow_material("FireMat", (1.0, 0.25, 0.03), 6.0), tilt)
     visible(fire, [(L[4][0], end + 1)], end)
 
@@ -249,13 +253,13 @@ def build(t):
     build_ground(scene, L, end)
 
     cam_ground = bpy.data.objects.new("CamGround", bpy.data.cameras.new("CamGround"))
-    cam_ground.data.lens = 22
+    cam_ground.data.lens = 20
     scene.collection.objects.link(cam_ground)
-    cam_ground.rotation_euler = (math.radians(84), 0, 0)
+    cam_ground.rotation_euler = (math.radians(86), 0, 0)
     gs = L[3][0]
     for fr in range(gs, L[4][0] + 1, 2):
         k = 0.0 if fr < gs + 10 else 0.25
-        key(cam_ground, "location", fr, (GROUND_X + random.uniform(-1, 1) * k, -16 + random.uniform(-1, 1) * k * 0.3, 2.2 + random.uniform(-1, 1) * k))
+        key(cam_ground, "location", fr, (GROUND_X + random.uniform(-1, 1) * k, -7 + random.uniform(-1, 1) * k * 0.3, 1.4 + random.uniform(-1, 1) * k))
 
     # --- カット割り(マーカーでカメラを切り替える) ---
     for name, frame, cam in [("s1", 1, cam_space), ("ground", L[3][0], cam_ground), ("end", L[4][0], cam_space)]:
@@ -272,7 +276,7 @@ def build_ground(scene, L, end):
 
     sky_mat, nodes, links = new_material("Sky")
     emit = nodes.new("ShaderNodeEmission")
-    emit.inputs["Color"].default_value = (0.45, 0.65, 0.95, 1)
+    emit.inputs["Color"].default_value = (0.2, 0.45, 1.0, 1)
     emit.inputs["Strength"].default_value = 1.0
     links.new(emit.outputs[0], nodes["Material Output"].inputs["Surface"])
     sky = sphere("Sky", 150, sky_mat, loc=(GROUND_X, 0, 0))
@@ -304,7 +308,7 @@ def build_ground(scene, L, end):
 
     objs = []
     for _ in range(14):  # 家
-        x, y = GROUND_X + random.uniform(-14, 14), random.uniform(4, 30)
+        x, y = GROUND_X + random.uniform(-10, 10), random.uniform(2, 16)
         s = random.uniform(1.2, 2.0)
         bpy.ops.mesh.primitive_cube_add(size=s, location=(x, y, s / 2))
         wall = bpy.context.active_object
@@ -315,7 +319,7 @@ def build_ground(scene, L, end):
         assign(r, roof)
         objs.append(group([wall, r], x, y))
     for _ in range(18):  # 木
-        x, y = GROUND_X + random.uniform(-16, 16), random.uniform(-2, 30)
+        x, y = GROUND_X + random.uniform(-10, 10), random.uniform(-1, 18)
         bpy.ops.mesh.primitive_cylinder_add(radius=0.12, depth=1.0, location=(x, y, 0.5))
         tr = bpy.context.active_object
         assign(tr, trunk)
@@ -324,7 +328,7 @@ def build_ground(scene, L, end):
         assign(lf, leaf)
         objs.append(group([tr, lf], x, y))
     for _ in range(12):  # 人
-        x, y = GROUND_X + random.uniform(-8, 8), random.uniform(-6, 2)
+        x, y = GROUND_X + random.uniform(-5, 5), random.uniform(-4, 1)
         bpy.ops.mesh.primitive_cylinder_add(radius=0.18, depth=0.9, location=(x, y, 0.45))
         body = bpy.context.active_object
         assign(body, random.choice(people))
@@ -349,7 +353,7 @@ def build_ground(scene, L, end):
     # 風の筋
     streak_mat = flat_material("Streak", (1, 1, 1), emission=3.0)
     for i in range(70):
-        y, z = random.uniform(-6, 25), random.uniform(0.3, 6)
+        y, z = random.uniform(-6, 18), random.uniform(0.3, 6)
         st = blast - 6 + random.randint(0, ge - blast)
         bpy.ops.mesh.primitive_cylinder_add(radius=0.025, depth=random.uniform(3, 7), location=(GROUND_X - 30, y, z))
         s = bpy.context.active_object
@@ -365,7 +369,8 @@ def render(scene, out_dir, frames=None, samples=24, scale=100):
     scene.cycles.device = "CPU"
     scene.cycles.samples = samples
     scene.cycles.use_denoising = True
-    scene.cycles.max_bounces = 4
+    scene.cycles.max_bounces = 3
+    scene.cycles.transparent_max_bounces = 6
     scene.render.use_persistent_data = True
     scene.render.resolution_x, scene.render.resolution_y = RES
     scene.render.resolution_percentage = scale
@@ -388,7 +393,11 @@ if __name__ == "__main__":
     timings = json.loads(Path(sys.argv[1]).read_text())
     scene, L, stop, end = build(timings)
     if "--preview" in sys.argv:
-        frames = [L[0][0] + 20, L[1][0] + 25, stop + 8, L[3][0] + 22, L[4][0] + 15]
+        frames = [L[0][0] + 20, L[1][0] + 25, stop + 8, L[3][0] + 5, L[3][0] + 22, L[4][0] + 15]
         render(scene, sys.argv[2], frames, samples=12, scale=50)
     else:
-        render(scene, sys.argv[2])
+        # 画質と時間の調整用: SAMPLES / SCALE(%)/ FRAMES("開始-終了")を環境変数で上書きできる
+        import os
+        if os.environ.get("FRAMES"):
+            scene.frame_start, scene.frame_end = map(int, os.environ["FRAMES"].split("-"))
+        render(scene, sys.argv[2], samples=int(os.environ.get("SAMPLES", 8)), scale=int(os.environ.get("SCALE", 75)))
