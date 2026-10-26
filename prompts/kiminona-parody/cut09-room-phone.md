@@ -28,3 +28,6 @@
 ## 構図ガイド(git 管理外)
 - 部屋: `assets/source/kiminona/cut09-room-guide.png`(開始・終了共通。俯瞰で斜め、左上の窓の光、ベッドにデブ慶太、床にお菓子の袋とピザの箱)
 - スマホ: `assets/source/kiminona/cut09-phone-guide.png`(机の上で斜め、画面中央に通知カード)
+- ガイドのアップロード: 部屋 `c9bcba23-657c-4c08-8020-7b5b5302a917`、スマホ `a94c6565-4951-4699-9756-f28abaf3f1c1`
+- 部屋 開始(Nano Banana 2.1 / 4K / 3 クレジット、ガイド+デブ慶太の部屋着シート+登録写真): `7ac74446-ca2f-4060-8a93-7f38aa844d8a`
+- スマホ 開始(同 3 クレジット): `29fda6ad-dab9-4b12-b48d-b97dbff1e074`
