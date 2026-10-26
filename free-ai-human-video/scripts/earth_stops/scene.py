@@ -307,7 +307,7 @@ def build_ground(scene, L, end):
         return root
 
     objs = []
-    for _ in range(14):  # 家
+    for _ in range(22):  # 家
         x, y = GROUND_X + random.uniform(-10, 10), random.uniform(2, 16)
         s = random.uniform(1.2, 2.0)
         bpy.ops.mesh.primitive_cube_add(size=s, location=(x, y, s / 2))
@@ -318,7 +318,7 @@ def build_ground(scene, L, end):
         r.rotation_euler.z = math.radians(45)
         assign(r, roof)
         objs.append(group([wall, r], x, y))
-    for _ in range(18):  # 木
+    for _ in range(28):  # 木
         x, y = GROUND_X + random.uniform(-10, 10), random.uniform(-1, 18)
         bpy.ops.mesh.primitive_cylinder_add(radius=0.12, depth=1.0, location=(x, y, 0.5))
         tr = bpy.context.active_object
@@ -327,7 +327,7 @@ def build_ground(scene, L, end):
         lf = bpy.context.active_object
         assign(lf, leaf)
         objs.append(group([tr, lf], x, y))
-    for _ in range(12):  # 人
+    for _ in range(16):  # 人
         x, y = GROUND_X + random.uniform(-5, 5), random.uniform(-4, 1)
         bpy.ops.mesh.primitive_cylinder_add(radius=0.18, depth=0.9, location=(x, y, 0.45))
         body = bpy.context.active_object
@@ -338,24 +338,24 @@ def build_ground(scene, L, end):
         assign(head, skin)
         objs.append(group([body, head], x, y))
 
-    # 東(画面右)へ吹き飛ばす。手前(カメラに近い)ものほど先に飛ぶ
+    # 東(画面右)へ吹き飛ばす。カット全体に散らして、最後まで何かが飛んでいるようにする
     for o in objs:
-        start = blast + int((o.location.y + 6) * 0.35) + random.randint(0, 3)
-        dist = random.uniform(35, 60)
+        start = blast + random.randint(0, max(1, ge - blast - 30))
+        dist = random.uniform(30, 50)
         lift = random.uniform(2, 9)
         spinv = [random.uniform(-6, 6) for _ in range(3)]
         x0, y0 = o.location.x, o.location.y
         key(o, "location", start, (x0, y0, 0), "BEZIER")
         key(o, "rotation_euler", start, (0, 0, 0), "BEZIER")
-        key(o, "location", start + 18, (x0 + dist, y0 + random.uniform(-3, 3), lift))
-        key(o, "rotation_euler", start + 18, spinv)
+        key(o, "location", start + 36, (x0 + dist, y0 + random.uniform(-3, 3), lift))
+        key(o, "rotation_euler", start + 36, spinv)
 
     # 風の筋
     streak_mat = flat_material("Streak", (1, 1, 1), emission=3.0)
-    for i in range(70):
+    for i in range(120):
         y, z = random.uniform(-6, 18), random.uniform(0.3, 6)
         st = blast - 6 + random.randint(0, ge - blast)
-        bpy.ops.mesh.primitive_cylinder_add(radius=0.025, depth=random.uniform(3, 7), location=(GROUND_X - 30, y, z))
+        bpy.ops.mesh.primitive_cylinder_add(radius=0.04, depth=random.uniform(3, 7), location=(GROUND_X - 30, y, z))
         s = bpy.context.active_object
         s.rotation_euler = (0, math.radians(90), 0)
         assign(s, streak_mat)
