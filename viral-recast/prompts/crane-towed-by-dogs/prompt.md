@@ -33,3 +33,23 @@ Realistic physics, dust and small stones kicked up, crane engine rumble, creakin
 - 上記プロンプトそのまま / seedance_2_5 t2v / 15秒 / 9:16 / 480p / 音声あり / 45 クレジット
 - 犬種ミックス・約20匹・曇り
 - job_id: `827ccb72-8ad3-4390-8446-04e638a3cfcf`
+- 結果: **NG**。ブームのないクレーンになり、下り坂に見えた(原因: "boom retracted" と書いたこと、坂とカメラの向きを書かなかったこと)
+
+## プロンプト v2(台本 v2・絵コンテ v2 に対応、未生成)
+```
+Photorealistic vertical 9:16 video, one continuous 15-second shot, natural documentary look, overcast daylight.
+
+FIXED RULES FOR THE WHOLE VIDEO:
+- The road is a very steep UPHILL dirt road, rough and rutted with rocks and bumps. Screen-left is the bottom of the hill, screen-right is the top of the hill. Everything moves UP the hill, to the right.
+- The vehicle is a large yellow all-terrain mobile crane with five axles of big tires and a long, thick, clearly visible telescopic crane boom lying on top of the carrier, extending forward past the driver's cab with a hook block at its tip. The boom must be visible in every shot of the crane.
+- The crane has broken down on the climb: orange hazard lights blinking, a thin wisp of smoke from the engine, wheels slipping. It cannot climb by itself.
+- A thick steel tow cable runs from the crane's front tow hook straight UP the hill, pulled tight.
+- About twenty dogs in pulling harnesses (huskies, malamutes, golden retrievers, shiba inus, corgis, French bulldogs), in two rows like a sled-dog team, are ABOVE the crane on the hill and pull the cable UPHILL.
+
+0-4s: Side view from slightly below. The whole crane fills the frame, tilted up to the right on the steep slope, boom on top, hazard lights, smoke. The tight cable goes up to the right and leaves the frame. No dogs visible yet. Camera nearly still, slowly moving right (uphill).
+4-8s: Camera tracks uphill alongside the crane: close-up of the huge tires slipping on the bumpy dirt and kicking up soil, the underside of the boom overhead. The crane creeps upward, pulled by the cable.
+8-11s: Camera passes the driver's cab and the boom tip and follows the tense cable up the slope. The cable disappears over a small crest; we still cannot see what is pulling.
+11-15s: Reveal. Camera is now uphill in front of the dog team, looking down the slope: in the foreground the lead dogs' faces, behind them two rows of dogs climbing toward the camera with full effort, paws digging into the dirt, tongues out; far behind them, lower on the hill, the yellow crane with its boom attached to the cable. The camera slowly backs up the hill and ends close on the proud, determined face of the lead dog.
+
+Sound: struggling crane engine, creaking steel cable, tires scraping dirt, then dogs panting and barking happily.
+```
