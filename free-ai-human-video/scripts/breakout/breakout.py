@@ -28,6 +28,7 @@ from ball_escape import hue_rgb, midi_hz, noise, text, tone  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
+from angels import DURATION as ANGEL_DUR, AngelShow, holy_music  # noqa: E402
 
 W, H = 1080, 1920
 FPS = 60
@@ -284,7 +285,7 @@ def simulate(seed, record=False):
                 "hps": [br["hp"] for br in g.bricks],
             })
         if g.result is not None:
-            extra = OUTRO + (SCARE_DUR if g.result == "fail" else 0)
+            extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR   # 成功時は天使のお祝い
             if not record or g.t > g.result_t + extra:
                 break
     # 最後の連続破壊:決着前 6 秒以内の最大コンボ
@@ -371,6 +372,7 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
+    angels = AngelShow(W, H, seed) if result == "success" else None
     particles, popups = [], []
     last_hit = {}
     trails = {}
@@ -495,8 +497,10 @@ def render(seed):
             col = hue_rgb((combo * 0.04) % 1, 0.7, 1.0)
             text(ctx, f"COMBO ×{combo}", W / 2, 1150, size, rgb=col, sw=16)
 
+        if angels is not None and over:   # 成功:かわいい天使がずっと現れる
+            angels.draw(ctx, t - end_t)
         # 文字
-        shown_t = min(t, TIME_LIMIT)
+        shown_t = min(t, end_t if end_t is not None else TIME_LIMIT)   # 決着したら時計を止める
         remain = TIME_LIMIT - shown_t
         left = sum(1 for hp in fr["hps"] if hp > 0)
         text(ctx, f"{int(TIME_LIMIT)}秒で", W / 2, 200, 84, sw=14)
@@ -539,7 +543,8 @@ def render(seed):
 MELODY = [74, 67, 69, 71, 72, 74, 67, 67, 76, 72, 74, 76, 78, 79, 67, 67,
           72, 74, 72, 71, 69, 71, 72, 71, 69, 67, 66, 67, 69, 71, 67, 71, 69]
 COMBO_SCALE = [60, 62, 64, 67, 69, 72, 74, 76, 79, 81, 84, 86, 88, 91, 93, 96]   # コンボ中は音が上がっていく
-MIX_GAIN = 0.98  # 通常部分の音量(約 -18dB になるよう調整)
+HOLY_GAIN = 0.85  # 成功BGMの音量
+MIX_GAIN = 0.67  # 通常部分の音量(約 -18dB になるよう調整)
 
 
 def synth_audio(events, end_t, fail, duration, path):
@@ -583,10 +588,10 @@ def synth_audio(events, end_t, fail, duration, path):
         for k, m in enumerate((64, 63, 62)):
             add(tone(midi_hz(m), 0.45, 0.35, 3) + tone(midi_hz(m - 12), 0.45, 0.25, 3), sad_t + k * 0.42)
         add(tone(midi_hz(61), 1.4, 0.35, 1.5) + tone(midi_hz(49), 1.4, 0.25, 1.5), sad_t + 1.26)
-    elif end_t is not None:
-        for iv in (0, 4, 7, 12, 16, 19):
-            add(tone(midi_hz(67 + iv), 2.5, 0.22, 1.2), end_t)
-        add(noise(1.5, 0.25, 2.5, rng, smooth=2), end_t)
+    elif end_t is not None:   # 成功:神々しいBGM(正規化のあとに重ねる)
+        sig = holy_music(SR, ANGEL_DUR)
+        i0 = int(end_t * SR)
+        scare[i0:i0 + len(sig)] += HOLY_GAIN * sig[: len(scare) - i0]
     wet = out.copy()
     for d, g in ((0.043, 0.3), (0.071, 0.24), (0.113, 0.17)):
         k = int(d * SR)
@@ -594,7 +599,7 @@ def synth_audio(events, end_t, fail, duration, path):
     wet = wet[: int(duration * SR)]
     # 通常部分は軽く圧縮して聞こえやすくし、叫び声との差は約10dBに抑える
     wet = np.tanh(2.5 * wet / max(1e-9, np.max(np.abs(wet)))) / np.tanh(2.5) * MIX_GAIN
-    wet = np.clip(wet + 0.95 * scare[: len(wet)], -0.98, 0.98)
+    wet = np.clip(wet + (0.95 if fail else 1.0) * scare[: len(wet)], -0.98, 0.98)
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
