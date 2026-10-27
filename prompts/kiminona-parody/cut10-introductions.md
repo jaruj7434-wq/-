@@ -176,3 +176,6 @@
 - 6a:髪はきれい。目を閉じ、頬に手を当てる → パロディでは口いっぱいに頬張り、ハムスターのようなパンパンのほっぺ
 - 6b:髪はボサボサ。手で目をこすり、口を開けて疲れた顔 → パロディでは頬に**肉まんの食べかす**
 - ガイド画像:`assets/source/kiminona/cut10-6a-face-guide.png`、`cut10-6b-face-guide.png`(git 管理外)
+- ガイドのアップロード(ハッシュで照合済み):6a `b6f576df-d8a5-4953-b11b-3795b2069bdc` / 6b `7c27ac5e-725d-4f9b-884d-efc4a097fcbc`
+- 6a の1回目 `6b31ef95-ac39-4599-8b64-1ec9ec6c9d80`:**失敗**(理由の表示なし)
+  - 安全フィルターに引っかかったとみられる。「school-style blouse」「young woman」「mouth crammed full」の組み合わせが原因と推定
