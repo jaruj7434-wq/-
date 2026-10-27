@@ -56,4 +56,4 @@ Sound: struggling crane engine, creaking steel cable, tires scraping dirt, then 
 
 ## 生成 #2(2026-10-27、台本 v2・絵コンテ v2 OK 後)
 - プロンプト v2 そのまま / seedance_2_5 t2v / 15秒 / 9:16 / 480p / 音声あり / 45 クレジット
-- job_id: `7b27d1b6-8baa-4a45-83c0-2d64348f2751`
+- job_id: `7b27d1b6-8baa-4a45-83c0-2d64348f2751`(完了・ユーザー確認待ち)
