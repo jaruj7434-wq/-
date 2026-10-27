@@ -28,3 +28,8 @@ Photorealistic vertical video, one continuous 15-second shot, cinematic but natu
 
 Realistic physics, dust and small stones kicked up, crane engine rumble, creaking cable, dogs panting and barking.
 ```
+
+## 生成 #1(2026-10-27)
+- 上記プロンプトそのまま / seedance_2_5 t2v / 15秒 / 9:16 / 480p / 音声あり / 45 クレジット
+- 犬種ミックス・約20匹・曇り
+- job_id: `827ccb72-8ad3-4390-8446-04e638a3cfcf`
