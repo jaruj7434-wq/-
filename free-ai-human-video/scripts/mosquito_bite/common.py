@@ -238,7 +238,7 @@ def red_blood_cell_mesh(name, R=1.0, segments=48, rings=24):
 
 
 # ---------- レンダリング ----------
-def render(scene, out_dir, samples=None, scale=None, motion_blur=False, preview_frames=None):
+def render(scene, out_dir, samples=None, scale=None, motion_blur=False, preview_frames=None, bounces=None):
     samples = samples or int(os.environ.get("SAMPLES", 12))
     scale = scale or int(os.environ.get("SCALE", 67))
     scene.render.engine = "CYCLES"
@@ -251,6 +251,9 @@ def render(scene, out_dir, samples=None, scale=None, motion_blur=False, preview_
     scene.cycles.transmission_bounces = 4
     scene.cycles.volume_bounces = 0
     scene.cycles.transparent_max_bounces = 8
+    if bounces:  # ガラス越しの水など、透過が重なる場面用
+        scene.cycles.max_bounces = bounces
+        scene.cycles.transmission_bounces = bounces
     scene.render.use_persistent_data = True
     scene.render.resolution_x, scene.render.resolution_y = RES
     scene.render.resolution_percentage = scale
