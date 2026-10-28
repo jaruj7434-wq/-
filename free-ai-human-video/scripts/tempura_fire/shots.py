@@ -46,12 +46,9 @@ def add_fire(scene, sims, name, frames, light_k=14.0):
 
 
 def glass(scene):
-    """水の入ったガラスのコップ。"""
-    g = principled("Glass", (1, 1, 1), rough=0.02, transmission=1.0, ior=1.5)
-    cup = lathe("Cup", [(0.0, 0.0), (0.032, 0.0), (0.036, 0.11), (0.033, 0.11), (0.029, 0.004), (0.0, 0.004)], g)
-    water = principled("Water", (0.85, 0.95, 1.0), rough=0.02, transmission=1.0, ior=1.33)
-    w = cyl("WaterIn", 0.03, 0.07, (0, 0, 0.04), water)
-    w.parent = cup
+    """水が満杯に入ったガラスのコップ(閉じた円柱1つで表現。薄いガラス壁の器はこの環境では黒く写るため)。"""
+    water = principled("GlassOfWater", (0.9, 0.96, 1.0), rough=0.01, transmission=1.0, ior=1.4)
+    cup = cyl("Cup", 0.034, 0.11, (0, 0, 0.055), water, verts=64, bevel=0.002)
     return cup, water
 
 

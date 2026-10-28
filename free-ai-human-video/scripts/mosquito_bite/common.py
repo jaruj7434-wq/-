@@ -254,6 +254,7 @@ def render(scene, out_dir, samples=None, scale=None, motion_blur=False, preview_
     if bounces:  # ガラス越しの水など、透過が重なる場面用
         scene.cycles.max_bounces = bounces
         scene.cycles.transmission_bounces = bounces
+        scene.cycles.glossy_bounces = bounces
     scene.render.use_persistent_data = True
     scene.render.resolution_x, scene.render.resolution_y = RES
     scene.render.resolution_percentage = scale

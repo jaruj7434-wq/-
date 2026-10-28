@@ -28,6 +28,8 @@ def lathe(name, profile, mat, segments=96):
         for i in range(segments):
             j = (i + 1) % segments
             bm.faces.new([a[i], a[j], b[j], b[i]])
+    # 回転軸上(r=0)の点が重なったままだと面の向きが決まらず、ガラスなどが黒く写るので1点にまとめる
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     me = bpy.data.meshes.new(name)
     bm.to_mesh(me)
