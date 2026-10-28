@@ -22,7 +22,9 @@ from volume import SCALES, atlas, domain_box, flame_curve, volume_material  # no
 
 # 炎がとても強いシミュレーションは、アトラスで白飛びしないよう範囲を広げる
 SIM_SCALES = {"erupt": {**SCALES, "flame": 12.0, "temp": 12.0}, "spray": {**SCALES, "flame": 6.0}}
-SIM_FLAME_K = {"erupt": 110.0, "spray": 120.0}  # 火柱は明るすぎて白飛びしやすいので、発光を抑えて炎の色を残す
+SIM_FLAME_K = {"erupt": 110.0, "spray": 120.0}
+# 熱した油から出る煙は白っぽい灰色で濃い(発火前の「煙が出ている」状態を見せる)
+SIM_SMOKE = {"heat": dict(smoke_k=160.0, smoke_color=(0.32, 0.31, 0.3))}  # 火柱は明るすぎて白飛びしやすいので、発光を抑えて炎の色を残す
 
 RED_X = (1.0, 0.04, 0.03)
 
@@ -34,7 +36,8 @@ def add_fire(scene, sims, name, frames, light_k=14.0):
     scales = SIM_SCALES.get(name, SCALES)
     info = atlas(sim_dir, Path(sims) / f"{name}_atlas", scales)
     first = sorted((Path(sims) / f"{name}_atlas").glob("f_*.png"))[0]
-    mat = volume_material(f"Fire_{name}", first, info, scales=scales, flame_k=SIM_FLAME_K.get(name, 260.0))
+    mat = volume_material(f"Fire_{name}", first, info, scales=scales, flame_k=SIM_FLAME_K.get(name, 260.0),
+                          **SIM_SMOKE.get(name, {}))
     domain_box(f"Fire_{name}", tuple(grid["shape"]), grid["h"], tuple(grid["origin"]), mat)
     curve = flame_curve(sim_dir)[:frames]
     fire_light(scene, (0, 0, 0.25), curve, light_k)

@@ -45,8 +45,10 @@ def make(name, timings, out_root):
     ev = events(frames)
     n = frames_needed(name, win)
     out = Path(out_root) / name
-    if name in ("steady", "heat", "lid"):
+    if name in ("steady", "lid"):
         sim = Sim(shape=(100, 100, 200), h=0.005, origin=(-0.25, -0.25, 0.0))
+    elif name == "heat":  # 油の煙は軽く、熱で勢いよく立ちのぼる
+        sim = Sim(shape=(100, 100, 200), h=0.005, origin=(-0.25, -0.25, 0.0), weight=0.03, smoke_fade=0.35)
     elif name == "extinguisher":
         sim = Sim(shape=(160, 110, 170), h=0.0055, origin=(-0.33, -0.36, 0.0))
     elif name == "erupt":
@@ -115,7 +117,7 @@ def make(name, timings, out_root):
 
         def ev_fn(s, fr, st):
             if fr < ign:  # 発火前:油から白っぽい煙が立ちのぼる(熱いが火はない)
-                s.emit(oil, smoke=0.35 + 0.4 * max(fr, 0) / ign, temp=0.12, vel=(0, 0, 0.15), jitter=0.9)
+                s.emit(oil, smoke=0.35 + 0.4 * max(fr, 0) / ign, temp=0.6, vel=(0, 0, 0.35), jitter=0.9)
             else:  # 約370℃で自然発火:炎が油面全体に広がっていく
                 k = min(1.0, (fr - ign + st / 3) / 10)
                 sub = s.mask_cylinder(0.04, 0.02, OIL_Z - 0.006, OIL_Z + 0.012, 0.02 + 0.09 * k)
