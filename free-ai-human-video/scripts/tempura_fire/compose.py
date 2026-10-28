@@ -31,7 +31,8 @@ def main(work, out_mp4):
     n, starts = 0, []
     for shot in SHOTS:
         starts.append(n / FPS)
-        for f in sorted((work / "frames" / shot).glob("f_*.png")):
+        src = work / "up" / shot if (work / "up" / shot).exists() else work / "frames" / shot  # 拡大済みがあれば使う
+        for f in sorted(src.glob("f_*.png")):
             n += 1
             (tmp / f"{n:05d}.png").symlink_to(f)
     total = n / FPS

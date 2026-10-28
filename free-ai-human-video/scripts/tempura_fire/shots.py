@@ -24,7 +24,8 @@ from volume import SCALES, atlas, domain_box, flame_curve, volume_material  # no
 SIM_SCALES = {"erupt": {**SCALES, "flame": 12.0, "temp": 12.0}, "spray": {**SCALES, "flame": 6.0}}
 SIM_FLAME_K = {"erupt": 110.0, "spray": 120.0}
 # 熱した油から出る煙は白っぽい灰色で濃い(発火前の「煙が出ている」状態を見せる)
-SIM_SMOKE = {"heat": dict(smoke_k=160.0, smoke_color=(0.32, 0.31, 0.3))}  # 火柱は明るすぎて白飛びしやすいので、発光を抑えて炎の色を残す
+SIM_SMOKE = {"heat": dict(smoke_k=160.0, smoke_color=(0.32, 0.31, 0.3)),
+             "erupt": dict(smoke_k=9.0)}  # 火柱のあとの大量のすすで画面が真っ黒にならないよう薄めに  # 火柱は明るすぎて白飛びしやすいので、発光を抑えて炎の色を残す
 
 RED_X = (1.0, 0.04, 0.03)
 
@@ -305,7 +306,8 @@ def build(name, timings, sims):
     frames = win[name][1]
     ev = events({k: v[1] for k, v in win.items()})
     scene = reset_scene(frames)
-    scene.cycles.volume_step_rate = 1.0
+    import os
+    scene.cycles.volume_step_rate = float(os.environ.get("VOLUME_STEP", 1.0))  # 大きいほど速いが粗い
 
     if name == "section":
         kitchen(scene, with_burner=False)  # 断面の鍋の中にバーナーが見えないように
@@ -441,4 +443,4 @@ if __name__ == "__main__":
         render(scene, out, samples=12, scale=30, preview_frames=sorted({max(1, frames // 6), frames // 2, frames - 3}),
                bounces=10)
     else:
-        render(scene, out, bounces=10)
+        render(scene, out, bounces=10 if name in ("hook", "erupt", "section", "outro") else None)  # ガラス・水・油が重なる場面だけ

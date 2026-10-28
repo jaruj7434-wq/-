@@ -48,6 +48,8 @@ def volume_material(name, first_png, info, smoke_k=40.0, flame_density=1.5, flam
         mat.use_nodes = True
     except AttributeError:
         pass
+    import os
+    mat.cycles.volume_step_rate = float(os.environ.get("VOLUME_STEP", 1.0))  # 大きいほど速いが粗い
     n, l = mat.node_tree.nodes, mat.node_tree.links
     n.remove(n["Principled BSDF"])
 
