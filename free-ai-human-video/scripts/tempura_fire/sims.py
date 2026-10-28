@@ -71,10 +71,10 @@ def make(name, timings, out_root):
 
         def ev_fn(s, fr, st):
             pot_fire(s, oil, 1.0 if fr < burst else 1.6)
-            if burst <= fr < burst + 4:  # 水が一気に気化して、燃える油の霧が噴き上がる
-                k = (fr - burst) + st / 3
+            if burst <= fr < burst + 9:  # 水が一気に気化して、燃える油の霧が噴き上がる(鍋から天井までつながる柱)
+                k = min(fr - burst + st / 3, 4.0)
                 ball = s.mask_sphere(0, 0, 0.12 + 0.06 * k, 0.07 + 0.03 * k)
-                s.emit(ball, fuel=1.6, temp=2.0, jitter=0.6)
+                s.emit(ball, fuel=1.6 if fr < burst + 4 else 1.0, temp=2.0, jitter=0.6)
                 s.emit_radial(ball, 0, 0, 0.05, speed=2.5, up=6.0)
 
     elif name == "spray":

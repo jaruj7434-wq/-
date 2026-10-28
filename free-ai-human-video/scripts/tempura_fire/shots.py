@@ -22,7 +22,7 @@ from volume import SCALES, atlas, domain_box, flame_curve, volume_material  # no
 
 # 炎がとても強いシミュレーションは、アトラスで白飛びしないよう範囲を広げる
 SIM_SCALES = {"erupt": {**SCALES, "flame": 12.0, "temp": 12.0}, "spray": {**SCALES, "flame": 6.0}}
-SIM_FLAME_K = {"erupt": 110.0}  # 火柱は明るすぎて白飛びしやすいので、発光を抑えて炎の色を残す
+SIM_FLAME_K = {"erupt": 110.0, "spray": 120.0}  # 火柱は明るすぎて白飛びしやすいので、発光を抑えて炎の色を残す
 
 RED_X = (1.0, 0.04, 0.03)
 
@@ -353,7 +353,7 @@ def build(name, timings, sims):
         sim_dir = Path(sims) / "spray"
         track = json.loads((sim_dir / "droplets.json").read_text())
         mat = principled("BurningDrop", (1.0, 0.6, 0.15), rough=0.1, emission=6.0, emission_color=(1.0, 0.55, 0.15))
-        objs = {}
+        objs, last = {}, {}
         for fr_s, items in track.items():
             for i, x, y, z, r in items:
                 if i not in objs:
@@ -369,6 +369,11 @@ def build(name, timings, sims):
                 o.keyframe_insert("location", frame=int(fr_s))
                 o.scale = (1, 1, 1)
                 o.keyframe_insert("scale", frame=int(fr_s))
+                last[i] = max(last.get(i, 0), int(fr_s))
+        bpy.context.preferences.edit.keyframe_new_interpolation_type = "CONSTANT"
+        for i, fr_last in last.items():  # 着地したら(最後に記録されたフレームの次から)消す
+            objs[i].scale = (0, 0, 0)
+            objs[i].keyframe_insert("scale", frame=fr_last + 1)
         cam, tgt = camera(scene, "Cam", (0.35, -1.3, 0.4), (0, 0, 0.32), lens=28)
         key(cam, "location", 1, (0.4, -1.35, 0.42))
         key(cam, "location", frames, (0.2, -1.1, 0.36))
