@@ -1,12 +1,13 @@
-"""「玉は木を全部こわせる?」うずまきの通路に並んだ木の板を、玉が跳ねながら壊していく物理ショートを生成する。
+"""「12個の玉で木を全部こわせる?」うずまきの通路に並んだ木の板を、玉が割っていく物理ショートを生成する。
 
 参考動画(Will the ball break through all the wood?)の動き・見た目・音を分析して再現したもの:
-- 5重のうずまきの壁。通路には放射状に並んだ木の板(432枚)。
-- 玉は右上のたて筒を落ちて、うずまきの外側の口から通路に入る。板に当たると板は割れて玉は突き抜けるが、そのたびに少し遅くなる。
-- 玉は波のように増える:黄1 → 赤2 → 青4 → 黄5。
-- 板が壊れるたびに短い木琴のような「コッ」という音。音の高さは玉の位置(角度)で上下する。
+- 5重のうずまきの壁。通路には放射状に並んだ木の板(432枚)。中心には小さな部屋。
+- 玉はうずまきの外側の口の真上から落ちてきて通路に入る。板に当たると板は割れて玉は突き抜けるが、そのたびに少し遅くなる。
+  盤面は真上から見た水平な台で、転がり抵抗でも少しずつ遅くなり、勢いがなくなった玉は薄くなって消える(中心の小部屋に小さな玉として集まる)。
+- 前の玉が全部消えたら次の波が落ちてくる:黄1 → 赤2 → 青4 → 黄5(計12個)。
+- 板が壊れるたびに短い木の「コッ」という音。音の高さは玉の位置(角度)で上下する。BGMなし。
 - 玉の動きは重力・反発・衝突の物理のまま(ねらい・補正なし)。
-制限時間内に432枚すべて壊せば成功(天使)、残れば失敗(幽霊)。
+12個の玉で432枚すべて壊せば成功(天使)、玉が尽きたら失敗(幽霊)。
 
 使い方:
     python wood.py search [--want fail|success] [-n 200]
@@ -47,16 +48,21 @@ N_PLANKS = 432
 TH_WOOD0 = 2 * math.pi * 0.35          # 板を並べ始める位置(中心の小部屋は空ける)
 TH_WOOD1 = TH_END - 2 * math.pi - 0.35  # 板を並べ終える位置(入口は少し空ける)
 
-CHUTE_L, CHUTE_R = CX + R_OUT - LANE, CX + R_OUT   # 入口のたて筒
-CHUTE_TOP = CY - R_OUT - 150
-GATE_Y = CY - 30
-BREAK_KEEP = 0.965                     # 板を1枚割ったあとに残る玉の速さの割合
-AIR_DAMP = 0.98                        # 1秒あたりに残る速さの割合(空気抵抗)
+BREAK_KEEP = 0.978                     # 板を1枚割ったあとに残る玉の速さの割合
+AIR_DAMP = 0.7832                      # 盤面で1秒あたりに残る速さの割合(転がり抵抗)
+V_DIE = 200.0                          # これより遅くなった玉は消えていく
+FADE = 0.5                             # 消えていく時間(秒)
 WALL_E = 1.0                           # 壁の反発係数
-BALL_R = 16
-GRAVITY = 1300.0
-WAVES = [(0.5, 1, "yellow"), (3.6, 2, "red"), (8.2, 4, "blue"), (14.8, 5, "yellow")]
-TIME_LIMIT = 20.0
+BALL_R = 19
+GRAVITY = 2600.0
+DROP_X = CX + R_OUT - LANE / 2         # 玉はうずまきの外側の口の真上から落ちてくる
+DROP_Y = CY - 600
+WAVES = [(1, "yellow"), (2, "red"), (4, "blue"), (5, "yellow")]   # 前の玉が全部消えたら次の波
+N_BALLS = sum(n for n, _ in WAVES)
+WAVE_GAP = 0.6                         # 前の玉が消えてから次の玉が落ちてくるまで
+DROP_EVERY = 0.35                      # 同じ波の玉どうしの間隔
+FAIL_WAIT = 0.8                        # 最後の玉が消えてから失敗確定まで
+MAX_T = 90.0
 OUTRO = 2.5
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "output")
@@ -76,10 +82,17 @@ def wall_pt(th, dr=0.0):
     return CX + r * math.cos(p), CY + r * math.sin(p)
 
 
+def outside_board(x, y):
+    """うずまきの一番外側の壁よりも外(=空中)にいるか。"""
+    dx, dy = x - CX, y - CY
+    phi = math.atan2(dy, dx) % (2 * math.pi)
+    return math.hypot(dx, dy) > R_OUT - B * phi + 2
+
+
 def board_physics(body, gravity, damping, dt):
-    """入口のたて筒の中だけ重力で落ちる。盤面は真上から見た水平な台なので重力は効かず、わずかな抵抗だけかかる。"""
+    """うずまきの外(空中)では重力で落ちる。盤面は真上から見た水平な台なので重力は効かず、転がり抵抗で少しずつ遅くなる。"""
     x, y = body.position
-    if y < GATE_Y and x > CHUTE_L - 10:
+    if outside_board(x, y):
         pymunk.Body.update_velocity(body, gravity, 1.0, dt)
     else:
         pymunk.Body.update_velocity(body, (0, 0), AIR_DAMP ** dt, dt)
@@ -98,28 +111,18 @@ class Game:
         n = int(TH_END / 0.025)
         pts = [wall_pt(TH_END * k / n) for k in range(n + 1)]
         for i, (a, b) in enumerate(zip(pts, pts[1:])):
-            s = pymunk.Segment(st, a, b, 4)
+            s = pymunk.Segment(st, a, b, 3)
             s.elasticity, s.friction = WALL_E, 0.0
             # つなぎ目で玉が変な向きにはじかれないよう、となりの線分を教えておく
             s.set_neighbors(pts[max(i - 1, 0)], pts[min(i + 2, n)])
             sp.add(s)
-        # 入口のたて筒(うずまきの外側の口から真上へ)。筒の下には一方通行のふた(上から入る玉は通し、出ようとする玉ははね返す)
-        for x in (CHUTE_L, CHUTE_R):
-            seg = pymunk.Segment(st, (x, CY), (x, CHUTE_TOP), 4)
-            seg.elasticity, seg.friction = 1.0, 0.0
-            sp.add(seg)
-        gate = pymunk.Segment(st, (CHUTE_L + 4, GATE_Y), (CHUTE_R - 4, GATE_Y), 3)
-        gate.elasticity, gate.friction = 1.0, 0.0
-        gate.collision_type = 5
-        sp.add(gate)
-        sp.on_collision(1, 5, pre_solve=self._gate)
         # 木の板(放射状。内側の壁から外側の壁まで)
         self.planks = []
         self.plank_of = {}
         for k in range(N_PLANKS):
             th = TH_WOOD0 + (TH_WOOD1 - TH_WOOD0) * (k + 0.5) / N_PLANKS
-            a = wall_pt(th, 9)
-            b = wall_pt(th + 2 * math.pi, -9)
+            a = wall_pt(th, 8)
+            b = wall_pt(th + 2 * math.pi, -8)
             s = pymunk.Segment(st, a, b, 3)
             s.elasticity, s.friction = 1.0, 0.0
             s.collision_type = 4
@@ -129,15 +132,17 @@ class Game:
                                 "tint": float(self.rng.uniform(-0.06, 0.06))})
         sp.on_collision(1, 4, begin=self._hit)
         self.to_break = []
+        self.breaking = set()
         self.balls = []
         self.events = []
         self.cleared = 0
         self.t = 0.0
         self.result, self.result_t = None, None
+        self.wave = -1
         self.queue = []
-        for t0, n_b, col in WAVES:
-            for j in range(n_b):
-                self.queue.append((t0 + j * 0.28, col))
+        self.next_wave_t = 0.5
+        self.dropped = 0
+        self.all_gone_t = None
 
     def _hit(self, arb, space, data):
         """玉が板に当たったら、板は割れて玉は突き抜ける。割るのに使った分だけ玉は遅くなる。"""
@@ -151,26 +156,29 @@ class Game:
             self.to_break.append((k, body, body.velocity.length))
             body.velocity = body.velocity * BREAK_KEEP
 
-    @staticmethod
-    def _gate(arb, space, data):
-        arb.process_collision = arb.shapes[0].body.velocity.y < 0
-
     def drop(self, col):
         m = 1.0
         b = pymunk.Body(m, pymunk.moment_for_circle(m, 0, BALL_R))
-        x = (CHUTE_L + CHUTE_R) / 2 + self.rng.uniform(-6, 6)
-        b.position = (x, CHUTE_TOP + 40)
-        b.velocity = (self.rng.uniform(-15, 15), 300)
+        b.position = (DROP_X + self.rng.uniform(-8, 8), DROP_Y)
+        b.velocity = (self.rng.uniform(-10, 10), 0)
         b.velocity_func = board_physics
         c = pymunk.Circle(b, BALL_R)
         c.elasticity, c.friction = 1.0, 0.0
         c.collision_type = 1
         self.space.add(b, c)
-        self.balls.append({"body": b, "col": col, "born": self.t})
-        self.events.append(("drop", self.t, col))
+        bid = self.dropped
+        self.dropped += 1
+        self.balls.append({"id": bid, "body": b, "shape": c, "col": col})
+        self.events.append(("drop", self.t, (bid, col)))
 
     def step(self, dt):
         self.t += dt
+        if self.result is None and not self.balls and not self.queue and self.next_wave_t is not None \
+                and self.t >= self.next_wave_t and self.wave + 1 < len(WAVES):
+            self.wave += 1
+            n_b, col = WAVES[self.wave]
+            self.queue = [(self.t + j * DROP_EVERY, col) for j in range(n_b)]
+            self.next_wave_t = None
         while self.queue and self.queue[0][0] <= self.t:
             self.drop(self.queue.pop(0)[1])
         self.to_break = []
@@ -185,13 +193,31 @@ class Game:
             self.cleared += 1
             x, y = body.position
             self.events.append(("break", self.t, (k, x, y, speed)))
+        # 勢いがなくなった玉(と画面の外へ落ちた玉)は消える
+        for bl in list(self.balls):
+            b = bl["body"]
+            x, y = b.position
+            slow = b.velocity.length < V_DIE and not outside_board(x, y)
+            if slow or y > H + 200 or x < -200 or x > W + 200:
+                self.space.remove(b, bl["shape"])
+                self.balls.remove(bl)
+                self.events.append(("die", self.t, (bl["id"], x, y, bl["col"])))
         if self.result is None:
             if self.cleared == N_PLANKS:
                 self.result, self.result_t = "success", self.t
                 self.events.append(("success", self.t, None))
-            elif self.t >= TIME_LIMIT:
+            elif not self.balls and not self.queue:
+                if self.wave + 1 < len(WAVES):
+                    if self.next_wave_t is None:
+                        self.next_wave_t = self.t + WAVE_GAP
+                else:
+                    if self.all_gone_t is None:
+                        self.all_gone_t = self.t
+                    if self.t >= self.all_gone_t + FAIL_WAIT:
+                        self.result, self.result_t = "fail", self.t
+                        self.events.append(("fail", self.t, None))
+            if self.result is None and self.t >= MAX_T:
                 self.result, self.result_t = "fail", self.t
-                self.events.append(("fail", self.t, None))
 
 
 def simulate(seed, record=False):
@@ -202,9 +228,9 @@ def simulate(seed, record=False):
         for _ in range(SUBSTEPS):
             g.step(dt)
         if record:
-            frames.append({"t": g.t, "cleared": g.cleared,
-                           "balls": [(b["body"].position.x, b["body"].position.y,
-                                      b["body"].velocity.x, b["body"].velocity.y, b["col"]) for b in g.balls],
+            frames.append({"t": g.t, "cleared": g.cleared, "dropped": g.dropped,
+                           "balls": [(b["id"], b["body"].position.x, b["body"].position.y, b["col"])
+                                     for b in g.balls],
                            "alive": [p["alive"] for p in g.planks]})
         if g.result is not None:
             extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR
@@ -216,7 +242,9 @@ def simulate(seed, record=False):
 
 def score(seed):
     r = simulate(seed)
-    return seed, r["result"], r["result_t"], r["cleared"]
+    waves = [sum(1 for e in r["events"] if e[0] == "break" and e[1] <= t) for t in
+             [e[1] for e in r["events"] if e[0] == "drop"]]
+    return seed, r["result"], r["result_t"], r["cleared"], waves
 
 
 def search(n, want):
@@ -225,10 +253,10 @@ def search(n, want):
     succ = [r for r in rs if r[1] == "success"]
     print(f"{n} シード中 成功 {len(succ)} 件 / 失敗 {n - len(succ)} 件")
     if want == "fail":
-        for seed, _, _, c in sorted([r for r in rs if r[1] == "fail"], key=lambda r: -r[3])[:15]:
-            print(f"seed={seed:4d}  {c}/{N_PLANKS} 枚で時間切れ")
+        for seed, _, _, c, _ in sorted([r for r in rs if r[1] == "fail"], key=lambda r: -r[3])[:15]:
+            print(f"seed={seed:4d}  {c}/{N_PLANKS} 枚で玉が尽きた")
     else:
-        for seed, _, rt, _ in sorted(succ, key=lambda r: -r[2])[:15]:
+        for seed, _, rt, _, _ in sorted(succ, key=lambda r: -r[2])[:15]:
             print(f"seed={seed:4d}  全部こわした {rt:5.2f}秒")
 
 
@@ -240,7 +268,7 @@ WOOD = (0.79, 0.63, 0.48)
 BALL_COL = {"yellow": (1.0, 0.84, 0.22), "red": (1.0, 0.32, 0.30), "blue": (0.36, 0.66, 1.0)}
 GOLD = (1, 0.86, 0.2)
 MONO = "JetBrains Mono"
-WAVE_TEXT = {2: "玉が2個に増えた！", 4: "玉が4個に増えた！", 5: "ラスト5個！"}
+HUB_R = 46                             # 中心の小部屋(消えた玉が小さくなって集まる)
 
 
 def plank_quad(th):
@@ -255,9 +283,8 @@ def plank_quad(th):
 
 def draw_walls(ctx):
     n = int(TH_END / 0.02)
-    lines = [[wall_pt(TH_END * k / n) for k in range(n + 1)],
-             [(CHUTE_L, CY), (CHUTE_L, CHUTE_TOP)], [(CHUTE_R, CY), (CHUTE_R, CHUTE_TOP)]]
-    for width, alpha in ((22, 0.05), (12, 0.10), (6, 1.0)):   # ぼんやり光る → 芯の線
+    lines = [[wall_pt(TH_END * k / n) for k in range(n + 1)]]
+    for width, alpha in ((12, 0.06), (4, 0.9)):   # うっすら光る → 細い芯の線
         for pts in lines:
             ctx.new_path()
             ctx.move_to(*pts[0])
@@ -268,20 +295,19 @@ def draw_walls(ctx):
             ctx.set_source_rgba(*STEEL, alpha)
             ctx.set_line_width(width)
             ctx.stroke()
-    # 入口のふた(一方通行)と白い点
+    # うずまきの外側の端の白い点
     ctx.new_path()
-    ctx.move_to(CHUTE_L + 4, GATE_Y)
-    ctx.line_to(CHUTE_R - 4, GATE_Y)
-    ctx.set_dash([8, 8])
-    ctx.set_source_rgba(1, 1, 1, 0.55)
+    ctx.arc(CX + R_OUT, CY, 6, 0, 2 * math.pi)
+    ctx.set_source_rgb(1, 1, 1)
+    ctx.fill()
+    # 中心の小部屋
+    ctx.new_path()
+    ctx.arc(CX, CY, HUB_R, 0, 2 * math.pi)
+    ctx.set_source_rgb(0.01, 0.015, 0.03)
+    ctx.fill_preserve()
+    ctx.set_source_rgba(*STEEL, 0.9)
     ctx.set_line_width(3)
     ctx.stroke()
-    ctx.set_dash([])
-    for x in (CHUTE_L, CHUTE_R):
-        ctx.new_path()
-        ctx.arc(x, GATE_Y, 7, 0, 2 * math.pi)
-        ctx.set_source_rgb(1, 1, 1)
-        ctx.fill()
 
 
 def draw_planks(ctx, planks, alive):
@@ -302,8 +328,9 @@ def draw_planks(ctx, planks, alive):
         ctx.stroke()
 
 
-def draw_ball(ctx, x, y, col, trail):
+def draw_ball(ctx, x, y, col, trail, fade=1.0):
     r, g_, b = col
+    ctx.push_group()
     for j, (tx, ty) in enumerate(trail):   # 残像(だんだん薄く・小さく)
         a = (j + 1) / (len(trail) + 1)
         ctx.new_path()
@@ -328,6 +355,8 @@ def draw_ball(ctx, x, y, col, trail):
     ctx.set_source_rgba(1, 1, 1, 0.85)
     ctx.set_line_width(2)
     ctx.stroke()
+    ctx.pop_group_to_source()
+    ctx.paint_with_alpha(fade)
 
 
 def mono(ctx, s, x, y, size, rgb, alpha=1.0):
@@ -373,8 +402,7 @@ def render(seed):
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
     angels = AngelShow(W, H, seed) if result == "success" else None
-    shards, banners, trails = [], [], {}
-    last10 = False
+    shards, trails, dying, hub = [], {}, [], []
     ev_i = 0
     prev_t = 0.0
     for fi, fr in enumerate(frames):
@@ -393,16 +421,11 @@ def render(seed):
                     shards.append([mx + rng.uniform(-14, 14), my + rng.uniform(-14, 14),
                                    math.cos(a) * v, math.sin(a) * v, rng.uniform(0, math.pi),
                                    rng.uniform(-12, 12), rng.uniform(4, 11), et])
-            elif kind == "drop":
-                n_now = sum(1 for e in events if e[0] == "drop" and e[1] <= et)
-                for t0, n_b, col in WAVES:
-                    first = sum(nb for t1, nb, _ in WAVES if t1 < t0) + 1
-                    if n_now == first and n_b > 1:
-                        banners.append([et, WAVE_TEXT[n_b], BALL_COL[col]])
+            elif kind == "die":   # 勢いがなくなった玉は、その場で薄くなって消える
+                bid, x, y, col = data
+                dying.append([et, x, y, col, trails.pop(bid, [])])
+                hub.append([col, rng.uniform(0, 2 * math.pi), rng.uniform(0, HUB_R - 14), rng.uniform(0, 100)])
             ev_i += 1
-        if not last10 and N_PLANKS - fr["cleared"] <= 10 and fr["cleared"] < N_PLANKS:
-            last10 = True
-            banners.append([t, "ラスト10枚！", GOLD])
         over = end_t is not None and t >= end_t
         if ghost is not None and over and t - end_t < SCARE_DUR:
             ghost.draw(surf, t - end_t)
@@ -442,46 +465,62 @@ def render(seed):
             ctx.restore()
             keep.append(sh)
         shards = keep
+        # 中心の小部屋に集まった小さな玉(ぷるぷる動く)
+        for col, a0, r0, ph in hub:
+            a = a0 + 0.6 * math.sin(t * 1.3 + ph)
+            rr = r0 + 3 * math.sin(t * 5.1 + ph)
+            hx = CX + rr * math.cos(a) + 1.5 * math.sin(t * 17 + ph)
+            hy = CY + rr * math.sin(a) + 1.5 * math.cos(t * 19 + ph)
+            ctx.new_path()
+            ctx.arc(hx, hy, 6, 0, 2 * math.pi)
+            ctx.set_source_rgb(*BALL_COL[col])
+            ctx.fill()
+        # 消えていく玉
+        keep = []
+        for d in dying:
+            age = t - d[0]
+            if age < FADE:
+                k = 1 - age / FADE
+                draw_ball(ctx, d[1], d[2], BALL_COL[d[3]], d[4][-int(8 * k):] if k > 0.15 else [], fade=k)
+                keep.append(d)
+        dying = keep
         # 玉
-        for i, (x, y, vx, vy, col) in enumerate(fr["balls"]):
-            tr = trails.setdefault(i, [])
+        for bid, x, y, col in fr["balls"]:
+            tr = trails.setdefault(bid, [])
             draw_ball(ctx, x, y, BALL_COL[col], tr)
             tr.append((x, y))
-            del tr[:-8]
+            del tr[:-10]
         ctx.restore()
 
         # ふつうの文字(参考動画と同じ等幅のカウンター)
         mono(ctx, f"WOOD CLEARED {fr['cleared']} / {N_PLANKS}", W / 2, 1585, 40, (0.62, 0.64, 0.68))
-        for bn in banners:
-            age = t - bn[0]
-            if 0 <= age < 1.3 and not over:
-                k = min(1, age / 0.15)
-                text(ctx, bn[1], W / 2, 1700, 84 * (1.4 - 0.4 * k), rgb=bn[2], sw=16,
-                     alpha=min(1, 3 * (1.3 - age)))
+        # 残りの玉(まだ落ちてきていない玉)
+        rest = [col for n_b, col in WAVES for _ in range(n_b)][fr["dropped"]:]
+        for j, col in enumerate(rest):
+            x = W / 2 + (j - (len(rest) - 1) / 2) * 40
+            ctx.new_path()
+            ctx.arc(x, 1650, 11, 0, 2 * math.pi)
+            ctx.set_source_rgba(*BALL_COL[col], 0.85)
+            ctx.fill()
         if angels is not None and over:
             angels.draw(ctx, t - end_t)
 
         # 上の帯
-        g = cairo.LinearGradient(0, 0, 0, 470)
+        g = cairo.LinearGradient(0, 0, 0, 400)
         g.add_color_stop_rgba(0, 0.01, 0.015, 0.03, 0.96)
         g.add_color_stop_rgba(0.8, 0.01, 0.015, 0.03, 0.85)
         g.add_color_stop_rgba(1, 0.01, 0.015, 0.03, 0.0)
-        ctx.rectangle(0, 0, W, 470)
+        ctx.rectangle(0, 0, W, 400)
         ctx.set_source(g)
         ctx.fill()
-        text(ctx, f"{int(TIME_LIMIT)}秒で木を全部", W / 2, 165, 82, sw=14)
+        text(ctx, f"{N_BALLS}個の玉で木を全部", W / 2, 165, 82, sw=14)
         text(ctx, "こわせる？", W / 2, 295, 124, rgb=GOLD, sw=18)
         text(ctx, "Will the ball break through all the wood?", W / 2, 360, 36, rgb=(0.85, 0.85, 0.9), sw=8)
-        left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
-        tcol = (1, 0.35, 0.35) if left < 5 else (1, 1, 1)
-        text(ctx, f"残り {left:4.1f}秒" if left >= 3 else f"残り {left:4.2f}秒", W / 2, 440, 56, rgb=tcol, sw=10)
-        if not over:
-            text(ctx, "※失敗すると…アレが出ます", W / 2, 1840, 50, rgb=(1, 0.35, 0.35), sw=10)
-        elif fail:
+        if over and fail:
             k = min(1.0, after / 0.25)
-            text(ctx, "時間切れ…", W / 2, 1000, 150 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, "玉が尽きた…", W / 2, 1000, 140 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"あと{N_PLANKS - res['cleared']}枚だったのに…", W / 2, 1130, 72, sw=12)
-        else:
+        elif over:
             age = t - end_t
             if age < 0.35:   # 参考動画のような白いフラッシュ
                 ctx.rectangle(0, 0, W, H)
@@ -508,7 +547,7 @@ def render(seed):
 
 
 # ---------------------------------------------------------------- 音
-MIX_GAIN = 0.6   # 通常部分の音量(約 -18dB になるよう調整)
+MIX_GAIN = 0.72  # 通常部分の音量(約 -18dB になるよう調整)
 HOLY_GAIN = 0.85
 F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動画と同じくらい)
 
@@ -553,8 +592,6 @@ def synth_audio(res, duration, path):
             k, x, y, speed = data
             amp = 0.35 + 0.65 * min(1.0, speed / 900)   # 速い玉ほど強い音
             add(wood_tick(tick_freq(x, y), 0.5 * amp), t, pan=(x - CX) / (R_OUT * 1.6))
-        elif kind == "drop":
-            add(chime(midi_hz(84), 0.5, 0.06), t)
     extra = np.zeros_like(out)
     if fail:
         sig = scream(SR)
