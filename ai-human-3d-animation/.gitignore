@@ -1,0 +1,9 @@
+# 生成物・素材(バイナリ)はコミットしない
+assets/output/
+assets/source/
+*.glb
+*.gltf
+*.blend
+*.fbx
+*.obj
+*.usdz
