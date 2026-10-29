@@ -23,13 +23,13 @@ from volume import SCALES, atlas, domain_box, volume_material  # noqa: E402
 RED_X = (1.0, 0.04, 0.03)
 
 
-def steam(sims):
-    """湯気(白く光を散らす煙)。"""
+def steam(sims, k=32.0):
+    """湯気(白く光を散らす煙)。k は濃さ(カメラが湯気ごしに見るアップでは薄くする)。"""
     d = Path(sims) / "steam"
     grid = json.loads((d / "grid.json").read_text())
     info = atlas(d, Path(sims) / "steam_atlas")
     first = sorted((Path(sims) / "steam_atlas").glob("f_*.png"))[0]
-    mat = volume_material("Steam", first, info, smoke_k=32.0, flame_k=0.0, smoke_color=(0.95, 0.96, 0.98), scales=SCALES,
+    mat = volume_material("Steam", first, info, smoke_k=k, flame_k=0.0, smoke_color=(0.95, 0.96, 0.98), scales=SCALES,
                           absorption=(0.97, 0.97, 0.97))
     domain_box("Steam", tuple(grid["shape"]), grid["h"], tuple(grid["origin"]), mat)
 
@@ -161,7 +161,7 @@ def build(name, timings, sims):
     w.inputs["Color"].default_value = (0.03, 0.035, 0.05, 1)
     w.inputs["Strength"].default_value = 0.5
     if name in STEAM_SHOTS:
-        steam(sims)
+        steam(sims, k=9.0 if name == "temp_timer" else 32.0)
 
     if name == "bath":
         bpy.data.objects["BathLamp"].data.energy = 22
