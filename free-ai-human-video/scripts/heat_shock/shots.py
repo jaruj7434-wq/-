@@ -29,7 +29,8 @@ def steam(sims):
     grid = json.loads((d / "grid.json").read_text())
     info = atlas(d, Path(sims) / "steam_atlas")
     first = sorted((Path(sims) / "steam_atlas").glob("f_*.png"))[0]
-    mat = volume_material("Steam", first, info, smoke_k=6.0, flame_k=0.0, smoke_color=(0.9, 0.92, 0.95), scales=SCALES)
+    mat = volume_material("Steam", first, info, smoke_k=32.0, flame_k=0.0, smoke_color=(0.95, 0.96, 0.98), scales=SCALES,
+                          absorption=(0.97, 0.97, 0.97))
     domain_box("Steam", tuple(grid["shape"]), grid["h"], tuple(grid["origin"]), mat)
 
 
@@ -168,12 +169,15 @@ def build(name, timings, sims):
         key(cam, "location", 1, (0.35, -2.7, 1.35))
         key(cam, "location", frames, (0.1, -2.0, 1.15))
     elif name == "heatshock":
-        bpy.data.objects["BathLamp"].data.energy = 6
-        red = light(scene, "AREA", "Red", (-0.8, -1.5, 1.4), 0, (1.0, 0.1, 0.05), size=1.0, look_at=(0, 0, 0.6))
-        blue = light(scene, "AREA", "Blue", (0.8, -1.5, 1.4), 0, (0.1, 0.3, 1.0), size=1.0, look_at=(0, 0, 0.6))
+        bpy.data.objects["BathLamp"].data.energy = 3
+        # 左の壁を赤(熱い)、右の壁を青(寒い)に照らし分ける
+        red = light(scene, "SPOT", "Red", (-0.3, -1.6, 1.6), 0, (1.0, 0.08, 0.04), size=0.1, look_at=(-0.95, 0.2, 1.0))
+        blue = light(scene, "SPOT", "Blue", (0.3, -1.6, 1.6), 0, (0.08, 0.3, 1.0), size=0.1, look_at=(0.95, 0.2, 1.0))
         for l_ in (red, blue):
+            l_.data.spot_size = math.radians(55)
+            l_.data.spot_blend = 0.5
             key(l_.data, "energy", 1, 0.0)
-            key(l_.data, "energy", 12, 160.0)
+            key(l_.data, "energy", 12, 220.0)
         cam, tgt = camera(scene, "Cam", (0.0, -2.6, 1.2), (0, 0, 0.7), lens=26)
         key(cam, "location", 1, (0.0, -2.8, 1.25))
         key(cam, "location", frames, (0.0, -2.3, 1.15))
@@ -219,19 +223,22 @@ def build(name, timings, sims):
     elif name == "temp_timer":
         # 浮かぶ湯温計(41℃)と、ふちに置いたタイマー(10:00)
         body = principled("Floater", (0.95, 0.95, 0.95), rough=0.3, coat=0.6)
-        fl = cyl("Floater", 0.07, 0.03, (-0.15, -0.05, WATER_Z + 0.01), body, bevel=0.01)
+        fl = cyl("Floater", 0.1, 0.035, (-0.15, -0.05, WATER_Z + 0.01), body, bevel=0.01)
         lcd = principled("LCD", (0.6, 0.7, 0.62), rough=0.3)
-        cyl("FloaterLCD", 0.045, 0.005, (-0.15, -0.05, WATER_Z + 0.027), lcd)
-        t41 = text(scene, "41℃", 0.035, principled("LCDInk", (0.03, 0.03, 0.03), rough=0.5), (-0.15, -0.05, WATER_Z + 0.031), (0, 0, 0))
-        tm = box("Timer", (0.11, 0.05, 0.08), (0.35, -TUB_Y - 0.06, TUB_RIM + 0.04), principled("TimerBody", (0.95, 0.85, 0.2), rough=0.35), bevel=0.01)
-        box("TimerLCD", (0.085, 0.004, 0.04), (0.35, -TUB_Y - 0.087, TUB_RIM + 0.045), lcd)
-        text(scene, "10:00", 0.028, principled("LCDInk2", (0.03, 0.03, 0.03), rough=0.5), (0.35, -TUB_Y - 0.09, TUB_RIM + 0.045),
+        lcd_o = cyl("FloaterLCD", 0.075, 0.005, (-0.15, -0.05, WATER_Z + 0.03), lcd)
+        t41 = text(scene, "41℃", 0.06, principled("LCDInk", (0.03, 0.03, 0.03), rough=0.5), (-0.15, -0.05, WATER_Z + 0.034), (0, 0, 0))
+        for o in (lcd_o, t41):
+            o.parent = fl
+            o.location = (o.location.x + 0.15, o.location.y + 0.05, o.location.z - WATER_Z - 0.01)
+        tm = box("Timer", (0.11, 0.05, 0.08), (0.2, -TUB_Y - 0.06, TUB_RIM + 0.04), principled("TimerBody", (0.95, 0.85, 0.2), rough=0.35), bevel=0.01)
+        box("TimerLCD", (0.085, 0.004, 0.04), (0.2, -TUB_Y - 0.087, TUB_RIM + 0.045), lcd)
+        text(scene, "10:00", 0.028, principled("LCDInk2", (0.03, 0.03, 0.03), rough=0.5), (0.2, -TUB_Y - 0.09, TUB_RIM + 0.045),
              (math.radians(90), 0, 0), jp=False)
         key(fl, "location", 1, (-0.15, -0.05, WATER_Z + 0.01))
         key(fl, "location", frames, (-0.1, -0.08, WATER_Z + 0.01))
-        cam, tgt = camera(scene, "Cam", (0.15, -1.05, 1.0), (0.05, -0.15, WATER_Z + 0.05), lens=34, fstop=4.0)
-        key(cam, "location", 1, (0.2, -1.1, 1.02))
-        key(cam, "location", frames, (0.1, -0.95, 0.95))
+        cam, tgt = camera(scene, "Cam", (0.0, -0.8, 0.95), (-0.02, -0.12, WATER_Z + 0.03), lens=34, fstop=4.0)
+        key(cam, "location", 1, (0.05, -0.85, 0.98))
+        key(cam, "location", frames, (-0.02, -0.72, 0.9))
     elif name == "handrail":
         arrow_mat = glow("Arrow", (0.3, 0.9, 1.0), 6.0)
         root = bpy.data.objects.new("Arrow", None)
@@ -282,8 +289,9 @@ if __name__ == "__main__":
     scene = build(name, timings, sims)
     frames = scene.frame_end
     glass = name in ("food", "bath", "temp_timer", "handrail", "heatshock")
+    vb = 3 if name in STEAM_SHOTS else 0
     if "--preview" in sys.argv:
         render(scene, out, samples=12, scale=30, preview_frames=sorted({max(1, frames // 6), frames // 2, frames - 3}),
-               bounces=10 if glass else None)
+               bounces=10 if glass else None, volume_bounces=vb)
     else:
-        render(scene, out, bounces=10 if glass else None)
+        render(scene, out, bounces=10 if glass else None, volume_bounces=vb)

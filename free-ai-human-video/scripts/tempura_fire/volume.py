@@ -40,7 +40,7 @@ def atlas(npz_dir, out_dir, scales=SCALES):
 
 
 def volume_material(name, first_png, info, smoke_k=40.0, flame_density=1.5, flame_k=260.0,
-                    smoke_color=(0.025, 0.024, 0.023), detail=True, scales=SCALES):
+                    smoke_color=(0.025, 0.024, 0.023), detail=True, scales=SCALES, absorption=(0.02, 0.02, 0.02)):
     import bpy
     nx, ny, nz, cols, rows, frames = info
     mat = bpy.data.materials.new(name)
@@ -139,7 +139,7 @@ def volume_material(name, first_png, info, smoke_k=40.0, flame_density=1.5, flam
 
     vol = n.new("ShaderNodeVolumePrincipled")
     vol.inputs["Color"].default_value = (*smoke_color, 1)
-    vol.inputs["Absorption Color"].default_value = (0.02, 0.02, 0.02, 1)
+    vol.inputs["Absorption Color"].default_value = (*absorption, 1)  # すすは光を吸う(黒)、湯気はほとんど吸わない(白)
     dens = math_node("ADD", math_node("MULTIPLY", smoke, smoke_k), math_node("MULTIPLY", flame, flame_density))
     # 粉は白く光を散らす。煙の色と粉の色を濃さの割合で混ぜる
     pdens = math_node("MULTIPLY", powder, 30.0)
