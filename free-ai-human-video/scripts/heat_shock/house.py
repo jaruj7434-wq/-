@@ -243,7 +243,7 @@ def exterior(scene, frames):
     import bmesh
     bm = bmesh.new()
     for i in range(4000):
-        c = (rnd.uniform(-12, 12), rnd.uniform(-16, 4), rnd.uniform(0, 30))
+        c = (rnd.uniform(-12, 12), rnd.uniform(-5.5, 4), rnd.uniform(0, 30))  # カメラのすぐ前には降らせない(大きな角ばった粒に見えるため)
         bmesh.ops.create_icosphere(bm, subdivisions=1, radius=rnd.uniform(0.015, 0.035),
                                    matrix=__import__("mathutils").Matrix.Translation(c))
     me = bpy.data.meshes.new("Snowfall")
