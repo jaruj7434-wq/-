@@ -105,7 +105,7 @@
 | 15 | 有馬記念2005 (ec337c53) | kling4_0 | 6 | 3bf1d4ec-2f4b-470a-863c-b13c83dd1f64 |
 | 16 | 阪神大賞典・飛ぶ走り (28cf19f1) | kling4_0 | 4 | c472ac49-0004-487f-bdda-f2dda753185a |
 | 17 | 天皇賞春 (22ca3700) | kling4_0 | 6 | 44d2f390-e0a3-44ce-8ae8-6e5b1fd1df0f |
-| 18 | 宝塚記念・雨の京都 (新規 95b5edbc) | kling4_0 | 5 | ユーザー確認後 |
+| 18 | 宝塚記念・雨の京都 (新規 95b5edbc) | kling4_0 (1080p) | 5 | 4a666504-80ba-4784-8b1f-c1e6cf7abf58 |
 | 19 | パリ (5a4b46ca) | kling4_0 | 3 | 81841803-2371-4125-8acb-01daa9a9f329 |
 | 20 | 凱旋門 交わされる (c1e4cb09) | kling4_0 | 4 | b4a653bd-f14f-4882-b3e1-4402ea783afa |
 | 21 | 谷上 (567d8801) + 音声 3ae522bd | wan2_7 | 4 | fea62976-0052-4b45-b02e-f2c242d30986 |
@@ -115,3 +115,11 @@
 | 25 | 中山 夕暮れの独走 (ae13fdbc) | kling4_0 | 5 | a1c2fe5d-9bb4-40ba-ae53-2bb23f2d5272 |
 | 26 | 夕日の放牧地 (9a8bb3f1) | kling4_0 | 5 | db7352d3-ba91-4f92-a549-f2b0793ed413 |
 | 27 | 谷上 カメラ目線 (4113dc44) + 音声 bde610dd | wan2_7 | 5 | 5ab07d6b-e8e4-4dac-ab27-5e2a65fc7762 |
+
+## 編集・書き出し (v1, 2026-10-29)
+
+- 編集スクリプト: `edit/deep-impact/build.py` + `run.sh` (Higgs sandbox `~/deep/ed/` で実行)
+- ナレーション: ElevenLabs v4 の行ごとの wav (`~/deep/el/v4/fin/NN.wav`) を等速のままつなぐ。行間 0.3秒 (章末 06/14/22/26 は 0.6秒、23 は 0.4秒、27 の後は 1.2秒の締め)
+- Wan のカット (03/21/27) は先頭 0.1秒をトリム
+- カット24 (ラストラン) は `vid/24.mp4` が無ければ約10秒の暗転プレースホルダー。ユーザーの映像を `vid/24.mp4` に置き、`LASTRUN=<秒数>` を指定して `run.sh` を再実行すれば差し替わる
+- 書き出し: `assets/output/deep-impact/deep_impact_v1.mp4` (1080x1920, 116.8秒, Higgs media afdd306d-5924-47ec-bf2d-698032ba45ab)
