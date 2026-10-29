@@ -11,14 +11,14 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "mosquito_bite"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "mosquito_bite"))  # 同名の compose より先に見つかるよう最後に先頭へ
 
 from compose import FONT, FPS, chunks, esc, wrap  # noqa: E402
 from plan import SHOTS, events, windows  # noqa: E402
 
 TELOPS = ["水をかけたら?", "天井まで火柱", "約1700倍", "油が飛び散る", "約370℃で発火", "目を離さない",
-          "黄色マークの消火器", "ふたで空気を断つ", "マヨネーズは✕", "保存して家族にも"]
+          "黄色マークの消火器", "ふたで空気を断つ", "マヨネーズは×", "保存して家族にも"]
 HIGHLIGHT = re.compile(r"天井|1700倍|飛び散|370|目を離|黄色|消火器|ふた|開けない|マヨネーズ|危険|保存")
 
 
