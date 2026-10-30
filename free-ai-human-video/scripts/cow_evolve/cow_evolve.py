@@ -502,8 +502,10 @@ def render(seed):
 MIX_GAIN = 0.5   # 通常部分の音量(約 -18dB になるよう調整)
 HOLY_GAIN = 0.85
 # 進化した段階 → 鳴き声ファイルと音の高さ(1.0 = そのまま)
-VOICE = {1: ("calf_0.wav", 1.08), 2: ("calf_1.wav", 0.95), 3: ("cow_0.wav", 1.0), 4: ("bull_0.wav", 1.0)}
-VOICE_LEN = 1.8
+# 鳴き声は Higgs Field(Seedance 2.0 Mini)で「子牛〜雄牛が順番に鳴く」動画を生成し、その音声から一声ずつ切り出したもの
+# (make_voices.sh で切り出し・低音のノイズ除去・無音部分のゲート)
+VOICE = {1: ("calf_0.wav", 1.0), 2: ("calf_1.wav", 1.0), 3: ("cow_0.wav", 1.0), 4: ("bull_0.wav", 1.0)}
+VOICE_LEN = 3.4
 
 
 def load_voice(name, pitch):
