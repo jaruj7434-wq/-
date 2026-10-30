@@ -512,7 +512,7 @@ def build(name):
         kettle(scene, SPOUT_TIP)
         dirs = [math.radians(a) for a in (-95, -15, 165, 35, -150, 100)]
         paths = C.crack_paths(21, (x0, y0), n_main=6, length=(0.35, 0.8), dirs=dirs, branch=0.07)
-        C.crack_curves(scene, paths, start_frame=56, frames_total=34)
+        C.crack_curves(scene, paths, start_frame=56, frames_total=34, radius=0.0006)
         steam("pour", k=22.0, start=50)
         cam, tgt = camera(scene, "Cam", tuple(p0 + nrm * 0.22 + np.array((-0.08, -0.04, 0.03))), tuple(p0), lens=50, fstop=5.6)
         key(cam, "location", 1, tuple(p0 + nrm * 0.22 + np.array((-0.08, -0.04, 0.03))))
