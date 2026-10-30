@@ -10,7 +10,7 @@ BPY="${BLENDER_PY:-python3}"
 MPY="${ML_PY:-python3}"
 OUT="$HERE/../../assets/output"
 mkdir -p "$WORK" "$OUT"
-export SCALE="${SCALE:-50}" SAMPLES="${SAMPLES:-10}"  # 540x960 で描いて AI で 1080x1920 に拡大
+export SCALE="${SCALE:-50}" SAMPLES="${SAMPLES:-10}" VOLUME_STEP="${VOLUME_STEP:-2}"  # 540x960 で描いて AI で 1080x1920 に拡大
 SHOTS="hook morning stopwatch layers thermal chip lukewarm wiper defroster spray cover drive"
 
 [[ -f "$WORK/timings.json" ]] || "$MPY" "$HERE/tts.py" "$WORK"

@@ -668,4 +668,4 @@ if __name__ == "__main__":
             sorted({max(1, frames // 6), frames // 2, frames - 3})
         render(scene, out, samples=16, scale=40, preview_frames=pf, bounces=12, volume_bounces=vb)
     else:
-        render(scene, out, bounces=12, volume_bounces=vb)
+        render(scene, out, bounces=8, volume_bounces=vb)
