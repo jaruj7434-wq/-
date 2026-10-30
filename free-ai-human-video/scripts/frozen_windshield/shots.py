@@ -224,7 +224,7 @@ def glass_sample(scene, thermal, frames):
     ramp.color_ramp.elements[1].position = 0.35
     l.new(sub_.outputs[0], ramp.inputs["Fac"])
     l.new(ramp.outputs["Color"], b.inputs["Emission Color"])
-    b.inputs["Emission Strength"].default_value = 6.0
+    b.inputs["Emission Strength"].default_value = 3.0
     C.key_value(heat.outputs[0], 18, 0.0)
     C.key_value(heat.outputs[0], frames - 20, 0.75)
     cold = principled("BottomCold", (0.82, 0.95, 0.9), rough=0.02, transmission=1.0, ior=1.52, emission=0.6,
@@ -475,9 +475,9 @@ def build(name):
             key(tgt, "location", 1, (0.03, -0.1, 0.0))
             key(tgt, "location", frames, (0.08, -0.18, 0.0))
         else:
-            cam, tgt = camera(scene, "Cam", (0.0, -0.7, 0.12), (0.0, 0, 0.01), lens=40, fstop=8.0)
-            key(cam, "location", 1, (-0.05, -0.72, 0.16))
-            key(cam, "location", frames, (0.03, -0.62, 0.09))
+            cam, tgt = camera(scene, "Cam", (0.0, -0.95, 0.14), (0.0, 0, 0.0), lens=40, fstop=8.0)
+            key(cam, "location", 1, (-0.05, -0.98, 0.18))
+            key(cam, "location", frames, (0.03, -0.88, 0.1))
         return scene
 
     if name == "chip":
