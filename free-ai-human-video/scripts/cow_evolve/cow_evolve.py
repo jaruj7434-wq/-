@@ -56,7 +56,7 @@ DROP_Y = 520.0
 DROP_X0, DROP_X1 = 230.0, 850.0
 DROP_EVERY = 0.85
 P_STAGE2 = 0.18                        # 落ちてくるのが「子牛」のことがある確率
-TIME_LIMIT = 45.0
+TIME_LIMIT = 17.0
 OUTRO = 2.5
 
 
