@@ -287,7 +287,7 @@ def spray_can(scene):
     for p in (body, band, lab, cap, nozzle):
         p.parent = root
     # 霧:先が広がる円すいに、ノイズで濃淡を付けたボリューム
-    bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=0.09, radius2=0.004, depth=0.27, location=(0, 0, -0.15))
+    bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=0.08, radius2=0.004, depth=0.2, location=(0, 0, -0.11))
     mist = bpy.context.active_object
     mist.parent = root
     mat = bpy.data.materials.new("Mist")
@@ -311,8 +311,8 @@ def spray_can(scene):
     mp.inputs["Location"].default_value = (0, 0, 3.0)
     mp.inputs["Location"].keyframe_insert("default_value", frame=120)
     mr = n.new("ShaderNodeMapRange")
-    mr.inputs["From Min"].default_value, mr.inputs["From Max"].default_value = 0.45, 0.8
-    mr.inputs["To Max"].default_value = 30.0
+    mr.inputs["From Min"].default_value, mr.inputs["From Max"].default_value = 0.3, 0.75
+    mr.inputs["To Max"].default_value = 60.0
     l.new(noise.outputs["Fac"], mr.inputs["Value"])
     l.new(mr.outputs["Result"], vol.inputs["Density"])
     l.new(vol.outputs[0], n["Material Output"].inputs["Volume"])
@@ -327,10 +327,10 @@ def cover_sheet(scene, lift_start, frames):
     add_bump(silver, scale=6, strength=0.6, distance=0.02)
     root = bpy.data.objects.new("Cover", None)
     scene.collection.objects.link(root)
-    sheet = C.surface_mesh("CoverSheet", offset=0.006, u_range=(-1.06, 1.06), v_range=(-0.04, 1.03), nu=64, nv=32)
+    sheet = C.surface_mesh("CoverSheet", offset=0.006, u_range=(-1.14, 1.14), v_range=(-0.06, 1.04), nu=64, nv=32)
     assign(sheet, silver)
-    fm, _ = C.frost_material("CoverFrost", cover=1.0, seed=2.0)
-    fr = C.surface_mesh("CoverFrost", offset=0.008, u_range=(-1.06, 1.06), v_range=(-0.04, 1.03), nu=64, nv=32)
+    fm, _ = C.frost_material("CoverFrost", cover=0.45, seed=2.0)
+    fr = C.surface_mesh("CoverFrost", offset=0.008, u_range=(-1.14, 1.14), v_range=(-0.06, 1.04), nu=64, nv=32)
     assign(fr, fm)
     for o in (sheet, fr):
         o.parent = root
@@ -363,7 +363,7 @@ def drive_scene(scene, frames):
     pine = principled("Pine", (0.04, 0.14, 0.08), rough=0.7)
     snow = principled("TreeSnow", (0.9, 0.93, 0.97), rough=0.6)
     objs = [g, r]
-    for i in range(70):
+    for i in range(0):   # 円すいの木は作り物っぽく見えるので置かない(遠景は HDRI の山と林)
         x = rnd.choice([-1, 1]) * rnd.uniform(5, 30) + 0.6
         y = rnd.uniform(-180, 40)
         hgt = rnd.uniform(4, 9)
@@ -385,9 +385,9 @@ def drive_scene(scene, frames):
         t = (fr - 1) / 24
         dist = 0.5 * 2.2 * t * t
         key(world, "location", fr, (0, dist, 0), "LINEAR")
-    cam, tgt = camera(scene, "Cam", (-0.05, 0.42, 1.3), (-0.02, -3.0, 1.2), lens=22)
+    cam, tgt = camera(scene, "Cam", (-0.05, 0.3, 1.27), (-0.02, -3.0, 0.95), lens=20)
     for fr in range(1, frames + 1, 2):
-        key(cam, "location", fr, (-0.05 + random.uniform(-0.002, 0.002), 0.42, 1.3 + random.uniform(-0.002, 0.002)), "LINEAR")
+        key(cam, "location", fr, (-0.05 + random.uniform(-0.002, 0.002), 0.3, 1.27 + random.uniform(-0.002, 0.002)), "LINEAR")
 
 
 # ---------------------------------------------------------------- カット
@@ -615,7 +615,7 @@ def build(name):
             u, v = to_uv(cu * 0.68, cv * 0.886)
             pt = np.array(ws_point(u, v))
             n_ = ws_normal(u, v)
-            pos = pt + n_ * 0.28 + np.array((0.06, 0, 0.04))
+            pos = pt + n_ * 0.2 + np.array((0.0, -0.08, 0.0))
             if fr > spray_end:
                 pos = pos + n_ * (fr - spray_end) * 0.012 + np.array((0.02, 0, 0.01)) * (fr - spray_end)
             key(can, "location", fr, tuple(pos), "LINEAR")
@@ -624,9 +624,9 @@ def build(name):
         key(mist, "scale", 1, (0, 0, 0), "CONSTANT")
         key(mist, "scale", s0, (1, 1, 1), "CONSTANT")
         key(mist, "scale", spray_end, (0, 0, 0), "CONSTANT")
-        cam, tgt = camera(scene, "Cam", (-0.15, -1.75, 1.62), (0.0, -0.15, 1.2), lens=28, fstop=8.0)
-        key(cam, "location", 1, (-0.18, -1.8, 1.64))
-        key(cam, "location", frames, (-0.1, -1.6, 1.58))
+        cam, tgt = camera(scene, "Cam", (-0.25, -1.3, 1.6), (0.0, -0.15, 1.28), lens=24, fstop=8.0)
+        key(cam, "location", 1, (-0.28, -1.34, 1.62))
+        key(cam, "location", frames, (-0.2, -1.2, 1.56))
         return scene
 
     if name == "cover":

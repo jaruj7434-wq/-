@@ -451,7 +451,7 @@ def car(scene, paint=None, frost_mat=None, side_frost=None, interior=True, wiper
     a = [np.array(ws_point(u, 0.0)) + np.array((0, 0, 0.004)) for u in vs]
     b = [(u * 0.74, -0.63, 0.985) for u in vs]
     _quad_strip("Cowl", a, b, principled("CowlPlastic", (0.02, 0.02, 0.022), rough=0.55), thick=0.004)
-    roof = box("Roof", (1.36, 1.16, 0.05), (0, 0.79, 1.41), paint, bevel=0.03)
+    roof = box("Roof", (1.34, 1.08, 0.04), (0, 0.83, 1.405), paint, bevel=0.018)
     _quad_strip("RearWin", [(-0.64, 1.33, 1.395), (0.64, 1.33, 1.395)], [(-0.86, 1.93, 1.03), (0.86, 1.93, 1.03)],
                 side_frost or tint, thick=0.004)
     # 前後の灯火類・グリル・ナンバー
