@@ -432,7 +432,7 @@ def build(name):
         outdoor(scene, sun_az=-30, strength=1.0)
         C.car(scene, paint=C.car_paint(frost_top=0.85), frost_mat=frost()[0], side_frost=frost()[0])
         kettle(scene, KETTLE_SPOUT_MORNING, tilt_deg=0, yaw_deg=0)
-        steam("spout", k=70.0)
+        steam("spout", k=130.0)
         cam, tgt = camera(scene, "Cam", (0.95, -2.25, 1.5), (0.2, -0.7, 1.12), lens=30, fstop=5.6)
         key(cam, "location", 1, (1.05, -2.45, 1.55))
         key(cam, "location", frames, (0.85, -2.0, 1.45))
