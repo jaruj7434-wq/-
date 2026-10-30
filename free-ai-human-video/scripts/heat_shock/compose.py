@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "mosquito_bite")
 from compose import FONT, FPS, chunks, esc, wrap  # noqa: E402
 from plan import SHOTS, windows  # noqa: E402
 
-TELOPS = ["家族を守るために最後まで見て", "交通事故より多い", "ヒートショック", "温度差が危ない", "血圧が乱高下",
+TELOPS = ["家族を守るために\n最後まで見て", "交通事故より多い", "ヒートショック", "温度差が危ない", "血圧が乱高下",
           "防ぐポイント5つ", "①先に暖める", "②41℃以下・10分まで", "③急に立たない", "④食後・飲酒後は避ける",
           "⑤家族に一声", "大切な人に送って"]
 HIGHLIGHT = re.compile(r"最後まで|交通事故|ヒートショック|温度差|血圧|5つ|暖め|41度|10分|急に|食事|お酒|一声|大切な人")
@@ -47,7 +47,7 @@ def main(work, out_mp4):
         a = f"if(lt(t-{s:.2f},0.15),(t-{s:.2f})/0.15,1)"
         draws.append(f"drawtext=fontfile={FONT}:textfile={esc(f)}:fontsize=92:fontcolor=#FFE14D:alpha='{a}':"
                      f"borderw=3:bordercolor=#FFE14D:box=1:boxcolor=black@0.6:boxborderw=26:"
-                     f"x=(w-text_w)/2:y=h*0.1:enable='between(t,{s:.2f},{e:.2f})'")
+                     f"line_spacing=14:x=(w-text_w)/2:y=h*0.1:enable='between(t,{s:.2f},{e:.2f})'")
     for i, (s, e, text) in enumerate(chunks(t["lines"])):
         f = tmp / f"c{i}.txt"
         f.write_text(wrap(text))
