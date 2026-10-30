@@ -621,9 +621,10 @@ def build(name):
             key(can, "location", fr, tuple(pos), "LINEAR")
             d = mathutils.Vector(tuple(pt - pos)).normalized()
             key(can, "rotation_euler", fr, tuple(d.to_track_quat("-Z", "Y").to_euler()), "LINEAR")
-        key(mist, "scale", 1, (0, 0, 0), "CONSTANT")
-        key(mist, "scale", s0, (1, 1, 1), "CONSTANT")
-        key(mist, "scale", spray_end, (0, 0, 0), "CONSTANT")
+        # 縮尺0の体積は OpenVDB が落ちるので、表示/非表示で切り替える
+        for fr, hide in ((1, True), (s0, False), (spray_end, True)):
+            mist.hide_render = hide
+            mist.keyframe_insert("hide_render", frame=fr)
         cam, tgt = camera(scene, "Cam", (-0.25, -1.3, 1.6), (0.0, -0.15, 1.28), lens=24, fstop=8.0)
         key(cam, "location", 1, (-0.28, -1.34, 1.62))
         key(cam, "location", frames, (-0.2, -1.2, 1.56))
