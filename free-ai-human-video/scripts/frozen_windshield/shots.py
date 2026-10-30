@@ -311,8 +311,8 @@ def spray_can(scene):
     mp.inputs["Location"].default_value = (0, 0, 3.0)
     mp.inputs["Location"].keyframe_insert("default_value", frame=120)
     mr = n.new("ShaderNodeMapRange")
-    mr.inputs["From Min"].default_value, mr.inputs["From Max"].default_value = 0.3, 0.75
-    mr.inputs["To Max"].default_value = 60.0
+    mr.inputs["From Min"].default_value, mr.inputs["From Max"].default_value = 0.25, 0.7
+    mr.inputs["To Max"].default_value = 160.0
     l.new(noise.outputs["Fac"], mr.inputs["Value"])
     l.new(mr.outputs["Result"], vol.inputs["Density"])
     l.new(vol.outputs[0], n["Material Output"].inputs["Volume"])
