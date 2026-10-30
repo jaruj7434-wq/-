@@ -54,9 +54,9 @@ OVER_Y = 760.0                         # 止まった牛の上端がこれより
 OVER_WAIT = 1.5
 DROP_Y = 520.0
 DROP_X0, DROP_X1 = 230.0, 850.0
-DROP_EVERY = 0.85
+DROP_EVERY = 2.3
 P_STAGE2 = 0.18                        # 落ちてくるのが「子牛」のことがある確率
-TIME_LIMIT = 17.0
+TIME_LIMIT = 43.0
 OUTRO = 2.5
 
 
@@ -437,7 +437,7 @@ def render(seed):
             ctx.set_source_rgba(0, 0, 0, 0.18)
             ctx.fill()
             sprites[st].draw(ctx, x, y, ang, k)
-        for p in pops:   # 進化の光の輪と名前
+        for p in pops:   # 進化の光の輪
             age = t - p[0]
             if 0 <= age < 0.9:
                 ctx.new_path()
@@ -445,8 +445,6 @@ def render(seed):
                 ctx.set_source_rgba(1, 0.95, 0.7, 0.8 * (1 - age / 0.9))
                 ctx.set_line_width(10)
                 ctx.stroke()
-                text(ctx, f"{NAMES[p[3]]}に進化！", p[1], p[2] - 60 - 120 * age, 58 + 6 * p[3],
-                     rgb=GOLD if p[3] == GOAL else (1, 1, 1), sw=12, alpha=min(1, 3 * (0.9 - age)))
         ctx.restore()
         if fr["over"] is not None and not over:   # あふれそうな警告
             if int(t * 6) % 2 == 0:
@@ -478,8 +476,6 @@ def render(seed):
                 ctx.rectangle(0, 0, W, H)
                 ctx.set_source_rgba(1, 1, 1, 0.8 * (1 - age / 0.3))
                 ctx.fill()
-            k = min(1.0, age / 0.25)
-            text(ctx, "巨大な雄牛に進化！", W / 2, 1650, 96 * (1.3 - 0.3 * k), rgb=GOLD, sw=20)
 
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
