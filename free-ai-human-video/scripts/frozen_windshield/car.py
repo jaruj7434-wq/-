@@ -478,7 +478,7 @@ def car(scene, paint=None, frost_mat=None, side_frost=None, interior=True, wiper
         dash = principled("Dash", (0.03, 0.03, 0.032), rough=0.6)
         add_bump(dash, scale=300, strength=0.15)
         box("Dashboard", (1.6, 0.5, 0.14), (0, -0.15, 0.99), dash, bevel=0.04)
-        box("CabinFloor", (1.7, 2.1, 0.02), (0, 0.85, 0.99), principled("Carpet", (0.04, 0.04, 0.045), rough=0.9))
+        box("CabinFloor", (1.7, 2.1, 0.02), (0, 0.85, 1.035), principled("Carpet", (0.04, 0.04, 0.045), rough=0.9))
         seat = principled("Seat", (0.06, 0.06, 0.065), rough=0.7)
         for s in (-1, 1):
             box(f"SeatBack{s}", (0.5, 0.12, 0.3), (s * 0.4, 0.62, 1.15), seat, bevel=0.05)

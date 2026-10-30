@@ -385,9 +385,9 @@ def drive_scene(scene, frames):
         t = (fr - 1) / 24
         dist = 0.5 * 2.2 * t * t
         key(world, "location", fr, (0, dist, 0), "LINEAR")
-    cam, tgt = camera(scene, "Cam", (-0.38, 0.42, 1.27), (-0.15, -3.0, 1.15), lens=22)
+    cam, tgt = camera(scene, "Cam", (-0.05, 0.42, 1.3), (-0.02, -3.0, 1.2), lens=22)
     for fr in range(1, frames + 1, 2):
-        key(cam, "location", fr, (-0.38 + random.uniform(-0.002, 0.002), 0.42, 1.27 + random.uniform(-0.002, 0.002)), "LINEAR")
+        key(cam, "location", fr, (-0.05 + random.uniform(-0.002, 0.002), 0.42, 1.3 + random.uniform(-0.002, 0.002)), "LINEAR")
 
 
 # ---------------------------------------------------------------- カット
@@ -593,9 +593,9 @@ def build(name):
         key(warm.data, "energy", 1, 0.0)
         key(warm.data, "energy", 14, 25.0)
         cabin = light(scene, "AREA", "CabinFill", (-0.3, 0.6, 1.35), 6.0, (0.8, 0.85, 1.0), size=0.6, look_at=(-0.2, -0.3, 1.0))
-        cam, tgt = camera(scene, "Cam", (-0.38, 0.42, 1.27), (-0.12, -0.6, 1.2), lens=20)
-        key(cam, "location", 1, (-0.38, 0.45, 1.27))
-        key(cam, "location", frames, (-0.34, 0.35, 1.25))
+        cam, tgt = camera(scene, "Cam", (-0.05, 0.42, 1.3), (-0.02, -0.6, 1.24), lens=20)
+        key(cam, "location", 1, (-0.06, 0.45, 1.3))
+        key(cam, "location", frames, (-0.04, 0.36, 1.28))
         return scene
 
     if name == "spray":
