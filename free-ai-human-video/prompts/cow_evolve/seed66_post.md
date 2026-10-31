@@ -1,6 +1,8 @@
 # 投稿用テキスト:cow_66.mp4(子牛を合体させて最強の暴れ牛をめざす回・7段階・失敗パターン)
 
-- 動画: Higgs Field のライブラリに保存(アップロード後に URL を追記)
+- 動画: Higgs Field のライブラリに保存(media_id 1ad2c49c-e4be-466f-99bd-b067f6e73806)
+  https://d2ol7oe51mr4n9.cloudfront.net/user_3IAIfINAmehvTGXEdm9EGpVegmO/1ad2c49c-e4be-466f-99bd-b067f6e73806.mp4
+  (1080x1920 / 60fps / 54.2秒 / H.264 + AAC)
 - 再生成: `python scripts/cow_evolve/cow_evolve.py render --seed 66`(写真と鳴き声は assets/source/cow/ に置く)
   ※書き出しは Higgs Field のクラウド作業環境(sandbox_exec。cairocffi を cairo として使用)で行った
 - 写真: Higgs Field(Seedream 5.0 Pro・背景除去)で生成したホルスタイン7段階
