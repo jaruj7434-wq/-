@@ -23,6 +23,9 @@ TELOPS = ["これだけで\n修理代10万円以上も", "凍った窓にお湯\
 HIGHLIGHT = re.compile(r"10万円|お湯|1分|合わせガラス|ゆがみ|傷|ヒビ|ぬるま湯|厚い氷|NG|デフロスター|10分|解氷スプレー|カバー|保存")
 
 
+SFX_GAIN = 0.35  # 効果音全体の音量(ナレーションが聞き取れるよう控えめに)
+
+
 def main(work, out_mp4):
     work = Path(work)
     t = json.loads((work / "timings.json").read_text())
@@ -124,12 +127,17 @@ def main(work, out_mp4):
         af.append(f"[{3 + k}:a]{filt},volume={vol},afade=t=in:d=0.02,afade=t=out:st={max(0.0, length - 0.2):.2f}:d=0.2,"
                   f"adelay={ms(start)}|{ms(start)}[s{k}]")
         labels.append(f"[s{k}]")
+    # 効果音と BGM はナレーションの下に置く:全体を下げたうえで、声が鳴っている間はさらに自動で絞る(ダッキング)
     af = [
         "[1:a]highpass=f=70,acompressor=threshold=-20dB:ratio=3:attack=5:release=80,"
-        "aformat=channel_layouts=stereo:sample_rates=48000[vo]",
-        f"[2:a]lowpass=f=1500,volume=0.12,afade=t=in:d=0.5,afade=t=out:st={total - 1.2:.2f}:d=1.2[bgm]",
+        "aformat=channel_layouts=stereo:sample_rates=48000,asplit=3[vo][key1][key2]",
+        f"[2:a]lowpass=f=1500,volume=0.08,afade=t=in:d=0.5,afade=t=out:st={total - 1.2:.2f}:d=1.2[bgm0]",
+        "[bgm0][key1]sidechaincompress=threshold=0.02:ratio=4:attack=20:release=300[bgm]",
     ] + af + [
-        f"[vo][bgm]{''.join(labels)}amix=inputs={2 + len(labels)}:duration=longest:normalize=0,"
+        f"{''.join(labels)}amix=inputs={len(labels)}:duration=longest:normalize=0,volume={SFX_GAIN},"
+        "alimiter=limit=0.5[fx0]",
+        "[fx0][key2]sidechaincompress=threshold=0.02:ratio=6:attack=10:release=250[fx]",
+        f"[vo][bgm][fx]amix=inputs=3:duration=longest:normalize=0,"
         f"apad=whole_dur={total:.2f},atrim=0:{total:.2f},loudnorm=I=-14:TP=-1.5:LRA=11[a]"
     ]
     # BGM:軽快な8分音符のベースと和音(Am-F-C-G を2秒ずつ)
