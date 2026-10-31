@@ -468,7 +468,7 @@ def render(seed):
         ctx.set_source(g)
         ctx.fill()
         text(ctx, "子牛を合体させて", W / 2, 150, 80, sw=14)
-        text(ctx, "最強の暴れ牛にできる？", W / 2, 270, 92, rgb=GOLD, sw=18)
+        text(ctx, "最強の暴れ牛にできる？", W / 2, 270, 84, rgb=GOLD, sw=18)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, 365, 54, rgb=(1, 0.35, 0.35) if left < 10 else (1, 1, 1), sw=10)
         draw_chart(ctx, sprites, fr["best"], t)
