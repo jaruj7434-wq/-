@@ -91,7 +91,7 @@ GRAD = grad()
 class Vid:
     def __init__(self, path, dur, mode, ss=0.0):
         src = float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path]))
-        slow = max(1.0, (dur + 0.3) / (src - 0.1))
+        slow = 1.0 if ss > 0 else max(1.0, (dur + 0.3) / (src - 0.1))
         pre = f'setpts={slow:.4f}*PTS,fps={FPS}'
         if mode == 'cover':
             fc = f'[0:v]{pre},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}[o]'
@@ -210,8 +210,20 @@ bgv('K5', S(10), S(11)); bgv('W11', S(11), END, 0.1)
 # 01 hook (谷上)
 add(text('明日の', 72, stroke=8), L, 1000, 0.0, S(2), anchor='l')
 add(fit(text('天皇賞・秋', 150, stroke=12), 960), L, 1140, 0.1, S(2), anchor='l', anim='zoom')
-add(text('谷上の本命は…', 80, GOLD, stroke=8), L, 1310, at(1, 0.35), S(2), anchor='l')
-add(chip('最後に発表', 56, bg=RED, fg=WHITE), 600, 1310, at(1, 0.7), S(2), anchor='l', anim='zoom')
+add(text('谷上の本命は…', 80, GOLD, stroke=8), L, 1290, at(1, 0.35), S(2), anchor='l')
+def reveal_banner():
+    """「最後に発表」: 斜めの赤い帯 + 金のフチ + 白の極太文字"""
+    s = text('最後に発表', 96, WHITE, stroke=6, sc=(120, 0, 10), shadow=False)
+    w, h = s.width + 140, s.height + 60
+    im = Image.new('RGBA', (w + 60, h + 60), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    poly = [(30 + 40, 30), (30 + w, 30), (30 + w - 40, 30 + h), (30, 30 + h)]
+    d.polygon([(x + 8, y + 10) for x, y in poly], fill=(0, 0, 0, 120))
+    d.polygon(poly, fill=(215, 18, 38, 255)); d.line(poly + [poly[0]], fill=GOLD, width=8)
+    d.line((30 + 60, 30 + h - 16, 30 + w - 60, 30 + h - 16), fill=GOLD + (200,), width=4)
+    im.alpha_composite(s, ((im.width - s.width) // 2, (im.height - s.height) // 2 - 4))
+    glow = im.filter(ImageFilter.GaussianBlur(14)); out = Image.alpha_composite(glow, im)
+    return out.rotate(6, expand=True, resample=Image.BICUBIC)
+add(reveal_banner(), W // 2, 1430, at(1, 0.68), S(2), anim='zoom')
 # 02 HINT 1: GI 4勝
 hint(1, 2)
 add(text('その馬は', 64, stroke=6), L, 560, S(2), S(3), anchor='l')
