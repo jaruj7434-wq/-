@@ -23,3 +23,10 @@
   - 06・23 も録り直したが1回目とほぼ同じだったので1回目のまま
 - 編集 `edit/tennosho-aki-2026/build_vo.py`: 速度変更なし。前後の無音カット、文中の0.3秒超の間を0.3秒に、行間0.25秒 (章の切れ目0.5秒)
 - 合計 102.7秒 → `assets/output/tennosho-aki-2026/tennosho_narration_v1.mp3` (Higgs media 5c7fb669-ce97-4c04-bd3c-5b8f27e9c31d)
+
+## ナレーション v2 (2026-10-31) — 参考動画と同じ3テーマ (① 1番人気 ② 毎日王冠 ③ 内枠) に戻す
+- 台本 v2 (`scripts/tennosho-aki-2026.md`)。数字は netkeiba 全出走馬データ + JRA で検証 (`docs/research/tennosho-aki-2026.md`)
+- 全27行を ElevenLabs v4 (谷上-2) で生成。10〜15・18 は 429 (混雑) で再送信
+- 検査: ノイズ床は22以外 -85〜-89dB。22「本当だったのは、1番人気だけ」は -59dB だったため、v1 で同じ文を録り直した音声 (ノイズなし) を使用
+- 編集: v1 と同じ (速度変更なし、文中の間は最大0.3秒、行間0.25秒、章の切れ目0.5秒)
+- 合計 148.9秒 → `assets/output/tennosho-aki-2026/tennosho_narration_v2.mp3` (Higgs media 3d608836-d942-492f-ad2f-21dec8ea1572)
