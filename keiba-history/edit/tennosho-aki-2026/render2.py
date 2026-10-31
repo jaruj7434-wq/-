@@ -34,11 +34,14 @@ def font(kind, sz):
             f = ImageFont.truetype(F_BODY, sz); f.set_variation_by_name('Black' if kind == 'black' else 'Bold'); _fc[k] = f
     return _fc[k]
 
-def text(t, sz, color=WHITE, kind='head', hl=GOLD, stroke=0, sc=INK, shadow=True):
-    """'{...}' segments are drawn in hl color"""
+def text(t, sz, color=WHITE, kind='head', hl=GOLD, stroke=0, sc=INK, shadow=True, outer=0, oc=INK):
+    """'{...}' segments are drawn in hl color; outer adds a second (outside) outline in oc"""
     f = font(kind, sz); segs = [(p, hl if i % 2 else color) for i, p in enumerate(re.split(r'[{}]', t)) if p]
-    ws = [f.getbbox(p, stroke_width=stroke)[2] for p, _ in segs]
+    ws = [f.getbbox(p, stroke_width=stroke + outer)[2] for p, _ in segs]
     im = Image.new('RGBA', (sum(ws) + 40, int(sz * 1.5) + 40), (0, 0, 0, 0))
+    if outer:
+        d = ImageDraw.Draw(im); x = 20
+        for (p, _), w_ in zip(segs, ws): d.text((x, 20), p, font=f, fill=oc, stroke_width=stroke + outer, stroke_fill=oc); x += w_
     if shadow:
         sh = Image.new('RGBA', im.size, (0, 0, 0, 0)); d = ImageDraw.Draw(sh); x = 20
         for (p, _), w_ in zip(segs, ws): d.text((x + 3, 24), p, font=f, fill=(0, 0, 0, 170), stroke_width=stroke, stroke_fill=(0, 0, 0, 170)); x += w_
@@ -237,9 +240,9 @@ bg('cover', 'V2', S(19), S(20)); bg('cover', 'V8', S(20), S(21)); bg('kb', 16, S
 bg('blur', 'V5', S(22), S(23)); bg('kb', 12, S(23), S(24)); bg('blur', 'V9', S(24), END)
 
 # 01 title
-add(text('明日は', 96), L, 430, 0.0, S(2), anchor='l')
-add(fit(text('天皇賞・秋', 190), 960), L, 620, 0.15, S(2), anchor='l', anim='zoom')
-add(fit(text('知らなきゃ損', 168, RED, stroke=10, sc=WHITE), 960), L, 850, 0.45, S(2), anchor='l')
+add(text('明日は', 96, stroke=9, sc=INK), L, 430, 0.0, S(2), anchor='l')
+add(fit(text('天皇賞・秋', 190, stroke=14, sc=INK), 960), L, 620, 0.15, S(2), anchor='l', anim='zoom')
+add(fit(text('知らなきゃ損', 176, (255, 0, 0), stroke=10, sc=WHITE, outer=10, oc=(110, 0, 0)), 980), L, 860, 0.45, S(2), anchor='l')
 add(text('データで検証する3つの“常識”', 48, WHITE, kind='black'), L, 1010, 0.8, S(2), anchor='l')
 # 02 three hidden checks
 add(text('予想でよく聞く“常識”', 72), L, 430, S(2), S(3), anchor='l')
