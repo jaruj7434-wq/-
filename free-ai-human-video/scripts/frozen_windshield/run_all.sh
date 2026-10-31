@@ -25,5 +25,6 @@ for shot in $SHOTS; do
   echo "=== upscale $shot $(date +%T)"
   "$MPY" "$HERE/../mosquito_bite/upscale.py" "$WORK/frames/$shot" "$WORK/up/$shot" | tail -1
 done
+[[ -z "${NARRATION_DIR:-}" ]] || python3 "$HERE/fit_narration.py" "$WORK" "$NARRATION_DIR"
 python3 "$HERE/compose.py" "$WORK" "$OUT/frozen-windshield.mp4"
 echo "=== done $(date +%T)"
