@@ -400,10 +400,11 @@ def render(seed):
         text(ctx, f"残り {left:4.1f}秒", W / 2, 360, 54, rgb=(1, 0.35, 0.35) if left < 8 else (1, 1, 1), sw=10)
         text(ctx, f"ベル {fr['rung']} / {N_BELLS}", W / 2, 1620, 64,
              rgb=GOLD if fr["rung"] == N_BELLS else (1, 1, 1), sw=12)
+        text(ctx, f"♪ {SONG_TITLE}", W / 2, 1710, 46, rgb=(1, 0.9, 0.6), sw=10)
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "時間切れ…", W / 2, 1000, 150 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
-            text(ctx, f"あと{N_BELLS - res['rung']}個だったのに…", W / 2, 1130, 72, sw=12)
+            text(ctx, f"あと{N_BELLS - res['rung']}音で曲が終わったのに…", W / 2, 1130, 66, sw=12)
         elif over:
             age = t - end_t
             if age < 0.3:
@@ -431,9 +432,18 @@ def render(seed):
 
 
 # ---------------------------------------------------------------- 音
-MIX_GAIN = 0.5   # 通常部分の音量(約 -18dB になるよう調整)
+MIX_GAIN = 0.6   # 通常部分の音量(約 -18dB になるよう調整)
 HOLY_GAIN = 0.85
-# ベルの音の高さ(内側の輪ほど高い。ペンタトニックで、どの順に鳴っても濁らない)
+# ベルを新しく1個鳴らすたびに曲が1音進む:「ジングルベル」(ピアポント作・1857年・パブリックドメイン)のサビを22音に
+SONG_TITLE = "ジングルベル"
+#            ジン グル ベー ル  ジン グル ベー ル  ジン グル オー ル ザ ウェイ
+MELODY = [76, 76, 76, 76, 76, 76, 76, 79, 72, 74, 76,
+          77, 77, 77, 77, 76, 76, 79, 79, 77, 74, 72]
+#         オー ワッ ファン イッ イズ トゥ ライ ド ... (最後はド=Cで終わる)
+CHORD = [48, 48, 48, 48, 48, 48, 48, 48, 48, 43, 48,
+         53, 53, 53, 53, 48, 48, 43, 43, 43, 43, 48]
+assert len(MELODY) == N_BELLS
+# 1度鳴ったベルにまた当たったときは、いま鳴っている音を小さく響かせる(曲が濁らない)
 PENTA = [0, 2, 4, 7, 9]
 
 
@@ -478,13 +488,21 @@ def synth_audio(res, duration, path):
             out[i:j, 0] += gain * sig[: j - i] * math.sqrt(0.5 * (1 - pan))
             out[i:j, 1] += gain * sig[: j - i] * math.sqrt(0.5 * (1 + pan))
 
+    note_i = -1
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.05:
             continue
         if kind == "ring":
             i, imp, first = data
-            amp = (0.35 + 0.65 * min(1.0, imp / 400)) * (1.0 if first else 0.45)
-            add(handbell(midi_hz(bell_note(i)), amp, int(t * 1000)), t, pan=(pos[i][0] - PX) / 500)
+            pan = (pos[i][0] - PX) / 500
+            if first:   # 曲が1音進む:メロディ+低い和音
+                note_i += 1
+                amp = 0.55 + 0.45 * min(1.0, imp / 400)
+                add(handbell(midi_hz(MELODY[note_i]), amp, int(t * 1000)), t, pan=pan)
+                add(handbell(midi_hz(CHORD[note_i]), 0.35, int(t * 1000) + 1), t, pan=0.0)
+                add(handbell(midi_hz(CHORD[note_i] + 7), 0.18, int(t * 1000) + 2), t, pan=0.0)
+            elif note_i >= 0:   # 鳴らし済みのベル:いまの音を小さく1オクターブ上で
+                add(handbell(midi_hz(MELODY[note_i] + 12), 0.12, int(t * 1000)), t, pan=pan)
         elif kind == "clank":
             x, y, imp = data
             add(clank(min(1.0, imp / 600) * 0.5, int(t * 1000)), t, pan=(x - PX) / 500)
