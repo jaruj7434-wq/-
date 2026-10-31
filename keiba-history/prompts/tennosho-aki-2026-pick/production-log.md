@@ -1,0 +1,9 @@
+# 天皇賞・秋 2026 谷上の本命予想 — 制作ログ
+
+## 谷上の画像 (nano_banana_pro + Element「谷上」b0bf8884-7e0b-4337-a4c7-40db6c805c32)
+- A カメラ目線・赤ペン dd0a6f4f / B 新聞を指さす 7c27db56 / C ◎の新聞を見せる 035f2866
+
+## ナレーション v1 (ElevenLabs v4, 谷上-2 c4548a1f, stability 0.95 / similarity 1.0)
+- 01 f7198e34 / 02 02796b5f / 03 6b0d023a / 04 c32dd78c / 05 30c6e85a / 06 6039b89b / 07 d0b73c1c / 08 e5fd63b9 / 09 cf3ec670 / 10 21774bb5
+- ノイズ床は全行 -85〜-88dB。編集は天皇賞・秋データ編と同じ (速度変更なし、文中の間は最大0.3秒、行間0.25秒、区切り0.45秒)
+- 合計 49.6秒 → `assets/output/tennosho-aki-2026-pick/pick_narration_v1.mp3` (Higgs media ddfce177)
