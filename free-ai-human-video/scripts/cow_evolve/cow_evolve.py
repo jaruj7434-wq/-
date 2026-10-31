@@ -1,10 +1,11 @@
-"""「子牛を合体させて巨大な雄牛にできる?」本物の写真の牛が落ちてきて、同じ大きさどうしがぶつかると進化する物理ショートを生成する。
+"""「子牛を合体させて最強の暴れ牛にできる?」本物の写真の牛が落ちてきて、同じ大きさどうしがぶつかると進化する物理ショートを生成する。
 
-- 牛の写真(Higgs Field で生成・背景透明)5段階:生まれたての子牛 → 子牛 → 若い牛 → 大人の牛 → 巨大な雄牛(ゴール)
+- 牛の写真(Higgs Field で生成・背景透明)7段階:生まれたての子牛 → 子牛 → 若い牛 → 大人の牛 → 巨大な雄牛
+  → 怒れる雄牛 → 最強の暴れ牛(ゴール)
 - 写真の輪郭(凸包)そのものを当たり判定にして、重力・摩擦・回転のまま自然に落ちて転がる(ねらい・補正なし)。
   止まった牛は眠らせて(動かなくなって)永久には動き続けない。
 - 同じ段階の牛どうしが触れると合体して1段階大きくなり、その段階の本物の鳴き声(Wikimedia Commons の録音)が鳴る。
-- 入れ物は底の丸い大きなボウル。巨大な雄牛ができれば成功(天使)、時間切れかボウルからあふれたら失敗(幽霊)。
+- 入れ物は底の丸い大きなボウル。最強の暴れ牛ができれば成功(天使)、時間切れかボウルからあふれたら失敗(幽霊)。
 
 使い方:
     python fetch_assets.py              # 写真と鳴き声を集める(初回のみ)
@@ -42,10 +43,10 @@ IMG_DIR = os.path.join(ROOT, "assets", "source", "cow")
 SND_DIR = os.path.join(IMG_DIR, "sounds")
 OUT_DIR = os.path.join(ROOT, "assets", "output")
 
-NAMES = ["生まれたての子牛", "子牛", "若い牛", "大人の牛", "巨大な雄牛"]
-SHORT = ["赤ちゃん", "子牛", "若牛", "大人", "雄牛"]
+NAMES = ["生まれたての子牛", "子牛", "若い牛", "大人の牛", "巨大な雄牛", "怒れる雄牛", "最強の暴れ牛"]
+SHORT = ["赤ちゃん", "子牛", "若牛", "大人", "雄牛", "怒れる牛", "暴れ牛"]
 GOAL = len(NAMES) - 1
-WIDTHS = [118, 170, 240, 330, 470]     # 段階ごとの写真の横幅(px)
+WIDTHS = [80, 110, 150, 205, 280, 380, 520]     # 段階ごとの写真の横幅(px)
 
 # 底の丸いボウル
 BOWL_CX, BOWL_CY, BOWL_R = 540.0, 1200.0, 470.0
@@ -55,7 +56,7 @@ OVER_WAIT = 1.5
 DROP_Y = 520.0
 DROP_X0, DROP_X1 = 230.0, 850.0
 DROP_EVERY = 1.0
-V_MERGE = 120.0                        # 合体に必要なぶつかる速さ(px/秒)
+V_MERGE = 0.0                          # 合体に必要なぶつかる速さ(px/秒)。0 = 同じ段階どうしが触れたら合体
 COW_E, COW_F = 0.6, 0.5                # 牛の反発係数・摩擦(落ちたら跳ねる)
 BOWL_E, BOWL_F = 0.7, 0.6              # ボウルの反発係数・摩擦
 TIME_LIMIT = 60.0
@@ -290,7 +291,7 @@ def search(n, want):
     print(f"{n} シード中 成功 {len(succ)} 件 / 失敗 {n - len(succ)} 件")
     if want == "fail":
         for seed, _, rt, best, why, n3 in sorted([r for r in rs if r[1] == "fail"], key=lambda r: (-r[3], -r[5]))[:15]:
-            print(f"seed={seed:4d}  最高 {NAMES[best]} / 大人の牛 {n3}頭 / {'時間切れ' if why == 'time' else 'あふれ'} {rt:5.2f}秒")
+            print(f"seed={seed:4d}  最高 {NAMES[best]} / {NAMES[GOAL - 1]} {n3}頭 / {'時間切れ' if why == 'time' else 'あふれ'} {rt:5.2f}秒")
     else:
         for seed, _, rt, _, _, _ in sorted(succ, key=lambda r: -r[2])[:15]:
             print(f"seed={seed:4d}  雄牛 {rt:5.2f}秒")
@@ -351,14 +352,14 @@ def draw_bowl(ctx):
 
 
 def draw_chart(ctx, sprites, best, t):
-    """上の進化表。5段階の写真を並べ、たどり着いた段階は明るく、ゴールは金の輪。"""
+    """上の進化表。7段階の写真を並べ、たどり着いた段階は明るく、ゴールは金の輪。"""
     y = 560
-    xs = [120 + k * 210 for k in range(len(NAMES))]
+    xs = [84 + k * 152 for k in range(len(NAMES))]
     for k in range(len(NAMES) - 1):
-        text(ctx, "▶", (xs[k] + xs[k + 1]) / 2, y + 14, 34, rgb=(1, 1, 1), sw=0, alpha=0.6)
+        text(ctx, "▶", (xs[k] + xs[k + 1]) / 2, y + 10, 24, rgb=(1, 1, 1), sw=0, alpha=0.6)
     for k, x in enumerate(xs):
         goal = k == GOAL
-        r = 80 if goal else 66
+        r = 64 if goal else 54
         reached = k <= best
         ctx.new_path()
         ctx.arc(x, y, r, 0, 2 * math.pi)
@@ -374,7 +375,7 @@ def draw_chart(ctx, sprites, best, t):
         sp = sprites[k]
         k_fit = (r * 1.7) / max(sp.w, sp.h)
         sp.draw(ctx, x, y, 0.0, k_fit, alpha=1.0 if (reached or goal) else 0.35)
-        text(ctx, SHORT[k], x, y + r + 34, 30 if not goal else 36,
+        text(ctx, SHORT[k], x, y + r + 32, 26 if not goal else 30,
              rgb=GOLD if goal else ((1, 1, 1) if reached else (0.7, 0.7, 0.75)), sw=7)
 
 
@@ -467,7 +468,7 @@ def render(seed):
         ctx.set_source(g)
         ctx.fill()
         text(ctx, "子牛を合体させて", W / 2, 150, 80, sw=14)
-        text(ctx, "巨大な雄牛にできる？", W / 2, 270, 92, rgb=GOLD, sw=18)
+        text(ctx, "最強の暴れ牛にできる？", W / 2, 270, 92, rgb=GOLD, sw=18)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, 365, 54, rgb=(1, 0.35, 0.35) if left < 10 else (1, 1, 1), sw=10)
         draw_chart(ctx, sprites, fr["best"], t)
@@ -506,7 +507,8 @@ HOLY_GAIN = 0.85
 # 進化した段階 → 鳴き声ファイルと音の高さ(1.0 = そのまま)
 # 鳴き声は Higgs Field(Seedance 2.0 Mini)で「子牛〜雄牛が順番に鳴く」動画を生成し、その音声から一声ずつ切り出したもの
 # (make_voices.sh で切り出し・低音のノイズ除去・無音部分のゲート)
-VOICE = {1: ("calf_0.wav", 1.0), 2: ("calf_1.wav", 1.0), 3: ("cow_0.wav", 1.0), 4: ("bull_0.wav", 1.0)}
+VOICE = {1: ("calf_0.wav", 1.0), 2: ("calf_1.wav", 1.0), 3: ("cow_0.wav", 1.0), 4: ("bull_0.wav", 1.0),
+         5: ("bull_angry.wav", 1.0), 6: ("bull_final.wav", 1.0)}
 VOICE_LEN = 3.4
 
 
