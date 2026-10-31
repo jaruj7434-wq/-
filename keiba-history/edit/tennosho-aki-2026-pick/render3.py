@@ -184,7 +184,7 @@ def bars(rows, x0, y0, maxw, t0, t1, rowh=150, grow=0.6, stagger=0.25, maxv=None
 
 # ---------- subtitles ----------
 SUB = {
-1: '明日の{天皇賞・秋}/俺の本命は……/{最後に発表}する', 2: 'まずはヒントから/その馬は/これまで{GⅠを4勝}',
+1: '明日の{天皇賞・秋}/俺の本命は……', 2: 'これまで/{GⅠは4勝}',
 3: '国内で{馬券圏外}に負けたのは/凱旋門賞帰りの/{ジャパンカップ}ただ1回だけ', 4: 'それでも{4着}/地力の高さは/改めて証明済みだ',
 5: '宝塚記念からは/少し{間隔}が空いた', 6: 'でも調教を見る限り/春に{3戦}した疲れは感じない/しっかり仕上がってる印象だ',
 7: '臨戦態勢は/{十分}に整ってる', 8: '人気になるのは間違いない/でも{人気を理由に嫌う}必要はない',
@@ -202,36 +202,21 @@ L = 80
 def hint(no, n, y=420): add(chip(f'HINT {no}', 44, bg=GOLD), L, y, S(n), E(n), anchor='l')
 def bgv(name, a, b, ss=0.0): BG.append(dict(kind='cover', src=name, t0=a, t1=b, v=None, img=None, ss=ss))
 
-# --- background plan: 谷上 (W) と馬 (K) を交互に ---
-bgv('W01', 0, S(2), 0.1); bgv('K1', S(2), S(3)); bgv('K2', S(3), S(5)); bgv('W05', S(5), S(6), 0.1)
-BG.append(dict(kind='kb', src='p3', t0=S(6), t1=S(7), v=None, img=None)) if not os.path.exists(f'{P}/vids/K3ok') else bgv('K3', S(6), S(7)); bgv('K4', S(7), S(8)); bgv('W08', S(8), S(9), 0.1); bgv('W09', S(9), S(10), 0.1)
+# --- background plan: 谷上 (W) の場面は続けない (馬・競馬場の映像の間に1つずつ) ---
+bgv('T1', 0, S(2)); bgv('K1', S(2), S(3)); bgv('K2', S(3), S(5)); bgv('W05', S(5), S(6), 0.1)
+BG.append(dict(kind='kb', src='p3', t0=S(6), t1=S(7), v=None, img=None)) if not os.path.exists(f'{P}/vids/K3ok') else bgv('K3', S(6), S(7)); bgv('K4', S(7), S(8)); bgv('T2', S(8), S(9)); bgv('W09', S(9), S(10), 0.1)
 bgv('K5', S(10), S(11)); bgv('W11', S(11), END, 0.1)
 
-# 01 hook (谷上)
-add(text('明日の', 72, stroke=8), L, 1000, 0.0, S(2), anchor='l')
-add(fit(text('天皇賞・秋', 150, stroke=12), 960), L, 1140, 0.1, S(2), anchor='l', anim='zoom')
-add(text('谷上の本命は…', 80, GOLD, stroke=8), L, 1290, at(1, 0.35), S(2), anchor='l')
-def reveal_banner():
-    """「最後に発表」: 斜めの赤い帯 + 金のフチ + 白の極太文字"""
-    s = text('最後に発表', 96, WHITE, stroke=6, sc=(120, 0, 10), shadow=False)
-    w, h = s.width + 140, s.height + 60
-    im = Image.new('RGBA', (w + 60, h + 60), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
-    poly = [(30 + 40, 30), (30 + w, 30), (30 + w - 40, 30 + h), (30, 30 + h)]
-    d.polygon([(x + 8, y + 10) for x, y in poly], fill=(0, 0, 0, 120))
-    d.polygon(poly, fill=(215, 18, 38, 255)); d.line(poly + [poly[0]], fill=GOLD, width=8)
-    d.line((30 + 60, 30 + h - 16, 30 + w - 60, 30 + h - 16), fill=GOLD + (200,), width=4)
-    im.alpha_composite(s, ((im.width - s.width) // 2, (im.height - s.height) // 2 - 4))
-    glow = im.filter(ImageFilter.GaussianBlur(14)); out = Image.alpha_composite(glow, im)
-    return out.rotate(6, expand=True, resample=Image.BICUBIC)
-add(reveal_banner(), W // 2, 1430, at(1, 0.68), S(2), anim='zoom')
-# 02 HINT 1: GI 4勝
-hint(1, 2)
-add(text('その馬は', 64, stroke=6), L, 560, S(2), S(3), anchor='l')
-counter('GⅠ {}勝', 4, 170, L, 740, at(2, 0.55), S(3), anchor='l')
+# 01 hook (東京競馬場の映像)
+add(text('明日の', 80, stroke=8), L, 520, 0.0, S(2), anchor='l')
+add(fit(text('天皇賞・秋', 170, stroke=14), 960), L, 680, 0.1, S(2), anchor='l', anim='zoom')
+add(text('谷上の本命は…', 90, GOLD, stroke=9), L, 870, at(1, 0.45), S(2), anchor='l')
+# 02 GI 4勝
+add(text('これまで', 72, stroke=7), L, 560, S(2), S(3), anchor='l')
+counter('GⅠ {}勝', 4, 170, L, 740, at(2, 0.3), S(3), anchor='l')
 for i, r in enumerate(['ホープフルS', '日本ダービー', '大阪杯', '天皇賞（春）']):
-    add(chip(r, 40, bg=(12, 16, 26, 210), fg=WHITE), L + 470 * (i % 2), 930 + 90 * (i // 2), at(2, 0.65) + 0.12 * i, S(3), anchor='l')
-# 03 HINT 2: 国内成績
-hint(2, 3)
+    add(chip(r, 40, bg=(12, 16, 26, 210), fg=WHITE), L + 470 * (i % 2), 930 + 90 * (i // 2), at(2, 0.45) + 0.12 * i, S(3), anchor='l')
+# 03 国内成績
 add(text('国内での成績', 64, stroke=6), L, 560, S(3), S(4), anchor='l')
 bars([('1着', 6, '6回', GOLD), ('2着', 2, '2回', WHITE), ('3着', 0, '0回', WHITE), ('4着以下', 1, '1回', RED)], L, 660, 600, S(3) + 0.3, S(4), rowh=120, stagger=0.2, maxv=6)
 add(panel([text('馬券圏外はこの1回だけ', 44, WHITE, kind='black'), text('凱旋門賞帰りの{ジャパンカップ}', 52, WHITE, kind='black', hl=GOLD)], accent=RED, minw=920), L, 1230, at(3, 0.55), S(4), anchor='l')
@@ -241,8 +226,7 @@ counter('{}着', 4, 260, L, 900, S(4) + 0.15, S(5), anchor='l')
 add(chip('地力の高さを証明', 56, bg=GOLD), L, 1120, at(4, 0.5), S(5), anchor='l', anim='zoom')
 # 05 間隔 (谷上)
 add(panel([text('前走  宝塚記念 2着', 48, WHITE, kind='black'), text('→ {140日}ぶりのレース', 60, WHITE, kind='black')], minw=920), L, 1300, S(5) + 0.2, S(6), anchor='l')
-# 06 HINT 3: 春3戦
-hint(3, 6)
+# 06 春3戦
 add(text('春の3戦', 80, stroke=8), L, 560, S(6), S(7), anchor='l')
 for i, (r, p) in enumerate([('大阪杯', '1着'), ('天皇賞（春）', '1着'), ('宝塚記念', '2着')]):
     add(panel([text(f'{r}  {{{p}}}', 54, WHITE, kind='black')], pad=24, minw=760), L, 700 + 130 * i, S(6) + 0.3 + 0.25 * i, S(7), anchor='l')
@@ -250,7 +234,7 @@ add(chip('調教を見る限り 疲れは感じない', 48, bg=GOLD), L, 1150, a
 # 07 臨戦態勢
 add(text('臨戦態勢', 150, stroke=12), L, 650, S(7), S(8), anchor='l', anim='zoom')
 add(text('{十分}に整った', 100, stroke=10), L, 840, S(7) + 0.4, S(8), anchor='l')
-# 08 人気 (谷上)
+# 08 人気 (競馬場の観客)
 add(panel([text('人気になっても', 52, WHITE, kind='black'), text('{嫌う必要はない}', 76, WHITE, kind='black')], minw=920), L, 1300, at(8, 0.4), S(9), anchor='l')
 # 09 ため (谷上)
 add(text('谷上の本命は…', 100, GOLD, stroke=10), W // 2, 1380, at(9, 0.6), S(10), anim='zoom')
