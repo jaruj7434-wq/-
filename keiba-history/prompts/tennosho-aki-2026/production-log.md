@@ -38,3 +38,4 @@
 - BGM: sonilo_music 60秒 (ca1b92cc) をループ、音量 0.11
 - 編集: `edit/tennosho-aki-2026/render.py` (PIL で1フレームずつ描画: 空と競馬場のイラスト背景、緑の章ラベル、赤い極太数字、白フチ文字、ポップイン、○×スタンプ、下部字幕 白+黒フチ・キーワード黄色) + `run.sh`
 - 書き出し v1: `assets/output/tennosho-aki-2026/tennosho_aki_v1.mp4` (1080x1920, 128.0秒, Higgs media 27154e65)。V2・V8 が生成待ちだったため、この版は V2 の代わりに V1、V8 の代わりに V9 を使用
+- 書き出し v2 (完成版): V2・V8 が届いたので差し替えて再書き出し → `assets/output/tennosho-aki-2026/tennosho_aki_v2.mp4` (128.0秒, Higgs media fd6768cf)
