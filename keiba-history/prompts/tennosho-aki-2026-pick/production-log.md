@@ -54,3 +54,4 @@
 - 画像: T1 直線を馬群が走る 6ce708ad / T2 スタンド前の観客 c257f4e0 → 動画 (kling4_0 720p 5秒): T1 ea221224 / T2 854d3fa7
 - 並び: T1 → K1 → K2 → W05 → K3 → K4 → T2 → W09 → K5 → W11 (谷上の場面は連続しない。W01・W08 は不使用)
 - 編集の修正は `edit/tennosho-aki-2026-pick/fix_v4.py` (scenes3.py に適用済み)
+- 書き出し v4: `tennosho_pick_v4.mp4` (1080x1920, 51.1秒, Higgs media fdcc08bd)
