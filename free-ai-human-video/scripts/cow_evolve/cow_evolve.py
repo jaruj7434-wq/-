@@ -54,9 +54,11 @@ OVER_Y = 760.0                         # 止まった牛の上端がこれより
 OVER_WAIT = 1.5
 DROP_Y = 520.0
 DROP_X0, DROP_X1 = 230.0, 850.0
-DROP_EVERY = 2.3
-P_STAGE2 = 0.18                        # 落ちてくるのが「子牛」のことがある確率
-TIME_LIMIT = 43.0
+DROP_EVERY = 1.0
+V_MERGE = 120.0                        # 合体に必要なぶつかる速さ(px/秒)
+COW_E, COW_F = 0.6, 0.5                # 牛の反発係数・摩擦(落ちたら跳ねる)
+BOWL_E, BOWL_F = 0.7, 0.6              # ボウルの反発係数・摩擦
+TIME_LIMIT = 60.0
 OUTRO = 2.5
 
 
@@ -163,7 +165,7 @@ class Game:
         pts = bowl_points()
         for i, (a, b) in enumerate(zip(pts, pts[1:])):
             s = pymunk.Segment(sp.static_body, a, b, 8)
-            s.elasticity, s.friction = 0.2, 0.8
+            s.elasticity, s.friction = BOWL_E, BOWL_F
             s.set_neighbors(pts[max(i - 1, 0)], pts[min(i + 2, len(pts) - 1)])
             sp.add(s)
         self.polys = polys()
@@ -180,9 +182,13 @@ class Game:
         self.over_since = None
 
     def _touch(self, arb, space, data):
+        """同じ段階の牛どうしが「ぶつかった」ときだけ合体する。そっと触れているだけ・寄りかかっているだけでは合体しない。"""
         a, b = arb.shapes
         if self.result is None:
-            self.pairs.append((a.body, b.body))
+            n = arb.normal
+            rel = (a.body.velocity - b.body.velocity).dot(n)
+            if abs(rel) >= V_MERGE:
+                self.pairs.append((a.body, b.body))
 
     def add(self, stage, x, y, ang=0.0, vx=0.0, vy=0.0, w=0.0):
         poly = self.polys[stage]
@@ -191,7 +197,7 @@ class Game:
         b.position, b.angle = (x, y), ang
         b.velocity, b.angular_velocity = (vx, vy), w
         s = pymunk.Poly(b, poly, radius=2)
-        s.elasticity, s.friction = 0.15, 0.7
+        s.elasticity, s.friction = COW_E, COW_F
         s.collision_type = 10 + stage
         self.space.add(b, s)
         cow = {"id": self.next_id, "stage": stage, "body": b, "shape": s, "born": self.t}
@@ -203,7 +209,7 @@ class Game:
         self.t += dt
         if self.result is None and self.t >= self.next_drop:
             self.next_drop += DROP_EVERY
-            stage = 1 if self.rng.random() < P_STAGE2 else 0
+            stage = 0   # 上から落ちてくるのは、いつも一番小さい生まれたての子牛
             x = self.rng.uniform(DROP_X0, DROP_X1)
             c = self.add(stage, x, DROP_Y, ang=self.rng.uniform(-0.3, 0.3),
                          vx=self.rng.uniform(-40, 40), w=self.rng.uniform(-1.5, 1.5))
