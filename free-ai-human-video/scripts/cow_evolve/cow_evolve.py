@@ -55,11 +55,11 @@ OVER_Y = 760.0                         # 止まった牛の上端がこれより
 OVER_WAIT = 1.5
 DROP_Y = 520.0
 DROP_X0, DROP_X1 = 230.0, 850.0
-DROP_EVERY = 1.0
+DROP_EVERY = 0.5
 V_MERGE = 0.0                          # 合体に必要なぶつかる速さ(px/秒)。0 = 同じ段階どうしが触れたら合体
 COW_E, COW_F = 0.6, 0.5                # 牛の反発係数・摩擦(落ちたら跳ねる)
 BOWL_E, BOWL_F = 0.7, 0.6              # ボウルの反発係数・摩擦
-TIME_LIMIT = 60.0
+TIME_LIMIT = 50.5
 OUTRO = 2.5
 
 
