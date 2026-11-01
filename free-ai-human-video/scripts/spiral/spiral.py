@@ -52,10 +52,10 @@ TH_WOOD0 = 2 * math.pi * 0.35          # 板を並べ始める位置(中心の�
 TH_WOOD1 = TH_END - 2 * math.pi - 0.35  # 板を並べ終える位置(入口は少し空ける)
 
 PLANK_E = 0.8                          # 板の反発係数(割れなかったときだけ使う)
-ABSORB = 0.0340                         # 板を割るときに失う「板に垂直な向きの速さ」の割合
-ZONES = [(0.10, 2), (0.30, 3), (0.55, 2)]   # 増殖ゾーン(うずまきの外側からの位置の割合, 何倍になるか)
-MAX_BALLS = 70                         # 一度に盤面にいられる玉の数(計算が重くなりすぎないように)
-SPREAD = math.radians(14)              # 増えた玉が分かれる角度
+ABSORB = 0.10                           # 板を割るときに失う「板に垂直な向きの速さ」の割合
+PADS = [0.12, 0.32, 0.52, 0.72]        # 加速地面(うずまきの外側からの位置の割合)
+BOOST_DV = 500.0                       # 加速地面に乗ったとき、進む向き(うずまきの内側へ)に足される速さ(px/秒)
+MAX_BALLS = 70
 AIR_DAMP = 0.85                        # 盤面で1秒あたりに残る速さの割合(転がり抵抗)
 V_DIE = 200.0                          # これより遅くなった玉は消えていく
 FADE = 0.5                             # 消えていく時間(秒)
@@ -66,7 +66,7 @@ DROP_X = CX + R_OUT - LANE / 2         # 玉はうずまきの外側の口の真
 DROP_Y = CY - 600
 CHUTE_L, CHUTE_R = CX + R_OUT - LANE, CX + R_OUT   # 入口のたて筒
 CHUTE_TOP = DROP_Y - 60
-WAVES = [(1, "yellow"), (1, "red"), (1, "blue")]   # 前の玉が全部消えたら次の玉
+WAVES = [(1, "chick"), (2, "cat"), (4, "panda"), (5, "lion")]   # 前の動物が全部消えたら次の群れ
 N_BALLS = sum(n for n, _ in WAVES)
 WAVE_GAP = 0.6                         # 前の玉が消えてから次の玉が落ちてくるまで
 DROP_EVERY = 0.35                      # 同じ波の玉どうしの間隔
@@ -147,7 +147,8 @@ class Game:
         sp.on_collision(1, 4, begin=self._hit)
         # 増殖ゾーン(通路を横切る光の帯。玉は通り抜ける)
         self.zones = []
-        for z, (frac, mult) in enumerate(ZONES):
+        for z, frac in enumerate(PADS):
+            mult = 1
             th = TH_WOOD1 - (TH_WOOD1 - TH_WOOD0) * frac
             s = pymunk.Segment(st, wall_pt(th, 6), wall_pt(th + 2 * math.pi, -6), 4)
             s.sensor = True
@@ -188,13 +189,11 @@ class Game:
             arb.process_collision = False
 
     def _zone(self, arb, space, data):
-        """増殖ゾーンを初めて通った玉は、何倍かに増える(同じ玉は同じゾーンで1回だけ)。"""
+        """加速地面:乗った動物を、うずまきの進む向き(内側へ向かう時計回り)に BOOST_DV だけ押し出す。"""
         z = self.zone_of.get(arb.shapes[1])
         body = arb.shapes[0].body
-        bl = self.ball_of.get(body)
-        if z is not None and bl is not None and z not in bl["used"] and self.result is None:
-            bl["used"].add(z)
-            self.spawns.append((bl, z))
+        if z is not None and self.result is None:
+            self.spawns.append((body, z))
 
     def drop(self, col):
         self.new_ball(col, (DROP_X + self.rng.uniform(-8, 8), DROP_Y), (self.rng.uniform(-10, 10), 0), set())
@@ -231,19 +230,14 @@ class Game:
         self.breaking = set()
         self.spawns = []
         self.space.step(dt)
-        for bl, z in self.spawns:   # 増殖:同じ場所から、少しずつ違う向きに分かれて進む
-            if bl not in self.balls:
-                continue
-            mult = self.zones[z]["mult"]
-            b = bl["body"]
+        for b, z in self.spawns:   # 加速:進む向きの速さを足す(横向きの速さはそのまま)
+            x, y = b.position
+            a = math.atan2(y - CY, x - CX)
+            fwd = pymunk.Vec2d(-math.sin(a), math.cos(a))
             v = b.velocity
-            for j in range(1, mult):
-                if len(self.balls) >= MAX_BALLS:
-                    break
-                ang = SPREAD * ((j + 1) // 2) * (1 if j % 2 else -1)
-                nb = self.new_ball(bl["col"], b.position, v.rotated(ang), bl["used"])
-                nb["body"].position = b.position + v.rotated(ang).normalized() * 3
-            self.events.append(("zone", self.t, (z, b.position.x, b.position.y)))
+            along = v.dot(fwd)
+            b.velocity = v + fwd * (max(along, 0.0) + BOOST_DV - along)
+            self.events.append(("zone", self.t, (z, x, y)))
         for k, body, speed in self.to_break:
             p = self.planks[k]
             if not p["alive"]:
@@ -325,8 +319,9 @@ def search(n, want):
 OFFSET_Y = 80                          # 物理の座標を画面上で少し下にずらして表示する
 # 明るいパステルの「おもちゃ箱」風(9本目の暗い夜の色合いとは変える)
 WOOD = (0.79, 0.63, 0.48)
-BALL_COL = {"yellow": (1.0, 0.80, 0.20), "red": (1.0, 0.55, 0.30), "blue": (0.45, 0.45, 0.55)}
-ANIMAL = {"yellow": 0, "red": 3, "blue": 6}   # 玉の代わりの動物:ひよこ → ネコ → パンダ
+BALL_COL = {"chick": (1.0, 0.80, 0.20), "cat": (1.0, 0.55, 0.30), "panda": (0.45, 0.45, 0.55),
+            "lion": (0.95, 0.65, 0.20)}
+ANIMAL = {"chick": 0, "cat": 3, "panda": 6, "lion": 7}   # 玉の代わりの動物:ひよこ → ネコ → パンダ → ライオン
 ANIMAL_SCALE = 1.35                    # 動物の絵の大きさ(当たり判定の半径に対して)
 GOLD = (1, 0.86, 0.2)
 MONO = "JetBrains Mono"
@@ -393,21 +388,54 @@ def plank_col(k):
     return hue(k / N_PLANKS * 2.0, 0.42, 0.98)
 
 
-def draw_zone(ctx, th, mult, flash):
-    """増殖ゾーン:通路を横切る光の帯と「×2」「×3」の文字。玉が通って増えた瞬間に強く光る。"""
+def draw_zone(ctx, th, t, flash):
+    """加速地面:虹色の板に白い矢印(>)が進む向きへ流れていく。乗った瞬間に明るく光る。"""
     a = wall_pt(th, 6)
     b = wall_pt(th + 2 * math.pi, -6)
-    col = ZONE_COL[mult]
-    for wd, al in ((26, 0.15 + 0.4 * flash), (10, 0.55 + 0.45 * flash)):
-        ctx.new_path()
-        ctx.move_to(*a)
-        ctx.line_to(*b)
-        ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-        ctx.set_source_rgba(*col, al)
-        ctx.set_line_width(wd)
-        ctx.stroke()
     mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
-    text(ctx, f"×{mult}", mx, my + 16, 46 + 16 * flash, rgb=col, sw=10)
+    ang = math.atan2(my - CY, mx - CX)
+    width = math.hypot(b[0] - a[0], b[1] - a[1])   # 通路の幅
+    length = 84.0                                   # 進む向きの長さ
+    ctx.save()
+    ctx.translate(mx, my)
+    ctx.rotate(ang + math.pi / 2)                   # x 軸 = 進む向き(時計回り)
+    rr = 10
+    ctx.new_path()
+    ctx.move_to(-length / 2 + rr, -width / 2)
+    ctx.arc(length / 2 - rr, -width / 2 + rr, rr, -math.pi / 2, 0)
+    ctx.arc(length / 2 - rr, width / 2 - rr, rr, 0, math.pi / 2)
+    ctx.arc(-length / 2 + rr, width / 2 - rr, rr, math.pi / 2, math.pi)
+    ctx.arc(-length / 2 + rr, -width / 2 + rr, rr, math.pi, 1.5 * math.pi)
+    ctx.close_path()
+    ctx.save()
+    ctx.clip_preserve()
+    g = cairo.LinearGradient(-length / 2, 0, length / 2, 0)
+    for k in range(7):   # 虹色(時間とともに流れる)
+        h = (k / 6 - t * 1.2) % 1.0
+        g.add_color_stop_rgb(k / 6, *hue(h, 0.75, 1.0))
+    ctx.set_source(g)
+    ctx.paint()
+    sp = 28.0
+    off = (t * 140) % sp
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    for j in range(-3, 4):   # 白い矢印「>」が進む向きに流れる
+        x0 = j * sp + off
+        ctx.new_path()
+        ctx.move_to(x0 - 8, -width * 0.32)
+        ctx.line_to(x0 + 6, 0)
+        ctx.line_to(x0 - 8, width * 0.32)
+        ctx.set_source_rgba(1, 1, 1, 0.9)
+        ctx.set_line_width(6)
+        ctx.stroke()
+    if flash > 0:
+        ctx.set_source_rgba(1, 1, 1, 0.6 * flash)
+        ctx.paint()
+    ctx.restore()
+    ctx.set_source_rgba(1, 1, 1, 0.95)
+    ctx.set_line_width(3)
+    ctx.stroke()
+    ctx.restore()
 
 
 def draw_planks(ctx, planks, alive):
@@ -609,12 +637,12 @@ def render(seed):
             hx = CX + rr * math.cos(a) + 1.5 * math.sin(t * 17 + ph)
             hy = CY + rr * math.sin(a) + 1.5 * math.cos(t * 19 + ph)
             draw_animal(ctx, hx, hy, 11, ANIMAL[col])
-        # 増殖ゾーン
-        for zi, (frac, mult) in enumerate(ZONES):
+        # 加速地面
+        for zi, frac in enumerate(PADS):
             th = TH_WOOD1 - (TH_WOOD1 - TH_WOOD0) * frac
             ft = zone_flash.get(zi)
-            flash = max(0.0, 1 - (t - ft) / 0.6) if ft is not None and t >= ft else 0.0
-            draw_zone(ctx, th, mult, flash)
+            flash = max(0.0, 1 - (t - ft) / 0.4) if ft is not None and t >= ft else 0.0
+            draw_zone(ctx, th, t, flash)
         # 消えていく玉
         keep = []
         for d in dying:
@@ -635,12 +663,11 @@ def render(seed):
 
         # ふつうの文字(参考動画と同じ等幅のカウンター)
         text(ctx, f"こわした積み木 {fr['cleared']} / {N_PLANKS}", W / 2, 1600, 54, sw=10)
-        text(ctx, f"♪ {SONG_TITLE}", W / 2, 1790, 48, rgb=(1, 0.6, 0.15), sw=10)
         # 残りの玉(まだ落ちてきていない玉)
         rest = [col for n_b, col in WAVES for _ in range(n_b)][fr["dropped"]:]
         for j, col in enumerate(rest):
             x = W / 2 + (j - (len(rest) - 1) / 2) * 40
-            draw_animal(ctx, W / 2 + (j - (len(rest) - 1) / 2) * 80, 1690, 28, ANIMAL[col])
+            draw_animal(ctx, W / 2 + (j - (len(rest) - 1) / 2) * 64, 1700, 26, ANIMAL[col])
         if angels is not None and over:
             angels.draw(ctx, t - end_t)
 
@@ -654,7 +681,7 @@ def render(seed):
         ctx.fill()
         text(ctx, "動物たちは積み木を", W / 2, 165, 80, sw=14)
         text(ctx, "全部こわせる？", W / 2, 295, 116, rgb=GOLD, sw=18)
-        text(ctx, "ひよこ → ネコ → パンダ の順にやってくる", W / 2, 370, 38, sw=8)
+        text(ctx, "ひよこ1 → ネコ2 → パンダ4 → ライオン5 がやってくる", W / 2, 370, 36, sw=8)
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "みんな力尽きた…", W / 2, 1000, 104 * (1.25 - 0.25 * k), rgb=(1, 0.3, 0.3), sw=20)
@@ -686,7 +713,7 @@ def render(seed):
 
 
 # ---------------------------------------------------------------- 音
-MIX_GAIN = 0.45  # 通常部分の音量(約 -18dB になるよう調整)
+MIX_GAIN = 0.58  # 通常部分の音量(約 -18dB になるよう調整)
 HOLY_GAIN = 0.85
 F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動画と同じくらい)
 
@@ -702,12 +729,16 @@ def wood_tick(freq, amp):
     return amp * (y + click) * np.minimum(1, t / 0.0006)
 
 
-# 板が1枚割れるたびに曲が1音進む:ロシア民謡「コロブチカ」(作者不詳・パブリックドメイン)を繰り返す
-SONG_TITLE = "コロブチカ"
-MELODY = [76, 71, 72, 74, 72, 71, 69, 69, 72, 76, 74, 72, 71, 72, 74, 76, 72, 69, 69,
-          74, 77, 81, 79, 77, 76, 72, 76, 74, 72, 71, 71, 72, 74, 76, 72, 69, 69]
-BASS = [45, 52, 45, 52, 45, 52, 45, 45, 45, 52, 45, 52, 44, 44, 44, 52, 45, 45, 45,
-        50, 50, 50, 50, 50, 48, 48, 48, 48, 48, 44, 44, 44, 52, 52, 45, 45, 45]
+# 板が1枚割れるたびに曲が1音進む:「ハッピーバースデー・トゥー・ユー」
+# (メロディは1893年の「Good Morning to All」(ミルドレッド・ヒル作)と同じ・パブリックドメイン)を繰り返す
+MELODY = [67, 67, 69, 67, 72, 71,
+          67, 67, 69, 67, 74, 72,
+          67, 67, 79, 76, 72, 71, 69,
+          77, 77, 76, 72, 74, 72]
+BASS = [48, 48, 48, 48, 48, 43,
+        43, 43, 43, 43, 43, 48,
+        48, 48, 48, 48, 41, 41, 41,
+        41, 41, 48, 48, 43, 48]
 
 
 def marimba(freq, amp):
@@ -756,9 +787,11 @@ def synth_audio(res, duration, path):
             add(marimba(midi_hz(MELODY[m]), 0.55 * amp), t, pan=pan)
             add(marimba(midi_hz(BASS[m]), 0.22), t)
             add(wood_tick(tick_freq(x, y), 0.15 * amp), t, pan=pan)   # 板が割れる「コッ」
-        elif kind == "zone":
-            for k_, mm in enumerate((84, 88, 91)):   # 増えたときのきらめき
-                add(chime(midi_hz(mm), 0.4, 0.08), t + k_ * 0.04)
+        elif kind == "zone":   # 加速の「シュイーン」
+            n = int(0.35 * SR)
+            tt = np.arange(n) / SR
+            f = 500 + 2200 * tt / 0.35
+            add(0.07 * np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt * 6), t, pan=(data[1] - CX) / 700)
     extra = np.zeros_like(out)
     if fail:
         sig = scream(SR)
