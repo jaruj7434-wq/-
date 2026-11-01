@@ -456,6 +456,143 @@ def draw_planks(ctx, planks, alive):
         ctx.stroke()
 
 
+def draw_crying_cat(ctx, t, saved=False):
+    """真ん中のゴールにいるネコ。両手を上に伸ばして泣いていて、吹き出しの「help me!!」が出たり消えたりする。"""
+    x, y = CX, CY + 6
+    r = 36
+    orange, dark = (1.0, 0.72, 0.38), (0.55, 0.32, 0.12)
+    wob = 0.06 * math.sin(t * 9)   # 泣きじゃくって小さくゆれる
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(wob)
+    ctx.set_line_width(2.5)
+    # とがったネコ耳(頭の上)
+    for sx in (-1, 1):
+        ctx.new_path()
+        ctx.move_to(sx * r * 0.92, -r * 0.3)
+        ctx.line_to(sx * r * 0.82, -r * 1.25)
+        ctx.line_to(sx * r * 0.18, -r * 0.88)
+        ctx.close_path()
+        ctx.set_source_rgb(*orange)
+        ctx.fill_preserve()
+        ctx.set_source_rgb(*dark)
+        ctx.stroke()
+        ctx.new_path()
+        ctx.move_to(sx * r * 0.78, -r * 0.45)
+        ctx.line_to(sx * r * 0.74, -r * 1.02)
+        ctx.line_to(sx * r * 0.36, -r * 0.82)
+        ctx.close_path()
+        ctx.set_source_rgb(1.0, 0.7, 0.75)
+        ctx.fill()
+    # 顔
+    ctx.new_path()
+    ctx.arc(0, 0, r, 0, 2 * math.pi)
+    ctx.set_source_rgb(*orange)
+    ctx.fill_preserve()
+    ctx.set_source_rgb(*dark)
+    ctx.stroke()
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    if saved:   # 助かったらにっこり
+        for sx in (-1, 1):
+            ctx.new_path()
+            ctx.arc(sx * 10, -2, 6, math.pi * 1.1, math.pi * 1.9)
+            ctx.set_source_rgb(0.2, 0.12, 0.08)
+            ctx.set_line_width(3)
+            ctx.stroke()
+        ctx.new_path()
+        ctx.arc(0, 8, 8, 0.15 * math.pi, 0.85 * math.pi)
+        ctx.stroke()
+    else:
+        # ぎゅっと閉じた泣き目「> <」
+        for sx in (-1, 1):
+            ctx.new_path()
+            ctx.move_to(sx * 15, -8)
+            ctx.line_to(sx * 7, -3)
+            ctx.line_to(sx * 15, 2)
+            ctx.set_source_rgb(0.2, 0.12, 0.08)
+            ctx.set_line_width(3)
+            ctx.stroke()
+        # 大きく開いた泣き口
+        ctx.new_path()
+        ctx.save()
+        ctx.translate(0, 13)
+        ctx.scale(7, 5 + 1.5 * math.sin(t * 12))
+        ctx.arc(0, 0, 1, 0, 2 * math.pi)
+        ctx.restore()
+        ctx.set_source_rgb(0.6, 0.15, 0.15)
+        ctx.fill()
+        # 流れ落ちる涙
+        for sx in (-1, 1):
+            for k in range(2):
+                ph = (t * 1.4 + k * 0.5 + (0.25 if sx > 0 else 0)) % 1.0
+                ctx.new_path()
+                ctx.arc(sx * (13 + 4 * ph), 4 + 26 * ph, 3.5 * (1 - 0.3 * ph), 0, 2 * math.pi)
+                ctx.set_source_rgba(0.35, 0.7, 1.0, 1 - ph)
+                ctx.fill()
+    # ほっぺとひげ
+    for sx in (-1, 1):
+        ctx.new_path()
+        ctx.arc(sx * 20, 9, 5, 0, 2 * math.pi)
+        ctx.set_source_rgba(1, 0.45, 0.5, 0.45)
+        ctx.fill()
+        for k in (-1, 1):
+            ctx.new_path()
+            ctx.move_to(sx * 24, 3 + k * 3)
+            ctx.line_to(sx * 40, k * 6)
+            ctx.set_source_rgb(*dark)
+            ctx.set_line_width(1.5)
+            ctx.stroke()
+    # 助けを求めて前に伸ばした両手(顔の左右下から外側の上へ)
+    if not saved:
+        for sx in (-1, 1):
+            reach = 3 * math.sin(t * 7 + sx)
+            ctx.new_path()
+            ctx.save()
+            ctx.translate(sx * (r * 0.95 + reach), r * 0.45)
+            ctx.rotate(sx * 0.9)
+            ctx.scale(9, 19)
+            ctx.arc(0, 0, 1, 0, 2 * math.pi)
+            ctx.restore()
+            ctx.set_source_rgb(*orange)
+            ctx.fill_preserve()
+            ctx.set_source_rgb(*dark)
+            ctx.set_line_width(2.5)
+            ctx.stroke()
+            ctx.new_path()   # 肉球
+            ctx.arc(sx * (r * 1.32 + reach), r * 0.18, 5, 0, 2 * math.pi)
+            ctx.set_source_rgb(1.0, 0.7, 0.75)
+            ctx.fill()
+    ctx.restore()
+    # 吹き出し(出たり消えたりをくり返す)
+    on = (t % 1.6) < 1.0
+    if on or saved:
+        msg = "thank you!!" if saved else "help me!!"
+        bx, by = x + 62, y - 84
+        ctx.select_font_face("DejaVu Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        ctx.set_font_size(24)
+        ext = ctx.text_extents(msg)
+        w_, h_ = ext.width + 26, 40
+        ctx.new_path()
+        rr = 14
+        ctx.move_to(bx - w_ / 2 + rr, by - h_ / 2)
+        ctx.arc(bx + w_ / 2 - rr, by - h_ / 2 + rr, rr, -math.pi / 2, 0)
+        ctx.arc(bx + w_ / 2 - rr, by + h_ / 2 - rr, rr, 0, math.pi / 2)
+        ctx.line_to(bx - w_ / 2 + 22, by + h_ / 2)
+        ctx.line_to(bx - w_ / 2 + 4, by + h_ / 2 + 16)   # しっぽ(ネコの方へ)
+        ctx.line_to(bx - w_ / 2 + 12, by + h_ / 2)
+        ctx.arc(bx - w_ / 2 + rr, by + h_ / 2 - rr, rr, math.pi / 2, math.pi)
+        ctx.arc(bx - w_ / 2 + rr, by - h_ / 2 + rr, rr, math.pi, 1.5 * math.pi)
+        ctx.close_path()
+        ctx.set_source_rgb(1, 1, 1)
+        ctx.fill_preserve()
+        ctx.set_source_rgb(0.25, 0.2, 0.3)
+        ctx.set_line_width(2.5)
+        ctx.stroke()
+        ctx.move_to(bx - ext.width / 2 - ext.x_bearing, by + ext.height / 2 - 2)
+        ctx.set_source_rgb(0.9, 0.2, 0.3)
+        ctx.show_text(msg)
+
+
 def draw_creature(ctx, x, y, kind, trail, vx=0.0, fade=1.0):
     """玉の代わりの動物。進む向きに少し傾き、後ろにうっすら足あとのような残像。"""
     r, g_, b = BALL_COL[kind]
@@ -630,13 +767,8 @@ def render(seed):
             ctx.restore()
             keep.append(sh)
         shards = keep
-        # 中心の小部屋に集まった小さな玉(ぷるぷる動く)
-        for col, a0, r0, ph in hub:
-            a = a0 + 0.6 * math.sin(t * 1.3 + ph)
-            rr = r0 + 3 * math.sin(t * 5.1 + ph)
-            hx = CX + rr * math.cos(a) + 1.5 * math.sin(t * 17 + ph)
-            hy = CY + rr * math.sin(a) + 1.5 * math.cos(t * 19 + ph)
-            draw_animal(ctx, hx, hy, 11, ANIMAL[col])
+        # 真ん中のゴール:泣きながら手を伸ばして助けを待つネコ
+        draw_crying_cat(ctx, t, saved=(over and not fail))
         # 加速地面
         for zi, frac in enumerate(PADS):
             th = TH_WOOD1 - (TH_WOOD1 - TH_WOOD0) * frac
@@ -713,7 +845,7 @@ def render(seed):
 
 
 # ---------------------------------------------------------------- 音
-MIX_GAIN = 0.58  # 通常部分の音量(約 -18dB になるよう調整)
+MIX_GAIN = 0.47  # 通常部分の音量(約 -18dB になるよう調整)
 HOLY_GAIN = 0.85
 F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動画と同じくらい)
 
@@ -737,6 +869,10 @@ MELODY = [72, 72, 79, 79, 81, 81, 79, 77, 77, 76, 76, 74, 74, 72,
 BASS = [C, C, C, C, F, F, C, F, F, C, C, G, G, C,
         C, C, F, F, C, C, G, C, C, F, F, C, C, G,
         C, C, C, C, F, F, C, F, F, C, C, G, G, C]
+BEAT = 0.30                            # 4分音符の長さ(秒)。本来のきらきら星くらいの速さ
+DURS = [1, 1, 1, 1, 1, 1, 2] * 6       # 音の長さ(拍):「きら きら ひか る お そら の ほし よ ー」
+# 一気にこわれているときは、曲はこのテンポで進む(前の音の長さが経つまで次の音には進まない)。
+# ゆっくりこわれているときは、こわれた瞬間に次の音が鳴る。
 
 
 def marimba(freq, amp):
@@ -775,16 +911,19 @@ def synth_audio(res, duration, path):
         out[i:j, 1] += sig[: j - i] * math.sqrt(0.5 * (1 + pan))
 
     note_i = -1
+    next_ok = 0.0
     for kind, t, data in events:
         if kind == "break" and (end_t is None or t <= end_t):
             k, x, y, speed = data
-            note_i += 1
-            m = note_i % len(MELODY)
             amp = 0.5 + 0.5 * min(1.0, speed / 900)   # 速い玉ほど強い音
             pan = (x - CX) / (R_OUT * 1.6)
-            add(marimba(midi_hz(MELODY[m]), 0.55 * amp), t, pan=pan)
-            add(marimba(midi_hz(BASS[m]), 0.22), t)
-            add(wood_tick(tick_freq(x, y), 0.15 * amp), t, pan=pan)   # 板が割れる「コッ」
+            add(wood_tick(tick_freq(x, y), 0.15 * amp), t, pan=pan)   # 積み木がこわれる「コッ」
+            if t >= next_ok:   # 前の音の長さが経っていたら、曲が1音進む
+                note_i += 1
+                m = note_i % len(MELODY)
+                add(marimba(midi_hz(MELODY[m]), 0.55 * amp), t, pan=pan)
+                add(marimba(midi_hz(BASS[m]), 0.22), t)
+                next_ok = t + DURS[m] * BEAT - 0.01
         elif kind == "zone":   # 加速の「シュイーン」
             n = int(0.35 * SR)
             tt = np.arange(n) / SR
