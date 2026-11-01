@@ -29,6 +29,9 @@ import pymunk
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "ball_escape"))
 from ball_escape import midi_hz, text  # noqa: E402
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "evolve"))
+from evolve import draw_animal  # noqa: E402   7本目の動物の絵(ひよこ・ネコ・パンダなど)
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 from angels import DURATION as ANGEL_DUR, AngelShow, holy_music  # noqa: E402
@@ -320,13 +323,14 @@ def search(n, want):
 
 # ---------------------------------------------------------------- 描画
 OFFSET_Y = 80                          # 物理の座標を画面上で少し下にずらして表示する
-BG = (0.02, 0.027, 0.047)
-STEEL = (0.62, 0.72, 0.88)
+# 明るいパステルの「おもちゃ箱」風(9本目の暗い夜の色合いとは変える)
 WOOD = (0.79, 0.63, 0.48)
-BALL_COL = {"yellow": (1.0, 0.84, 0.22), "red": (1.0, 0.32, 0.30), "blue": (0.36, 0.66, 1.0)}
+BALL_COL = {"yellow": (1.0, 0.80, 0.20), "red": (1.0, 0.55, 0.30), "blue": (0.45, 0.45, 0.55)}
+ANIMAL = {"yellow": 0, "red": 3, "blue": 6}   # 玉の代わりの動物:ひよこ → ネコ → パンダ
+ANIMAL_SCALE = 1.35                    # 動物の絵の大きさ(当たり判定の半径に対して)
 GOLD = (1, 0.86, 0.2)
 MONO = "JetBrains Mono"
-HUB_R = 46                             # 中心の小部屋(消えた玉が小さくなって集まる)
+HUB_R = 46                             # 中心のゴール(消えた動物が小さくなって集まる)
 
 
 def plank_quad(th):
@@ -343,33 +347,50 @@ def draw_walls(ctx):
     n = int(TH_END / 0.02)
     lines = [[wall_pt(TH_END * k / n) for k in range(n + 1)],
              [(CHUTE_L, CY), (CHUTE_L, CHUTE_TOP)], [(CHUTE_R, CY), (CHUTE_R, CHUTE_TOP)]]
-    for width, alpha in ((12, 0.06), (4, 0.9)):   # うっすら光る → 細い芯の線
-        for pts in lines:
-            ctx.new_path()
-            ctx.move_to(*pts[0])
-            for p in pts[1:]:
-                ctx.line_to(*p)
-            ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-            ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-            ctx.set_source_rgba(*STEEL, alpha)
-            ctx.set_line_width(width)
-            ctx.stroke()
-    # うずまきの外側の端の白い点
+    # 盤(白いおもちゃの台)と影
     ctx.new_path()
-    ctx.arc(CX + R_OUT, CY, 6, 0, 2 * math.pi)
-    ctx.set_source_rgb(1, 1, 1)
+    ctx.arc(CX + 10, CY + 18, R_OUT + 40, 0, 2 * math.pi)
+    ctx.set_source_rgba(0.35, 0.25, 0.45, 0.18)
     ctx.fill()
-    # 中心の小部屋
+    ctx.new_path()
+    ctx.arc(CX, CY, R_OUT + 40, 0, 2 * math.pi)
+    ctx.set_source_rgb(1.0, 0.98, 0.94)
+    ctx.fill()
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    for k, pts in enumerate(lines):   # 白いチューブに虹色のふち
+        for width, mode in ((12, "rim"), (6, "core")):
+            for i in range(len(pts) - 1):
+                ctx.new_path()
+                ctx.move_to(*pts[i])
+                ctx.line_to(*pts[i + 1])
+                if mode == "rim":
+                    ctx.set_source_rgb(*hue(i / len(pts) * 3 if k == 0 else 0.55, 0.65, 0.95))
+                else:
+                    ctx.set_source_rgb(1, 1, 1)
+                ctx.set_line_width(width)
+                ctx.stroke()
+    # 中心のゴール(動物たちが集まる小部屋)
     ctx.new_path()
     ctx.arc(CX, CY, HUB_R, 0, 2 * math.pi)
-    ctx.set_source_rgb(0.01, 0.015, 0.03)
+    ctx.set_source_rgb(1.0, 0.93, 0.70)
     ctx.fill_preserve()
-    ctx.set_source_rgba(*STEEL, 0.9)
-    ctx.set_line_width(3)
+    ctx.set_source_rgb(1.0, 0.65, 0.25)
+    ctx.set_line_width(5)
     ctx.stroke()
 
 
-ZONE_COL = {2: (0.35, 0.95, 1.0), 3: (1.0, 0.45, 0.95)}
+ZONE_COL = {2: (0.0, 0.62, 1.0), 3: (0.95, 0.15, 0.65)}
+
+
+def hue(h, s=0.45, v=1.0):
+    import colorsys
+    return colorsys.hsv_to_rgb(h % 1.0, s, v)
+
+
+def plank_col(k):
+    """積み木の色:うずまきに沿って虹色に少しずつ変わるパステルカラー。"""
+    return hue(k / N_PLANKS * 2.0, 0.42, 0.98)
 
 
 def draw_zone(ctx, th, mult, flash):
@@ -399,12 +420,35 @@ def draw_planks(ctx, planks, alive):
         for c in q[1:]:
             ctx.line_to(*c)
         ctx.close_path()
-        tint = p["tint"]
-        ctx.set_source_rgb(WOOD[0] + tint, WOOD[1] + tint, WOOD[2] + tint * 0.8)
+        c = p["col"]
+        ctx.set_source_rgb(*c)
         ctx.fill_preserve()
-        ctx.set_source_rgba(0.25, 0.15, 0.08, 0.9)
+        ctx.set_source_rgba(c[0] * 0.55, c[1] * 0.55, c[2] * 0.55, 0.9)
         ctx.set_line_width(1.6)
         ctx.stroke()
+
+
+def draw_creature(ctx, x, y, kind, trail, vx=0.0, fade=1.0):
+    """玉の代わりの動物。進む向きに少し傾き、後ろにうっすら足あとのような残像。"""
+    r, g_, b = BALL_COL[kind]
+    ctx.push_group()
+    for j, (tx, ty) in enumerate(trail):
+        a = (j + 1) / (len(trail) + 1)
+        ctx.new_path()
+        ctx.arc(tx, ty, BALL_R * (0.3 + 0.4 * a), 0, 2 * math.pi)
+        ctx.set_source_rgba(r, g_, b, 0.30 * a)
+        ctx.fill()
+    ctx.new_path()   # 影
+    ctx.arc(x + 4, y + 7, BALL_R * 1.1, 0, 2 * math.pi)
+    ctx.set_source_rgba(0.2, 0.15, 0.3, 0.18)
+    ctx.fill()
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(max(-0.5, min(0.5, vx / 1500)))
+    draw_animal(ctx, 0, 0, BALL_R * ANIMAL_SCALE, ANIMAL[kind])
+    ctx.restore()
+    ctx.pop_group_to_source()
+    ctx.paint_with_alpha(fade)
 
 
 def draw_ball(ctx, x, y, col, trail, fade=1.0):
@@ -451,8 +495,9 @@ def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
     planks = res["planks"]
-    for p in planks:
+    for k, p in enumerate(planks):
         p["quad"] = plank_quad(p["th"])
+        p["col"] = plank_col(k)
     fail = result == "fail"
     os.makedirs(OUT_DIR, exist_ok=True)
     silent = os.path.join(OUT_DIR, f"spiral_{seed}_video.mp4")
@@ -464,10 +509,19 @@ def render(seed):
     # 動かない背景と壁は最初に1回だけ描いておく
     static = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     sc = cairo.Context(static)
-    vg = cairo.RadialGradient(CX, CY + OFFSET_Y, 200, CX, CY + OFFSET_Y, 1250)
-    vg.add_color_stop_rgb(0, 0.035, 0.045, 0.075)
-    vg.add_color_stop_rgb(1, *BG)
+    vg = cairo.LinearGradient(0, 0, 0, H)   # 昼の空色 → 桃色のやさしいグラデーション
+    vg.add_color_stop_rgb(0, 0.62, 0.84, 1.0)
+    vg.add_color_stop_rgb(0.55, 0.86, 0.90, 1.0)
+    vg.add_color_stop_rgb(1, 1.0, 0.86, 0.90)
     sc.set_source(vg)
+    sc.paint()
+    dot_rng = np.random.default_rng(7)
+    for _ in range(70):   # 水玉もよう
+        sc.new_path()
+        sc.arc(dot_rng.uniform(0, W), dot_rng.uniform(0, H), dot_rng.uniform(6, 22), 0, 2 * math.pi)
+        sc.set_source_rgba(1, 1, 1, 0.35)
+        sc.fill()
+    sc.set_source_rgba(0, 0, 0, 0)
     sc.paint()
     sc.translate(0, OFFSET_Y)
     draw_walls(sc)
@@ -494,13 +548,14 @@ def render(seed):
             if kind == "break":
                 k, x, y, speed = data
                 q = planks[k]["quad"]
+                pc = planks[k]["col"]
                 mx, my = (q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2
                 for _ in range(6):   # 木くず
                     a = rng.uniform(0, 2 * math.pi)
                     v = rng.uniform(60, 260)
                     shards.append([mx + rng.uniform(-14, 14), my + rng.uniform(-14, 14),
                                    math.cos(a) * v, math.sin(a) * v, rng.uniform(0, math.pi),
-                                   rng.uniform(-12, 12), rng.uniform(4, 11), et])
+                                   rng.uniform(-12, 12), rng.uniform(4, 11), et, pc])
             elif kind == "zone":
                 zone_flash[data[0]] = et
             elif kind == "die":   # 勢いがなくなった玉は、その場で薄くなって消える
@@ -542,7 +597,7 @@ def render(seed):
             ctx.translate(sh[0], sh[1])
             ctx.rotate(sh[4])
             ctx.rectangle(-sh[6] / 2, -1.6, sh[6], 3.2)
-            ctx.set_source_rgba(*WOOD, 1 - age / 0.8)
+            ctx.set_source_rgba(*sh[8], 1 - age / 0.8)
             ctx.fill()
             ctx.restore()
             keep.append(sh)
@@ -553,10 +608,7 @@ def render(seed):
             rr = r0 + 3 * math.sin(t * 5.1 + ph)
             hx = CX + rr * math.cos(a) + 1.5 * math.sin(t * 17 + ph)
             hy = CY + rr * math.sin(a) + 1.5 * math.cos(t * 19 + ph)
-            ctx.new_path()
-            ctx.arc(hx, hy, 6, 0, 2 * math.pi)
-            ctx.set_source_rgb(*BALL_COL[col])
-            ctx.fill()
+            draw_animal(ctx, hx, hy, 11, ANIMAL[col])
         # 増殖ゾーン
         for zi, (frac, mult) in enumerate(ZONES):
             th = TH_WOOD1 - (TH_WOOD1 - TH_WOOD0) * frac
@@ -569,45 +621,43 @@ def render(seed):
             age = t - d[0]
             if age < FADE:
                 k = 1 - age / FADE
-                draw_ball(ctx, d[1], d[2], BALL_COL[d[3]], d[4][-int(8 * k):] if k > 0.15 else [], fade=k)
+                draw_creature(ctx, d[1], d[2], d[3], d[4][-int(8 * k):] if k > 0.15 else [], fade=k)
                 keep.append(d)
         dying = keep
         # 玉
         for bid, x, y, col in fr["balls"]:
             tr = trails.setdefault(bid, [])
-            draw_ball(ctx, x, y, BALL_COL[col], tr)
+            vx = (x - tr[-1][0]) * FPS if tr else 0.0
+            draw_creature(ctx, x, y, col, tr, vx)
             tr.append((x, y))
             del tr[:-10]
         ctx.restore()
 
         # ふつうの文字(参考動画と同じ等幅のカウンター)
-        mono(ctx, f"WOOD CLEARED {fr['cleared']} / {N_PLANKS}", W / 2, 1585, 40, (0.62, 0.64, 0.68))
-        text(ctx, f"♪ {SONG_TITLE}", W / 2, 1745, 44, rgb=(1, 0.9, 0.6), sw=10)
+        text(ctx, f"こわした積み木 {fr['cleared']} / {N_PLANKS}", W / 2, 1600, 54, sw=10)
+        text(ctx, f"♪ {SONG_TITLE}", W / 2, 1790, 48, rgb=(1, 0.6, 0.15), sw=10)
         # 残りの玉(まだ落ちてきていない玉)
         rest = [col for n_b, col in WAVES for _ in range(n_b)][fr["dropped"]:]
         for j, col in enumerate(rest):
             x = W / 2 + (j - (len(rest) - 1) / 2) * 40
-            ctx.new_path()
-            ctx.arc(x, 1650, 11, 0, 2 * math.pi)
-            ctx.set_source_rgba(*BALL_COL[col], 0.85)
-            ctx.fill()
+            draw_animal(ctx, W / 2 + (j - (len(rest) - 1) / 2) * 80, 1690, 28, ANIMAL[col])
         if angels is not None and over:
             angels.draw(ctx, t - end_t)
 
         # 上の帯
         g = cairo.LinearGradient(0, 0, 0, 400)
-        g.add_color_stop_rgba(0, 0.01, 0.015, 0.03, 0.96)
-        g.add_color_stop_rgba(0.8, 0.01, 0.015, 0.03, 0.85)
-        g.add_color_stop_rgba(1, 0.01, 0.015, 0.03, 0.0)
+        g.add_color_stop_rgba(0, 1, 1, 1, 0.55)
+        g.add_color_stop_rgba(0.8, 1, 1, 1, 0.35)
+        g.add_color_stop_rgba(1, 1, 1, 1, 0.0)
         ctx.rectangle(0, 0, W, 400)
         ctx.set_source(g)
         ctx.fill()
-        text(ctx, "玉は木を全部", W / 2, 165, 82, sw=14)
-        text(ctx, "こわせる？", W / 2, 295, 124, rgb=GOLD, sw=18)
-        text(ctx, "Will the ball break through all the wood?", W / 2, 360, 36, rgb=(0.85, 0.85, 0.9), sw=8)
+        text(ctx, "動物たちは積み木を", W / 2, 165, 80, sw=14)
+        text(ctx, "全部こわせる？", W / 2, 295, 116, rgb=GOLD, sw=18)
+        text(ctx, "ひよこ → ネコ → パンダ の順にやってくる", W / 2, 370, 38, sw=8)
         if over and fail:
             k = min(1.0, after / 0.25)
-            text(ctx, "玉が尽きた…", W / 2, 1000, 140 * (1.6 - 0.6 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, "みんな力尽きた…", W / 2, 1000, 104 * (1.25 - 0.25 * k), rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"あと{N_PLANKS - res['cleared']}枚だったのに…", W / 2, 1130, 72, sw=12)
         elif over:
             age = t - end_t
