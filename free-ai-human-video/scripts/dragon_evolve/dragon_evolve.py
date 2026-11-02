@@ -414,6 +414,23 @@ def draw_chart(ctx, sprites, best, t):
              rgb=GOLD if goal else ((1, 1, 1) if reached else (0.6, 0.6, 0.65)), sw=6)
 
 
+def remix(seed):
+    """映像はそのままで、音だけ作り直して差し替える。"""
+    res = simulate(seed)
+    final = os.path.join(OUT_DIR, f"dragon_{seed}.mp4")
+    tmp = os.path.join(OUT_DIR, f"dragon_{seed}_tmp.mp4")
+    wav = os.path.join(OUT_DIR, f"dragon_{seed}.wav")
+    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", final],
+                               capture_output=True, text=True).stdout)
+    synth_audio(res, dur, wav)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", final, "-i", wav, "-map", "0:v", "-map", "1:a",
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest",
+                    "-movflags", "+faststart", tmp], check=True)
+    os.replace(tmp, final)
+    os.remove(wav)
+    print("音を差し替えました:", final)
+
+
 def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
@@ -656,7 +673,10 @@ def synth_audio(res, duration, path):
         k = int(d * SR)
         wet[k:] += out[:-k] * g
     wet = wet[: int(duration * SR)]
-    wet = np.tanh(2.0 * wet / max(1e-9, np.max(np.abs(wet)))) / np.tanh(2.0) * MIX_GAIN
+    # 最後の「ドーン!」だけが大きくて全体が小さくならないよう、ほぼ最大(上位0.5%を除く)の大きさを基準にそろえる
+    loud = np.abs(wet[np.abs(wet) > 1e-4])
+    ref = np.percentile(loud, 99.5) if len(loud) else 1.0
+    wet = np.tanh(1.5 * wet / max(1e-9, ref)) / np.tanh(1.5) * MIX_GAIN
     wet = np.clip(wet + (0.95 if fail else 1.0) * extra[: len(wet)], -0.98, 0.98)
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
@@ -667,12 +687,14 @@ def synth_audio(res, duration, path):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("mode", choices=["search", "render"])
+    ap.add_argument("mode", choices=["search", "render", "remix"])
     ap.add_argument("--seed", type=int)
     ap.add_argument("--want", choices=["fail", "success"], default="fail")
     ap.add_argument("-n", type=int, default=200)
     a = ap.parse_args()
     if a.mode == "search":
         search(a.n, a.want)
+    elif a.mode == "remix":
+        remix(a.seed)
     else:
         render(a.seed)
