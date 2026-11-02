@@ -498,9 +498,6 @@ def render(seed):
         if fr["over"] is not None and not over:   # あふれそうな警告
             if int(t * 6) % 2 == 0:
                 text(ctx, "つまりそう！", W / 2, OVER_Y + 70, 60, rgb=(1, 0.35, 0.35), sw=12)
-        if t < 2.6 and not over:   # 冒頭のひとこと(参考動画の「It only gets deeper…」)
-            al = min(1.0, t / 0.3, (2.6 - t) / 0.4)
-            text(ctx, "ここからどんどん深くなる…", W / 2, FL_CY - 40, 60, sw=12, alpha=al)
         if angels is not None and over:
             angels.draw(ctx, t - end_t)
 
