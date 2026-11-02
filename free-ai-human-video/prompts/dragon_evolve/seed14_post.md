@@ -1,7 +1,7 @@
 # 投稿用テキスト:dragon_14.mp4(卵が合体して進化し、ドラゴンをめざす回・失敗パターン)
 
-- 動画: Higgs Field のライブラリに保存(media_id 7cf72ee3-37ec-4f17-ad84-c8d35e4e9b63)
-  https://d2ol7oe51mr4n9.cloudfront.net/user_3IAIfINAmehvTGXEdm9EGpVegmO/7cf72ee3-37ec-4f17-ad84-c8d35e4e9b63.mp4
+- 動画: Higgs Field のライブラリに保存(media_id 0e9bd335-d007-44c4-a4dc-183a8aee8466)
+  https://d2ol7oe51mr4n9.cloudfront.net/user_3IAIfINAmehvTGXEdm9EGpVegmO/0e9bd335-d007-44c4-a4dc-183a8aee8466.mp4
   (1080x1920 / 60fps / 43.8秒 / H.264 + AAC)
 - 再生成: `python scripts/dragon_evolve/dragon_evolve.py render --seed 14`(写真は assets/source/dragon/stage1〜7.png)
   ※書き出しは Higgs Field のクラウド作業環境(sandbox_exec。cairocffi を cairo として使用)で行った
