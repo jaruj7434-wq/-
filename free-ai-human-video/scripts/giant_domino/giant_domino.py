@@ -40,10 +40,13 @@ GRAVITY = 1500.0
 
 H0 = 30.0                 # 最初のドミノの高さ
 N1, R1 = 60, 1.035        # ふつうに大きくなっていく区間:枚数, 1枚ごとの倍率
-N2, R2 = 5, 1.50          # 巨大化ゾーン:枚数, 1枚ごとの倍率
+N2, R2 = 5, float(os.environ.get("R2", 1.49))          # 巨大化ゾーン:枚数, 1枚ごとの倍率
 K = 0.6                   # ドミノの間隔(手前のドミノの高さに対する割合)
 JIT = 0.15                # 間隔のばらつき(±)
 THICK = 0.18              # ドミノの厚み(高さに対する割合)
+BELL_GAP = float(os.environ.get("BELL_GAP", 0.98))  # 最後のドミノの前の面から鐘のふちまでの距離(最後のドミノの高さに対する割合)
+BELL_JIT = float(os.environ.get("BELL_JIT", 0.12))  # 鐘の位置のばらつき(±・ドミノの間隔と同じく置き方の誤差)
+BELL_SIZE = 0.55          # 鐘の大きさ(最後のドミノの高さに対する割合)
 STOP_WAIT = 3.0           # これだけ次のドミノが倒れなければ止まった(失敗)
 OUTRO = 2.5
 
@@ -86,8 +89,24 @@ class Game:
             if i + 1 < N:
                 x += w + K * h * (1 + rng.uniform(-JIT, JIT))
         # 鐘(最後のドミノが倒れこむ先)
+        # 鐘は床の上につるされた本物の当たり判定。倒れた巨大ドミノがふちに触れたら鳴る
         hl = self.hs[-1]
-        self.bell_x = x + THICK * hl / 2 + hl * 0.95
+        bs = BELL_SIZE * hl
+        self.bell_x = x + THICK * hl + BELL_GAP * hl * (1 + rng.uniform(-BELL_JIT, BELL_JIT)) + 0.55 * bs
+        bx = self.bell_x
+        bell = pymunk.Poly(sp.static_body, [(bx - 0.22 * bs, -1.25 * bs), (bx + 0.22 * bs, -1.25 * bs),
+                                            (bx + 0.55 * bs, -0.4 * bs), (bx - 0.55 * bs, -0.4 * bs)])
+        bell.friction, bell.elasticity = 0.5, 0.1
+        bell.collision_type = 2
+        sp.add(bell)
+        for sh in self.doms[-1].shapes:
+            sh.collision_type = 1
+        self.bell_hit = False
+        self.landed = False
+
+        def on_bell(arb, space, data):
+            self.bell_hit = True
+        sp.on_collision(1, 2, begin=on_bell)
         b0 = self.doms[0]
         b0.apply_impulse_at_local_point((b0.mass * 60, 0), (0, -self.hs[0] * 0.4))   # 最初のドミノを指で軽く押す
         self.fell = [None] * N
@@ -102,11 +121,19 @@ class Game:
             if self.fell[i] is None and abs(b.angle) > 0.5:
                 self.fell[i] = self.t
                 self.events.append(("fall", self.t, i))
+        if self.fell[-1] is not None and not self.landed and abs(self.doms[-1].angle) > 1.45:
+            self.landed = True   # 巨大ドミノが床にドスン
+            self.events.append(("land", self.t, None))
         if self.result is None:
             last = max((i for i in range(N) if self.fell[i] is not None), default=-1)
-            if last == N - 1 and abs(self.doms[-1].angle) > 1.2:   # 巨大ドミノが鐘まで倒れこんだ
+            if self.bell_hit:   # 巨大ドミノが鐘に当たった
                 self.result, self.result_t = "success", self.t
                 self.events.append(("bell", self.t, None))
+            elif last == N - 1 and self.t - self.fell[last] > 1.5 \
+                    and abs(self.doms[-1].angular_velocity) < 0.05 and abs(self.doms[-1].velocity.x) < 5:
+                # 最後のドミノは倒れたが、鐘に届かずに止まった
+                self.result, self.result_t = "fail", self.t
+                self.events.append(("miss", self.t, None))
             elif last >= 0 and last < N - 1 and self.t - self.fell[last] > STOP_WAIT \
                     and abs(self.doms[last + 1].angular_velocity) < 0.05:   # 次のドミノがもう動いていない
                 self.result, self.result_t = "fail", self.t
@@ -252,11 +279,13 @@ def draw_bell(ctx, x, y_base, size, swing):
     ctx.translate(x, y_base - size * 1.25)
     # 台
     ctx.set_source_rgb(0.35, 0.22, 0.12)
-    ctx.rectangle(-size * 0.75, -size * 0.18, size * 1.5, size * 0.12)
+    # 台は奥側(右)の柱1本から腕を出してつるす形。手前(左)には何もないので、鐘のふちまでのすき間がよく見える
+    ctx.rectangle(-size * 0.1, -size * 0.18, size * 0.95, size * 0.12)
     ctx.fill()
-    for sx in (-1, 1):
-        ctx.rectangle(sx * size * 0.7 - size * 0.05, -size * 0.18, size * 0.1, size * 1.43)
-        ctx.fill()
+    ctx.rectangle(size * 0.75, -size * 0.18, size * 0.1, size * 1.43)
+    ctx.fill()
+    ctx.rectangle(-size * 0.04, -size * 0.1, size * 0.08, size * 0.12)
+    ctx.fill()
     ctx.rotate(swing)
     ctx.new_path()
     ctx.move_to(-size * 0.22, 0)
@@ -281,6 +310,7 @@ def render(seed):
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
     hs = res["hs"]
     fail = result == "fail"
+    miss = any(e[0] == "miss" for e in events)   # 最後まで倒れたのに鐘に届かなかった
     os.makedirs(OUT_DIR, exist_ok=True)
     silent = os.path.join(OUT_DIR, f"giant_domino_{seed}_video.mp4")
     wav = os.path.join(OUT_DIR, f"giant_domino_{seed}.wav")
@@ -311,6 +341,8 @@ def render(seed):
             elif kind == "bell":
                 bell_t = et
                 shake = max(shake, 30)
+            elif kind == "land" and bell_t is None:
+                shake = max(shake, 22)
             ev_i += 1
         over = end_t is not None and t >= end_t
         if ghost is not None and over and t - end_t < SCARE_DUR:
@@ -324,10 +356,13 @@ def render(seed):
         hf = hs[front]
         # 画面上のドミノの高さ:最初は260px、大きくなるほど画面の中でも大きく見える(最後は約1000px)
         tgt_s = 260.0 * (hf / H0) ** 0.33 / hf
-        cam_s += (tgt_s - cam_s) * 0.06
         tgt_x = fx + hf * 0.25
-        if front >= N - 1:   # 最後の巨大ドミノと鐘が両方入るように
-            tgt_x = (fr["doms"][N - 1][0] + res["bell_x"]) / 2 - hs[-1] * 0.1
+        if front >= N - 1:   # 最後の巨大ドミノ(倒れた後の長さ)と鐘が両方入るように引く
+            left = frames[0]["doms"][N - 1][0] - hs[-1] * 0.3
+            right = res["bell_x"] + hs[-1] * BELL_SIZE * 0.8
+            tgt_s = min(tgt_s, 0.94 * W / (right - left))
+            tgt_x = (left + right) / 2
+        cam_s += (tgt_s - cam_s) * 0.06
         cam_x += (tgt_x - cam_x) * 0.08
         shake *= 0.86
         dx, dy = (math.sin(t * 57) * shake, math.cos(t * 49) * shake) if shake > 0.5 else (0, 0)
@@ -382,8 +417,12 @@ def render(seed):
         text(ctx, f"ドミノ {min(fr['fell'], N)} / {N}", W / 2, 1720, 60, sw=12)
         if over and fail:
             k = min(1.0, after / 0.25)
-            text(ctx, "止まった…", W / 2, 900, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
-            text(ctx, f"あと{N - res['fell']}枚だったのに…", W / 2, 1030, 70, sw=12)
+            if miss:
+                text(ctx, "届かなかった…", W / 2, 900, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
+                text(ctx, "鐘まであと少しだったのに…", W / 2, 1030, 70, sw=12)
+            else:
+                text(ctx, "止まった…", W / 2, 900, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
+                text(ctx, f"あと{N - res['fell']}枚だったのに…", W / 2, 1030, 70, sw=12)
         elif over:
             age = t - end_t
             if age < 0.3:
@@ -523,6 +562,10 @@ def synth_audio(res, duration, path):
             for m_, a in ((48, 0.7), (55, 0.5), (60, 0.6), (64, 0.5), (67, 0.4)):   # 最後のジャーン
                 add(mix(brass(midi_hz(m_), a, 2.0), strings(midi_hz(m_), a * 0.6, 2.5)), t + 0.05)
             add(timpani(1.0, 2.5), t)
+        elif kind == "land":   # 巨大ドミノが床に倒れこむ重い音(鐘に当たったときは鐘の音が主役)
+            if not any(e[0] == "bell" for e in events):
+                add(click(hs[-1], N), t, 1.2)
+                add(timpani(0.8, 1.5), t)
     extra = np.zeros(n_out)
     if fail:
         sig = scream(SR)
@@ -542,6 +585,11 @@ def synth_audio(res, duration, path):
     loud = np.abs(wet[np.abs(wet) > 1e-4])
     ref = np.percentile(loud, 99.5) if len(loud) else 1.0
     wet = np.tanh(1.5 * wet / max(1e-9, ref)) / np.tanh(1.5) * MIX_GAIN
+    # 通常部分の平均音量を約 -18dB にそろえる(回によって音数が違うため)
+    body = wet[: int((end_t or duration) * SR)]
+    rms = np.sqrt(np.mean(body ** 2)) if len(body) else 0
+    if rms > 0:
+        wet *= min(1.6, 10 ** (-18.0 / 20) / rms)
     wet = np.clip(wet + (0.95 if fail else 1.0) * extra[: len(wet)], -0.98, 0.98)
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
