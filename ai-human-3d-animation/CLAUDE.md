@@ -59,7 +59,7 @@
      `show_reference_elements`(Elements: すぐに使え、複数人物も可)
 3. 静止画で見た目を固める → `generate_image`
 4. 動画化 → `generate_video`。動きの転写は `motion_control` など
-5. 仕上げ: アップスケール、字幕、音声(`generate_audio`)など(それぞれ要許可)
+5. 仕上げ: アップスケール、字幕、音声(`generate_audio`)など
 
 ### リアルな人物表現のコツ
 
