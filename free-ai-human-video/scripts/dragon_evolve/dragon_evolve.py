@@ -39,12 +39,13 @@ GRAVITY = 1800.0
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 IMG_DIR = os.path.join(ROOT, "assets", "source", "dragon")
+SND_DIR = os.path.join(IMG_DIR, "sounds")
 OUT_DIR = os.path.join(ROOT, "assets", "output")
 
 NAMES = ["卵", "ひよこ", "ニワトリ", "ダチョウ", "ワニ", "恐竜", "ドラゴン"]
 SHORT = NAMES
 GOAL = len(NAMES) - 1
-WIDTHS = [62, 86, 118, 160, 220, 300, 420]     # 段階ごとの写真の横幅(px)
+WIDTHS = [46, 74, 112, 165, 235, 330, 470]     # 段階ごとの写真の横幅(px)。進化するたびにぐっと大きくなる
 
 # 首のついた丸いフラスコ(参考動画と同じ形)
 FL_CX, FL_CY, FL_R = 540.0, 1180.0, 430.0
@@ -631,6 +632,20 @@ def evolve_sound(st, seed):
     return out
 
 
+# 進化した段階の鳴き声(Higgs Field の Seedance 2.0 Mini で「6匹が順番に鳴く」動画を作り、音声から切り出したもの)
+# 1=ひよこ(かわいいピヨピヨ)… 6=ドラゴン(一番低く凶暴な咆哮)。大きくなるほど声も低く・大きく
+VOICE_GAIN = [0, 0.55, 0.65, 0.75, 0.85, 1.0, 1.15]
+
+
+def load_voice(st):
+    path = os.path.join(SND_DIR, f"voice{st}.wav")
+    if not os.path.exists(path):
+        return None
+    with wave.open(path) as w:
+        x = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(float) / 32768
+    return x / max(1e-9, np.max(np.abs(x)))
+
+
 def thud(amp, seed):
     """卵が落ちて当たる「コトッ」。"""
     t = _t(0.12)
@@ -649,6 +664,7 @@ def synth_audio(res, duration, path):
         if i < n_out:
             out[i:j] += gain * sig[: j - i]
 
+    voices = {st: load_voice(st) for st in range(1, len(NAMES))}
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.05:
             continue
@@ -656,7 +672,9 @@ def synth_audio(res, duration, path):
             add(thud(0.18, int(t * 1000)), t + 0.25)
         elif kind == "merge":
             st = data[1]
-            add(evolve_sound(st, int(t * 1000)), t, 0.6 + 0.08 * st)
+            add(evolve_sound(st, int(t * 1000)), t, 0.35 + 0.06 * st)   # 豪華になる効果音(鳴き声の下にひかえめに)
+            if voices.get(st) is not None:
+                add(voices[st], t + 0.03, VOICE_GAIN[st])
     extra = np.zeros(n_out)
     if fail:
         sig = scream(SR)
