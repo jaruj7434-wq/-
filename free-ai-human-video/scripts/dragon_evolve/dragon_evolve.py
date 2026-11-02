@@ -58,7 +58,7 @@ DROP_START, DROP_END, DROP_RAMP = 0.8, 0.2, 40.0   # 落ちてくる間隔(秒):
 V_MERGE = 0.0                          # 合体に必要なぶつかる速さ(px/秒)。0 = 同じ段階どうしが触れたら合体
 COW_E, COW_F = 0.5, 0.5                # 反発係数・摩擦(落ちたら跳ねる)
 BOWL_E, BOWL_F = 0.6, 0.5              # フラスコの反発係数・摩擦
-TIME_LIMIT = 50.5
+TIME_LIMIT = 40.0
 OUTRO = 2.5
 
 
