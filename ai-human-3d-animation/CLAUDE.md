@@ -12,30 +12,20 @@
 2. **3Dアニメーション動画**: 3Dシーン・3Dモデル・カメラワークを使ったアニメーション動画
    (フォトリアルな3D人物をシーンに置いた映像も含む)
 
-## 最重要ルール: 生成前に必ず許可を取る
+## 生成の許可: 常時許可(事前確認は不要)
 
-- Higgs Field で **動画・画像・音声・3Dモデル** を作る前には、**必ずチャットでユーザーの許可を取ってから**
-  作業に入ること。許可が出るまでは生成系ツールを一切呼び出さない。
+- ユーザーから常時許可を得ているため、Higgs Field で **動画・画像・音声・3Dモデル** を作るときは、
+  チャットで事前に許可を求めずにそのまま生成してよい。
   - 対象: `generate_image` / `generate_video` / `generate_audio` / `generate_3d` / `*_batch` /
     `execute_preset` / `ai_influencer_generate` / `motion_control` / `upscale_*` / `reframe` /
-    `outpaint_image` / `scene_builder_3d_generate_angles` / `scene_builder_3d_generate_video` など、
-    クレジットや処理時間がかかるツールすべて。
-- 許可を求めるときは、次の内容を一言でまとめて提示する。
-  - 何を作るか(画像 / 動画 / 3D、本数)
-  - 使うモデル・ツール、アスペクト比、尺
-  - プロンプトの要点
-  - 予想コスト(`get_cost: true` や `ai_influencer_prepare` などで事前に確認した値)
-- 1回の許可で実行してよいのは、その時に提示した内容だけ。プロンプト変更、本数追加、
-  リトライ、別モデルでの再生成をするときは、もう一度許可を取る。
-- 課金がない準備作業(ワークフロー・プリセットの読み込み、`models_explore`、
-  `media_upload_widget`、`video_analysis_*`、3Dプロジェクトの閲覧など)は許可なしで進めてよい。
-  課金されるかどうか分からないときは許可を取る。
+    `outpaint_image` / `scene_builder_3d_generate_angles` / `scene_builder_3d_generate_video` など。
+  - 台本・プロンプトの修正後の再生成、リトライ、部分的な録り直しも同様に確認不要。
+- 生成後は必ず、何を生成したか・使ったモデル・消費したクレジット・ジョブIDを報告する。
 
 ## クレジットの扱い
 
 - 可能な限り `use_unlim: true`(無制限/トライアル枠)を使い、通常クレジットを消費しないようにする。
-- 無制限枠が使えないとツールから返ってきた場合は、「クレジットを消費する形になるがよいか」を
-  改めて確認してから進める。無断でクレジットを消費しない。
+- 無制限枠が使えないとツールから返ってきた場合は、確認を取らずに通常クレジットで生成してよい。
 
 ## 作業を始める前に必ず行うこと
 
@@ -50,25 +40,25 @@
 
 1. 企画: `prompts/` に絵コンテ・カット割り・カメラワークを書く
 2. 3D素材の準備:
-   - 画像から3Dモデル(GLB)を作る → `generate_3d`(要許可)
+   - 画像から3Dモデル(GLB)を作る → `generate_3d`
    - 3Dシーンの作成・素材の配置 → `scene_builder_3d_create_project` /
      `scene_builder_3d_search_assets` / `scene_builder_3d_import_asset`
    - シーンの確認 → `scene_builder_3d_show_scene`
 3. カメラアングル・映像の生成 → `scene_builder_3d_generate_angles` /
-   `scene_builder_3d_generate_video`(要許可)
-4. 仕上げ: 必要に応じて `upscale_video`、字幕は `subtitles` ワークフロー(要許可)
+   `scene_builder_3d_generate_video`
+4. 仕上げ: 必要に応じて `upscale_video`、字幕は `subtitles` ワークフロー
 
 ## リアルな人間の動画制作の流れ(目安)
 
 1. 人物設計: 年齢・雰囲気・服装・ライティングなどを `prompts/characters/` にまとめる
 2. 人物の一貫性を保つ:
-   - AIインフルエンサー(架空の人物)を作る → `ai_influencer_prepare` で設計と価格を確認し、
-     許可を得てから `ai_influencer_generate`
+   - AIインフルエンサー(架空の人物)を作る → `ai_influencer_prepare` で設計と価格を確認してから
+     `ai_influencer_generate`
    - 複数アングルの参照シート → `character-sheet` ワークフロー(明示的に頼まれた場合のみ)
    - 同一人物を何度も使う → `show_characters`(Soul: 同一人物の写真5〜20枚が必要)か
      `show_reference_elements`(Elements: すぐに使え、複数人物も可)
-3. 静止画で見た目を固める → `generate_image`(要許可)
-4. 動画化 → `generate_video`(要許可)。動きの転写は `motion_control` など
+3. 静止画で見た目を固める → `generate_image`
+4. 動画化 → `generate_video`。動きの転写は `motion_control` など
 5. 仕上げ: アップスケール、字幕、音声(`generate_audio`)など(それぞれ要許可)
 
 ### リアルな人物表現のコツ
