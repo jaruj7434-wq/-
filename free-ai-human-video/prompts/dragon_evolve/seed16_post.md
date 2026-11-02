@@ -2,6 +2,7 @@
 
 - 動画: Higgs Field のライブラリに保存(media_id cd17466a-5e28-466f-9861-be2aaaf8c799)
   https://d2ol7oe51mr4n9.cloudfront.net/user_3IAIfINAmehvTGXEdm9EGpVegmO/cd17466a-5e28-466f-9861-be2aaaf8c799.mp4
+  (1080x1920 / 60fps / 44.3秒 / H.264 + AAC)
 - 再生成: `python scripts/dragon_evolve/dragon_evolve.py render --seed 16`(写真は assets/source/dragon/stage1〜7.png)
   ※書き出しは Higgs Field のクラウド作業環境(sandbox_exec。cairocffi を cairo として使用)で行った
 - 参考: 猫が合体して最終形態になる海外のショート(首つきの丸いフラスコ・虹色のふち・だんだん速く落ちてくる)
