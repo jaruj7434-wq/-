@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__higgs_field__sandbox_exec",
+      "mcp__higgs_field"
+    ]
+  }
+}
