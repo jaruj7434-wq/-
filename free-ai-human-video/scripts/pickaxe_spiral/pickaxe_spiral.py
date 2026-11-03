@@ -5,7 +5,7 @@
 - 玉の代わりはツルハシ(オリジナルのドット絵)。木・石・鉄・金・ダイヤ 各4本の計20本が、ランダムな順番で1本ずつ落ちてくる。
 - ツルハシは坂を転がってブロックに当たると、はね返らずにその場で止まって掘り続ける(一定の間隔でカンカンと打つ)。
   1回打つごとにブロックの「あと何回」がツルハシの強さだけ減り、ツルハシの耐久が1減る。
-  強さ 木1・石2・鉄3・金4・ダイヤ7、耐久 木4・石4・鉄5・金3・ダイヤ6。落ちてきた勢いのまま強く当たった1打目はクリティカル(1.5倍)。
+  強さ 木1・石2・鉄3・金4・ダイヤ7、耐久 木4・石4・鉄5・金4・ダイヤ6。ツルハシが掘りかけで折れたら、そのブロックは元に戻る。落ちてきた勢いのまま強く当たった1打目はクリティカル(1.5倍)。
   結末はツルハシの順番(シードごとのランダム)と当たる勢いで変わる。
   ブロックがこわれたら次のブロックへ転がっていく。耐久がなくなったツルハシは「パキッ」と折れて消える。
 - ブロックを壊すたびに「天国と地獄」(オッフェンバック・パブリックドメイン)が1音ずつ本来のテンポで進む(ピコピコ音)。
@@ -88,7 +88,7 @@ if os.environ.get("SWORD_D"):   # 調整用:ツルハシの強さ
 N_SWORDS = sum(s[1] for s in SWORDS)
 SWORD_N_TOTAL = N_SWORDS
 # 剣の耐久(何回ブロックに当たったら折れるか):木・石・鉄・金・ダイヤ。金は強いが折れやすい
-SWORD_DUR = [int(x) for x in os.environ.get("SWORD_DUR", "4,4,5,3,6").split(",")]
+SWORD_DUR = [int(x) for x in os.environ.get("SWORD_DUR", "4,4,5,4,6").split(",")]
 BLOCK_HP = [int(x) for x in os.environ.get("BLOCK_HP", "1,2,3,4,5,6,7,8").split(",")]
 # こわれるまでに木の剣で当たる回数:土1・木2・石3・銅4・鉄5・金6・ダイヤ7・最強合金8
 WAVE_GAP = float(os.environ.get("WAVE_GAP", 0.2))
@@ -245,6 +245,9 @@ class Game:
             self.events.append(("hit", self.t, (k, bl["kind"], d)))
         if bl["dur"] <= 0:   # 耐久がなくなった:その場で折れて消える
             self.to_shatter.append(bl)
+            if blk["alive"] and blk["hp"] < blk["hp0"]:   # 掘りかけのブロックは元に戻る(次のツルハシは最初から掘り直し)
+                blk["hp"] = blk["hp0"]
+                self.events.append(("reset", self.t, k))
 
     def drop(self, kind):
         m = 1.0
@@ -425,39 +428,37 @@ def block_tex(m, rng):
     return surf
 
 
-PICK_GRID = [   # オリジナルのドット絵のツルハシ(上が頭、下が柄)
-    "...EEEEEEE...",
-    ".EEBBBBBBBEE.",
-    "EBBBEEHEEBBBE",
-    "EBEE..H..EEBE",
-    "EE....H....EE",
-    "E.....H.....E",
-    "......H......",
-    "......H......",
-    "......H......",
-    "......H......",
-    "......H......",
-    "......H......",
-    "......G......",
+PICK_GRID = [   # ドット絵のツルハシ(右上に弧の形の頭、左下へななめの柄)
+    "................",
+    ".....OOOOO......",
+    "....OBBBBBOO....",
+    "....OSSSSBBBO...",
+    ".....OOOOOSBBO..",
+    "........OHOOSBO.",
+    ".......OHHO.OSBO",
+    "......OHHO..OSBO",
+    ".....OHHO...OSBO",
+    "....OHHO.....OSO",
+    "...OHHO.......O.",
+    "..OHHO..........",
+    ".OHHO...........",
+    ".OHO............",
+    "..O.............",
+    "................",
 ]
+PICK_TIP = -math.pi / 4   # 頭の打つ向き(右上)
 
 
 def draw_sword(ctx, x, y, ang, kind, size, alpha=1.0):
     """オリジナルのドット絵のツルハシ。ang=0 で頭が上。"""
     _, _, _, blade, edge = SWORDS[kind]
-    cols = {"B": blade, "E": edge, "H": (0.55, 0.38, 0.22), "G": (0.35, 0.25, 0.18)}
+    cols = {"B": blade, "S": edge, "H": (0.55, 0.38, 0.22), "O": (0.13, 0.10, 0.09)}
     n = len(PICK_GRID)
     px = size / n
     ctx.save()
     ctx.translate(x, y)
     ctx.rotate(ang)
     ctx.translate(-size / 2, -size / 2)
-    for j, row in enumerate(PICK_GRID):   # 黒いふち
-        for i, ch in enumerate(row):
-            if ch != ".":
-                ctx.rectangle(i * px - px * 0.35, j * px - px * 0.35, px * 1.7, px * 1.7)
-    ctx.set_source_rgba(0.08, 0.06, 0.06, alpha)
-    ctx.fill()
     for j, row in enumerate(PICK_GRID):
         for i, ch in enumerate(row):
             if ch != ".":
@@ -599,6 +600,8 @@ def render(seed):
                 shake = max(shake, 3 + blocks[k]["mat"] * 1.0)
             elif kind == "die":
                 dying.append(data + (et,))
+            elif kind == "reset":
+                dmg[data] = 0.0
             elif kind == "crit":   # クリティカル:星が飛び散る
                 x, y = data
                 for j in range(10):
@@ -693,7 +696,7 @@ def render(seed):
             else:
                 ph = (t % MINE_DT) / MINE_DT
                 swing = -0.9 + 1.2 * min(1.0, ph / 0.25) if ph < 0.25 else 0.3 - 1.2 * (ph - 0.25) / 0.75
-                base = mdir + math.pi / 2   # 頭をブロックに向ける
+                base = mdir - PICK_TIP   # 頭をブロックに向ける
                 draw_sword(ctx, x, y, base + swing, kind, BALL_R * 5.6)
                 spin[bid] = base
         keep = []
