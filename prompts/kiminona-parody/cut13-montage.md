@@ -350,3 +350,10 @@
 - 動画「おデブ」(Cinema Studio Video 2 pro、3秒、16:9。開始 0cb84265 → 終了 8bc2b146。IN THE DARK プリセットの提案は断った。6 クレジット):`6dd1d8fb-194a-4bb3-9c8d-3c55dd8cf317`
   - 「おかわり」版の動画 2a9aad5c は不採用
   - 編集:「ブ」を書く動きが見える約 0.58 秒を切り出し、動画C の 0.9–1.8 秒(カット17)と差し替える
+- ユーザー指摘:6dd1d8fb の文字が縦にきれいに並ばずガタガタ → AI に文字を書かせるのをやめ、プログラムで書き込む方式に変更
+  - 生成画像がダウンロードできるようになったため、実際の画像を確認した(9a412336 / 8bc2b146 は字が斜めにずれ、フォント風だった)
+  - 文字なし画像(GPT Image 2 medium 1k で 9621a24f の文字を消す。ペンは移動しなかった。1 クレジット):`170cc9d0-0484-4821-aa0a-bcad9656bf2b`
+  - 書き込み:`tools/palmtext.py`(手書き風の線を描く。線の太さは均一で文字の高さの約1/6.5、端は丸い、こげ茶寄りの黒、肌のしわが透ける)+ `tools/occlude.py`(ペンを文字の手前に重ねる)
+  - 配置(ユーザー OK の見本 v3):列の中心 (820,420)、文字の大きさ 140px、手のひらの向きに合わせて 35°、文字の間隔 0.25
+    - `python3 tools/palmtext.py plate.png out.png 820 420 140 35 2`(「おデ」)/ `... 3`(「おデブ」)→ `python3 tools/occlude.py plate.png out.png final.png`
+  - 開始:`assets/source/kiminona/cut13-17-odebu-start.png`(「おデ」)/ 終了:`assets/source/kiminona/cut13-17-odebu-end.png`(「おデブ」。ペン先は書き終えた濁点のすぐ上)
