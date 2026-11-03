@@ -44,8 +44,10 @@ N2, R2 = 5, float(os.environ.get("R2", 1.49))          # 巨大化ゾーン:枚�
 K = 0.6                   # ドミノの間隔(手前のドミノの高さに対する割合)
 JIT = 0.15                # 間隔のばらつき(±)
 THICK = 0.18              # ドミノの厚み(高さに対する割合)
-BELL_GAP = float(os.environ.get("BELL_GAP", 0.98))  # 最後のドミノの前の面から鐘のふちまでの距離(最後のドミノの高さに対する割合)
-BELL_JIT = float(os.environ.get("BELL_JIT", 0.12))  # 鐘の位置のばらつき(±・ドミノの間隔と同じく置き方の誤差)
+BELL_GAP = float(os.environ.get("BELL_GAP", 0.85))  # 最後のドミノの前の面から鐘のふちまでの距離(最後のドミノの高さに対する割合)
+BELL_JIT = float(os.environ.get("BELL_JIT", 0.0))   # 鐘の位置のばらつき(±)。今は固定(倒れきれば必ず届く距離)
+MACHO_P = float(os.environ.get("MACHO_P", 0.34))  # 最後の巨大ドミノが鐘に当たる直前にマッチョが現れて止める確率
+MACHO_ANG = 0.72          # 最後のドミノがこの角度まで倒れたらマッチョが現れる(手に当たるのは約1.1)
 BELL_SIZE = 0.55          # 鐘の大きさ(最後のドミノの高さに対する割合)
 STOP_WAIT = 3.0           # これだけ次のドミノが倒れなければ止まった(失敗)
 OUTRO = 2.5
@@ -84,6 +86,9 @@ class Game:
             b.position = (x + w / 2, -h / 2)
             s = pymunk.Poly.create_box(b, (w, h))
             s.friction, s.elasticity = 0.6, 0.05
+            s.collision_type = 3
+            self.idx_of = getattr(self, "idx_of", {})
+            self.idx_of[s] = i
             sp.add(b, s)
             self.doms.append(b)
             if i + 1 < N:
@@ -99,18 +104,40 @@ class Game:
         bell.friction, bell.elasticity = 0.5, 0.1
         bell.collision_type = 2
         sp.add(bell)
-        for sh in self.doms[-1].shapes:
-            sh.collision_type = 1
         self.bell_hit = False
         self.landed = False
+        self.hit = [None] * N        # ドミノ i が前のドミノに当てられた(=音を鳴らす)瞬間
+        self.hit[0] = 0.0            # 最初の1枚は指で押す
 
         def on_bell(arb, space, data):
-            self.bell_hit = True
-        sp.on_collision(1, 2, begin=on_bell)
+            a, b = arb.shapes
+            if self.idx_of.get(a, self.idx_of.get(b)) == N - 1 and not self.macho_caught:
+                self.bell_hit = True
+        sp.on_collision(3, 2, begin=on_bell)
+
+        def on_dom(arb, space, data):   # ドミノどうしが実際にぶつかった瞬間
+            a, b = arb.shapes
+            i, j = sorted((self.idx_of[a], self.idx_of[b]))
+            if j == i + 1 and self.hit[j] is None:
+                self.hit[j] = self.t
+                self.events.append(("hit", self.t, j))
+        sp.on_collision(3, 3, begin=on_dom)
+        # マッチョ:最後の巨大ドミノが鐘に当たる直前に現れ、両手(本物の当たり判定)で受け止める
+        self.macho = rng.uniform() < MACHO_P
+        lip = bx - 0.55 * bs
+        self.hand = (lip - 0.06 * hl, -0.40 * hl)
+        self.hand_r = 0.05 * hl
+        self.macho_t, self.macho_caught = None, False
+
+        def on_hand(arb, space, data):
+            if not self.macho_caught:
+                self.macho_caught = True
+                self.events.append(("catch", self.t, None))
+        sp.on_collision(3, 4, begin=on_hand)
         b0 = self.doms[0]
         b0.apply_impulse_at_local_point((b0.mass * 60, 0), (0, -self.hs[0] * 0.4))   # 最初のドミノを指で軽く押す
         self.fell = [None] * N
-        self.events = []
+        self.events = [("hit", 0.0, 0)]   # 最初の1枚を指で押した音
         self.t = 0.0
         self.result, self.result_t = None, None
 
@@ -121,6 +148,13 @@ class Game:
             if self.fell[i] is None and abs(b.angle) > 0.5:
                 self.fell[i] = self.t
                 self.events.append(("fall", self.t, i))
+        if self.macho and self.macho_t is None and abs(self.doms[-1].angle) > MACHO_ANG:
+            self.macho_t = self.t   # シュッ!とマッチョ登場。手の位置に当たり判定を置く
+            hand = pymunk.Circle(self.space.static_body, self.hand_r, self.hand)
+            hand.friction, hand.elasticity = 1.0, 0.0
+            hand.collision_type = 4
+            self.space.add(hand)
+            self.events.append(("macho", self.t, None))
         if self.fell[-1] is not None and not self.landed and abs(self.doms[-1].angle) > 1.45:
             self.landed = True   # 巨大ドミノが床にドスン
             self.events.append(("land", self.t, None))
@@ -157,7 +191,8 @@ def simulate(seed, record=False):
         if g.t > 120:
             break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t,
-            "fell": sum(f is not None for f in g.fell), "hs": g.hs, "bell_x": g.bell_x}
+            "fell": sum(f is not None for f in g.fell), "hs": g.hs, "bell_x": g.bell_x,
+            "hand": g.hand, "hand_r": g.hand_r, "macho_t": g.macho_t}
 
 
 def score(seed):
@@ -305,6 +340,141 @@ def draw_bell(ctx, x, y_base, size, swing):
     ctx.restore()
 
 
+SKIN = (0.93, 0.66, 0.46)
+SKIN_D = (0.72, 0.45, 0.30)
+
+
+def _limb(ctx, pts, w, col):
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    ctx.move_to(*pts[0])
+    for p in pts[1:]:
+        ctx.line_to(*p)
+    ctx.set_source_rgb(0.25, 0.13, 0.07)
+    ctx.set_line_width(w + w * 0.18)
+    ctx.stroke_preserve()
+    ctx.set_source_rgb(*col)
+    ctx.set_line_width(w)
+    ctx.stroke()
+
+
+def _blob(ctx, x, y, rx, ry, col, line=True):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(rx, ry)
+    ctx.arc(0, 0, 1, 0, 2 * math.pi)
+    ctx.restore()
+    ctx.set_source_rgb(*col)
+    if line:
+        ctx.fill_preserve()
+        ctx.set_source_rgb(0.25, 0.13, 0.07)
+        ctx.set_line_width(max(1.0, rx * 0.06))
+        ctx.stroke()
+    else:
+        ctx.fill()
+
+
+def draw_macho(ctx, hand, h, age, part):
+    """マッチョ(ワールド座標)。hand=両手の位置、h=最後のドミノの高さ、age=登場してからの秒数。
+    part="body" はドミノより奥(体)、"hands" はドミノより手前(にぎった手)。"""
+    hx, hy = hand
+    k = min(1.0, age / 0.12)
+    pop = k * (1 + 0.25 * math.sin(min(1.0, age / 0.35) * math.pi))   # ボンッと出てくる
+    if pop <= 0:
+        return
+    cx = hx + 0.20 * h                 # 立ち位置(手より少し奥=鐘の前)
+    ctx.save()
+    ctx.translate(cx, 0)
+    ctx.scale(pop, pop)
+    ctx.translate(-cx, 0)
+    u = h
+    if part == "body":
+        # 登場の煙
+        if age < 0.6:
+            a = 1 - age / 0.6
+            for j in range(7):
+                ang = j / 7 * 2 * math.pi
+                rr = 0.18 * u + 0.25 * u * (1 - a)
+                ctx.arc(cx + math.cos(ang) * rr, -0.3 * u + math.sin(ang) * rr * 0.7, 0.09 * u * a + 0.02 * u, 0, 2 * math.pi)
+                ctx.set_source_rgba(1, 1, 1, 0.75 * a)
+                ctx.fill()
+        sh_x, sh_y = cx - 0.02 * u, -0.50 * u        # 肩
+        # 脚(赤いパンツ)
+        _limb(ctx, [(cx + 0.05 * u, -0.22 * u), (cx + 0.08 * u, -0.03 * u)], 0.085 * u, SKIN)
+        _limb(ctx, [(cx - 0.06 * u, -0.22 * u), (cx - 0.09 * u, -0.03 * u)], 0.085 * u, SKIN)
+        for fx_ in (cx + 0.10 * u, cx - 0.11 * u):    # くつ
+            _blob(ctx, fx_, -0.02 * u, 0.06 * u, 0.025 * u, (0.15, 0.15, 0.2))
+        ctx.move_to(cx - 0.12 * u, -0.30 * u)
+        ctx.line_to(cx + 0.12 * u, -0.30 * u)
+        ctx.line_to(cx + 0.11 * u, -0.19 * u)
+        ctx.line_to(cx - 0.11 * u, -0.19 * u)
+        ctx.close_path()
+        ctx.set_source_rgb(0.85, 0.12, 0.15)
+        ctx.fill_preserve()
+        ctx.set_source_rgb(0.25, 0.13, 0.07)
+        ctx.set_line_width(0.008 * u)
+        ctx.stroke()
+        # 逆三角形の胴体
+        ctx.move_to(sh_x - 0.19 * u, sh_y - 0.02 * u)
+        ctx.curve_to(sh_x - 0.10 * u, sh_y - 0.06 * u, sh_x + 0.12 * u, sh_y - 0.06 * u, sh_x + 0.21 * u, sh_y - 0.02 * u)
+        ctx.curve_to(sh_x + 0.20 * u, sh_y + 0.10 * u, sh_x + 0.15 * u, sh_y + 0.16 * u, cx + 0.12 * u, -0.30 * u)
+        ctx.line_to(cx - 0.12 * u, -0.30 * u)
+        ctx.curve_to(sh_x - 0.14 * u, sh_y + 0.16 * u, sh_x - 0.19 * u, sh_y + 0.10 * u, sh_x - 0.19 * u, sh_y - 0.02 * u)
+        ctx.close_path()
+        ctx.set_source_rgb(*SKIN)
+        ctx.fill_preserve()
+        ctx.set_source_rgb(0.25, 0.13, 0.07)
+        ctx.set_line_width(0.01 * u)
+        ctx.stroke()
+        # 胸と腹筋のライン
+        ctx.set_source_rgb(*SKIN_D)
+        ctx.set_line_width(0.008 * u)
+        ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+        for sx in (-1, 1):
+            ctx.arc(sh_x + sx * 0.075 * u, sh_y + 0.035 * u, 0.07 * u, 0.15 * math.pi, 0.85 * math.pi)
+            ctx.new_sub_path()
+        ctx.stroke()
+        for yy in (-0.40, -0.36, -0.32):
+            ctx.move_to(cx - 0.05 * u, yy * u)
+            ctx.line_to(cx + 0.05 * u, yy * u)
+        ctx.move_to(cx, -0.42 * u)
+        ctx.line_to(cx, -0.31 * u)
+        ctx.stroke()
+        # 頭(サングラス・にやり)
+        hcx, hcy = sh_x + 0.01 * u, sh_y - 0.11 * u
+        _limb(ctx, [(hcx, sh_y - 0.02 * u), (hcx, hcy)], 0.07 * u, SKIN)   # 太い首
+        _blob(ctx, hcx, hcy, 0.075 * u, 0.085 * u, SKIN)
+        ctx.move_to(hcx - 0.075 * u, hcy - 0.03 * u)
+        ctx.curve_to(hcx - 0.07 * u, hcy - 0.12 * u, hcx + 0.07 * u, hcy - 0.12 * u, hcx + 0.075 * u, hcy - 0.03 * u)
+        ctx.close_path()
+        ctx.set_source_rgb(0.12, 0.08, 0.06)
+        ctx.fill()
+        ctx.rectangle(hcx - 0.07 * u, hcy - 0.015 * u, 0.14 * u, 0.035 * u)
+        ctx.set_source_rgb(0.05, 0.05, 0.08)
+        ctx.fill()
+        ctx.rectangle(hcx - 0.055 * u, hcy - 0.01 * u, 0.03 * u, 0.008 * u)
+        ctx.set_source_rgba(1, 1, 1, 0.7)
+        ctx.fill()
+        ctx.arc(hcx - 0.005 * u, hcy + 0.035 * u, 0.03 * u, 0.1 * math.pi, 0.75 * math.pi)
+        ctx.set_source_rgb(0.25, 0.1, 0.05)
+        ctx.set_line_width(0.009 * u)
+        ctx.stroke()
+        # 腕(ムキッとした力こぶ)。手はドミノの手前に描く
+        for dy in (-0.015, 0.015):
+            ex, ey = (sh_x + hx) / 2 + 0.02 * u, (sh_y + hy) / 2 + 0.07 * u + dy * u
+            _limb(ctx, [(sh_x - 0.13 * u, sh_y + dy * u), (ex, ey), (hx, hy + dy * u)], 0.075 * u, SKIN)
+            _blob(ctx, (sh_x - 0.13 * u + ex) / 2, (sh_y + ey) / 2 - 0.035 * u, 0.065 * u, 0.045 * u, SKIN, line=False)
+    else:
+        _blob(ctx, hx, hy, 0.055 * u, 0.05 * u, SKIN)
+        ctx.set_source_rgb(*SKIN_D)
+        ctx.set_line_width(0.006 * u)
+        for j in range(3):
+            ctx.move_to(hx - 0.03 * u, hy - 0.02 * u + j * 0.018 * u)
+            ctx.line_to(hx + 0.01 * u, hy - 0.02 * u + j * 0.018 * u)
+        ctx.stroke()
+    ctx.restore()
+
+
 def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
@@ -335,9 +505,11 @@ def render(seed):
         t = fr["t"]
         while ev_i < len(events) and events[ev_i][1] <= t:
             kind, et, data = events[ev_i]
-            if kind == "fall":
+            if kind == "hit":
                 fall_t[data] = et
                 shake = max(shake, 0.4 * math.sqrt(hs[data]) if data >= N1 else 0)
+            elif kind == "catch":
+                shake = max(shake, 26)
             elif kind == "bell":
                 bell_t = et
                 shake = max(shake, 30)
@@ -394,12 +566,17 @@ def render(seed):
         ctx.translate(-cam_x, 0)
         lo = cam_x - W / 2 / cam_s - 200
         hi = cam_x + W / 2 / cam_s + 200
+        m_age = t - res["macho_t"] if res["macho_t"] is not None and t >= res["macho_t"] else None
+        if m_age is not None:
+            draw_macho(ctx, res["hand"], hs[-1], m_age, "body")
         for i, (x, y, ang) in enumerate(fr["doms"]):
             if x < lo - hs[i] or x > hi + hs[i]:
                 continue
             ft = fall_t.get(i)
             hit = max(0.0, 1 - (t - ft) / 0.25) if ft is not None and t >= ft else 0.0
             draw_domino(ctx, x, y, ang, hs[i], dom_col(i), hit)
+        if m_age is not None:
+            draw_macho(ctx, res["hand"], hs[-1], m_age, "hands")
         ctx.restore()
         ctx.restore()
         if angels is not None and over:
@@ -415,9 +592,17 @@ def render(seed):
         text(ctx, "最後の巨大ドミノまで", W / 2, 150, 76, sw=14)
         text(ctx, "倒れきる？", W / 2, 280, 118, rgb=GOLD, sw=18)
         text(ctx, f"ドミノ {min(fr['fell'], N)} / {N}", W / 2, 1720, 60, sw=12)
+        if m_age is not None and not over:
+            hx_s = (res["hand"][0] + 0.2 * hs[-1] - cam_x) * cam_s + W / 2
+            hy_s = FLOOR_Y - 0.95 * hs[-1] * cam_s
+            k2 = min(1.0, m_age / 0.15)
+            text(ctx, "ストップ!!", min(W - 230, max(230, hx_s)), hy_s, 92 * k2, rgb=(1, 0.95, 0.3), sw=16)
         if over and fail:
             k = min(1.0, after / 0.25)
-            if miss:
+            if miss and res["macho_t"] is not None:
+                text(ctx, "止められた…", W / 2, 900, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
+                text(ctx, "鐘まであと少しだったのに…", W / 2, 1030, 70, sw=12)
+            elif miss:
                 text(ctx, "届かなかった…", W / 2, 900, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
                 text(ctx, "鐘まであと少しだったのに…", W / 2, 1030, 70, sw=12)
             else:
@@ -534,6 +719,25 @@ def bell_sound(amp):
     return amp * y * np.minimum(1, t / 0.003)
 
 
+def whoosh(dur=0.35):
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal(n)
+    # 高い音から低い音へ流れる風切り音(簡易バンドパスを時間で動かす)
+    out = np.zeros(n)
+    y1 = y2 = 0.0
+    for i in range(n):
+        f = 3000 - 2400 * t[i] / dur
+        a = 2 * math.pi * f / SR
+        y1 += a * (x[i] - y1 - y2 * 0.3)
+        y2 += a * y1
+        out[i] = y2
+    env = np.sin(np.pi * t / dur) ** 2
+    out = out * env
+    return out / (np.max(np.abs(out)) + 1e-9) * 0.6
+
+
 def synth_audio(res, duration, path):
     events, end_t, fail = res["events"], res["result_t"], res["result"] == "fail"
     hs = res["hs"]
@@ -549,7 +753,7 @@ def synth_audio(res, duration, path):
     note_i = -1
     next_ok = 0.0
     for kind, t, data in events:
-        if kind == "fall":
+        if kind == "hit":   # ドミノが次のドミノに実際に当たった瞬間に鳴らす
             i = data
             add(click(hs[i], i), t)
             if t >= next_ok:   # 前の音の長さが経っていたら、曲が1音進む(ドミノが速く倒れても本来のテンポ)
@@ -562,7 +766,14 @@ def synth_audio(res, duration, path):
             for m_, a in ((48, 0.7), (55, 0.5), (60, 0.6), (64, 0.5), (67, 0.4)):   # 最後のジャーン
                 add(mix(brass(midi_hz(m_), a, 2.0), strings(midi_hz(m_), a * 0.6, 2.5)), t + 0.05)
             add(timpani(1.0, 2.5), t)
-        elif kind == "land":   # 巨大ドミノが床に倒れこむ重い音(鐘に当たったときは鐘の音が主役)
+        elif kind == "macho":   # シュッ!(登場)
+            add(whoosh(), t, 0.9)
+        elif kind == "catch":   # ガシッ!(受け止め)+ ジャン!
+            add(click(hs[-1], N + 1), t, 1.3)
+            add(timpani(0.9, 1.2), t)
+            for m_ in (50, 57, 62):
+                add(brass(midi_hz(m_), 0.5, 0.45), t + 0.02)
+        elif kind == "land" and not any(e[0] == "catch" for e in events):   # 巨大ドミノが床に倒れこむ重い音(鐘に当たったときは鐘の音が主役)
             if not any(e[0] == "bell" for e in events):
                 add(click(hs[-1], N), t, 1.2)
                 add(timpani(0.8, 1.5), t)
