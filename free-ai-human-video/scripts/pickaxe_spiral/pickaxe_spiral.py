@@ -733,7 +733,7 @@ def render(seed):
             text(ctx, f"{name}のツルハシ!", W / 2, 400, 84 * (1.25 - 0.25 * k), rgb=SWORDS[wave_banner[1]][3], sw=14)
         if over and fail:
             k = min(1.0, after / 0.25)
-            text(ctx, "ツルハシが尽きた…", W / 2, 880, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, "ツルハシが尽きた…", W / 2, 880, 100 * (1.12 - 0.12 * k), rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"あと{len(blocks) - res['cleared']}個だったのに…", W / 2, 1010, 70, sw=12)
         elif over:
             age = t - end_t
