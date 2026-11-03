@@ -60,7 +60,7 @@ V_REF = float(os.environ.get("V_REF", 490.0))   # この速さで当たると剣
 V_MIN = float(os.environ.get("V_MIN", 150.0))                         # これより弱い当たりはダメージなし
 AIR_DAMP = float(os.environ.get("AIR_DAMP", 0.75))   # 盤面で1秒あたりに残る速さの割合(転がり抵抗)
 A_SLOPE = float(os.environ.get("A_SLOPE", 500.0))
-V_CRIT = float(os.environ.get("V_CRIT", 1700.0))   # これより速く当たるとクリティカル   # 中心へ向かう下り坂の強さ(px/秒²)
+V_CRIT = float(os.environ.get("V_CRIT", 1665.0))   # これより速く当たるとクリティカル   # 中心へ向かう下り坂の強さ(px/秒²)
 V_DIE = 200.0                          # これより遅くなった剣は消えていく
 FADE = 0.5
 WALL_E = 1.0
@@ -72,11 +72,11 @@ CHUTE_L, CHUTE_R = CX + R_OUT - LANE, CX + R_OUT
 CHUTE_TOP = DROP_Y - 60
 HPK = float(os.environ.get("HPK", 1.0))
 # 剣:名前, 本数, ダメージ, 刃の色, 刃のふちの色
-SWORDS = [("木", 1, 1, (0.72, 0.53, 0.30), (0.45, 0.30, 0.15)),
-          ("石", 2, 2, (0.62, 0.62, 0.62), (0.35, 0.35, 0.38)),
-          ("鉄", 3, 3, (0.92, 0.92, 0.95), (0.55, 0.55, 0.60)),
+SWORDS = [("木", 4, 1, (0.72, 0.53, 0.30), (0.45, 0.30, 0.15)),
+          ("石", 4, 2, (0.62, 0.62, 0.62), (0.35, 0.35, 0.38)),
+          ("鉄", 4, 3, (0.92, 0.92, 0.95), (0.55, 0.55, 0.60)),
           ("金", 4, 4, (1.00, 0.85, 0.25), (0.75, 0.52, 0.08)),
-          ("ダイヤ", 10, 7, (0.45, 0.95, 0.95), (0.15, 0.55, 0.60))]
+          ("ダイヤ", 4, 7, (0.45, 0.95, 0.95), (0.15, 0.55, 0.60))]
 # ダメージ=1回当たるとブロックの「あと何回」がいくつ減るか。木1・石2・鉄3・金4(石ブロックを1回で)・ダイヤ7(ダイヤブロックを1回で)
 if os.environ.get("SWORD_N"):   # 調整用:波ごとの本数
     SWORDS = [(w[0], int(n), w[2], w[3], w[4]) for w, n in zip(SWORDS, os.environ["SWORD_N"].split(","))]
@@ -84,7 +84,7 @@ if os.environ.get("SWORD_D"):   # 調整用:剣の強さ
     SWORDS = [(w[0], w[1], int(d), w[3], w[4]) for w, d in zip(SWORDS, os.environ["SWORD_D"].split(","))]
 N_SWORDS = sum(s[1] for s in SWORDS)
 # 剣の耐久(何回ブロックに当たったら折れるか):木・石・鉄・金・ダイヤ。金は強いが折れやすい
-SWORD_DUR = [int(x) for x in os.environ.get("SWORD_DUR", "2,3,3,2,4").split(",")]
+SWORD_DUR = [int(x) for x in os.environ.get("SWORD_DUR", "3,4,5,3,6").split(",")]
 BLOCK_HP = [int(x) for x in os.environ.get("BLOCK_HP", "1,2,3,4,5,6,7,8").split(",")]
 # こわれるまでに木の剣で当たる回数:土1・木2・石3・銅4・鉄5・金6・ダイヤ7・最強合金8
 WAVE_GAP = 0.6
@@ -281,7 +281,11 @@ class Game:
         for bl in list(self.balls):
             b = bl["body"]
             x, y = b.position
-            slow = b.velocity.length < V_DIE and not outside_board(x, y)
+            if b.velocity.length < V_DIE and not outside_board(x, y):
+                bl["slow_t"] = bl.get("slow_t", 0.0) + dt
+            else:
+                bl["slow_t"] = 0.0
+            slow = bl["slow_t"] > 1.0   # 坂の上ではね返って一瞬止まるのは数えない。1秒止まったままなら消える
             if slow or y > H + 200 or x < -200 or x > W + 200:
                 self.space.remove(b, bl["shape"])
                 self.balls.remove(bl)
