@@ -49,12 +49,15 @@ LANE = 2 * math.pi * B                 # 通路の幅(90px)
 BLOCK_LEN = 86.0                       # ブロック1個の通路方向の長さ(px)
 TH_B0 = 0.6                            # ブロックを並べ始める位置(内側)
 TH_B1 = TH_END - 2 * math.pi - 0.5     # ブロックを並べ終える位置(外側の入口は少し空ける)
+MATS = list(MATS)
+# 一番奥の最強合金は、紫がかった黒っぽい金属(ドット絵はオリジナル)
+MATS[7] = ("最強合金", 22, (0.24, 0.19, 0.27), (0.34, 0.26, 0.40))
 NR = len(MATS)
 
-BLOCK_E = 0.75                         # こわれなかったときのはね返り
+BLOCK_E = float(os.environ.get("BLOCK_E", 0.75))                        # こわれなかったときのはね返り
 ABSORB = float(os.environ.get("ABSORB", 0.10))   # ブロックをこわして突き抜けるときに失う速さの割合
 V_REF = float(os.environ.get("V_REF", 490.0))   # この速さで当たると剣の標準ダメージ
-V_MIN = 150.0                          # これより弱い当たりはダメージなし
+V_MIN = float(os.environ.get("V_MIN", 150.0))                         # これより弱い当たりはダメージなし
 AIR_DAMP = float(os.environ.get("AIR_DAMP", 0.75))   # 盤面で1秒あたりに残る速さの割合(転がり抵抗)
 V_DIE = 200.0                          # これより遅くなった剣は消えていく
 FADE = 0.5
@@ -65,15 +68,21 @@ DROP_X = CX + R_OUT - LANE / 2
 DROP_Y = CY - 600
 CHUTE_L, CHUTE_R = CX + R_OUT - LANE, CX + R_OUT
 CHUTE_TOP = DROP_Y - 60
-HPK = float(os.environ.get("HPK", 0.4))
+HPK = float(os.environ.get("HPK", 1.0))
 # 剣:名前, 本数, ダメージ, 刃の色, 刃のふちの色
 SWORDS = [("木", 1, 1, (0.72, 0.53, 0.30), (0.45, 0.30, 0.15)),
           ("石", 2, 2, (0.62, 0.62, 0.62), (0.35, 0.35, 0.38)),
           ("鉄", 3, 3, (0.92, 0.92, 0.95), (0.55, 0.55, 0.60)),
-          ("金", 3, 4, (1.00, 0.85, 0.25), (0.75, 0.52, 0.08)),
-          ("ダイヤ", 4, 6, (0.45, 0.95, 0.95), (0.15, 0.55, 0.60))]
+          ("金", 4, 4, (1.00, 0.85, 0.25), (0.75, 0.52, 0.08)),
+          ("ダイヤ", 10, 7, (0.45, 0.95, 0.95), (0.15, 0.55, 0.60))]
+# ダメージ=1回当たるとブロックの「あと何回」がいくつ減るか。木1・石2・鉄3・金4(石ブロックを1回で)・ダイヤ7(ダイヤブロックを1回で)
+if os.environ.get("SWORD_N"):   # 調整用:波ごとの本数
+    SWORDS = [(w[0], int(n), w[2], w[3], w[4]) for w, n in zip(SWORDS, os.environ["SWORD_N"].split(","))]
+if os.environ.get("SWORD_D"):   # 調整用:剣の強さ
+    SWORDS = [(w[0], w[1], int(d), w[3], w[4]) for w, d in zip(SWORDS, os.environ["SWORD_D"].split(","))]
 N_SWORDS = sum(s[1] for s in SWORDS)
-BLOCK_HP = [1, 2, 3, 4, 6, 7, 9, 12]   # 外側(土)→ 内側(最強合金)
+BLOCK_HP = [int(x) for x in os.environ.get("BLOCK_HP", "1,2,3,4,5,6,7,8").split(",")]
+# こわれるまでに木の剣で当たる回数:土1・木2・石3・銅4・鉄5・金6・ダイヤ7・最強合金8
 WAVE_GAP = 0.6
 DROP_EVERY = 0.35
 FAIL_WAIT = 0.8
@@ -196,7 +205,7 @@ class Game:
         vn = abs(v.dot(n))
         if vn < V_MIN:
             return   # 弱すぎる当たりはただはね返るだけ
-        d = SWORDS[bl["kind"]][2] * min(2.0, vn / V_REF)   # 強く当たるほど大きいダメージ
+        d = SWORDS[bl["kind"]][2]   # 剣の強さのぶんだけ「あと何回」が減る
         blk["hp"] -= d
         self.last_dmg = d
         if blk["hp"] <= 0:   # こわれた:突き抜ける(そのぶん遅くなる)
@@ -352,8 +361,12 @@ def block_tex(m, rng):
                     col = pat
                 elif (i, j) in ((2, 2), (3, 2), (2, 3), (5, 5), (4, 5), (5, 4)):
                     col = (0.9, 1, 1)
-            else:
-                if j in (1, 4, 6) and rng.uniform() < 0.6:
+            else:   # 最強合金:紫がかった黒い金属。ふちは暗く、ななめに明るいすじ
+                if j in (0, 7) or i in (0, 7):
+                    col = (0.15, 0.11, 0.17)
+                elif (i + j) in (5, 6) or (i + j) == 10:
+                    col = (0.46, 0.36, 0.52)
+                elif rng.uniform() < 0.4:
                     col = pat
             c.rectangle(i, j, 1, 1)
             c.set_source_rgb(*[min(1, max(0, x + v)) for x in col])
@@ -588,6 +601,11 @@ def render(seed):
                         y0 = max(-h_ / 2, min(h_ / 2, y0 + cr.uniform(-14, 14)))
                         ctx.line_to(x0, y0)
                 ctx.stroke()
+            left = max(0, round(blocks[k]["hp0"] * (1 - dmg[k])))   # あと何回
+            ctx.save()
+            ctx.rotate(-ang)
+            text(ctx, str(left), 0, 14, 40, sw=8)
+            ctx.restore()
             ht = hit_t.get(k)
             if ht is not None and t - ht < 0.15:
                 ctx.rectangle(-w_ / 2, -h_ / 2, w_, h_)
@@ -632,12 +650,13 @@ def render(seed):
             text(ctx, "たすけて!", CX, CY + OFFSET_Y - R_IN - 4, 46, rgb=(1, 0.8, 0.9), sw=9)
         text(ctx, f"ブロック {fr['cleared']} / {len(blocks)}", W / 2, 1610, 64, sw=12)
         # 残りの剣の列
-        x0 = W / 2 - (N_SWORDS - 1) * 70 / 2
+        gap = min(70.0, (W - 90) / max(1, N_SWORDS - 1))
+        x0 = W / 2 - (N_SWORDS - 1) * gap / 2
         i = 0
         for sk, (_, cnt, _, _, _) in enumerate(SWORDS):
             for _ in range(cnt):
                 used = i < fr["dropped"]
-                draw_sword(ctx, x0 + i * 70, 1730, 0.0, sk, 62, 0.25 if used else 1.0)
+                draw_sword(ctx, x0 + i * gap, 1730, 0.0, sk, 56, 0.25 if used else 1.0)
                 i += 1
         if wave_banner is not None and 0 <= t - wave_banner[0] < 1.3 and not over:
             age = t - wave_banner[0]
