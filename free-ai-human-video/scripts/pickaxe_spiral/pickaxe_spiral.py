@@ -836,6 +836,11 @@ def synth_audio(res, duration, path):
             add(triangle(midi_hz(48), 1.0, 0.8), t + 0.35)
             add(square(midi_hz(84), 1.0, 0.5, 0.5), t + 0.35)
             add(square(midi_hz(88), 1.0, 0.35, 0.25), t + 0.35)
+    if fail:   # 幽霊のあと「ツルハシが尽きた…」の画面で流れる残念な音(ピコピコ音で ミ→レ#→レ→ド#ー)
+        sad_t = end_t + SCARE_DUR + 0.1
+        for k, m in enumerate((64, 63, 62)):
+            add(square(midi_hz(m), 0.42, 0.27, 0.5) + triangle(midi_hz(m - 12), 0.42, 0.3), sad_t + k * 0.42)
+        add(square(midi_hz(61), 1.4, 0.27, 0.5) + triangle(midi_hz(49), 1.4, 0.3), sad_t + 1.26)
     extra = np.zeros(n_out)
     if fail:
         sig = scream(SR)
