@@ -59,6 +59,8 @@ ABSORB = float(os.environ.get("ABSORB", 0.10))   # ブロックをこわして�
 V_REF = float(os.environ.get("V_REF", 490.0))   # この速さで当たると剣の標準ダメージ
 V_MIN = float(os.environ.get("V_MIN", 150.0))                         # これより弱い当たりはダメージなし
 AIR_DAMP = float(os.environ.get("AIR_DAMP", 0.75))   # 盤面で1秒あたりに残る速さの割合(転がり抵抗)
+A_SLOPE = float(os.environ.get("A_SLOPE", 500.0))
+V_CRIT = float(os.environ.get("V_CRIT", 1700.0))   # これより速く当たるとクリティカル   # 中心へ向かう下り坂の強さ(px/秒²)
 V_DIE = 200.0                          # これより遅くなった剣は消えていく
 FADE = 0.5
 WALL_E = 1.0
@@ -81,6 +83,8 @@ if os.environ.get("SWORD_N"):   # 調整用:波ごとの本数
 if os.environ.get("SWORD_D"):   # 調整用:剣の強さ
     SWORDS = [(w[0], w[1], int(d), w[3], w[4]) for w, d in zip(SWORDS, os.environ["SWORD_D"].split(","))]
 N_SWORDS = sum(s[1] for s in SWORDS)
+# 剣の耐久(何回ブロックに当たったら折れるか):木・石・鉄・金・ダイヤ。金は強いが折れやすい
+SWORD_DUR = [int(x) for x in os.environ.get("SWORD_DUR", "2,3,3,2,4").split(",")]
 BLOCK_HP = [int(x) for x in os.environ.get("BLOCK_HP", "1,2,3,4,5,6,7,8").split(",")]
 # こわれるまでに木の剣で当たる回数:土1・木2・石3・銅4・鉄5・金6・ダイヤ7・最強合金8
 WAVE_GAP = 0.6
@@ -115,8 +119,10 @@ def board_physics(body, gravity, damping, dt):
     x, y = body.position
     if outside_board(x, y):
         pymunk.Body.update_velocity(body, gravity, 1.0, dt)
-    else:
-        pymunk.Body.update_velocity(body, (0, 0), AIR_DAMP ** dt, dt)
+    else:   # 盤はうずまきに沿って中心へ向かうゆるい下り坂(すべり台)
+        a = math.atan2(y - CY, x - CX)
+        fwd = (-math.sin(a) * A_SLOPE, math.cos(a) * A_SLOPE)
+        pymunk.Body.update_velocity(body, fwd, AIR_DAMP ** dt, dt)
 
 
 def block_lines():
@@ -206,8 +212,14 @@ class Game:
         if vn < V_MIN:
             return   # 弱すぎる当たりはただはね返るだけ
         d = SWORDS[bl["kind"]][2]   # 剣の強さのぶんだけ「あと何回」が減る
+        crit = vn > V_CRIT
+        if crit:   # 勢いよく当たるとクリティカル(1.5倍)
+            d = math.ceil(d * 1.5)
         blk["hp"] -= d
-        self.last_dmg = d
+        bl["dur"] -= 1
+        if bl["dur"] <= 0:   # 剣の耐久がなくなった:はね返らずにその場で折れて消える
+            arb.process_collision = False
+            self.to_shatter.append(bl)
         if blk["hp"] <= 0:   # こわれた:突き抜ける(そのぶん遅くなる)
             arb.process_collision = False
             blk["alive"] = False
@@ -218,6 +230,9 @@ class Game:
             self.events.append(("break", self.t, (k, bl["kind"], d)))
         else:
             self.events.append(("hit", self.t, (k, bl["kind"], d)))
+        if crit:
+            x, y = body.position
+            self.events.append(("crit", self.t, (x, y)))
 
     def drop(self, kind):
         m = 1.0
@@ -229,7 +244,7 @@ class Game:
         c.elasticity, c.friction = 1.0, 0.0
         c.collision_type = 1
         self.space.add(b, c)
-        bl = {"id": self.dropped, "body": b, "shape": c, "kind": kind}
+        bl = {"id": self.dropped, "body": b, "shape": c, "kind": kind, "dur": SWORD_DUR[kind]}
         self.dropped += 1
         self.balls.append(bl)
         self.ball_of[b] = bl
@@ -250,7 +265,15 @@ class Game:
         while self.queue and self.queue[0][0] <= self.t:
             self.drop(self.queue.pop(0)[1])
         self.to_break = []
+        self.to_shatter = []
         self.space.step(dt)
+        for bl in self.to_shatter:
+            if bl in self.balls:
+                b = bl["body"]
+                self.space.remove(b, bl["shape"])
+                self.balls.remove(bl)
+                self.ball_of.pop(b, None)
+                self.events.append(("shatter", self.t, (bl["id"], b.position.x, b.position.y, bl["kind"], b.angle)))
         for k in self.to_break:
             for s in self.blocks[k]["shapes"]:
                 if s in self.space.shapes:
@@ -548,6 +571,21 @@ def render(seed):
                 shake = max(shake, 3 + blocks[k]["mat"] * 1.0)
             elif kind == "die":
                 dying.append(data + (et,))
+            elif kind == "crit":   # クリティカル:星が飛び散る
+                x, y = data
+                for j in range(10):
+                    a2 = drng.uniform(0, 2 * math.pi)
+                    sp = drng.uniform(150, 380)
+                    debris.append([x, y, math.cos(a2) * sp, math.sin(a2) * sp, et,
+                                   (1, 1, 0.75) if j % 2 else (1, 0.85, 0.3), drng.uniform(5, 9)])
+            elif kind == "shatter":   # 剣が折れて、ドットのかけらが飛び散る
+                bid, x, y, sk, _ = data
+                _, _, _, blade, edge = SWORDS[sk]
+                for j in range(16):
+                    a2 = drng.uniform(0, 2 * math.pi)
+                    sp = drng.uniform(120, 460)
+                    col = blade if j < 9 else (edge if j < 13 else (0.55, 0.38, 0.22))
+                    debris.append([x, y, math.cos(a2) * sp, math.sin(a2) * sp, et, col, drng.uniform(6, 12)])
             elif kind == "wave":
                 wave_banner = (et, data)
             elif kind == "success":
@@ -601,11 +639,6 @@ def render(seed):
                         y0 = max(-h_ / 2, min(h_ / 2, y0 + cr.uniform(-14, 14)))
                         ctx.line_to(x0, y0)
                 ctx.stroke()
-            left = max(0, round(blocks[k]["hp0"] * (1 - dmg[k])))   # あと何回
-            ctx.save()
-            ctx.rotate(-ang)
-            text(ctx, str(left), 0, 14, 40, sw=8)
-            ctx.restore()
             ht = hit_t.get(k)
             if ht is not None and t - ht < 0.15:
                 ctx.rectangle(-w_ / 2, -h_ / 2, w_, h_)
@@ -694,6 +727,25 @@ def render(seed):
 
 
 # ---------------------------------------------------------------- 音
+def item_break(seed):
+    """道具が折れる「パキッ」という短い音(ノイズと短い高い音で合成したオリジナル)。"""
+    rng = np.random.default_rng(seed + 50)
+    n = int(0.22 * SR)
+    t = np.arange(n) / SR
+    noise = rng.normal(0, 1, n)
+    lp = np.convolve(noise, np.ones(6) / 6, mode="same")
+    crack = (noise - lp) * np.exp(-t * 38)                 # 高い「パキッ」
+    body = lp * np.exp(-t * 22) * 0.8                      # 低めの「ガシャ」
+    pops = np.zeros(n)                                      # 細かく割れるプチプチ
+    for _ in range(9):
+        i = int(rng.uniform(0, 0.07) * SR)
+        pops[i:i + 40] += rng.uniform(-1, 1) * np.exp(-np.arange(min(40, n - i)) / 8)
+    f0 = rng.uniform(1700, 2100)
+    ping = np.sin(2 * np.pi * f0 * t * (1 - 0.35 * t / 0.22)) * np.exp(-t * 45) * 0.5
+    y = crack + body + pops * 1.5 + ping
+    return y / (np.max(np.abs(y)) + 1e-9) * 0.9
+
+
 def synth_audio(res, duration, path):
     events, end_t, fail = res["events"], res["result_t"], res["result"] == "fail"
     blocks = res["blocks"]
@@ -735,6 +787,11 @@ def synth_audio(res, duration, path):
         elif kind == "drop":
             add(sum(np.sin(2 * np.pi * f * np.arange(int(0.25 * SR)) / SR) for f in (2600, 3900))
                 * np.exp(-np.arange(int(0.25 * SR)) / SR * 14) * 0.15, t)
+        elif kind == "shatter":
+            add(item_break(data[0]), t, 1.0)
+        elif kind == "crit":   # クリティカルの「シャキン」
+            tt = np.arange(int(0.12 * SR)) / SR
+            add(np.sin(2 * np.pi * 3200 * tt) * np.exp(-tt * 30) * 0.25, t)
         elif kind == "die":
             for j, mm in enumerate((67, 62, 55)):
                 add(square(midi_hz(mm), 0.07, 0.12, 0.5), t + j * 0.06)
