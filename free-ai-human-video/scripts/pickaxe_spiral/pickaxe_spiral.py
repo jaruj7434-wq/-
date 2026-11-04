@@ -574,6 +574,7 @@ def render(seed):
     ghost = GhostScare(W, H, seed) if fail else None
     angels = AngelShow(W, H, seed) if result == "success" else None
     dmg = [0.0] * len(blocks)
+    reset_at = {}
     hit_t = {}
     debris, dying = [], []
     spin = {}
@@ -600,8 +601,8 @@ def render(seed):
                 shake = max(shake, 3 + blocks[k]["mat"] * 1.0)
             elif kind == "die":
                 dying.append(data + (et,))
-            elif kind == "reset":
-                dmg[data] = 0.0
+            elif kind == "reset":   # ヒビは少しのあいだ残してから元に戻す(あと少しだったことが見えるように)
+                reset_at[data] = et + 0.8
             elif kind == "crit":   # クリティカル:星が飛び散る
                 x, y = data
                 for j in range(10):
@@ -622,6 +623,9 @@ def render(seed):
             elif kind == "success":
                 shake = 20
             ev_i += 1
+        for k_ in [k_ for k_, rt in reset_at.items() if t >= rt]:
+            dmg[k_] = 0.0
+            del reset_at[k_]
         over = end_t is not None and t >= end_t
         if ghost is not None and over and t - end_t < SCARE_DUR:
             ghost.draw(surf, t - end_t)
