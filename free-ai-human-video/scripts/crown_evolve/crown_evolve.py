@@ -29,17 +29,17 @@ import numpy as np
 import pymunk
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "ball_escape"))
-from ball_escape import midi_hz, text  # noqa: E402
+from ball_escape import FONT, midi_hz, text  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
-from angels import DURATION as ANGEL_DUR, AngelShow, holy_music  # noqa: E402
+ANGEL_DUR = 6.0   # 成功したときの発表演出の長さ(天使の演出は使わない)
 
 W, H = 1080, 1920
 FPS = 60
 SUBSTEPS = 4
 SR = 48000
-GRAVITY = 1800.0
+GRAVITY = float(os.environ.get("GRAVITY", 1100.0))   # ゆっくりめに落ちる
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 IMG_DIR = os.path.join(ROOT, "assets", "source", "crown")
@@ -48,8 +48,9 @@ OUT_DIR = os.path.join(ROOT, "assets", "output")
 
 NAMES = ["初代", "3代目", "4代目", "7代目", "9代目", "12代目", "14代目", "16代目"]
 SHORT = ["1955", "1967", "1971", "1983", "1991", "2003", "2012", "2022"]   # 進化表に出す年
+NICK = ["観音開き", "白いクラウン", "クジラ", "いつかはクラウン", "", "ゼロクラウン", "", "クロスオーバー"]   # 世代の呼び名
 GOAL = len(NAMES) - 1
-WIDTHS = [72, 96, 126, 162, 208, 266, 340, 440]   # 段階ごとの写真の横幅(px)。新しい世代ほど大きい
+WIDTHS = [112, 140, 172, 212, 260, 318, 392, 500]   # 段階ごとの写真の横幅(px)。新しい世代ほど大きい(最後は発表演出でさらに巨大に)
 
 # 首のついた丸いフラスコ(参考動画と同じ形)
 FL_CX, FL_CY, FL_R = 540.0, 1180.0, 430.0
@@ -59,11 +60,11 @@ NECK_Y = FL_CY - math.sqrt(FL_R ** 2 - NECK_HW ** 2)   # 首と丸い部分の�
 OVER_Y = NECK_Y + 10                   # 止まったものの上端がこれより上(首の中)まで積み上がったら、あふれ
 OVER_WAIT = 1.5
 DROP_Y = NECK_TOP - 40
-DROP_START, DROP_END, DROP_RAMP = float(os.environ.get("DROP_START", 0.5)), float(os.environ.get("DROP_END", 0.12)), float(os.environ.get("DROP_RAMP", 25.0))   # 落ちてくる間隔(秒):最初 → 最後、何秒かけて速くなるか
+DROP_START, DROP_END, DROP_RAMP = float(os.environ.get("DROP_START", 0.7)), float(os.environ.get("DROP_END", 0.2)), float(os.environ.get("DROP_RAMP", 25.0))   # 落ちてくる間隔(秒):最初 → 最後、何秒かけて速くなるか
 V_MERGE = 0.0                          # 合体に必要なぶつかる速さ(px/秒)。0 = 同じ段階どうしが触れたら合体
 COW_E, COW_F = 0.5, 0.5                # 反発係数・摩擦(落ちたら跳ねる)
 BOWL_E, BOWL_F = 0.6, 0.5              # フラスコの反発係数・摩擦
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 36.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 43.0))
 OUTRO = 2.5
 
 
@@ -177,7 +178,7 @@ class Game:
         self.space = sp
         pts = bowl_points()
         for i, (a, b) in enumerate(zip(pts, pts[1:])):
-            s = pymunk.Segment(sp.static_body, a, b, 8)
+            s = pymunk.Segment(sp.static_body, a, b, 14)   # 厚めのかべ(大きい車がめりこんでもすり抜けない)
             s.elasticity, s.friction = BOWL_E, BOWL_F
             s.set_neighbors(pts[max(i - 1, 0)], pts[min(i + 2, len(pts) - 1)])
             sp.add(s)
@@ -242,6 +243,17 @@ class Game:
             pa, pb = ba.position, bb.position
             x, y = (pa.x + pb.x) / 2, (pa.y + pb.y) / 2
             v = (ba.velocity + bb.velocity) / 2
+            # 首の中で合体したときは、大きくなった車が首につかえて外へはじき出されないよう、丸い部分の入口に出す
+            half = WIDTHS[st] / 2
+            if y < NECK_Y + half * 0.5:
+                x, y = FL_CX, NECK_Y + half * 0.6
+                v = pymunk.Vec2d(0, max(0.0, v.y))
+            # 丸い部分のかべにめりこまないよう、中心側へ寄せる
+            dx, dy = x - FL_CX, y - FL_CY
+            dist = math.hypot(dx, dy)
+            lim = FL_R - half - 12
+            if dist > lim > 0:
+                x, y = FL_CX + dx / dist * lim, FL_CY + dy / dist * lim
             ang = math.atan2(math.sin(ba.angle) + math.sin(bb.angle), math.cos(ba.angle) + math.cos(bb.angle))
             for c in (ca, cb):
                 self.space.remove(c["body"], c["shape"])
@@ -314,89 +326,203 @@ GOLD = (1, 0.86, 0.2)
 
 
 def background():
+    """夜のショールームのような暗い背景:上からのやわらかいスポットライトと、床のにぶい反射。"""
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     ctx = cairo.Context(surf)
-    ctx.set_source_rgb(0.0, 0.0, 0.0)   # 参考動画と同じ真っ黒な背景
+    g = cairo.LinearGradient(0, 0, 0, H)
+    g.add_color_stop_rgb(0, 0.035, 0.04, 0.05)
+    g.add_color_stop_rgb(0.55, 0.07, 0.075, 0.09)
+    g.add_color_stop_rgb(1, 0.02, 0.02, 0.025)
+    ctx.set_source(g)
     ctx.paint()
-    v = cairo.RadialGradient(FL_CX, FL_CY, 100, FL_CX, FL_CY, 900)
-    v.add_color_stop_rgba(0, 0.10, 0.08, 0.16, 0.6)
-    v.add_color_stop_rgba(1, 0, 0, 0, 0)
-    ctx.set_source(v)
+    spot = cairo.RadialGradient(FL_CX, FL_CY - 250, 50, FL_CX, FL_CY, 900)
+    spot.add_color_stop_rgba(0, 1, 0.97, 0.9, 0.10)
+    spot.add_color_stop_rgba(1, 1, 0.97, 0.9, 0.0)
+    ctx.set_source(spot)
     ctx.paint()
+    floor = cairo.RadialGradient(FL_CX, FL_CY + FL_R + 20, 10, FL_CX, FL_CY + FL_R + 20, 520)
+    floor.add_color_stop_rgba(0, 0.8, 0.8, 0.85, 0.10)
+    floor.add_color_stop_rgba(1, 0.8, 0.8, 0.85, 0.0)
+    ctx.save()
+    ctx.translate(0, 0)
+    ctx.scale(1, 0.25)
+    ctx.translate(0, (FL_CY + FL_R + 20) * 3)
+    ctx.set_source(floor)
+    ctx.paint()
+    ctx.restore()
     return surf
 
 
-def hue(h, s=0.75, v=1.0):
-    import colorsys
-    return colorsys.hsv_to_rgb(h % 1.0, s, v)
-
-
 def draw_flask(ctx, t):
-    """フラスコの輪郭:虹色にゆっくり色が流れて光る線(参考動画と同じ雰囲気)。首は白い線。"""
+    """透明なガラスの容器:細い白い線と、左上に光の映りこみ。"""
     pts = bowl_points()
     ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-    for wd, al in ((22, 0.12), (12, 0.25), (6, 1.0)):
-        for i in range(1, len(pts) - 2):
-            ctx.new_path()
-            ctx.move_to(*pts[i])
-            ctx.line_to(*pts[i + 1])
-            ctx.set_source_rgba(*hue(i / (len(pts) - 3) - t * 0.15, 0.6, 1.0), al)
-            ctx.set_line_width(wd)
-            ctx.stroke()
-        for p, q in ((pts[0], pts[1]), (pts[-2], pts[-1])):
-            ctx.new_path()
-            ctx.move_to(*p)
-            ctx.line_to(*q)
-            ctx.set_source_rgba(1, 1, 1, al)
-            ctx.set_line_width(wd)
-            ctx.stroke()
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    ctx.new_path()
+    ctx.move_to(*pts[0])
+    for p in pts[1:]:
+        ctx.line_to(*p)
+    ctx.set_source_rgba(1, 1, 1, 0.10)
+    ctx.set_line_width(14)
+    ctx.stroke_preserve()
+    ctx.set_source_rgba(0.92, 0.95, 1.0, 0.75)
+    ctx.set_line_width(3)
+    ctx.stroke()
+    # ガラスの映りこみ(左上の弧と右下のうすい弧)
+    for a0, a1, al, rr in ((math.radians(200), math.radians(245), 0.35, FL_R - 22),
+                           (math.radians(20), math.radians(50), 0.15, FL_R - 22)):
+        ctx.new_path()
+        ctx.arc(FL_CX, FL_CY, rr, a0, a1)
+        ctx.set_source_rgba(1, 1, 1, al)
+        ctx.set_line_width(7)
+        ctx.stroke()
     # あふれライン(首のつなぎ目)
     ctx.new_path()
-    ctx.move_to(FL_CX - NECK_HW + 8, OVER_Y)
-    ctx.line_to(FL_CX + NECK_HW - 8, OVER_Y)
-    ctx.set_dash([10, 8])
-    ctx.set_source_rgba(1, 0.35, 0.35, 0.8)
-    ctx.set_line_width(4)
+    ctx.move_to(FL_CX - NECK_HW + 10, OVER_Y)
+    ctx.line_to(FL_CX + NECK_HW - 10, OVER_Y)
+    ctx.set_source_rgba(1, 0.4, 0.4, 0.45)
+    ctx.set_line_width(2)
     ctx.stroke()
-    ctx.set_dash([])
 
 
 def draw_merge_fx(ctx, x, y, st, age):
-    """進化の光:まぶしい白い光+時計の目盛りのような輪が広がる(参考動画の演出)。段階が上がるほど大きい。"""
-    big = 1 + 0.35 * st
-    if age < 0.35:   # まぶしい光
-        k = 1 - age / 0.35
-        g = cairo.RadialGradient(x, y, 0, x, y, 90 * big)
-        g.add_color_stop_rgba(0, 1, 1, 0.95, 0.95 * k)
-        g.add_color_stop_rgba(0.4, 1, 0.9, 0.5, 0.45 * k)
-        g.add_color_stop_rgba(1, 1, 0.8, 0.3, 0)
+    """進化の光:やわらかい白い光が一瞬ふくらみ、細い光の筋が数本のびて消える。"""
+    big = 1 + 0.25 * st
+    if age < 0.45:
+        k = 1 - age / 0.45
+        g = cairo.RadialGradient(x, y, 0, x, y, 110 * big)
+        g.add_color_stop_rgba(0, 1, 1, 1, 0.75 * k)
+        g.add_color_stop_rgba(0.35, 1, 0.96, 0.85, 0.30 * k)
+        g.add_color_stop_rgba(1, 1, 0.95, 0.8, 0)
         ctx.new_path()
-        ctx.arc(x, y, 90 * big, 0, 2 * math.pi)
+        ctx.arc(x, y, 110 * big, 0, 2 * math.pi)
         ctx.set_source(g)
         ctx.fill()
-    if age < 0.9:
-        k = 1 - age / 0.9
-        rr = 40 * big + 120 * big * age
-        ctx.new_path()
-        ctx.arc(x, y, rr, 0, 2 * math.pi)
-        ctx.set_source_rgba(1, 0.95, 0.75, 0.85 * k)
-        ctx.set_line_width(4)
-        ctx.stroke()
-        for j in range(24):   # 目盛り
-            a = 2 * math.pi * j / 24 + age * 2
+    if age < 0.6:
+        k = 1 - age / 0.6
+        ln = (60 + 220 * age) * big
+        for j in range(6):
+            a = j * math.pi / 3 + 0.4
             ctx.new_path()
-            ctx.move_to(x + (rr - 10) * math.cos(a), y + (rr - 10) * math.sin(a))
-            ctx.line_to(x + rr * math.cos(a), y + rr * math.sin(a))
-            ctx.set_line_width(3)
+            ctx.move_to(x + math.cos(a) * ln * 0.35, y + math.sin(a) * ln * 0.35)
+            ctx.line_to(x + math.cos(a) * ln, y + math.sin(a) * ln)
+            ctx.set_source_rgba(1, 1, 1, 0.55 * k)
+            ctx.set_line_width(2)
             ctx.stroke()
+
+
+def year_tag(ctx, x, y, st):
+    """車の上に小さな年のタグ。"""
+    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(24)
+    s_ = SHORT[st]
+    e = ctx.text_extents(s_)
+    w_, h_ = e.width + 18, 32
+    ctx.new_path()
+    r_ = 10
+    x0, y0 = x - w_ / 2, y - h_ / 2
+    ctx.arc(x0 + r_, y0 + r_, r_, math.pi, 1.5 * math.pi)
+    ctx.arc(x0 + w_ - r_, y0 + r_, r_, 1.5 * math.pi, 0)
+    ctx.arc(x0 + w_ - r_, y0 + h_ - r_, r_, 0, 0.5 * math.pi)
+    ctx.arc(x0 + r_, y0 + h_ - r_, r_, 0.5 * math.pi, math.pi)
+    ctx.close_path()
+    ctx.set_source_rgba(0.05, 0.05, 0.06, 0.72 if st < GOAL else 0.85)
+    ctx.fill_preserve()
+    ctx.set_source_rgba(*(GOLD if st == GOAL else (1, 1, 1)), 0.55)
+    ctx.set_line_width(1.5)
+    ctx.stroke()
+    ctx.move_to(x - e.width / 2 - e.x_bearing, y - e.height / 2 - e.y_bearing)
+    ctx.set_source_rgba(*(GOLD if st == GOAL else (1, 1, 1)), 0.95)
+    ctx.show_text(s_)
+
+
+def gen_label(st):
+    return f"{SHORT[st]}年 {NAMES[st]}" + (f"「{NICK[st]}」" if NICK[st] else "")
+
+
+def draw_reveal(ctx, sprite, age, src):
+    """成功したときの発表演出:背景が暗くなり、上からのスポットライトの中で最新のクラウンが巨大になって現れ、
+    ボディに光の帯が走る。最後に「70年の進化、完成。」"""
+    x0, y0 = src
+    dark = min(1.0, age / 0.6)
+    ctx.rectangle(0, 0, W, H)
+    ctx.set_source_rgba(0, 0, 0, 0.88 * dark)
+    ctx.fill()
+    # スポットライト(上から広がる光の円すい)
+    if age > 0.3:
+        a = min(1.0, (age - 0.3) / 0.6)
+        ctx.new_path()
+        ctx.move_to(W / 2 - 60, 0)
+        ctx.line_to(W / 2 + 60, 0)
+        ctx.line_to(W / 2 + 560, 1420)
+        ctx.line_to(W / 2 - 560, 1420)
+        ctx.close_path()
+        g = cairo.LinearGradient(0, 0, 0, 1420)
+        g.add_color_stop_rgba(0, 1, 0.97, 0.9, 0.22 * a)
+        g.add_color_stop_rgba(1, 1, 0.97, 0.9, 0.04 * a)
+        ctx.set_source(g)
+        ctx.fill()
+        fl = cairo.RadialGradient(W / 2, 1330, 10, W / 2, 1330, 520)
+        fl.add_color_stop_rgba(0, 1, 0.97, 0.9, 0.25 * a)
+        fl.add_color_stop_rgba(1, 1, 0.97, 0.9, 0)
+        ctx.save()
+        ctx.translate(0, 1330)
+        ctx.scale(1, 0.18)
+        ctx.translate(0, -1330)
+        ctx.set_source(fl)
+        ctx.arc(W / 2, 1330, 520, 0, 2 * math.pi)
+        ctx.fill()
+        ctx.restore()
+    # 車が真ん中に巨大になって現れる
+    p = min(1.0, max(0.0, (age - 0.2) / 1.3))
+    e = 1 - (1 - p) ** 3
+    tx, ty = W / 2, 1200
+    x = x0 + (tx - x0) * e
+    y = y0 + (ty - y0) * e
+    k = (1 + 1.06 * e) * (1 + 0.01 * math.sin(age * 2))
+    car = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    c2 = cairo.Context(car)
+    sprite.draw(c2, x, y, 0.0, k)
+    # 床への映りこみ
+    if e > 0.5:
+        ctx.save()
+        ctx.translate(0, 2 * (y + sprite.h * k / 2))
+        ctx.scale(1, -1)
+        ctx.set_source_surface(car, 0, 0)
+        ctx.paint_with_alpha(0.18 * (e - 0.5) * 2)
+        ctx.restore()
+    ctx.set_source_surface(car, 0, 0)
+    ctx.paint()
+    # ボディに走る光の帯(車の形で切り抜く)
+    if 1.5 < age < 2.7:
+        q = (age - 1.5) / 1.2
+        cx_ = -300 + (W + 600) * q
+        band = cairo.LinearGradient(cx_ - 160, 0, cx_ + 160, 120)
+        band.add_color_stop_rgba(0, 1, 1, 1, 0)
+        band.add_color_stop_rgba(0.5, 1, 1, 1, 0.55)
+        band.add_color_stop_rgba(1, 1, 1, 1, 0)
+        ctx.set_source(band)
+        ctx.mask_surface(car, 0, 0)
+    # 文字
+    if age > 2.2:
+        a = min(1.0, (age - 2.2) / 0.6)
+        text(ctx, "70年の進化、完成。", W / 2, 1560, 78, rgb=(1, 1, 1), sw=0, alpha=a)
+        text(ctx, "2022年  16代目「クロスオーバー」", W / 2, 1650, 40, rgb=GOLD, sw=0, alpha=a * 0.9)
 
 
 def draw_chart(ctx, sprites, best, t):
     """上の進化表。8世代の写真を並べ、たどり着いた世代は明るく、ゴールの最新クラウンは金の輪。"""
-    y = 440
+    y = 410
     xs = [72 + k * 133.7 for k in range(len(NAMES))]
     for k in range(len(NAMES) - 1):
-        text(ctx, "▶", (xs[k] + xs[k + 1]) / 2, y + 10, 24, rgb=(1, 1, 1), sw=0, alpha=0.6)
+        mx = (xs[k] + xs[k + 1]) / 2   # 小さな三角の矢印
+        ctx.new_path()
+        ctx.move_to(mx - 5, y - 7)
+        ctx.line_to(mx + 6, y)
+        ctx.line_to(mx - 5, y + 7)
+        ctx.close_path()
+        ctx.set_source_rgba(1, 1, 1, 0.4)
+        ctx.fill()
     for k, x in enumerate(xs):
         goal = k == GOAL
         r = 60 if goal else 52
@@ -406,17 +532,16 @@ def draw_chart(ctx, sprites, best, t):
         ctx.set_source_rgba(1, 1, 1, 0.14 if reached else 0.05)
         ctx.fill_preserve()
         if goal:
-            pulse = 1 + 0.05 * math.sin(t * 5)
-            ctx.set_source_rgba(*GOLD, 0.9)
-            ctx.set_line_width(5 * pulse)
+            ctx.set_source_rgba(*GOLD, 0.7)
+            ctx.set_line_width(2)
             ctx.stroke()
         else:
             ctx.new_path()
         sp = sprites[k]
         k_fit = (r * 1.75) / max(sp.w, sp.h)
         sp.draw(ctx, x, y, 0.0, k_fit, alpha=1.0 if (reached or goal) else 0.35)
-        text(ctx, SHORT[k], x, y + r + 30, 26 if not goal else 30,
-             rgb=GOLD if goal else ((1, 1, 1) if reached else (0.6, 0.6, 0.65)), sw=6)
+        text(ctx, SHORT[k], x, y + r + 30, 26,
+             rgb=GOLD if goal else ((1, 1, 1) if reached else (0.55, 0.55, 0.6)), sw=0)
 
 
 def remix(seed):
@@ -454,7 +579,7 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    angels = AngelShow(W, H, seed) if result == "success" else None
+    reveal_src = None
     born = {}
     pops = []
     shake = 0.0
@@ -484,45 +609,61 @@ def render(seed):
         ctx.save()
         ctx.translate(dx, dy)
         draw_flask(ctx, t)
-        for cid, st, x, y, ang in sorted(fr["cows"], key=lambda c: c[1]):
+        cars = sorted(fr["cows"], key=lambda c: c[1])
+        for cid, st, x, y, ang in cars:
             b_t = born.get(cid)
             k = 1.0
             if b_t is not None and t - b_t < 0.25:   # 進化した直後はぷくっとふくらむ
                 a = (t - b_t) / 0.25
                 k = 0.7 + 0.3 * a + 0.12 * math.sin(a * math.pi)
+            if over and not fail and st == GOAL:
+                if reveal_src is None:
+                    reveal_src = (x, y)
+                continue
             sprites[st].draw(ctx, x, y, ang, k)
+        for cid, st, x, y, ang in cars:   # 年のタグ(車の上に、いつもまっすぐ)
+            if over and not fail and st == GOAL:
+                continue
+            year_tag(ctx, x, y - sprites[st].h * 0.5 - 22, st)
         keep = []
         for p in pops:
             age = t - p[0]
-            if age < 0.9:
-                draw_merge_fx(ctx, p[1], p[2], p[3], age)
+            if age < 1.4:
+                if age < 0.9:
+                    draw_merge_fx(ctx, p[1], p[2], p[3], age)
                 keep.append(p)
         pops = keep
         ctx.restore()
         if fr["over"] is not None and not over:   # あふれそうな警告
             if int(t * 6) % 2 == 0:
                 text(ctx, "つまりそう！", W / 2, OVER_Y + 70, 60, rgb=(1, 0.35, 0.35), sw=12)
-        if angels is not None and over:
-            angels.draw(ctx, t - end_t)
+        if over and not fail and reveal_src is not None:
+            draw_reveal(ctx, sprites[GOAL], t - end_t, reveal_src)
 
-        # 上の帯
-        text(ctx, "初代クラウンを合体させて", W / 2, 130, 70, sw=14)
-        text(ctx, "最新クラウンにできる？", W / 2, 240, 92, rgb=GOLD, sw=18)
-        left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
-        text(ctx, f"残り {left:4.1f}秒", W / 2, 320, 50, rgb=(1, 0.35, 0.35) if left < 10 else (1, 1, 1), sw=10)
-        draw_chart(ctx, sprites, fr["best"], t)
-        text(ctx, "70年ぶんの進化をたどれるか？", W / 2, 1720, 46, sw=10)
+        # 上の帯(発表演出の間は消す)
+        hide = over and not fail
+        ui_a = 1.0 if not hide else max(0.0, 1 - (t - end_t) / 0.5)
+        if ui_a > 0:
+            text(ctx, "初代クラウンを合体させて", W / 2, 130, 66, sw=8, alpha=ui_a)
+            text(ctx, "最新クラウンにできる？", W / 2, 236, 88, rgb=GOLD, sw=10, alpha=ui_a)
+            left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
+            text(ctx, f"残り {left:4.1f}秒", W / 2, 316, 46, rgb=(1, 0.4, 0.4) if left < 10 else (0.9, 0.9, 0.92),
+                 sw=6, alpha=ui_a)
+            if not hide:
+                draw_chart(ctx, sprites, fr["best"], t)
+            # 進化した瞬間の世代の名前
+            for p in reversed(pops):   # いちばん新しい進化だけ出す
+                age = t - p[0]
+                if age < 1.4:
+                    a = min(1.0, age / 0.15) * min(1.0, (1.4 - age) / 0.3) * ui_a
+                    text(ctx, gen_label(p[3]), W / 2, 640, 52 if p[3] < GOAL else 58,
+                         rgb=GOLD if p[3] == GOAL else (1, 1, 1), sw=8, alpha=a)
+                    break
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "つまった…" if fail_why == "overflow" else "時間切れ…", W / 2, 1100,
                  130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
-            text(ctx, f"{NAMES[res['best']]}までだった…", W / 2, 1230, 70, sw=12)
-        elif over:
-            age = t - end_t
-            if age < 0.3:
-                ctx.rectangle(0, 0, W, H)
-                ctx.set_source_rgba(1, 1, 1, 0.8 * (1 - age / 0.3))
-                ctx.fill()
+            text(ctx, f"{SHORT[res['best']]}年の{NAMES[res['best']]}までだった…", W / 2, 1230, 62, sw=10)
 
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
@@ -682,11 +823,20 @@ def synth_audio(res, duration, path):
         i0 = int(end_t * SR)
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += sig[:m]
-    elif end_t is not None:
-        sig = holy_music(SR, ANGEL_DUR)
-        i0 = int(end_t * SR) + int(1.2 * SR)    # 「ドーン!」のあとに神々しいBGM
-        m = min(len(sig), n_out - i0)
-        extra[i0:i0 + m] += HOLY_GAIN * sig[:m]
+    elif end_t is not None:   # 発表演出:重いオーケストラの和音がのび、静かなハイブリッドの起動音、光の帯でシンバル
+        def put(sig, t0, g):
+            i0 = int(t0 * SR)
+            m = min(len(sig), n_out - i0)
+            if m > 0:
+                extra[i0:i0 + m] += g * sig[:m]
+        root = ROOTS[GOAL]
+        for m_, a in ((root - 24, 0.5), (root - 12, 0.5), (root - 5, 0.35), (root, 0.35), (root + 4, 0.3)):
+            put(strings(m_, a, dur=5.0), end_t + 0.3, 0.55)
+            put(brass(m_, a * 0.8, dur=2.5), end_t + 0.3, 0.45)
+        put(timpani(1.0, dur=2.5), end_t + 0.3, 0.6)
+        if voices.get(GOAL) is not None:   # 16代目に進化したときと同じハイブリッドの起動音
+            put(voices[GOAL], end_t + 1.2, 0.6)
+        put(cymbal(0.5, 7, dur=2.0), end_t + 1.5, 0.35)
     wet = out.copy()
     for d, g in ((0.043, 0.28), (0.071, 0.2), (0.113, 0.14)):   # 広い部屋の響き
         k = int(d * SR)
