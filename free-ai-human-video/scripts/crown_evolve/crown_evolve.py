@@ -1,0 +1,719 @@
+"""「初代クラウンを合体させて最新クラウンにできる?」首の長い丸フラスコに初代クラウンが次々落ちてきて、
+同じ世代どうしが触れると次の世代に進化する物理ショート(歴代クラウン版の合体進化)。
+
+- 写真(Higgs Field の Seedream 5.0 Pro で生成・背景透明)8段階:
+  初代(1955)→ 3代目「白いクラウン」(1967)→ 4代目「クジラ」(1971)→ 7代目(1983)→ 9代目(1991)
+  → 12代目「ゼロクラウン」(2003)→ 14代目(2012)→ 16代目「クロスオーバー」(2022・ゴール)
+  ※AIが描いた「その世代らしい」車。メーカーの公式の画像ではない。
+- 首から落ちてくるのは必ず初代で、落ちてくる間隔がだんだん短くなる(テンポアップ)。新しい世代ほど車が大きい。
+- 写真の輪郭(凸包)を当たり判定にして、重力・反発・摩擦・回転のまま自然に落ちる(ねらい・補正なし)。止まったものは眠らせる。
+- 進化したときは、その世代らしいエンジン音(Higgs Field の Seedance 2.0 Mini で作った音つき動画から切り出し)と、
+  段階が上がるほど豪華になる効果音。
+- 最新のクラウンができれば成功(天使)、首までつまってあふれるか時間切れなら失敗(幽霊)。
+
+使い方:
+    python crown_evolve.py search [--want fail|success] [-n 200]
+    python crown_evolve.py render --seed N
+"""
+
+import argparse
+import math
+import os
+import subprocess
+import sys
+import wave
+from multiprocessing import Pool
+
+import cairo
+import numpy as np
+import pymunk
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "ball_escape"))
+from ball_escape import midi_hz, text  # noqa: E402
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
+from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
+from angels import DURATION as ANGEL_DUR, AngelShow, holy_music  # noqa: E402
+
+W, H = 1080, 1920
+FPS = 60
+SUBSTEPS = 4
+SR = 48000
+GRAVITY = 1800.0
+
+ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
+IMG_DIR = os.path.join(ROOT, "assets", "source", "crown")
+SND_DIR = os.path.join(IMG_DIR, "sounds")
+OUT_DIR = os.path.join(ROOT, "assets", "output")
+
+NAMES = ["初代", "3代目", "4代目", "7代目", "9代目", "12代目", "14代目", "16代目"]
+SHORT = ["1955", "1967", "1971", "1983", "1991", "2003", "2012", "2022"]   # 進化表に出す年
+GOAL = len(NAMES) - 1
+WIDTHS = [72, 96, 126, 162, 208, 266, 340, 440]   # 段階ごとの写真の横幅(px)。新しい世代ほど大きい
+
+# 首のついた丸いフラスコ(参考動画と同じ形)
+FL_CX, FL_CY, FL_R = 540.0, 1180.0, 430.0
+NECK_HW = 66.0                         # 首の半分の幅
+NECK_TOP = 600.0                       # 首の上端
+NECK_Y = FL_CY - math.sqrt(FL_R ** 2 - NECK_HW ** 2)   # 首と丸い部分のつなぎ目
+OVER_Y = NECK_Y + 10                   # 止まったものの上端がこれより上(首の中)まで積み上がったら、あふれ
+OVER_WAIT = 1.5
+DROP_Y = NECK_TOP - 40
+DROP_START, DROP_END, DROP_RAMP = float(os.environ.get("DROP_START", 0.5)), float(os.environ.get("DROP_END", 0.12)), float(os.environ.get("DROP_RAMP", 25.0))   # 落ちてくる間隔(秒):最初 → 最後、何秒かけて速くなるか
+V_MERGE = 0.0                          # 合体に必要なぶつかる速さ(px/秒)。0 = 同じ段階どうしが触れたら合体
+COW_E, COW_F = 0.5, 0.5                # 反発係数・摩擦(落ちたら跳ねる)
+BOWL_E, BOWL_F = 0.6, 0.5              # フラスコの反発係数・摩擦
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 36.0))
+OUTRO = 2.5
+
+
+# ---------------------------------------------------------------- 写真と当たり判定
+def convex_hull(pts):
+    pts = sorted(set(pts))
+    if len(pts) < 3:
+        return pts
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lo, hi = [], []
+    for p in pts:
+        while len(lo) >= 2 and cross(lo[-2], lo[-1], p) <= 0:
+            lo.pop()
+        lo.append(p)
+    for p in reversed(pts):
+        while len(hi) >= 2 and cross(hi[-2], hi[-1], p) <= 0:
+            hi.pop()
+        hi.append(p)
+    return lo[:-1] + hi[:-1]
+
+
+def simplify(poly, min_d=8.0, max_n=24):
+    out = []
+    for p in poly:
+        if not out or math.dist(p, out[-1]) >= min_d:
+            out.append(p)
+    while len(out) > max_n:
+        out = out[::2]
+    return out
+
+
+class Sprite:
+    """背景透明の写真1枚。切り抜き済みの画像と、物理用の凸包(重心が原点)を持つ。"""
+
+    def __init__(self, stage):
+        path = os.path.join(IMG_DIR, f"stage{stage + 1}.png")
+        if not os.path.exists(path):
+            raise SystemExit(f"写真がありません: {path}")
+        img = cairo.ImageSurface.create_from_png(path)
+        w, h = img.get_width(), img.get_height()
+        a = np.ndarray((h, w, 4), np.uint8, img.get_data(), strides=(img.get_stride(), 4, 1))[:, :, 3]
+        ys, xs = np.nonzero(a > 100)
+        x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+        self.scale = WIDTHS[stage] / (x1 - x0)
+        # 輪郭の点(4px おきに間引き)→ 凸包
+        sub = a[y0:y1:4, x0:x1:4] > 100
+        yy, xx = np.nonzero(sub)
+        pts = [(float(x * 4), float(y * 4)) for x, y in zip(xx, yy)]
+        hull = convex_hull(pts)
+        hull = [(x * self.scale, y * self.scale) for x, y in hull]
+        cx = sum(p[0] for p in hull) / len(hull)
+        cy = sum(p[1] for p in hull) / len(hull)
+        self.poly = simplify([(x - cx, y - cy) for x, y in hull])
+        self.offset = (cx, cy)          # 切り抜いた画像の左上から重心まで(縮小後)
+        self.img, self.crop = img, (x0, y0, x1 - x0, y1 - y0)
+        self.w, self.h = (x1 - x0) * self.scale, (y1 - y0) * self.scale
+
+    def draw(self, ctx, x, y, ang, k=1.0, alpha=1.0):
+        x0, y0, cw, ch = self.crop
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(ang)
+        ctx.scale(k, k)
+        ctx.translate(-self.offset[0], -self.offset[1])
+        ctx.scale(self.scale, self.scale)
+        ctx.rectangle(0, 0, cw, ch)
+        ctx.clip()
+        ctx.set_source_surface(self.img, -x0, -y0)
+        ctx.get_source().set_filter(cairo.FILTER_GOOD)
+        ctx.paint_with_alpha(alpha)
+        ctx.restore()
+
+
+_POLYS = None
+
+
+def polys():
+    global _POLYS
+    if _POLYS is None:
+        _POLYS = [Sprite(k).poly for k in range(len(NAMES))]
+    return _POLYS
+
+
+def bowl_points():
+    """フラスコの輪郭:左の首の上 → 首のつなぎ目 → 丸い部分を左・下・右とまわる → 右のつなぎ目 → 右の首の上。"""
+    a0 = math.atan2(NECK_Y - FL_CY, -NECK_HW) % (2 * math.pi)   # 左のつなぎ目(約260°)
+    a1 = math.atan2(NECK_Y - FL_CY, NECK_HW)                    # 右のつなぎ目(約-80°)
+    pts = [(FL_CX - NECK_HW, NECK_TOP)]
+    n = 72
+    for k in range(n + 1):
+        a = a0 + (a1 - a0) * k / n
+        pts.append((FL_CX + FL_R * math.cos(a), FL_CY + FL_R * math.sin(a)))
+    pts.append((FL_CX + NECK_HW, NECK_TOP))
+    return pts
+
+
+def drop_every(t):
+    return max(DROP_END, DROP_START - (DROP_START - DROP_END) * t / DROP_RAMP)
+
+
+# ---------------------------------------------------------------- シミュレーション
+class Game:
+    def __init__(self, seed):
+        self.rng = np.random.default_rng(seed)
+        sp = pymunk.Space()
+        sp.gravity = (0, GRAVITY)
+        sp.iterations = 25
+        sp.sleep_time_threshold = 0.6     # しばらく止まっていたら眠らせる(永久に動き続けない)
+        self.space = sp
+        pts = bowl_points()
+        for i, (a, b) in enumerate(zip(pts, pts[1:])):
+            s = pymunk.Segment(sp.static_body, a, b, 8)
+            s.elasticity, s.friction = BOWL_E, BOWL_F
+            s.set_neighbors(pts[max(i - 1, 0)], pts[min(i + 2, len(pts) - 1)])
+            sp.add(s)
+        self.polys = polys()
+        for k in range(len(NAMES)):
+            sp.on_collision(10 + k, 10 + k, begin=self._touch)
+        self.cows = []
+        self.next_id = 0
+        self.pairs = []
+        self.events = []
+        self.t = 0.0
+        self.next_drop = 0.4
+        self.best = 0
+        self.result, self.result_t = None, None
+        self.over_since = None
+
+    def _touch(self, arb, space, data):
+        """同じ段階どうしが触れたら合体する(V_MERGE = 0)。"""
+        a, b = arb.shapes
+        if self.result is None:
+            n = arb.normal
+            rel = (a.body.velocity - b.body.velocity).dot(n)
+            if abs(rel) >= V_MERGE:
+                self.pairs.append((a.body, b.body))
+
+    def add(self, stage, x, y, ang=0.0, vx=0.0, vy=0.0, w=0.0):
+        poly = self.polys[stage]
+        mass = 1.0 * (WIDTHS[stage] / WIDTHS[0]) ** 2
+        b = pymunk.Body(mass, pymunk.moment_for_poly(mass, poly))
+        b.position, b.angle = (x, y), ang
+        b.velocity, b.angular_velocity = (vx, vy), w
+        s = pymunk.Poly(b, poly, radius=2)
+        s.elasticity, s.friction = COW_E, COW_F
+        s.collision_type = 10 + stage
+        self.space.add(b, s)
+        cow = {"id": self.next_id, "stage": stage, "body": b, "shape": s, "born": self.t}
+        self.next_id += 1
+        self.cows.append(cow)
+        return cow
+
+    def step(self, dt):
+        self.t += dt
+        if self.result is None and self.t >= self.next_drop:
+            self.next_drop += drop_every(self.t)
+            stage = 0   # 首から落ちてくるのは、いつも初代
+            x = FL_CX + self.rng.uniform(-14, 14)
+            c = self.add(stage, x, DROP_Y, ang=self.rng.uniform(-0.4, 0.4),
+                         vx=self.rng.uniform(-30, 30), w=self.rng.uniform(-2.0, 2.0))
+            self.events.append(("drop", self.t, (c["id"], stage)))
+        self.pairs = []
+        self.space.step(dt)
+        by_body = {c["body"]: c for c in self.cows}
+        used = set()
+        for ba, bb in self.pairs:
+            ca, cb = by_body.get(ba), by_body.get(bb)
+            if ca is None or cb is None or ca["id"] in used or cb["id"] in used or ca["stage"] != cb["stage"]:
+                continue
+            if ca["stage"] >= GOAL:
+                continue
+            used |= {ca["id"], cb["id"]}
+            st = ca["stage"] + 1
+            pa, pb = ba.position, bb.position
+            x, y = (pa.x + pb.x) / 2, (pa.y + pb.y) / 2
+            v = (ba.velocity + bb.velocity) / 2
+            ang = math.atan2(math.sin(ba.angle) + math.sin(bb.angle), math.cos(ba.angle) + math.cos(bb.angle))
+            for c in (ca, cb):
+                self.space.remove(c["body"], c["shape"])
+                self.cows.remove(c)
+            nc = self.add(st, x, y, ang=ang, vx=v.x, vy=v.y, w=(ba.angular_velocity + bb.angular_velocity) / 2)
+            self.events.append(("merge", self.t, (nc["id"], st, x, y, ca["id"], cb["id"])))
+            if st > self.best:
+                self.best = st
+                if st == GOAL and self.result is None:
+                    self.result, self.result_t = "success", self.t
+                    self.events.append(("success", self.t, None))
+        if self.result is None:
+            # 止まったものが首の中まで積み上がったら、あふれ(画面の座標は下向きなので bb.bottom が見た目の上端)
+            top = min((c["shape"].bb.bottom for c in self.cows
+                       if self.t - c["born"] > 1.5 and c["body"].velocity.length < 60), default=H)
+            if top < OVER_Y:
+                if self.over_since is None:
+                    self.over_since = self.t
+                if self.t - self.over_since > OVER_WAIT:
+                    self.result, self.result_t = "fail", self.t
+                    self.events.append(("fail", self.t, "overflow"))
+            else:
+                self.over_since = None
+            if self.result is None and self.t >= TIME_LIMIT:
+                self.result, self.result_t = "fail", self.t
+                self.events.append(("fail", self.t, "time"))
+
+
+def simulate(seed, record=False):
+    g = Game(seed)
+    frames = []
+    dt = 1 / FPS / SUBSTEPS
+    while True:
+        for _ in range(SUBSTEPS):
+            g.step(dt)
+        if record:
+            frames.append({"t": g.t, "best": g.best,
+                           "cows": [(c["id"], c["stage"], c["body"].position.x, c["body"].position.y,
+                                     c["body"].angle) for c in g.cows],
+                           "over": g.over_since})
+        if g.result is not None:
+            extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR
+            if not record or g.t > g.result_t + extra:
+                break
+    return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "best": g.best}
+
+
+def score(seed):
+    r = simulate(seed)
+    why = next((e[2] for e in r["events"] if e[0] == "fail"), "")
+    n3 = sum(1 for e in r["events"] if e[0] == "merge" and e[2][1] == GOAL - 1)
+    return seed, r["result"], r["result_t"], r["best"], why, n3
+
+
+def search(n, want):
+    with Pool(os.cpu_count()) as p:
+        rs = p.map(score, range(n))
+    succ = [r for r in rs if r[1] == "success"]
+    print(f"{n} シード中 成功 {len(succ)} 件 / 失敗 {n - len(succ)} 件")
+    if want == "fail":
+        for seed, _, rt, best, why, n3 in sorted([r for r in rs if r[1] == "fail"], key=lambda r: (-r[3], -r[5]))[:15]:
+            print(f"seed={seed:4d}  最高 {NAMES[best]} / {NAMES[GOAL - 1]} {n3}頭 / {'時間切れ' if why == 'time' else 'あふれ'} {rt:5.2f}秒")
+    else:
+        for seed, _, rt, _, _, _ in sorted(succ, key=lambda r: -r[2])[:15]:
+            print(f"seed={seed:4d}  最新クラウン {rt:5.2f}秒")
+
+
+# ---------------------------------------------------------------- 描画
+GOLD = (1, 0.86, 0.2)
+
+
+def background():
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    ctx.set_source_rgb(0.0, 0.0, 0.0)   # 参考動画と同じ真っ黒な背景
+    ctx.paint()
+    v = cairo.RadialGradient(FL_CX, FL_CY, 100, FL_CX, FL_CY, 900)
+    v.add_color_stop_rgba(0, 0.10, 0.08, 0.16, 0.6)
+    v.add_color_stop_rgba(1, 0, 0, 0, 0)
+    ctx.set_source(v)
+    ctx.paint()
+    return surf
+
+
+def hue(h, s=0.75, v=1.0):
+    import colorsys
+    return colorsys.hsv_to_rgb(h % 1.0, s, v)
+
+
+def draw_flask(ctx, t):
+    """フラスコの輪郭:虹色にゆっくり色が流れて光る線(参考動画と同じ雰囲気)。首は白い線。"""
+    pts = bowl_points()
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    for wd, al in ((22, 0.12), (12, 0.25), (6, 1.0)):
+        for i in range(1, len(pts) - 2):
+            ctx.new_path()
+            ctx.move_to(*pts[i])
+            ctx.line_to(*pts[i + 1])
+            ctx.set_source_rgba(*hue(i / (len(pts) - 3) - t * 0.15, 0.6, 1.0), al)
+            ctx.set_line_width(wd)
+            ctx.stroke()
+        for p, q in ((pts[0], pts[1]), (pts[-2], pts[-1])):
+            ctx.new_path()
+            ctx.move_to(*p)
+            ctx.line_to(*q)
+            ctx.set_source_rgba(1, 1, 1, al)
+            ctx.set_line_width(wd)
+            ctx.stroke()
+    # あふれライン(首のつなぎ目)
+    ctx.new_path()
+    ctx.move_to(FL_CX - NECK_HW + 8, OVER_Y)
+    ctx.line_to(FL_CX + NECK_HW - 8, OVER_Y)
+    ctx.set_dash([10, 8])
+    ctx.set_source_rgba(1, 0.35, 0.35, 0.8)
+    ctx.set_line_width(4)
+    ctx.stroke()
+    ctx.set_dash([])
+
+
+def draw_merge_fx(ctx, x, y, st, age):
+    """進化の光:まぶしい白い光+時計の目盛りのような輪が広がる(参考動画の演出)。段階が上がるほど大きい。"""
+    big = 1 + 0.35 * st
+    if age < 0.35:   # まぶしい光
+        k = 1 - age / 0.35
+        g = cairo.RadialGradient(x, y, 0, x, y, 90 * big)
+        g.add_color_stop_rgba(0, 1, 1, 0.95, 0.95 * k)
+        g.add_color_stop_rgba(0.4, 1, 0.9, 0.5, 0.45 * k)
+        g.add_color_stop_rgba(1, 1, 0.8, 0.3, 0)
+        ctx.new_path()
+        ctx.arc(x, y, 90 * big, 0, 2 * math.pi)
+        ctx.set_source(g)
+        ctx.fill()
+    if age < 0.9:
+        k = 1 - age / 0.9
+        rr = 40 * big + 120 * big * age
+        ctx.new_path()
+        ctx.arc(x, y, rr, 0, 2 * math.pi)
+        ctx.set_source_rgba(1, 0.95, 0.75, 0.85 * k)
+        ctx.set_line_width(4)
+        ctx.stroke()
+        for j in range(24):   # 目盛り
+            a = 2 * math.pi * j / 24 + age * 2
+            ctx.new_path()
+            ctx.move_to(x + (rr - 10) * math.cos(a), y + (rr - 10) * math.sin(a))
+            ctx.line_to(x + rr * math.cos(a), y + rr * math.sin(a))
+            ctx.set_line_width(3)
+            ctx.stroke()
+
+
+def draw_chart(ctx, sprites, best, t):
+    """上の進化表。8世代の写真を並べ、たどり着いた世代は明るく、ゴールの最新クラウンは金の輪。"""
+    y = 440
+    xs = [72 + k * 133.7 for k in range(len(NAMES))]
+    for k in range(len(NAMES) - 1):
+        text(ctx, "▶", (xs[k] + xs[k + 1]) / 2, y + 10, 24, rgb=(1, 1, 1), sw=0, alpha=0.6)
+    for k, x in enumerate(xs):
+        goal = k == GOAL
+        r = 60 if goal else 52
+        reached = k <= best
+        ctx.new_path()
+        ctx.arc(x, y, r, 0, 2 * math.pi)
+        ctx.set_source_rgba(1, 1, 1, 0.14 if reached else 0.05)
+        ctx.fill_preserve()
+        if goal:
+            pulse = 1 + 0.05 * math.sin(t * 5)
+            ctx.set_source_rgba(*GOLD, 0.9)
+            ctx.set_line_width(5 * pulse)
+            ctx.stroke()
+        else:
+            ctx.new_path()
+        sp = sprites[k]
+        k_fit = (r * 1.75) / max(sp.w, sp.h)
+        sp.draw(ctx, x, y, 0.0, k_fit, alpha=1.0 if (reached or goal) else 0.35)
+        text(ctx, SHORT[k], x, y + r + 30, 26 if not goal else 30,
+             rgb=GOLD if goal else ((1, 1, 1) if reached else (0.6, 0.6, 0.65)), sw=6)
+
+
+def remix(seed):
+    """映像はそのままで、音だけ作り直して差し替える。"""
+    res = simulate(seed)
+    final = os.path.join(OUT_DIR, f"crown_{seed}.mp4")
+    tmp = os.path.join(OUT_DIR, f"crown_{seed}_tmp.mp4")
+    wav = os.path.join(OUT_DIR, f"crown_{seed}.wav")
+    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", final],
+                               capture_output=True, text=True).stdout)
+    synth_audio(res, dur, wav)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", final, "-i", wav, "-map", "0:v", "-map", "1:a",
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest",
+                    "-movflags", "+faststart", tmp], check=True)
+    os.replace(tmp, final)
+    os.remove(wav)
+    print("音を差し替えました:", final)
+
+
+def render(seed):
+    res = simulate(seed, record=True)
+    events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
+    fail = result == "fail"
+    sprites = [Sprite(k) for k in range(len(NAMES))]
+    os.makedirs(OUT_DIR, exist_ok=True)
+    silent = os.path.join(OUT_DIR, f"crown_{seed}_video.mp4")
+    wav = os.path.join(OUT_DIR, f"crown_{seed}.wav")
+    final = os.path.join(OUT_DIR, f"crown_{seed}.mp4")
+    bg = background()
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    ff = subprocess.Popen(
+        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgra",
+         "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-c:v", "libx264",
+         "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
+        stdin=subprocess.PIPE)
+    ghost = GhostScare(W, H, seed) if fail else None
+    angels = AngelShow(W, H, seed) if result == "success" else None
+    born = {}
+    pops = []
+    shake = 0.0
+    ev_i = 0
+    fail_why = next((e[2] for e in events if e[0] == "fail"), "")
+    for fi, fr in enumerate(frames):
+        t = fr["t"]
+        while ev_i < len(events) and events[ev_i][1] <= t:
+            kind, et, data = events[ev_i]
+            if kind == "merge":
+                cid, st, x, y = data[:4]
+                born[cid] = et
+                pops.append([et, x, y, st])
+                shake = max(shake, 3 + 4 * st)
+            ev_i += 1
+        over = end_t is not None and t >= end_t
+        if ghost is not None and over and t - end_t < SCARE_DUR:
+            ghost.draw(surf, t - end_t)
+            ff.stdin.write(surf.get_data())
+            continue
+        after = (t - end_t - (SCARE_DUR if fail else 0)) if over else 0
+        shake *= 0.85
+        dx, dy = (math.sin(t * 61) * shake, math.cos(t * 53) * shake) if shake > 0.5 else (0, 0)
+
+        ctx.set_source_surface(bg, 0, 0)
+        ctx.paint()
+        ctx.save()
+        ctx.translate(dx, dy)
+        draw_flask(ctx, t)
+        for cid, st, x, y, ang in sorted(fr["cows"], key=lambda c: c[1]):
+            b_t = born.get(cid)
+            k = 1.0
+            if b_t is not None and t - b_t < 0.25:   # 進化した直後はぷくっとふくらむ
+                a = (t - b_t) / 0.25
+                k = 0.7 + 0.3 * a + 0.12 * math.sin(a * math.pi)
+            sprites[st].draw(ctx, x, y, ang, k)
+        keep = []
+        for p in pops:
+            age = t - p[0]
+            if age < 0.9:
+                draw_merge_fx(ctx, p[1], p[2], p[3], age)
+                keep.append(p)
+        pops = keep
+        ctx.restore()
+        if fr["over"] is not None and not over:   # あふれそうな警告
+            if int(t * 6) % 2 == 0:
+                text(ctx, "つまりそう！", W / 2, OVER_Y + 70, 60, rgb=(1, 0.35, 0.35), sw=12)
+        if angels is not None and over:
+            angels.draw(ctx, t - end_t)
+
+        # 上の帯
+        text(ctx, "初代クラウンを合体させて", W / 2, 130, 70, sw=14)
+        text(ctx, "最新クラウンにできる？", W / 2, 240, 92, rgb=GOLD, sw=18)
+        left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
+        text(ctx, f"残り {left:4.1f}秒", W / 2, 320, 50, rgb=(1, 0.35, 0.35) if left < 10 else (1, 1, 1), sw=10)
+        draw_chart(ctx, sprites, fr["best"], t)
+        text(ctx, "70年ぶんの進化をたどれるか？", W / 2, 1720, 46, sw=10)
+        if over and fail:
+            k = min(1.0, after / 0.25)
+            text(ctx, "つまった…" if fail_why == "overflow" else "時間切れ…", W / 2, 1100,
+                 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, f"{NAMES[res['best']]}までだった…", W / 2, 1230, 70, sw=12)
+        elif over:
+            age = t - end_t
+            if age < 0.3:
+                ctx.rectangle(0, 0, W, H)
+                ctx.set_source_rgba(1, 1, 1, 0.8 * (1 - age / 0.3))
+                ctx.fill()
+
+        ff.stdin.write(surf.get_data())
+        if fi % 300 == 0:
+            print(f"  描画 {fi}/{len(frames)}", file=sys.stderr)
+    ff.stdin.close()
+    ff.wait()
+    duration = len(frames) / FPS
+    synth_audio(res, duration, wav)
+    # 叫び声の大きさを残すため、音量の自動調整(loudnorm)はかけない
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", wav,
+         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+         "-shortest", "-movflags", "+faststart", final], check=True)
+    os.remove(silent)
+    os.remove(wav)
+    print(f"完成: {os.path.abspath(final)}  ({'失敗' if fail else '成功'} 最高 {NAMES[res['best']]} / 長さ {duration:.1f}秒)")
+
+
+# ---------------------------------------------------------------- 音
+MIX_GAIN = 0.39  # 通常部分の音量(約 -18dB になるよう調整)
+HOLY_GAIN = 0.85
+ROOTS = [60, 62, 64, 65, 67, 69, 71, 72]   # 進化した段階ごとの和音の根音(段階が上がるほど高い)
+
+
+def _t(dur):
+    return np.arange(int(dur * SR)) / SR
+
+
+def pop(amp):
+    """「ポン」:高い音から下がる短い音。"""
+    t = _t(0.12)
+    f = 900 * np.exp(-t * 25) + 250
+    return amp * np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 30)
+
+
+def chime(freq, amp, dur=1.0):
+    t = _t(dur)
+    y = sum(a * np.sin(2 * np.pi * freq * m * t) * np.exp(-t * d)
+            for m, a, d in ((1, 1, 3), (2.01, 0.4, 5), (3.0, 0.2, 8)))
+    return amp * y * np.minimum(1, t / 0.003)
+
+
+def drum(amp, seed):
+    """ドラム:低い「ドン」+「パン」。"""
+    t = _t(0.35)
+    kick = np.sin(2 * np.pi * np.cumsum(120 * np.exp(-t * 18) + 45) / SR) * np.exp(-t * 9)
+    snare = np.random.default_rng(seed).normal(0, 1, len(t)) * np.exp(-t * 22) * 0.6
+    return amp * (kick + snare)
+
+
+def brass(root, amp, dur=0.7):
+    """ブラス:のこぎり波の和音(ド・ミ・ソ)をやわらかくした「パーン」。"""
+    t = _t(dur)
+    y = np.zeros_like(t)
+    for m in (0, 4, 7, 12):
+        f = midi_hz(root + m)
+        for h in range(1, 8):   # のこぎり波の倍音
+            y += np.sin(2 * np.pi * f * h * t) / h * (0.8 ** h)
+    env = np.minimum(1, t / 0.02) * np.exp(-t * 2.2)
+    return amp * y / 6 * env
+
+
+def strings(root, amp, dur=1.4):
+    """弦楽器のような、ふわっと広がる和音(ビブラートつき)。"""
+    t = _t(dur)
+    vib = 1 + 0.004 * np.sin(2 * np.pi * 5.5 * t)
+    y = sum(np.sin(2 * np.pi * midi_hz(root + m - 12) * vib * t) + 0.5 * np.sin(4 * np.pi * midi_hz(root + m - 12) * vib * t)
+            for m in (0, 4, 7, 12, 16))
+    env = np.minimum(1, t / 0.08) * np.exp(-t * 1.4)
+    return amp * y / 5 * env
+
+
+def cymbal(amp, seed, dur=1.2):
+    t = _t(dur)
+    n = np.random.default_rng(seed).normal(0, 1, len(t))
+    hp = n - np.convolve(n, np.ones(8) / 8, mode="same")
+    return amp * hp * np.exp(-t * 3)
+
+
+def timpani(amp, dur=1.5):
+    t = _t(dur)
+    return amp * (np.sin(2 * np.pi * 55 * t) + 0.5 * np.sin(2 * np.pi * 82 * t)) * np.exp(-t * 2.5) * np.minimum(1, t / 0.005)
+
+
+def evolve_sound(st, seed):
+    """進化の効果音。段階が上がるほど音が重なって豪華になる:
+    ひよこ=ポン / ニワトリ=+キラキラ / ダチョウ=+ドラム / ワニ=+ブラス / 恐竜=+弦とシンバル / ドラゴン=全部+ティンパニの「ドーン!」"""
+    root = ROOTS[st]
+    parts = [pop(0.5)]
+    if st >= 2:
+        parts.append(chime(midi_hz(root + 12), 0.35))
+    if st >= 3:
+        parts.append(drum(0.6, seed))
+    if st >= 4:
+        parts.append(brass(root, 0.55))
+    if st >= 5:
+        parts.append(strings(root, 0.5))
+        parts.append(cymbal(0.25, seed + 1))
+    if st >= GOAL:   # 最新クラウン:長く大きな「ドーン!」
+        parts.append(brass(root - 12, 0.8, dur=2.2))
+        parts.append(strings(root, 0.8, dur=2.8))
+        parts.append(timpani(1.0, dur=2.2))
+        parts.append(cymbal(0.4, seed + 2, dur=2.5))
+    n = max(len(p) for p in parts)
+    out = np.zeros(n)
+    for p in parts:
+        out[:len(p)] += p
+    return out
+
+
+# 進化した段階の鳴き声(Higgs Field の Seedance 2.0 Mini で「6匹が順番に鳴く」動画を作り、音声から切り出したもの)
+# 1=ひよこ(かわいいピヨピヨ)… 6=ドラゴン(一番低く凶暴な咆哮)。大きくなるほど声も低く・大きく
+VOICE_GAIN = [0, 0.6, 0.65, 0.7, 0.8, 0.9, 1.0, 1.1]
+
+
+def load_voice(st):
+    path = os.path.join(SND_DIR, f"voice{st}.wav")
+    if not os.path.exists(path):
+        return None
+    with wave.open(path) as w:
+        x = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(float) / 32768
+    return x / max(1e-9, np.max(np.abs(x)))
+
+
+def thud(amp, seed):
+    """卵が落ちて当たる「コトッ」。"""
+    t = _t(0.12)
+    n = np.random.default_rng(seed).normal(0, 1, len(t))
+    return amp * (np.sin(2 * np.pi * 320 * t) * np.exp(-t * 45) + 0.4 * n * np.exp(-t * 120))
+
+
+def synth_audio(res, duration, path):
+    events, end_t, fail = res["events"], res["result_t"], res["result"] == "fail"
+    n_out = int((duration + 4) * SR)
+    out = np.zeros(n_out)
+
+    def add(sig, t0, gain=1.0):
+        i = int(t0 * SR)
+        j = min(n_out, i + len(sig))
+        if i < n_out:
+            out[i:j] += gain * sig[: j - i]
+
+    voices = {st: load_voice(st) for st in range(1, len(NAMES))}
+    for kind, t, data in events:
+        if end_t is not None and t > end_t + 0.05:
+            continue
+        if kind == "drop":
+            add(thud(0.18, int(t * 1000)), t + 0.25)
+        elif kind == "merge":
+            st = data[1]
+            add(evolve_sound(st, int(t * 1000)), t, 0.35 + 0.06 * st)   # 豪華になる効果音(鳴き声の下にひかえめに)
+            if voices.get(st) is not None:
+                add(voices[st], t + 0.03, VOICE_GAIN[st])
+    extra = np.zeros(n_out)
+    if fail:
+        sig = scream(SR)
+        i0 = int(end_t * SR)
+        m = min(len(sig), n_out - i0)
+        extra[i0:i0 + m] += sig[:m]
+    elif end_t is not None:
+        sig = holy_music(SR, ANGEL_DUR)
+        i0 = int(end_t * SR) + int(1.2 * SR)    # 「ドーン!」のあとに神々しいBGM
+        m = min(len(sig), n_out - i0)
+        extra[i0:i0 + m] += HOLY_GAIN * sig[:m]
+    wet = out.copy()
+    for d, g in ((0.043, 0.28), (0.071, 0.2), (0.113, 0.14)):   # 広い部屋の響き
+        k = int(d * SR)
+        wet[k:] += out[:-k] * g
+    wet = wet[: int(duration * SR)]
+    # 最後の「ドーン!」だけが大きくて全体が小さくならないよう、ほぼ最大(上位0.5%を除く)の大きさを基準にそろえる
+    loud = np.abs(wet[np.abs(wet) > 1e-4])
+    ref = np.percentile(loud, 99.5) if len(loud) else 1.0
+    wet = np.tanh(1.5 * wet / max(1e-9, ref)) / np.tanh(1.5) * MIX_GAIN
+    wet = np.clip(wet + (0.95 if fail else 1.0) * extra[: len(wet)], -0.98, 0.98)
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes((wet * 32767).astype(np.int16).tobytes())
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("mode", choices=["search", "render", "remix"])
+    ap.add_argument("--seed", type=int)
+    ap.add_argument("--want", choices=["fail", "success"], default="fail")
+    ap.add_argument("-n", type=int, default=200)
+    a = ap.parse_args()
+    if a.mode == "search":
+        search(a.n, a.want)
+    elif a.mode == "remix":
+        remix(a.seed)
+    else:
+        render(a.seed)
