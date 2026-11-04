@@ -479,7 +479,8 @@ def draw_reveal(ctx, sprite, age, src):
     tx, ty = W / 2, 1200
     x = x0 + (tx - x0) * e
     y = y0 + (ty - y0) * e
-    k = (1 + 1.06 * e) * (1 + 0.01 * math.sin(age * 2))
+    k_end = 1000.0 / sprite.w            # 最後は画面の横幅いっぱい(1000px)
+    k = (1 + (k_end - 1) * e) * (1 + 0.01 * math.sin(age * 2))
     car = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     c2 = cairo.Context(car)
     sprite.draw(c2, x, y, 0.0, k)
