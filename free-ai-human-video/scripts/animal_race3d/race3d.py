@@ -28,6 +28,8 @@ WALL_H = 0.30
 RAMP_L = 4.2
 LEVEL_H = 1.05
 SLOPE = math.radians(float(os.environ.get("SLOPE_DEG", 5.0)))
+WINDMILLS = [(1, 0.55, 0.8), (2, 0.5, 1.0), (3, 0.4, 1.2)]   # (段, 段の中の位置, 速さの倍率)
+BUMPS = [0.3, 0.5, 0.7]
 COLORS = [(1, .55, .2), (.95, .95, .95), (.2, .2, .2), (1, .7, .8), (.2, .4, .9), (1, .6, .6)]
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "output", "race3d")
@@ -124,11 +126,14 @@ def build(seed):
     wood = wood_material()
 
     info = {"levels": []}
+    xl_list, xr_list = [], []
     z = 6.0
     xl, xr = -RAMP_L / 2, RAMP_L / 2
     n_levels = 5
     for i in range(n_levels):
         d = 1 if i % 2 == 0 else -1
+        xl_list.append(xl)
+        xr_list.append(xr)
         x0, x1 = (xl, xr) if d == 1 else (xr, xl)
         parts, cz = trough(f"ramp{i}", x0, x1, z, d, wood)
         # 高い方の端の壁(はね返り用)と、低い方の端の先の止め板
@@ -146,35 +151,44 @@ def build(seed):
             # 次の段は少し外側から始める(落ちてきた玉を受ける)
             xl2, xr2 = (xl, xr + 0.45) if d == 1 else (xl - 0.45, xr)
             xl, xr = xl2, xr2
-    # 風車(3段目):Y軸まわりに回る4枚の羽根(キネマティック)
-    lv = info["levels"][2]
-    wx = 0.0
-    wz = (lv["z_hi"] + lv["z_low"]) / 2 + 0.28
-    bpy.ops.object.empty_add(location=(wx, 0, wz))
-    hub = bpy.context.object
-    hub.name = "windmill"
-    blades = []
-    for k in range(4):
-        b = box(f"blade{k}", (wx, 0, wz), (0.04, LANE_W - 0.04, 0.5), passive=False, mat=wood)
-        b.location = (wx, 0, wz)
-        # 羽根の中心を軸から 0.25 ずらす
-        a = k * math.pi / 2
-        b.data.transform(__import__("mathutils").Matrix.Translation((0, 0, 0.25)))
-        b.rotation_euler = (0, a, 0)
-        bpy.context.view_layer.objects.active = b
-        bpy.ops.rigidbody.object_add()
-        b.rigid_body.type = 'PASSIVE'
-        b.rigid_body.kinematic = True
-        b.rigid_body.collision_shape = 'MESH'
-        b.rigid_body.restitution = 0.4
-        b.parent = hub
-        b.location = (0, 0, 0)
-        blades.append(b)
-    hub.rotation_mode = 'XYZ'
+    # 風車:Y軸まわりに回る4枚の羽根(キネマティック)。段ごとに位置・向き・速さを変える
+    import mathutils
     bpy.context.preferences.edit.keyframe_new_interpolation_type = 'LINEAR'   # 一定の速さで回す
-    hub.keyframe_insert("rotation_euler", frame=1)
-    hub.rotation_euler = (0, -math.radians(float(os.environ.get("WIND_DEG_S", 60)) * 60), 0)
-    hub.keyframe_insert("rotation_euler", frame=1 + 60 * FPS)
+    wind_speed = float(os.environ.get("WIND_DEG_S", 60))
+    for wi, (lvl, fx, spd) in enumerate(WINDMILLS):
+        lv = info["levels"][lvl]
+        x_hi = xl_list[lvl] if lv["dir"] == 1 else xr_list[lvl]
+        wx = x_hi + lv["dir"] * fx * RAMP_L
+        wz = lv["z_hi"] - math.tan(SLOPE) * fx * RAMP_L + 0.30
+        bpy.ops.object.empty_add(location=(wx, 0, wz))
+        hub = bpy.context.object
+        hub.name = f"windmill{wi}"
+        for k in range(4):
+            bl = box(f"blade{wi}_{k}", (0, 0, 0), (0.04, LANE_W - 0.04, 0.5), passive=False, mat=wood)
+            bl.data.transform(mathutils.Matrix.Translation((0, 0, 0.25)))
+            bl.rotation_euler = (0, k * math.pi / 2, 0)
+            bpy.context.view_layer.objects.active = bl
+            bpy.ops.rigidbody.object_add()
+            bl.rigid_body.type = 'PASSIVE'
+            bl.rigid_body.kinematic = True
+            bl.rigid_body.collision_shape = 'MESH'
+            bl.rigid_body.restitution = 0.4
+            bl.parent = hub
+            bl.location = (0, 0, 0)
+        # 羽根は玉の進む向きと逆に回る(玉を押し戻す)
+        sgn = -lv["dir"]
+        ph = rng.uniform(0, math.pi / 2)
+        hub.rotation_euler = (0, ph, 0)
+        hub.keyframe_insert("rotation_euler", frame=1)
+        hub.rotation_euler = (0, ph + sgn * math.radians(wind_speed * spd) * 60, 0)
+        hub.keyframe_insert("rotation_euler", frame=1 + 60 * FPS)
+    # でこぼこ(最後の段):低い横木を越えるたびに少し遅くなる
+    lv = info["levels"][-1]
+    x_hi = xl_list[-1] if lv["dir"] == 1 else xr_list[-1]
+    for j, fx in enumerate(BUMPS):
+        bx = x_hi + lv["dir"] * fx * RAMP_L
+        bz = lv["z_hi"] - math.tan(SLOPE) * fx * RAMP_L + 0.02
+        box(f"bump{j}", (bx, 0, bz), (0.05, LANE_W, 0.05), rot=(0, lv["dir"] * SLOPE, 0), mat=wood)
     # ゴールの受け皿(最後の段の落ちる所の真下)
     last = info["levels"][-1]
     x_end = xr if last["dir"] == 1 else xl
