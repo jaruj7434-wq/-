@@ -724,6 +724,8 @@ def render(seed):
         if not over and int(t * 2.5) % 2 == 0:
             text(ctx, "たすけて!", CX, CY + OFFSET_Y - R_IN - 4, 46, rgb=(1, 0.8, 0.9), sw=9)
         text(ctx, f"ブロック {fr['cleared']} / {len(blocks)}", W / 2, 1610, 64, sw=12)
+        if not over:   # 画面の下に小さく(ユーザー指定)
+            text(ctx, "※失敗したら…アレが出ます", W / 2, 1850, 40, rgb=(1, 0.75, 0.75), sw=8)
         # これから落ちてくるツルハシの列(ランダムな順番)
         gap = min(70.0, (W - 90) / max(1, N_SWORDS - 1))
         x0 = W / 2 - (N_SWORDS - 1) * gap / 2
