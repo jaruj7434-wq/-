@@ -50,11 +50,11 @@ NAMES = ["初代", "3代目", "4代目", "7代目", "9代目", "12代目", "14�
 SHORT = ["1955", "1967", "1971", "1983", "1991", "2003", "2012", "2022"]   # 進化表に出す年
 NICK = ["観音開き", "白いクラウン", "クジラ", "いつかはクラウン", "", "ゼロクラウン", "", "クロスオーバー"]   # 世代の呼び名
 GOAL = len(NAMES) - 1
-WIDTHS = [112, 140, 172, 212, 260, 318, 392, 500]   # 段階ごとの写真の横幅(px)。新しい世代ほど大きい(最後は発表演出でさらに巨大に)
+WIDTHS = [160, 196, 236, 284, 340, 404, 478, 560]   # 段階ごとの写真の横幅(px)。新しい世代ほど大きい(最後は発表演出でさらに巨大に)
 
 # 首のついた丸いフラスコ(参考動画と同じ形)
-FL_CX, FL_CY, FL_R = 540.0, 1180.0, 430.0
-NECK_HW = 66.0                         # 首の半分の幅
+FL_CX, FL_CY, FL_R = 540.0, 1195.0, 500.0
+NECK_HW = 96.0                         # 首の半分の幅
 NECK_TOP = 600.0                       # 首の上端
 NECK_Y = FL_CY - math.sqrt(FL_R ** 2 - NECK_HW ** 2)   # 首と丸い部分のつなぎ目
 OVER_Y = NECK_Y + 10                   # 止まったものの上端がこれより上(首の中)まで積み上がったら、あふれ
@@ -64,7 +64,7 @@ DROP_START, DROP_END, DROP_RAMP = float(os.environ.get("DROP_START", 0.7)), floa
 V_MERGE = 0.0                          # 合体に必要なぶつかる速さ(px/秒)。0 = 同じ段階どうしが触れたら合体
 COW_E, COW_F = 0.5, 0.5                # 反発係数・摩擦(落ちたら跳ねる)
 BOWL_E, BOWL_F = 0.6, 0.5              # フラスコの反発係数・摩擦
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 43.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 41.0))
 OUTRO = 2.5
 
 
@@ -656,7 +656,7 @@ def render(seed):
                 age = t - p[0]
                 if age < 1.4:
                     a = min(1.0, age / 0.15) * min(1.0, (1.4 - age) / 0.3) * ui_a
-                    text(ctx, gen_label(p[3]), W / 2, 640, 52 if p[3] < GOAL else 58,
+                    text(ctx, gen_label(p[3]), W / 2, 548, 52 if p[3] < GOAL else 58,
                          rgb=GOLD if p[3] == GOAL else (1, 1, 1), sw=8, alpha=a)
                     break
         if over and fail:
