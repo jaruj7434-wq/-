@@ -22,11 +22,15 @@ import numpy as np
 FPS = 30
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 40.0))
 N_BALLS = 6
+# 選手:名前, 玉の半径(m)。大きさに差をつける(極小のハムスター〜特大のゴリラ)
+RACERS = [("ハムスター", "hamster", 0.04), ("ウサギ", "rabbit", 0.08), ("ペンギン", "penguin", 0.11),
+          ("柴犬", "shiba", 0.13), ("ブタ", "pig", 0.17), ("ゴリラ", "gorilla", 0.275)]
 BALL_R = 0.13
-LANE_W = 0.36          # 通路の内幅
-WALL_H = 0.30
+LANE_W = 0.64          # 通路の内幅
+WALL_H = 0.40
 RAMP_L = 4.2
-LEVEL_H = 1.05
+LEVEL_H = 1.5
+DROP_GAP = 0.80        # 段の端の落ちる口の幅(いちばん大きい玉より広く)
 SLOPE = math.radians(float(os.environ.get("SLOPE_DEG", 5.0)))
 WINDMILLS = [(1, 0.55, 0.8), (2, 0.5, 1.0), (3, 0.4, 1.2)]   # (段, 段の中の位置, 速さの倍率)
 BUMPS = [0.3, 0.5, 0.7]
@@ -141,15 +145,15 @@ def build(seed):
         z_low = z - math.tan(SLOPE) * RAMP_L
         # 落ちる所を囲う(止め板+両側のかべ。次の段の床まで)
         drop_h = LEVEL_H + 0.6
-        box(f"stop{i}", (x1 + d * 0.45, 0, z_low + 0.3 - drop_h / 2), (0.04, LANE_W + 0.08, drop_h), mat=wood)
+        box(f"stop{i}", (x1 + d * DROP_GAP, 0, z_low + 0.3 - drop_h / 2), (0.04, LANE_W + 0.08, drop_h), mat=wood)
         for sy in (-1, 1):
-            box(f"drop{i}_{sy}", (x1 + d * 0.2, sy * (LANE_W / 2 + 0.02), z_low + 0.3 - drop_h / 2),
-                (0.55, 0.04, drop_h), mat=wood)
+            box(f"drop{i}_{sy}", (x1 + d * DROP_GAP / 2, sy * (LANE_W / 2 + 0.02), z_low + 0.3 - drop_h / 2),
+                (DROP_GAP + 0.1, 0.04, drop_h), mat=wood)
         info["levels"].append({"z_hi": z, "z_low": z_low, "dir": d})
         if i < n_levels - 1:
             z = z_low - LEVEL_H + 0.0
             # 次の段は少し外側から始める(落ちてきた玉を受ける)
-            xl2, xr2 = (xl, xr + 0.45) if d == 1 else (xl - 0.45, xr)
+            xl2, xr2 = (xl, xr + DROP_GAP) if d == 1 else (xl - DROP_GAP, xr)
             xl, xr = xl2, xr2
     # 風車:Y軸まわりに回る4枚の羽根(キネマティック)。段ごとに位置・向き・速さを変える
     import mathutils
@@ -159,13 +163,13 @@ def build(seed):
         lv = info["levels"][lvl]
         x_hi = xl_list[lvl] if lv["dir"] == 1 else xr_list[lvl]
         wx = x_hi + lv["dir"] * fx * RAMP_L
-        wz = lv["z_hi"] - math.tan(SLOPE) * fx * RAMP_L + 0.30
+        wz = lv["z_hi"] - math.tan(SLOPE) * fx * RAMP_L + 0.66
         bpy.ops.object.empty_add(location=(wx, 0, wz))
         hub = bpy.context.object
         hub.name = f"windmill{wi}"
         for k in range(4):
-            bl = box(f"blade{wi}_{k}", (0, 0, 0), (0.04, LANE_W - 0.04, 0.5), passive=False, mat=wood)
-            bl.data.transform(mathutils.Matrix.Translation((0, 0, 0.25)))
+            bl = box(f"blade{wi}_{k}", (0, 0, 0), (0.05, LANE_W - 0.06, 0.62), passive=False, mat=wood)
+            bl.data.transform(mathutils.Matrix.Translation((0, 0, 0.31)))
             bl.rotation_euler = (0, k * math.pi / 2, 0)
             bpy.context.view_layer.objects.active = bl
             bpy.ops.rigidbody.object_add()
@@ -188,21 +192,34 @@ def build(seed):
     for j, fx in enumerate(BUMPS):
         bx = x_hi + lv["dir"] * fx * RAMP_L
         bz = lv["z_hi"] - math.tan(SLOPE) * fx * RAMP_L + 0.02
-        box(f"bump{j}", (bx, 0, bz), (0.05, LANE_W, 0.05), rot=(0, lv["dir"] * SLOPE, 0), mat=wood)
+        bz = lv["z_hi"] - math.tan(SLOPE) * fx * RAMP_L
+        bpy.ops.mesh.primitive_cylinder_add(radius=0.022, depth=LANE_W, location=(bx, 0, bz),
+                                            rotation=(math.radians(90), 0, 0), vertices=16)
+        cyl = bpy.context.object
+        cyl.name = f"bump{j}"
+        bpy.ops.rigidbody.object_add()
+        cyl.rigid_body.type = 'PASSIVE'
+        cyl.rigid_body.collision_shape = 'CONVEX_HULL'
+        cyl.rigid_body.friction = 0.6
+        cyl.rigid_body.restitution = 0.2
+        cyl.data.materials.append(wood)
     # ゴールの受け皿(最後の段の落ちる所の真下)
     last = info["levels"][-1]
     x_end = xr if last["dir"] == 1 else xl
-    gx = x_end + last["dir"] * 0.15
+    gx = x_end + last["dir"] * DROP_GAP / 2
     gz = last["z_low"] - 0.9
-    box("goal_floor", (gx, 0, gz), (1.1, LANE_W + 0.08, 0.06), mat=wood)
-    info["goal"] = (gx - 0.55, gx + 0.55, gz)
+    box("goal_floor", (gx, 0, gz), (DROP_GAP + 0.6, LANE_W + 0.08, 0.06), mat=wood)
+    info["goal"] = (gx - DROP_GAP / 2 - 0.3, gx + DROP_GAP / 2 + 0.3, gz)
     # 塔全体を前後の透明な板ではさむ(カメラには写らないが、玉は外に飛び出せない)
     zmin, zmax = gz - 0.3, info["levels"][0]["z_hi"] + 1.2
+    cxmin, cxmax = min(xl_list) - DROP_GAP - 0.1, max(xr_list) + DROP_GAP + 0.1
+    info["xrange"] = (cxmin, cxmax)
     for sy in (-1, 1):
-        g = box(f"case{sy}", (0.2, sy * (LANE_W / 2 + 0.05), (zmin + zmax) / 2), (8.0, 0.02, zmax - zmin))
+        g = box(f"case{sy}", ((cxmin + cxmax) / 2, sy * (LANE_W / 2 + 0.05), (zmin + zmax) / 2),
+                (cxmax - cxmin + 0.2, 0.02, zmax - zmin))
         g.visible_camera = False
         g.visible_shadow = False
-    for sx, nm in ((-3.35, "caseL"), (3.75, "caseR")):
+    for sx, nm in ((cxmin - 0.04, "caseL"), (cxmax + 0.04, "caseR")):
         box(nm, (sx, 0, (zmin + zmax) / 2), (0.08, LANE_W + 0.12, zmax - zmin), mat=wood)
     # 玉
     def glass_mat(col):
@@ -216,24 +233,29 @@ def build(seed):
         return g
     lv0 = info["levels"][0]
     balls = []
-    for k in range(N_BALLS):
-        x = -RAMP_L / 2 + 0.25 + k * 0.30 + rng.uniform(-0.02, 0.02)
-        zz = lv0["z_hi"] - math.tan(SLOPE) * (x + RAMP_L / 2) + BALL_R + 0.05 + rng.uniform(0, 0.05)
-        bpy.ops.mesh.primitive_uv_sphere_add(radius=BALL_R, location=(x, rng.uniform(-0.03, 0.03), zz),
+    order = rng.permutation(N_BALLS)   # スタートの並び順はシードごとにランダム
+    xs = -RAMP_L / 2 + 0.1
+    for k in order:
+        rad = RACERS[k][2]
+        x = xs + rad + rng.uniform(0, 0.03)
+        xs = x + rad + 0.03
+        zz = lv0["z_hi"] - math.tan(SLOPE) * (x + RAMP_L / 2) + rad + 0.03 + rng.uniform(0, 0.03)
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=rad, location=(x, rng.uniform(-0.05, 0.05), zz),
                                              segments=32, ring_count=16)
         o = bpy.context.object
         o.name = f"ball{k}"
         bpy.ops.object.shade_smooth()
         bpy.ops.rigidbody.object_add()
         o.rigid_body.collision_shape = 'SPHERE'
-        o.rigid_body.mass = 0.3
+        o.rigid_body.mass = 0.3 * (rad / 0.13) ** 3   # 同じ密度:大きい玉ほど重い
         o.rigid_body.friction = 0.5
         o.rigid_body.restitution = 0.25
         o.rigid_body.angular_damping = 0.05
         o.rigid_body.linear_damping = 0.02
         o.rigid_body.use_deactivation = False
         o.data.materials.append(glass_mat(COLORS[k]))
-        balls.append(o)
+        balls.append((k, o))
+    balls = [o for _, o in sorted(balls, key=lambda t: t[0])]
     sc.frame_start = 1
     sc.frame_end = int((TIME_LIMIT + 6) * FPS)
     rw.point_cache.frame_end = sc.frame_end
@@ -260,7 +282,7 @@ def simulate(seed):
     return {"finish": finish, "success": ok, "track": track, "info": info}
 
 
-def setup_look(info, res=(540, 960), samples=24):
+def setup_look(info, res=(720, 1280), samples=24):
     """カメラ・光・背景(床と壁)を置く。"""
     sc = bpy.context.scene
     cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam"))
@@ -307,12 +329,44 @@ def setup_look(info, res=(540, 960), samples=24):
     sc.view_settings.view_transform = 'AgX'
 
 
+PREP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "source", "race3d", "prep")
+
+
+def add_animals():
+    """玉の中に入れる動物(Higgs Field で作った3Dモデル)を読み込む。玉と一緒には回らず、いつも立ったまま。"""
+    import mathutils
+    animals = []
+    for name_jp, key, rad in RACERS:
+        bpy.ops.import_scene.gltf(filepath=os.path.join(PREP, key + ".glb"))
+        o = [x for x in bpy.context.selected_objects if x.type == 'MESH'][0]
+        o.rotation_mode = 'XYZ'
+        s_ = 2 * rad * 0.78           # 玉の中にちょうど収まる大きさ
+        o.scale = (s_, s_, s_)
+        animals.append(o)
+    return animals
+
+
+def place_animals(balls, animals, prev=None):
+    """動物を玉の中心に置く。顔はカメラの方へ向け、進む向きに少しだけ顔をふる。"""
+    for k, (b, a) in enumerate(zip(balls, animals)):
+        p = b.matrix_world.translation
+        rad = RACERS[k][2]
+        a.location = (p.x, p.y, p.z - rad * 0.05)
+        vx = 0.0 if prev is None else (p.x - prev[k][0]) * FPS
+        yaw = -math.pi / 2 + max(-0.6, min(0.6, vx * 0.25))   # 正面(−Y)を向き、進む方へ少し向く
+        a.rotation_euler = (0, 0, yaw)
+
+
 def still(seed, frame, path):
     info, balls = build(seed)
     setup_look(info)
+    animals = add_animals()
     sc = bpy.context.scene
+    prev = None
     for f in range(1, frame + 1):
         sc.frame_set(f)
+        place_animals(balls, animals, prev)
+        prev = [tuple(b.matrix_world.translation) for b in balls]
     sc.render.filepath = path
     bpy.ops.render.render(write_still=True)
 
@@ -327,6 +381,26 @@ if __name__ == "__main__":
     if a.mode == "sim":
         r = simulate(a.seed)
         print(json.dumps({"finish": [None if v is None else round(v, 2) for v in r["finish"]], "success": r["success"]}))
+    elif a.mode == "closeup":   # 動物の見え方の確認用:玉の近くにカメラを寄せる
+        os.makedirs(OUT, exist_ok=True)
+        info, balls = build(a.seed)
+        setup_look(info)
+        animals = add_animals()
+        sc = bpy.context.scene
+        prev = None
+        for f in range(1, a.frame + 1):
+            sc.frame_set(f)
+            place_animals(balls, animals, prev)
+            prev = [tuple(b.matrix_world.translation) for b in balls]
+        zs = [b.matrix_world.translation for b in balls]
+        c = sum((v for v in zs), __import__("mathutils").Vector()) / len(zs)
+        sc.camera.location = (c.x, -6.5, c.z + 0.6)
+        sc.camera.rotation_euler = (math.radians(84), 0, 0)
+        import time
+        t0 = time.time()
+        sc.render.filepath = os.path.join(OUT, f"closeup_{a.seed}_{a.frame}.png")
+        bpy.ops.render.render(write_still=True)
+        print("描画", round(time.time() - t0, 1), "秒")
     elif a.mode == "still":
         os.makedirs(OUT, exist_ok=True)
         still(a.seed, a.frame, os.path.join(OUT, f"still_{a.seed}_{a.frame}.png"))
