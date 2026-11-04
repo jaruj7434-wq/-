@@ -9,16 +9,21 @@ vest=(214,160,70)
 # fatter back: widen the vest silhouette
 d.ellipse([780,520,1420,1300],fill=vest)
 d.ellipse([990,470,1240,560],fill=(232,236,236))  # collar
-# red gummy rope: thick glossy red candy strands
-for pts in [[(1210,200),(1300,280),(1380,360),(1390,480),(1385,650)],[(1075,330),(1072,480),(1070,640)]]:
-    d.line(pts,fill=(205,25,40),width=16,joint="curve")
-    d.line([(x-4,y) for x,y in pts],fill=(255,120,130),width=4,joint="curve")
+# red braided cords exactly where the ref has them
+for pts in [[(1200,195),(1270,262),(1342,338),(1372,480),(1380,645)],[(1072,330),(1070,480),(1068,638)]]:
+    d.line(pts,fill=(200,30,40),width=10,joint="curve")
+# reflected face: mouth visible just right of the raised sleeve, smeared with chocolate, drool
+d.ellipse([800,470,875,515],fill=(150,90,80))                 # open-ish mouth
+for (x,y,r) in [(790,475,22),(880,480,20),(835,505,26),(815,455,14),(865,455,12),(770,500,12)]:
+    d.ellipse([x-r,y-r,x+r,y+r],fill=(85,45,25))              # chocolate smears
+d.line([(845,512),(848,560),(852,610),(850,650)],fill=(225,235,240),width=7,joint="curve")  # drool string
+d.ellipse([840,640,862,668],fill=(225,235,240))
 lab("STATIC shot, 1.75s: she ties her hair, small hand movements",20,10)
-lab("HEROINE from behind (very fat), knit vest + white shirt",900,700)
-lab("tying her hair with a long RED GUMMY CANDY rope",900,735)
-lab("instead of a braided cord",900,770)
-lab("her own face reflected in the mirror",430,520)
-lab("(tall standing mirror, wooden frame)",430,555)
+lab("HEROINE from behind (very fat), knit vest + white shirt",960,900)
+lab("tying her hair with the RED BRAIDED CORD exactly as in the ref",960,935)
+lab("(no change)",960,970)
+lab("REFLECTION: chocolate smeared all around her mouth,",20,800)
+lab("a long string of drool dripping from her mouth",20,835)
 lab("bright window",210,300)
 lab("dark coat",10,560)
 lab("wooden pillar / closet with hangers",1300,40)
