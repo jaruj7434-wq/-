@@ -20,7 +20,7 @@ import bpy
 import numpy as np
 
 FPS = 30
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 40.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 33.0))
 N_BALLS = 6
 # 選手:名前, 玉の半径(m)。大きさに差をつける(極小のハムスター〜特大のゴリラ)
 RACERS = [("ハムスター", "hamster", 0.04), ("ウサギ", "rabbit", 0.08), ("ペンギン", "penguin", 0.11),
@@ -80,28 +80,32 @@ ACRYL = [None]
 
 
 def wood_material():
-    """木目のある木(手続きテクスチャ)。"""
+    """木の板(手続きテクスチャ):長さ方向にのびた木目+細かいすじ+少しのでこぼこ。"""
     m = bpy.data.materials.new("wood")
     m.use_nodes = True
     nt = m.node_tree
     bsdf = nt.nodes["Principled BSDF"]
     tc = nt.nodes.new("ShaderNodeTexCoord")
     mp = nt.nodes.new("ShaderNodeMapping")
-    mp.inputs["Scale"].default_value = (0.3, 1.5, 6.0)
-    wave = nt.nodes.new("ShaderNodeTexWave")
-    wave.wave_type = 'BANDS'
-    wave.bands_direction = 'Z'
-    wave.inputs["Scale"].default_value = 3.0
-    wave.inputs["Distortion"].default_value = 2.0
-    wave.inputs["Detail"].default_value = 3.0
+    mp.inputs["Scale"].default_value = (0.35, 9.0, 9.0)     # X(板の長さ)方向にのばす
+    noise = nt.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = 4.0
+    noise.inputs["Detail"].default_value = 8.0
+    noise.inputs["Distortion"].default_value = 1.5
     ramp = nt.nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].color = (0.42, 0.24, 0.11, 1)
-    ramp.color_ramp.elements[1].color = (0.72, 0.48, 0.26, 1)
+    ramp.color_ramp.elements[0].position = 0.35
+    ramp.color_ramp.elements[0].color = (0.50, 0.30, 0.15, 1)
+    ramp.color_ramp.elements[1].position = 0.70
+    ramp.color_ramp.elements[1].color = (0.78, 0.55, 0.32, 1)
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.08
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
-    nt.links.new(mp.outputs["Vector"], wave.inputs["Vector"])
-    nt.links.new(wave.outputs["Fac"], ramp.inputs["Fac"])
+    nt.links.new(mp.outputs["Vector"], noise.inputs["Vector"])
+    nt.links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
     nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
-    bsdf.inputs["Roughness"].default_value = 0.45
+    nt.links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    bsdf.inputs["Roughness"].default_value = 0.42
     return m
 
 
@@ -147,8 +151,11 @@ def build(seed):
         drop_h = LEVEL_H + 0.6
         box(f"stop{i}", (x1 + d * DROP_GAP, 0, z_low + 0.3 - drop_h / 2), (0.04, LANE_W + 0.08, drop_h), mat=wood)
         for sy in (-1, 1):
-            box(f"drop{i}_{sy}", (x1 + d * DROP_GAP / 2, sy * (LANE_W / 2 + 0.02), z_low + 0.3 - drop_h / 2),
-                (DROP_GAP + 0.1, 0.04, drop_h), mat=wood)
+            pnl = box(f"drop{i}_{sy}", (x1 + d * DROP_GAP / 2, sy * (LANE_W / 2 + 0.02), z_low + 0.3 - drop_h / 2),
+                      (DROP_GAP + 0.1, 0.04, drop_h), mat=wood)
+            if sy < 0:   # 手前の板はカメラに写さない(落ちる玉が見えるように)
+                pnl.visible_camera = False
+                pnl.visible_shadow = False
         info["levels"].append({"z_hi": z, "z_low": z_low, "dir": d})
         if i < n_levels - 1:
             z = z_low - LEVEL_H + 0.0
@@ -193,7 +200,7 @@ def build(seed):
         bx = x_hi + lv["dir"] * fx * RAMP_L
         bz = lv["z_hi"] - math.tan(SLOPE) * fx * RAMP_L + 0.02
         bz = lv["z_hi"] - math.tan(SLOPE) * fx * RAMP_L
-        bpy.ops.mesh.primitive_cylinder_add(radius=0.022, depth=LANE_W, location=(bx, 0, bz),
+        bpy.ops.mesh.primitive_cylinder_add(radius=0.016, depth=LANE_W, location=(bx, 0, bz),
                                             rotation=(math.radians(90), 0, 0), vertices=16)
         cyl = bpy.context.object
         cyl.name = f"bump{j}"
@@ -253,7 +260,7 @@ def build(seed):
         o.rigid_body.angular_damping = 0.05
         o.rigid_body.linear_damping = 0.02
         o.rigid_body.use_deactivation = False
-        o.data.materials.append(glass_mat(COLORS[k]))
+        o.data.materials.append(glass_mat((1.0, 1.0, 1.0)))   # 中の動物がよく見えるよう透明
         balls.append((k, o))
     balls = [o for _, o in sorted(balls, key=lambda t: t[0])]
     sc.frame_start = 1
@@ -274,7 +281,8 @@ def simulate(seed):
         t = (f - 1) / FPS
         for k, (x, y, z) in enumerate(pos):
             gx0, gx1, gz = info["goal"]
-            if finish[k] is None and gx0 - 0.1 < x < gx1 + 0.1 and z < gz + 0.4:   # ゴールの受け皿に入った
+            if finish[k] is None and gx0 - 0.1 < x < gx1 + 0.1 and z < info["levels"][-1]["z_low"] - 0.35:
+                # 最後の段の端から下のゴールの受け皿へ落ちた(先に入った玉の上に乗っても数える)
                 finish[k] = t
         if all(v is not None for v in finish):
             break
@@ -295,7 +303,7 @@ def setup_look(info, res=(720, 1280), samples=24):
     # 背景:明るいスタジオの床と奥のかべ
     floor_m = bpy.data.materials.new("studio")
     floor_m.use_nodes = True
-    floor_m.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.82, 0.86, 0.92, 1)
+    floor_m.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.55, 0.68, 0.82, 1)
     floor_m.node_tree.nodes["Principled BSDF"].inputs["Roughness"].default_value = 0.8
     gz = info["goal"][2]
     bpy.ops.mesh.primitive_plane_add(size=60, location=(0, 0, gz - 0.35))
@@ -371,16 +379,131 @@ def still(seed, frame, path):
     bpy.ops.render.render(write_still=True)
 
 
+OUTRO_FAIL, OUTRO_OK = 4.5, 6.5   # 結果が出たあとの長さ(幽霊+文字 / 天使)
+
+
+def camera_path(res):
+    """玉の群れを追いかけるカメラの道すじ。最初は塔全体、そのあとはまだゴールしていない玉が全部入るように寄る。"""
+    info, track, finish = res["info"], res["track"], res["finish"]
+    end_t = res["end_t"]
+    n = len(track)
+    raw = []
+    gx0, gx1, gz = info["goal"]
+    top = info["levels"][0]["z_hi"]
+    for f in range(n):
+        t = f / FPS
+        live = [k for k in range(N_BALLS) if finish[k] is None or finish[k] > t]
+        if t < 1.2:   # 最初は塔全体
+            cx, cz, hv = 0.3, (top + gz) / 2 + 0.4, 11.0
+        elif t >= end_t or not live:
+            if res["success"]:   # 全員ゴール:受け皿に寄る
+                cx, cz, hv = (gx0 + gx1) / 2, gz + 0.5, 2.6
+            else:                # 間に合わなかった玉に寄る
+                ks = live or list(range(N_BALLS))
+                xs = [track[min(f, n - 1)][k][0] for k in ks]
+                zs = [track[min(f, n - 1)][k][2] for k in ks]
+                cx, cz = sum(xs) / len(xs), sum(zs) / len(zs)
+                hv = max(2.6, (max(zs) - min(zs)) * 1.6 + 1.2)
+        else:
+            xs = [track[f][k][0] for k in live]
+            zs = [track[f][k][2] for k in live]
+            cx = (min(xs) + max(xs)) / 2
+            cz = (min(zs) + max(zs)) / 2
+            hv = max(3.0, (max(zs) - min(zs)) * 1.5 + 1.6, ((max(xs) - min(xs)) + 1.0) * 16 / 9)
+            hv = min(hv, 11.0)
+        raw.append([cx, cz, hv])
+    raw = np.array(raw)
+    sm = raw.copy()
+    a = 0.05
+    for i in range(1, n):            # 前向き
+        sm[i] = sm[i - 1] + (raw[i] - sm[i - 1]) * a
+    sm2 = sm.copy()
+    for i in range(n - 2, -1, -1):   # 後ろ向きにもう一度ならす(前向きの遅れを打ち消す)
+        sm2[i] = sm2[i + 1] + (sm[i] - sm2[i + 1]) * a
+    return sm2.tolist()
+
+
+def plan(seed):
+    """物理を最後まで計算し、結果・カメラの道すじを保存する。"""
+    os.environ["_PLAN"] = "1"
+    global TIME_LIMIT
+    res = simulate(seed)
+    finish = res["finish"]
+    ok = res["success"]
+    end_t = max(finish) if ok else TIME_LIMIT
+    res["end_t"] = end_t
+    n_frames = int((end_t + (OUTRO_OK if ok else OUTRO_FAIL)) * FPS)
+    # 結果のあとも物理を続けて記録する
+    sc = bpy.context.scene
+    balls = [bpy.data.objects[f"ball{k}"] for k in range(N_BALLS)]
+    track = res["track"]
+    for f in range(len(track) + 1, n_frames + 1):
+        sc.frame_set(f)
+        track.append([tuple(b.matrix_world.translation) for b in balls])
+    res["track"] = track[:n_frames]
+    cam = camera_path(res)
+    out = {"seed": seed, "finish": finish, "success": ok, "end_t": end_t, "time_limit": TIME_LIMIT,
+           "n_frames": n_frames, "track": res["track"], "cam": cam, "info": res["info"]}
+    os.makedirs(OUT, exist_ok=True)
+    with open(os.path.join(OUT, f"plan_{seed}.json"), "w") as fp:
+        json.dump(out, fp)
+    return out
+
+
+def render_frames(seed, start, end, samples, step=1, res=(720, 1280), tag=""):
+    """フレームを1枚ずつ PNG に描く(すでにある番号は飛ばすので、止まっても続きから描ける)。"""
+    with open(os.path.join(OUT, f"plan_{seed}.json")) as fp:
+        pl = json.load(fp)
+    info, balls = build(seed)
+    setup_look(info, res=res, samples=samples)
+    animals = add_animals()
+    sc = bpy.context.scene
+    sc.frame_end = pl["n_frames"]
+    sc.rigidbody_world.point_cache.frame_end = pl["n_frames"]
+    cam = sc.camera
+    fdir = os.path.join(OUT, f"frames_{seed}{tag}")
+    os.makedirs(fdir, exist_ok=True)
+    prev = None
+    end = min(end, pl["n_frames"])
+    for f in range(1, end + 1):
+        sc.frame_set(f)
+        place_animals(balls, animals, prev)
+        prev = [tuple(b.matrix_world.translation) for b in balls]
+        if f < start or (f - 1) % step:
+            continue
+        path = os.path.join(fdir, f"{f:05d}.png")
+        if os.path.exists(path):
+            continue
+        cx, cz, hv = pl["cam"][f - 1]
+        dist = hv * 50 / 24
+        cam.location = (cx, -dist, cz + hv * 0.08)
+        cam.rotation_euler = (math.radians(87), 0, 0)
+        sc.render.filepath = path
+        bpy.ops.render.render(write_still=True)
+        print(f"描画 {f}/{pl['n_frames']}", flush=True)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("mode")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("-n", type=int, default=20)
     ap.add_argument("--frame", type=int, default=1)
+    ap.add_argument("--start", type=int, default=1)
+    ap.add_argument("--end", type=int, default=99999)
+    ap.add_argument("--samples", type=int, default=16)
     a = ap.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:])
     if a.mode == "sim":
         r = simulate(a.seed)
         print(json.dumps({"finish": [None if v is None else round(v, 2) for v in r["finish"]], "success": r["success"]}))
+    elif a.mode == "plan":
+        p = plan(a.seed)
+        print(json.dumps({"finish": [None if v is None else round(v, 2) for v in p["finish"]], "success": p["success"],
+                          "end_t": p["end_t"], "n_frames": p["n_frames"]}))
+    elif a.mode == "render":
+        render_frames(a.seed, a.start, a.end, a.samples)
+    elif a.mode == "preview":   # 確認用:小さい画面・少ないサンプルで3コマに1枚
+        render_frames(a.seed, 1, 99999, 6, step=3, res=(360, 640), tag="_preview")
     elif a.mode == "closeup":   # 動物の見え方の確認用:玉の近くにカメラを寄せる
         os.makedirs(OUT, exist_ok=True)
         info, balls = build(a.seed)
