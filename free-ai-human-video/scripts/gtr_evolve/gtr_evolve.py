@@ -432,8 +432,8 @@ def turn_state(age):
 def year_tag(ctx, x, y, st):
     """車の上に小さな年のタグ。"""
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(24)
-    s_ = SHORT[st]
+    ctx.set_font_size(26)
+    s_ = NAMES[st]   # 名前のタグ(ハコスカ・R34 など)
     e = ctx.text_extents(s_)
     w_, h_ = e.width + 18, 32
     ctx.new_path()
@@ -456,6 +456,68 @@ def year_tag(ctx, x, y, st):
 
 def gen_label(st):
     return f"{SHORT[st]}年 {NAMES[st]}" + (f"「{NICK[st]}」" if NICK[st] else "")
+
+
+def draw_logo(ctx, age, cx, cy):
+    """「GT-R」の文字ロゴ。少し大きい所から縮みながら現れ、クロームの文字に光が一度走る。"""
+    a = min(1.0, age / 0.35)
+    k = 1.25 - 0.25 * (1 - (1 - min(1.0, age / 0.45)) ** 3)
+    size = 230
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.scale(k, k)
+    ctx.transform(cairo.Matrix(1, 0, -0.22, 1, 0, 0))   # 斜体
+    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(size)
+    label = "GT-R"
+    e = ctx.text_extents(label)
+    x0, y0 = -e.width / 2 - e.x_bearing, e.height / 2
+    # うしろの光
+    glow = cairo.RadialGradient(0, -e.height / 2, 10, 0, -e.height / 2, e.width * 0.75)
+    glow.add_color_stop_rgba(0, 1, 0.25, 0.2, 0.35 * a)
+    glow.add_color_stop_rgba(1, 1, 0.25, 0.2, 0)
+    ctx.set_source(glow)
+    ctx.paint()
+    ctx.new_path()
+    ctx.move_to(x0, y0)
+    ctx.text_path(label)
+    path = ctx.copy_path()
+    # 黒いふち
+    ctx.set_source_rgba(0, 0, 0, 0.8 * a)
+    ctx.set_line_width(14)
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    ctx.stroke_preserve()
+    # クロームのぬり(上は明るく、真ん中に暗い帯、下はまた明るく)
+    g = cairo.LinearGradient(0, y0 - e.height, 0, y0)
+    g.add_color_stop_rgba(0.0, 0.98, 0.98, 1.0, a)
+    g.add_color_stop_rgba(0.45, 0.70, 0.72, 0.78, a)
+    g.add_color_stop_rgba(0.52, 0.25, 0.26, 0.30, a)
+    g.add_color_stop_rgba(0.75, 0.85, 0.86, 0.9, a)
+    g.add_color_stop_rgba(1.0, 0.55, 0.56, 0.6, a)
+    ctx.set_source(g)
+    ctx.fill_preserve()
+    ctx.set_source_rgba(1, 1, 1, 0.6 * a)
+    ctx.set_line_width(2)
+    ctx.stroke()
+    # 光が一度走る(文字の形で切り抜く)
+    if age < 1.3:
+        q = age / 1.3
+        sx = -e.width * 0.8 + e.width * 1.6 * q
+        band = cairo.LinearGradient(sx - 80, 0, sx + 80, 0)
+        band.add_color_stop_rgba(0, 1, 1, 1, 0)
+        band.add_color_stop_rgba(0.5, 1, 1, 1, 0.9 * a)
+        band.add_color_stop_rgba(1, 1, 1, 1, 0)
+        ctx.new_path()
+        ctx.append_path(path)
+        ctx.set_source(band)
+        ctx.fill()
+    # 下の赤いライン
+    lw = e.width * min(1.0, age / 0.6)
+    ctx.new_path()
+    ctx.rectangle(-lw / 2, y0 + 26, lw, 9)
+    ctx.set_source_rgba(0.85, 0.05, 0.08, a)
+    ctx.fill()
+    ctx.restore()
 
 
 def draw_reveal(ctx, sprite, age, src):
@@ -522,6 +584,9 @@ def draw_reveal(ctx, sprite, age, src):
         band.add_color_stop_rgba(1, 1, 1, 1, 0)
         ctx.set_source(band)
         ctx.mask_surface(car, 0, 0)
+    # GT-R の文字ロゴ(オリジナルのデザイン:クロームの斜体+赤いライン+光が走る)
+    if age > 1.7:
+        draw_logo(ctx, age - 1.7, W / 2, 760)
     # 文字
     if age > 2.2:
         a = min(1.0, (age - 2.2) / 0.6)
@@ -915,6 +980,8 @@ def synth_audio(res, duration, path):
         if hybrid is not None:
             put(hybrid, end_t + 1.2, 0.6)
         put(cymbal(0.5, 7, dur=2.0), end_t + 1.5, 0.35)
+        put(timpani(0.9, dur=1.6), end_t + 1.7, 0.5)            # ロゴが出る「ドン」
+        put(cymbal(0.6, 11, dur=1.8), end_t + 1.7, 0.3)
     wet = out.copy()
     for d, g in ((0.043, 0.28), (0.071, 0.2), (0.113, 0.14)):   # 広い部屋の響き
         k = int(d * SR)
