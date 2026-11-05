@@ -458,65 +458,103 @@ def gen_label(st):
     return f"{SHORT[st]}年 {NAMES[st]}" + (f"「{NICK[st]}」" if NICK[st] else "")
 
 
+def _rrect(ctx, x, y, w, h, r):
+    ctx.new_path()
+    ctx.arc(x + r, y + r, r, math.pi, 1.5 * math.pi)
+    ctx.arc(x + w - r, y + r, r, 1.5 * math.pi, 0)
+    ctx.arc(x + w - r, y + h - r, r, 0, 0.5 * math.pi)
+    ctx.arc(x + r, y + h - r, r, 0.5 * math.pi, math.pi)
+    ctx.close_path()
+
+
 def draw_logo(ctx, age, cx, cy):
-    """「GT-R」の文字ロゴ。少し大きい所から縮みながら現れ、クロームの文字に光が一度走る。"""
-    a = min(1.0, age / 0.35)
-    k = 1.25 - 0.25 * (1 - (1 - min(1.0, age / 0.45)) ** 3)
-    size = 230
+    """「GT-R」のメタリックなバッジ(オリジナルのデザイン。メーカーのエンブレムの絵柄そのものではない)。
+    ガンメタの金属プレート+面取りしたクロームのふち+厚みのあるクロームの文字+赤いアクセント。現れるときに光が走る。"""
+    a = min(1.0, age / 0.3)
+    k = 1.3 - 0.3 * (1 - (1 - min(1.0, age / 0.5)) ** 3)
     ctx.save()
     ctx.translate(cx, cy)
     ctx.scale(k, k)
-    ctx.transform(cairo.Matrix(1, 0, -0.22, 1, 0, 0))   # 斜体
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(size)
+    ctx.set_font_size(170)
     label = "GT-R"
     e = ctx.text_extents(label)
-    x0, y0 = -e.width / 2 - e.x_bearing, e.height / 2
-    # うしろの光
-    glow = cairo.RadialGradient(0, -e.height / 2, 10, 0, -e.height / 2, e.width * 0.75)
-    glow.add_color_stop_rgba(0, 1, 0.25, 0.2, 0.35 * a)
-    glow.add_color_stop_rgba(1, 1, 0.25, 0.2, 0)
+    pw, ph = e.width + 150, e.height + 110
+    px, py = -pw / 2, -ph / 2
+    # うしろの赤い光
+    glow = cairo.RadialGradient(0, 0, 10, 0, 0, pw * 0.8)
+    glow.add_color_stop_rgba(0, 0.9, 0.1, 0.1, 0.30 * a)
+    glow.add_color_stop_rgba(1, 0.9, 0.1, 0.1, 0)
     ctx.set_source(glow)
     ctx.paint()
+    # 影
+    _rrect(ctx, px + 10, py + 14, pw, ph, 30)
+    ctx.set_source_rgba(0, 0, 0, 0.55 * a)
+    ctx.fill()
+    # 面取りしたクロームのふち
+    _rrect(ctx, px - 10, py - 10, pw + 20, ph + 20, 38)
+    rim = cairo.LinearGradient(0, py - 10, 0, py + ph + 10)
+    for p_, c_ in ((0, 0.97), (0.3, 0.6), (0.5, 0.95), (0.7, 0.45), (1, 0.85)):
+        rim.add_color_stop_rgba(p_, c_, c_, min(1, c_ + 0.03), a)
+    ctx.set_source(rim)
+    ctx.fill()
+    # ガンメタのプレート(ヘアライン風)
+    _rrect(ctx, px, py, pw, ph, 30)
+    plate = cairo.LinearGradient(px, py, px + pw * 0.3, py + ph)
+    plate.add_color_stop_rgba(0, 0.30, 0.31, 0.34, a)
+    plate.add_color_stop_rgba(0.5, 0.13, 0.13, 0.15, a)
+    plate.add_color_stop_rgba(1, 0.22, 0.22, 0.25, a)
+    ctx.set_source(plate)
+    ctx.fill_preserve()
+    ctx.save()
+    ctx.clip()
+    for j in range(0, int(ph), 4):   # ヘアライン
+        ctx.move_to(px, py + j)
+        ctx.line_to(px + pw, py + j)
+    ctx.set_source_rgba(1, 1, 1, 0.025 * a)
+    ctx.set_line_width(1)
+    ctx.stroke()
+    ctx.restore()
+    # 赤いアクセント(プレートの下の細い線)
+    ctx.rectangle(px + 40, py + ph - 26, pw - 80, 6)
+    ctx.set_source_rgba(0.9, 0.07, 0.1, a)
+    ctx.fill()
+    # 厚みのある文字:下に暗い層を何枚か重ねて立体に見せる
+    ctx.save()
+    ctx.transform(cairo.Matrix(1, 0, -0.18, 1, 0, 0))   # 少し斜体
+    x0, y0 = -e.width / 2 - e.x_bearing + 6, e.height / 2 - 6
+    for d in range(8, 0, -1):
+        ctx.new_path()
+        ctx.move_to(x0 + d * 0.8, y0 + d)
+        ctx.text_path(label)
+        c_ = 0.12 + 0.02 * (8 - d)
+        ctx.set_source_rgba(c_, c_, c_ + 0.02, a)
+        ctx.fill()
     ctx.new_path()
     ctx.move_to(x0, y0)
     ctx.text_path(label)
     path = ctx.copy_path()
-    # 黒いふち
-    ctx.set_source_rgba(0, 0, 0, 0.8 * a)
-    ctx.set_line_width(14)
-    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-    ctx.stroke_preserve()
-    # クロームのぬり(上は明るく、真ん中に暗い帯、下はまた明るく)
-    g = cairo.LinearGradient(0, y0 - e.height, 0, y0)
-    g.add_color_stop_rgba(0.0, 0.98, 0.98, 1.0, a)
-    g.add_color_stop_rgba(0.45, 0.70, 0.72, 0.78, a)
-    g.add_color_stop_rgba(0.52, 0.25, 0.26, 0.30, a)
-    g.add_color_stop_rgba(0.75, 0.85, 0.86, 0.9, a)
-    g.add_color_stop_rgba(1.0, 0.55, 0.56, 0.6, a)
-    ctx.set_source(g)
+    chrome = cairo.LinearGradient(0, y0 - e.height, 0, y0)
+    for p_, c_ in ((0, 1.0), (0.38, 0.78), (0.48, 0.35), (0.55, 0.55), (0.8, 0.95), (1, 0.7)):
+        chrome.add_color_stop_rgba(p_, c_, c_, min(1, c_ + 0.04), a)
+    ctx.set_source(chrome)
     ctx.fill_preserve()
-    ctx.set_source_rgba(1, 1, 1, 0.6 * a)
-    ctx.set_line_width(2)
+    ctx.set_source_rgba(1, 1, 1, 0.75 * a)   # ふちの光
+    ctx.set_line_width(2.2)
     ctx.stroke()
-    # 光が一度走る(文字の形で切り抜く)
-    if age < 1.3:
-        q = age / 1.3
-        sx = -e.width * 0.8 + e.width * 1.6 * q
-        band = cairo.LinearGradient(sx - 80, 0, sx + 80, 0)
+    # 文字とプレートに光が一度走る
+    if age < 1.4:
+        q = age / 1.4
+        sx = -pw * 0.9 + pw * 1.8 * q
+        band = cairo.LinearGradient(sx - 90, -60, sx + 90, 60)
         band.add_color_stop_rgba(0, 1, 1, 1, 0)
-        band.add_color_stop_rgba(0.5, 1, 1, 1, 0.9 * a)
+        band.add_color_stop_rgba(0.5, 1, 1, 1, 0.95 * a)
         band.add_color_stop_rgba(1, 1, 1, 1, 0)
         ctx.new_path()
         ctx.append_path(path)
         ctx.set_source(band)
         ctx.fill()
-    # 下の赤いライン
-    lw = e.width * min(1.0, age / 0.6)
-    ctx.new_path()
-    ctx.rectangle(-lw / 2, y0 + 26, lw, 9)
-    ctx.set_source_rgba(0.85, 0.05, 0.08, a)
-    ctx.fill()
+    ctx.restore()
     ctx.restore()
 
 
@@ -586,7 +624,7 @@ def draw_reveal(ctx, sprite, age, src):
         ctx.mask_surface(car, 0, 0)
     # GT-R の文字ロゴ(オリジナルのデザイン:クロームの斜体+赤いライン+光が走る)
     if age > 1.7:
-        draw_logo(ctx, age - 1.7, W / 2, 760)
+        draw_logo(ctx, age - 1.7, W / 2, 740)
     # 文字
     if age > 2.2:
         a = min(1.0, (age - 2.2) / 0.6)
