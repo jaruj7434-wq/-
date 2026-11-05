@@ -101,8 +101,8 @@ def simplify(poly, min_d=8.0, max_n=24):
 class Sprite:
     """背景透明の写真1枚。切り抜き済みの画像と、物理用の凸包(重心が原点)を持つ。"""
 
-    def __init__(self, stage):
-        path = os.path.join(IMG_DIR, f"stage{stage + 1}.png")
+    def __init__(self, stage, front=False, height=None):
+        path = os.path.join(IMG_DIR, f"{'front' if front else 'stage'}{stage + 1}.png")
         if not os.path.exists(path):
             raise SystemExit(f"写真がありません: {path}")
         img = cairo.ImageSurface.create_from_png(path)
@@ -110,7 +110,7 @@ class Sprite:
         a = np.ndarray((h, w, 4), np.uint8, img.get_data(), strides=(img.get_stride(), 4, 1))[:, :, 3]
         ys, xs = np.nonzero(a > 100)
         x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
-        self.scale = WIDTHS[stage] / (x1 - x0)
+        self.scale = WIDTHS[stage] / (x1 - x0) if height is None else height / (y1 - y0)
         # 輪郭の点(4px おきに間引き)→ 凸包
         sub = a[y0:y1:4, x0:x1:4] > 100
         yy, xx = np.nonzero(sub)
@@ -124,12 +124,12 @@ class Sprite:
         self.img, self.crop = img, (x0, y0, x1 - x0, y1 - y0)
         self.w, self.h = (x1 - x0) * self.scale, (y1 - y0) * self.scale
 
-    def draw(self, ctx, x, y, ang, k=1.0, alpha=1.0):
+    def draw(self, ctx, x, y, ang, k=1.0, alpha=1.0, sx=1.0):
         x0, y0, cw, ch = self.crop
         ctx.save()
         ctx.translate(x, y)
         ctx.rotate(ang)
-        ctx.scale(k, k)
+        ctx.scale(k * max(0.02, sx), k)   # sx<1 で横幅がしぼむ(くるっと回る見た目)
         ctx.translate(-self.offset[0], -self.offset[1])
         ctx.scale(self.scale, self.scale)
         ctx.rectangle(0, 0, cw, ch)
@@ -411,6 +411,26 @@ def draw_merge_fx(ctx, x, y, st, age):
             ctx.stroke()
 
 
+TURN = (0.12, 0.62, 0.74)   # 進化したあと:横→正面へ回り終わる / 正面を見せ終わる / 横に戻り終わる(秒)
+
+
+def turn_state(age):
+    """進化してからの時間 → (正面を見せるか, 横幅の倍率)。くるっと回って正面を見せ、また横に戻る。"""
+    a, b, c = TURN
+    h = a / 2
+    if age < h:
+        return False, 1 - age / h
+    if age < a:
+        return True, (age - h) / h
+    if age < b:
+        return True, 1.0
+    if age < b + (c - b) / 2:
+        return True, 1 - (age - b) / ((c - b) / 2)
+    if age < c:
+        return False, (age - b - (c - b) / 2) / ((c - b) / 2)
+    return False, 1.0
+
+
 def year_tag(ctx, x, y, st):
     """車の上に小さな年のタグ。"""
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
@@ -567,6 +587,10 @@ def render(seed):
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
     fail = result == "fail"
     sprites = [Sprite(k) for k in range(len(NAMES))]
+    fronts = {}
+    for k in range(1, len(NAMES)):   # 正面の写真(進化した瞬間だけ見せる)。高さは横向きの写真にそろえる
+        if os.path.exists(os.path.join(IMG_DIR, f"front{k + 1}.png")):
+            fronts[k] = Sprite(k, front=True, height=sprites[k].h * 1.05)
     os.makedirs(OUT_DIR, exist_ok=True)
     silent = os.path.join(OUT_DIR, f"crown_{seed}_video.mp4")
     wav = os.path.join(OUT_DIR, f"crown_{seed}.wav")
@@ -621,7 +645,10 @@ def render(seed):
                 if reveal_src is None:
                     reveal_src = (x, y)
                 continue
-            sprites[st].draw(ctx, x, y, ang, k)
+            show_front, sx = (False, 1.0)
+            if b_t is not None and st in fronts:
+                show_front, sx = turn_state(t - b_t)
+            (fronts[st] if show_front else sprites[st]).draw(ctx, x, y, ang, k, sx=sx)
         for cid, st, x, y, ang in cars:   # 年のタグ(車の上に、いつもまっすぐ)
             if over and not fail and st == GOAL:
                 continue
