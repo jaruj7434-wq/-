@@ -1,6 +1,6 @@
 # 投稿用テキスト:gtr_29.mp4(ハコスカを合体させて最新GT-Rにする回・成功パターン)
 
-- 動画: assets/output/gtr_29.mp4(1080x1920 / 60fps / H.264 + AAC・git 管理外)
+- 動画: assets/output/gtr_29.mp4(1080x1920 / 60fps / 32.8秒 / H.264 + AAC・git 管理外)
 - 再生成: `python scripts/gtr_evolve/gtr_evolve.py render --seed 29`(写真は assets/source/gtr/stage1〜7.png・front2〜7.png、音は make_sounds.sh で切り出し)
 - 写真: Higgs Field(Seedream 5.0 Pro・背景除去)で生成した7世代の横向き(17.5クレジット)と正面6枚(15クレジット)。
   AIが描いた「その世代らしい」車で、メーカーの公式画像ではない
@@ -12,6 +12,7 @@
 - 音: 進化するたびに、かわいい「ポヨン♪」→ 小さなエンジン → 直6 → ツインターボの「プシュー」→ かん高いうなり → NISMOは低く荒々しいV6+重低音
   (Higgs Field の Seedance 2.0 Mini で作ったスポーツカーのエンジン音の動画から切り出して加工・15クレジット)
 - 難易度: 200 回中 120 回成功(成功率 約60%。27秒にすると約33%)
+- 音量: 通常部分 約 -18.1dB
 - AI生成コンテンツ: 写真と音に AI 生成素材を使用。各プラットフォームの「AI生成」ラベルをオンにする
 
 ## YouTube ショート
