@@ -467,94 +467,43 @@ def _rrect(ctx, x, y, w, h, r):
     ctx.close_path()
 
 
+_LOGO = []
+LOGO_PATH = os.path.join(IMG_DIR, "logo", "logo.png")   # ユーザーが用意したロゴを prep_logo.py で加工したもの
+
+
 def draw_logo(ctx, age, cx, cy):
-    """「GT-R」のメタリックなバッジ(オリジナルのデザイン。メーカーのエンブレムの絵柄そのものではない)。
-    ガンメタの金属プレート+面取りしたクロームのふち+厚みのあるクロームの文字+赤いアクセント。現れるときに光が走る。"""
+    """最後に出すロゴ(ユーザーが用意した画像を、拡大・背景透明・彩度アップ・メタリック加工したもの)。
+    少し大きい所から縮みながら現れ、うしろに赤い光、表面に光が一度走る。"""
+    if not _LOGO:
+        _LOGO.append(cairo.ImageSurface.create_from_png(LOGO_PATH))
+    img = _LOGO[0]
     a = min(1.0, age / 0.3)
     k = 1.3 - 0.3 * (1 - (1 - min(1.0, age / 0.5)) ** 3)
-    ctx.save()
-    ctx.translate(cx, cy)
-    ctx.scale(k, k)
-    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(170)
-    label = "GT-R"
-    e = ctx.text_extents(label)
-    pw, ph = e.width + 150, e.height + 110
-    px, py = -pw / 2, -ph / 2
-    # うしろの赤い光
-    glow = cairo.RadialGradient(0, 0, 10, 0, 0, pw * 0.8)
-    glow.add_color_stop_rgba(0, 0.9, 0.1, 0.1, 0.30 * a)
-    glow.add_color_stop_rgba(1, 0.9, 0.1, 0.1, 0)
+    target_w = 520.0
+    sc = target_w / img.get_width() * k
+    w_, h_ = img.get_width() * sc, img.get_height() * sc
+    glow = cairo.RadialGradient(cx, cy, 10, cx, cy, w_ * 0.85)
+    glow.add_color_stop_rgba(0, 0.95, 0.1, 0.1, 0.35 * a)
+    glow.add_color_stop_rgba(1, 0.95, 0.1, 0.1, 0)
     ctx.set_source(glow)
-    ctx.paint()
-    # 影
-    _rrect(ctx, px + 10, py + 14, pw, ph, 30)
-    ctx.set_source_rgba(0, 0, 0, 0.55 * a)
+    ctx.arc(cx, cy, w_ * 0.85, 0, 2 * math.pi)
     ctx.fill()
-    # 面取りしたクロームのふち
-    _rrect(ctx, px - 10, py - 10, pw + 20, ph + 20, 38)
-    rim = cairo.LinearGradient(0, py - 10, 0, py + ph + 10)
-    for p_, c_ in ((0, 0.97), (0.3, 0.6), (0.5, 0.95), (0.7, 0.45), (1, 0.85)):
-        rim.add_color_stop_rgba(p_, c_, c_, min(1, c_ + 0.03), a)
-    ctx.set_source(rim)
-    ctx.fill()
-    # ガンメタのプレート(ヘアライン風)
-    _rrect(ctx, px, py, pw, ph, 30)
-    plate = cairo.LinearGradient(px, py, px + pw * 0.3, py + ph)
-    plate.add_color_stop_rgba(0, 0.30, 0.31, 0.34, a)
-    plate.add_color_stop_rgba(0.5, 0.13, 0.13, 0.15, a)
-    plate.add_color_stop_rgba(1, 0.22, 0.22, 0.25, a)
-    ctx.set_source(plate)
-    ctx.fill_preserve()
     ctx.save()
-    ctx.clip()
-    for j in range(0, int(ph), 4):   # ヘアライン
-        ctx.move_to(px, py + j)
-        ctx.line_to(px + pw, py + j)
-    ctx.set_source_rgba(1, 1, 1, 0.025 * a)
-    ctx.set_line_width(1)
-    ctx.stroke()
-    ctx.restore()
-    # 赤いアクセント(プレートの下の細い線)
-    ctx.rectangle(px + 40, py + ph - 26, pw - 80, 6)
-    ctx.set_source_rgba(0.9, 0.07, 0.1, a)
-    ctx.fill()
-    # 厚みのある文字:下に暗い層を何枚か重ねて立体に見せる
-    ctx.save()
-    ctx.transform(cairo.Matrix(1, 0, -0.18, 1, 0, 0))   # 少し斜体
-    x0, y0 = -e.width / 2 - e.x_bearing + 6, e.height / 2 - 6
-    for d in range(8, 0, -1):
-        ctx.new_path()
-        ctx.move_to(x0 + d * 0.8, y0 + d)
-        ctx.text_path(label)
-        c_ = 0.12 + 0.02 * (8 - d)
-        ctx.set_source_rgba(c_, c_, c_ + 0.02, a)
-        ctx.fill()
-    ctx.new_path()
-    ctx.move_to(x0, y0)
-    ctx.text_path(label)
-    path = ctx.copy_path()
-    chrome = cairo.LinearGradient(0, y0 - e.height, 0, y0)
-    for p_, c_ in ((0, 1.0), (0.38, 0.78), (0.48, 0.35), (0.55, 0.55), (0.8, 0.95), (1, 0.7)):
-        chrome.add_color_stop_rgba(p_, c_, c_, min(1, c_ + 0.04), a)
-    ctx.set_source(chrome)
-    ctx.fill_preserve()
-    ctx.set_source_rgba(1, 1, 1, 0.75 * a)   # ふちの光
-    ctx.set_line_width(2.2)
-    ctx.stroke()
-    # 文字とプレートに光が一度走る
-    if age < 1.4:
+    ctx.translate(cx - w_ / 2, cy - h_ / 2)
+    ctx.scale(sc, sc)
+    ctx.set_source_surface(img, 0, 0)
+    ctx.get_source().set_filter(cairo.FILTER_BEST)
+    ctx.paint_with_alpha(a)
+    if age < 1.4:   # 光が一度走る(ロゴの形で切り抜く)
         q = age / 1.4
-        sx = -pw * 0.9 + pw * 1.8 * q
-        band = cairo.LinearGradient(sx - 90, -60, sx + 90, 60)
+        iw = img.get_width()
+        sx = -iw * 0.5 + iw * 2.0 * q
+        band = cairo.LinearGradient(sx - 120, 0, sx + 120, img.get_height())
         band.add_color_stop_rgba(0, 1, 1, 1, 0)
-        band.add_color_stop_rgba(0.5, 1, 1, 1, 0.95 * a)
+        band.add_color_stop_rgba(0.5, 1, 1, 1, 0.75 * a)
         band.add_color_stop_rgba(1, 1, 1, 1, 0)
-        ctx.new_path()
-        ctx.append_path(path)
         ctx.set_source(band)
-        ctx.fill()
-    ctx.restore()
+        ctx.mask_surface(img, 0, 0)
     ctx.restore()
 
 
