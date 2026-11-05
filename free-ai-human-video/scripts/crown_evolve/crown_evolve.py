@@ -807,7 +807,7 @@ def evolve_sound(st, seed):
 
 # 進化した段階の鳴き声(Higgs Field の Seedance 2.0 Mini で「6匹が順番に鳴く」動画を作り、音声から切り出したもの)
 # 1=ひよこ(かわいいピヨピヨ)… 6=ドラゴン(一番低く凶暴な咆哮)。大きくなるほど声も低く・大きく
-VOICE_GAIN = [0, 0.6, 0.65, 0.7, 0.8, 0.9, 1.0, 1.1]
+VOICE_GAIN = [0, 0.55, 0.55, 0.65, 0.8, 0.95, 1.1, 1.3]   # 新しい世代ほど大きく
 
 
 def load_voice(st):
@@ -817,6 +817,56 @@ def load_voice(st):
     with wave.open(path) as w:
         x = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(float) / 32768
     return x / max(1e-9, np.max(np.abs(x)))
+
+
+def _resample(x, ratio):
+    """再生速度を ratio 倍にする(音が高く・短くなる。ratio<1 なら低く・長く)。"""
+    idx = np.arange(0, len(x) - 1, ratio)
+    return np.interp(idx, np.arange(len(x)), x)
+
+
+def _drive(x, k):
+    """ひずませて荒々しくする(k が大きいほど強い)。"""
+    return np.tanh(k * x) / np.tanh(k)
+
+
+def cute_boing():
+    """おもちゃのような「ポヨン♪」+小さなラッパの「プップッ」。"""
+    t = _t(0.32)
+    f = 700 + 700 * (1 - np.exp(-t * 18)) + 60 * np.sin(2 * np.pi * 14 * t)
+    boing = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 7) * np.minimum(1, t / 0.005)
+    out = np.zeros(int(0.75 * SR))
+    out[:len(boing)] += boing * 0.8
+    for j, fr in enumerate((1180, 1480)):   # プップッ
+        tt = _t(0.09)
+        tone = (np.sin(2 * np.pi * fr * tt) + 0.35 * np.sin(2 * np.pi * fr * 2 * tt)) * np.minimum(1, tt / 0.004) * np.minimum(1, (0.09 - tt) / 0.02)
+        i = int((0.36 + j * 0.13) * SR)
+        out[i:i + len(tone)] += tone * 0.5
+    return out
+
+
+def make_voices():
+    """進化した世代ごとの音。最初はかわいく、新しい世代ほど低く・荒々しいエンジン音になる。
+    元の音は Higgs Field の Seedance 2.0 Mini で作った音つき動画から切り出したもの(sounds/voice1〜7.wav)。"""
+    raw = {st: load_voice(st) for st in range(1, len(NAMES))}
+    v = {}
+    v[1] = cute_boing()                                                   # 3代目:かわいい「ポヨン♪プップッ」
+    if raw.get(2) is not None:
+        v[2] = _resample(raw[2], 1.7) * 0.8                               # 4代目:クラクションを高くした「パフッ」
+    if raw.get(1) is not None:
+        v[3] = raw[1]                                                     # 7代目:古いエンジンの「ポンポン」
+    if raw.get(3) is not None:
+        v[4] = _drive(raw[3], 1.5)                                        # 9代目:うなるエンジン
+    if raw.get(4) is not None:
+        v[5] = _drive(_resample(raw[4], 0.92), 2.5)                       # 12代目:力強くふかす
+    if raw.get(5) is not None:
+        v[6] = _drive(_resample(raw[5], 0.85), 4.0)                       # 14代目:V6の「ブォォーン!!」
+    if raw.get(6) is not None:                                            # 16代目:いちばんイカつい(低く・強くひずませ・重低音)
+        roar = _drive(_resample(raw[6], 0.7), 6.0)
+        t = _t(len(roar) / SR)
+        sub = np.sin(2 * np.pi * (48 - 18 * t / t[-1]) * t) * np.exp(-t * 1.2) * np.minimum(1, t / 0.01)
+        v[7] = roar * 0.85 + sub * 0.7
+    return v
 
 
 def thud(amp, seed):
@@ -837,7 +887,7 @@ def synth_audio(res, duration, path):
         if i < n_out:
             out[i:j] += gain * sig[: j - i]
 
-    voices = {st: load_voice(st) for st in range(1, len(NAMES))}
+    voices = make_voices()
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.05:
             continue
@@ -865,8 +915,9 @@ def synth_audio(res, duration, path):
             put(strings(m_, a, dur=5.0), end_t + 0.3, 0.55)
             put(brass(m_, a * 0.8, dur=2.5), end_t + 0.3, 0.45)
         put(timpani(1.0, dur=2.5), end_t + 0.3, 0.6)
-        if voices.get(GOAL) is not None:   # 16代目に進化したときと同じハイブリッドの起動音
-            put(voices[GOAL], end_t + 1.2, 0.6)
+        hybrid = load_voice(7)   # 発表演出では静かなハイブリッドの起動音
+        if hybrid is not None:
+            put(hybrid, end_t + 1.2, 0.6)
         put(cymbal(0.5, 7, dur=2.0), end_t + 1.5, 0.35)
     wet = out.copy()
     for d, g in ((0.043, 0.28), (0.071, 0.2), (0.113, 0.14)):   # 広い部屋の響き
@@ -877,6 +928,10 @@ def synth_audio(res, duration, path):
     loud = np.abs(wet[np.abs(wet) > 1e-4])
     ref = np.percentile(loud, 99.5) if len(loud) else 1.0
     wet = np.tanh(1.5 * wet / max(1e-9, ref)) / np.tanh(1.5) * MIX_GAIN
+    body = wet[: int((end_t or duration) * SR)]
+    rms = np.sqrt(np.mean(body ** 2)) if len(body) else 0
+    if rms > 0:   # 通常部分の平均音量を約 -18dB にそろえる
+        wet *= min(1.8, 10 ** (-18.0 / 20) / rms)
     wet = np.clip(wet + (0.95 if fail else 1.0) * extra[: len(wet)], -0.98, 0.98)
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
