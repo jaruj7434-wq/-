@@ -732,14 +732,6 @@ def render(seed):
                  sw=6, alpha=ui_a)
             if not hide:
                 draw_chart(ctx, sprites, fr["best"], t)
-            # 進化した瞬間の世代の名前
-            for p in reversed(pops):   # いちばん新しい進化だけ出す
-                age = t - p[0]
-                if age < 1.4:
-                    a = min(1.0, age / 0.15) * min(1.0, (1.4 - age) / 0.3) * ui_a
-                    text(ctx, gen_label(p[3]), W / 2, 548, 52 if p[3] < GOAL else 58,
-                         rgb=GOLD if p[3] == GOAL else (1, 1, 1), sw=8, alpha=a)
-                    break
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "つまった…" if fail_why == "overflow" else "時間切れ…", W / 2, 1100,
