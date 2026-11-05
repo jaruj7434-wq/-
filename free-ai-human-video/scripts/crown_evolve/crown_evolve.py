@@ -388,8 +388,8 @@ def draw_flask(ctx, t):
 def draw_merge_fx(ctx, x, y, st, age):
     """進化の光:やわらかい白い光が一瞬ふくらみ、細い光の筋が数本のびて消える。"""
     big = 1 + 0.25 * st
-    if age < 0.45:
-        k = 1 - age / 0.45
+    if age < 0.25:
+        k = 1 - age / 0.25
         g = cairo.RadialGradient(x, y, 0, x, y, 110 * big)
         g.add_color_stop_rgba(0, 1, 1, 1, 0.75 * k)
         g.add_color_stop_rgba(0.35, 1, 0.96, 0.85, 0.30 * k)
@@ -590,7 +590,7 @@ def render(seed):
     fronts = {}
     for k in range(1, len(NAMES)):   # 正面の写真(進化した瞬間だけ見せる)。高さは横向きの写真にそろえる
         if os.path.exists(os.path.join(IMG_DIR, f"front{k + 1}.png")):
-            fronts[k] = Sprite(k, front=True, height=sprites[k].h * 1.05)
+            fronts[k] = Sprite(k, front=True, height=sprites[k].h * 1.45)   # 顔がよく見えるよう少し大きめ
     os.makedirs(OUT_DIR, exist_ok=True)
     silent = os.path.join(OUT_DIR, f"crown_{seed}_video.mp4")
     wav = os.path.join(OUT_DIR, f"crown_{seed}.wav")
@@ -648,7 +648,10 @@ def render(seed):
             show_front, sx = (False, 1.0)
             if b_t is not None and st in fronts:
                 show_front, sx = turn_state(t - b_t)
-            (fronts[st] if show_front else sprites[st]).draw(ctx, x, y, ang, k, sx=sx)
+            if show_front:   # 正面はまっすぐ立てて見せる
+                fronts[st].draw(ctx, x, y, 0.0, k, sx=sx)
+            else:
+                sprites[st].draw(ctx, x, y, ang, k, sx=sx)
         for cid, st, x, y, ang in cars:   # 年のタグ(車の上に、いつもまっすぐ)
             if over and not fail and st == GOAL:
                 continue
