@@ -653,6 +653,10 @@ def synth_audio(res, duration, path):
     wet = wet[: int(duration * SR)]
     # 通常部分は軽く圧縮して聞こえやすくし、叫び声との差は約10dBに抑える
     wet = np.tanh(2.5 * wet / max(1e-9, np.max(np.abs(wet)))) / np.tanh(2.5) * MIX_GAIN
+    body = wet[: int((end_t or duration) * SR)]
+    rms = np.sqrt(np.mean(body ** 2)) if len(body) else 0
+    if rms > 0:   # 通常部分の平均音量を約 -18dB にそろえる
+        wet *= min(2.0, 10 ** (-18.0 / 20) / rms)
     wet = np.clip(wet + (0.95 if fail else 1.0) * extra[: len(wet)], -0.98, 0.98)
     with wave.open(path, "wb") as w:
         w.setnchannels(2)
@@ -661,14 +665,33 @@ def synth_audio(res, duration, path):
         w.writeframes((wet * 32767).astype(np.int16).tobytes())
 
 
+def remix(seed):
+    """映像はそのままで、音だけ作り直して差し替える。"""
+    res = simulate(seed)
+    final = os.path.join(OUT_DIR, f"glass_spiral_{seed}.mp4")
+    tmp = os.path.join(OUT_DIR, f"glass_spiral_{seed}_tmp.mp4")
+    wav = os.path.join(OUT_DIR, f"glass_spiral_{seed}.wav")
+    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", final],
+                               capture_output=True, text=True).stdout)
+    synth_audio(res, dur, wav)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", final, "-i", wav, "-map", "0:v", "-map", "1:a",
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest",
+                    "-movflags", "+faststart", tmp], check=True)
+    os.replace(tmp, final)
+    os.remove(wav)
+    print("音を差し替えました:", final)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("mode", choices=["search", "render"])
+    ap.add_argument("mode", choices=["search", "render", "remix"])
     ap.add_argument("--seed", type=int)
     ap.add_argument("--want", choices=["fail", "success"], default="fail")
     ap.add_argument("-n", type=int, default=200)
     a = ap.parse_args()
     if a.mode == "search":
         search(a.n, a.want)
+    elif a.mode == "remix":
+        remix(a.seed)
     else:
         render(a.seed)
