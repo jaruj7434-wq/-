@@ -408,7 +408,7 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    ending = None if fail else JP.Jackpot(W, H, seed, CX, CY + OFFSET_Y)
+    ending = None if fail else JP.Jackpot(W, H, seed, CX, CY + OFFSET_Y, GD.draw_ball)
     shards, trails, dying, hub = [], {}, [], []
     spin, embers = {}, []
     ev_i = 0
@@ -567,7 +567,7 @@ def render(seed):
             text(ctx, "ボールが尽きた…", W / 2, 1000, 120 * (1.15 - 0.15 * k), rgb=(1, 0.3, 0.3), sw=18)
             text(ctx, f"あと{N_PLANKS - res['cleared']}枚だったのに…", W / 2, 1130, 72, sw=12)
         elif over:
-            ending.draw(ctx, t - end_t)
+            ending.draw(surf, ctx, t - end_t)
 
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
@@ -590,7 +590,7 @@ def render(seed):
 MIX_GAIN = 0.72  # 通常部分の音量(約 -18dB になるよう調整)
 VOICE_GAIN = 0.55      # 掛け声の大きさ(ガラスの音より少し大きい程度)
 SFX_GAIN = 0.50        # ボールごとの効果音の大きさ
-END_MUSIC_GAIN = 1.6   # 成功後の「大当たり」の音の大きさ(お祝いなので通常部分より少し大きめ)
+END_MUSIC_GAIN = 1.1   # 成功後の「大当たり」の音の大きさ(お祝いなので通常部分より少し大きめ)
 F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動画と同じくらい)
 
 
