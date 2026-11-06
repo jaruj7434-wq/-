@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "glass_drum"))
 import glass_drum as GD  # noqa: E402   ボールの絵(スーパーボール〜隕石)を使う
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
-from angels import DURATION as ANGEL_DUR, AngelShow, holy_music  # noqa: E402
+import stylish_end as SE  # noqa: E402   成功したときのおしゃれな終わり方(映像と音楽)
 
 W, H = 1080, 1920
 FPS = 60
@@ -50,7 +50,9 @@ TH_WOOD0 = 2 * math.pi * 0.35          # 板を並べ始める位置(中心の�
 TH_WOOD1 = TH_END - 2 * math.pi - 0.35  # 板を並べ終える位置(入口は少し空ける)
 
 # ボールの種類ごとに、ガラスを1枚割ったあとに残る速さの割合(強いボールほど減りにくい)
-KEEP = [float(x) for x in os.environ.get("KEEP", "0.965,0.972,0.979,0.985,0.991,0.9979").split(",")]
+KEEP = [float(x) for x in os.environ.get("KEEP", "0.968,0.973,0.978,0.983,0.987,0.98888").split(",")]
+# ボールの種類ごとに、落とすときに下向きに足す速さ(px/秒)。後のボールほど速く打ち出される
+V0 = [float(x) for x in os.environ.get("V0", "0,250,500,800,1100,1450").split(",")]
 AIR_DAMP = 0.7832                      # 盤面で1秒あたりに残る速さの割合(転がり抵抗)
 V_DIE = 200.0                          # これより遅くなった玉は消えていく
 FADE = 0.5                             # 消えていく時間(秒)
@@ -163,7 +165,7 @@ class Game:
         m = 1.0
         b = pymunk.Body(m, pymunk.moment_for_circle(m, 0, BALL_R))
         b.position = (DROP_X + self.rng.uniform(-8, 8), DROP_Y)
-        b.velocity = (self.rng.uniform(-10, 10), 0)
+        b.velocity = (self.rng.uniform(-10, 10), V0[col])   # ボールごとに打ち出す速さ(後のボールほど速い)
         b.velocity_func = board_physics
         c = pymunk.Circle(b, BALL_R)
         c.elasticity, c.friction = 1.0, 0.0
@@ -237,7 +239,7 @@ def simulate(seed, record=False):
                                      for b in g.balls],
                            "alive": [p["alive"] for p in g.planks]})
         if g.result is not None:
-            extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR
+            extra = OUTRO + SCARE_DUR if g.result == "fail" else SE.DURATION
             if not record or g.t > g.result_t + extra:
                 break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t,
@@ -405,7 +407,7 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    angels = None   # 成功の演出は白いフラッシュ+「全部割った!」(天使は出さない)
+    ending = None if fail else SE.Ending(W, H, seed, GD.BALLS, GD.draw_ball)
     shards, trails, dying, hub = [], {}, [], []
     spin, embers = {}, []
     ev_i = 0
@@ -556,13 +558,7 @@ def render(seed):
             text(ctx, "ボールが尽きた…", W / 2, 1000, 120 * (1.15 - 0.15 * k), rgb=(1, 0.3, 0.3), sw=18)
             text(ctx, f"あと{N_PLANKS - res['cleared']}枚だったのに…", W / 2, 1130, 72, sw=12)
         elif over:
-            age = t - end_t
-            if age < 0.35:   # 参考動画のような白いフラッシュ
-                ctx.rectangle(0, 0, W, H)
-                ctx.set_source_rgba(1, 1, 1, 0.85 * (1 - age / 0.35))
-                ctx.fill()
-            k = min(1.0, age / 0.25)
-            text(ctx, "全部割った！", W / 2, 1000, 130 * (1.3 - 0.3 * k), rgb=GOLD, sw=20)
+            ending.draw(ctx, t - end_t)
 
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
@@ -583,7 +579,7 @@ def render(seed):
 
 # ---------------------------------------------------------------- 音
 MIX_GAIN = 0.72  # 通常部分の音量(約 -18dB になるよう調整)
-HOLY_GAIN = 0.85
+END_MUSIC_GAIN = 1.16  # 成功後の曲の音量(通常部分と同じ約 -18dB になるよう調整)
 F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動画と同じくらい)
 
 
@@ -638,13 +634,11 @@ def synth_audio(res, duration, path):
         sad_t = end_t + SCARE_DUR + 0.1
         for k, m_ in enumerate((64, 63, 62, 61)):
             add(chime(midi_hz(m_), 0.8, 0.35), sad_t + k * 0.42)
-    elif end_t is not None:   # 成功:きらめく和音の「ジャーン」(天使の音楽は使わない)
-        tt = np.arange(int(3.0 * SR)) / SR
-        sig = sum(np.sin(2 * np.pi * midi_hz(m_) * tt) * np.exp(-tt * 1.0) for m_ in (60, 67, 72, 76, 79, 84)) * 0.18
-        sig += sum(np.sin(2 * np.pi * f * tt) * np.exp(-tt * 6) for f in (3200, 4100, 5300)) * 0.08
+    elif end_t is not None:   # 成功:おしゃれで気持ちのいい短い曲
+        sig = SE.music(SR, res.get("seed", 0)) * END_MUSIC_GAIN
         i0 = int(end_t * SR)
         m = min(len(sig), n_out - i0)
-        extra[i0:i0 + m] += sig[:m, None]
+        extra[i0:i0 + m] += sig[:m]
     wet = out.copy()
     for d, g in ((0.023, 0.22), (0.041, 0.16), (0.067, 0.1)):   # 小さな部屋の響き
         k = int(d * SR)
