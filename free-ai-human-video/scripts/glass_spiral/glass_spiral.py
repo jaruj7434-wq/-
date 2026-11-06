@@ -32,6 +32,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "glass_drum"))
 import glass_drum as GD  # noqa: E402   ボールの絵(スーパーボール〜隕石)を使う
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
+import ball_voice as BV  # noqa: E402   ボールが落ちるときの掛け声と効果音
 import stylish_end as SE  # noqa: E402   成功したときのおしゃれな終わり方(映像と音楽)
 
 W, H = 1080, 1920
@@ -579,6 +580,8 @@ def render(seed):
 
 # ---------------------------------------------------------------- 音
 MIX_GAIN = 0.72  # 通常部分の音量(約 -18dB になるよう調整)
+VOICE_GAIN = 0.55      # 掛け声の大きさ(ガラスの音より少し大きい程度)
+SFX_GAIN = 0.50        # ボールごとの効果音の大きさ
 END_MUSIC_GAIN = 1.16  # 成功後の曲の音量(通常部分と同じ約 -18dB になるよう調整)
 F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動画と同じくらい)
 
@@ -626,6 +629,23 @@ def synth_audio(res, duration, path):
             amp = 0.35 + 0.65 * min(1.0, speed / 900)   # 速い玉ほど強い音
             add(wood_tick(tick_freq(x, y), 0.5 * amp), t, pan=(x - CX) / (R_OUT * 1.6))
     extra = np.zeros_like(out)
+    # ボールが落ちてくる瞬間の掛け声(ファイアー!! など)と、その種類の効果音
+    snd = BV.drop_sounds(SR)
+    fx = np.zeros_like(out)
+
+    def add_x(sig, t0, gain, pan=0.0):
+        i = int(t0 * SR)
+        j = min(n_out, i + len(sig))
+        if j > i:
+            fx[i:j, 0] += gain * sig[: j - i] * math.sqrt(0.5 * (1 - pan)) * 1.414
+            fx[i:j, 1] += gain * sig[: j - i] * math.sqrt(0.5 * (1 + pan)) * 1.414
+
+    for kind, t, data in events:
+        if kind == "drop" and (end_t is None or t <= end_t):
+            voice, sfx = snd[data[1]]
+            add_x(sfx, t + 0.05, SFX_GAIN)
+            add_x(voice, t, VOICE_GAIN)
+    extra += 0.6 * np.tanh(fx / 0.6)   # 音割れしないよう、大きすぎる瞬間だけやわらかく抑える
     if fail:
         sig = scream(SR)
         i0 = int(end_t * SR)
@@ -651,7 +671,10 @@ def synth_audio(res, duration, path):
     rms = np.sqrt(np.mean(body ** 2)) if len(body) else 0
     if rms > 0:   # 通常部分の平均音量を約 -18dB にそろえる
         wet *= min(2.0, 10 ** (-18.0 / 20) / rms)
-    wet = np.clip(wet + (0.95 if fail else 1.0) * extra[: len(wet)], -0.98, 0.98)
+    wet = wet + (0.95 if fail else 1.0) * extra[: len(wet)]
+    # 0.78 を超える瞬間だけなめらかに抑えて、音割れ(クリップ)を防ぐ
+    mag = np.abs(wet)
+    wet = np.where(mag < 0.78, wet, np.sign(wet) * (0.78 + 0.12 * np.tanh((mag - 0.78) / 0.12)))
     with wave.open(path, "wb") as w:
         w.setnchannels(2)
         w.setsampwidth(2)
