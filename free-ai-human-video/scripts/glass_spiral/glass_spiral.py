@@ -33,7 +33,6 @@ import glass_drum as GD  # noqa: E402   ボールの絵(スーパーボール〜
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 import ball_voice as BV  # noqa: E402   ボールが落ちるときの掛け声と効果音
-import specials as SP  # noqa: E402   ボールの必殺技
 import stylish_end as SE  # noqa: E402   成功したときのおしゃれな終わり方(映像と音楽)
 
 W, H = 1080, 1920
@@ -52,7 +51,7 @@ TH_WOOD0 = 2 * math.pi * 0.35          # 板を並べ始める位置(中心の�
 TH_WOOD1 = TH_END - 2 * math.pi - 0.35  # 板を並べ終える位置(入口は少し空ける)
 
 # ボールの種類ごとに、ガラスを1枚割ったあとに残る速さの割合(強いボールほど減りにくい)
-KEEP = [float(x) for x in os.environ.get("KEEP", "0.964,0.969,0.974,0.979,0.983,0.9858").split(",")]
+KEEP = [float(x) for x in os.environ.get("KEEP", "0.968,0.973,0.978,0.983,0.987,0.98888").split(",")]
 # ボールの種類ごとに、落とすときに下向きに足す速さ(px/秒)。後のボールほど速く打ち出される
 V0 = [float(x) for x in os.environ.get("V0", "0,250,500,800,1100,1450").split(",")]
 AIR_DAMP = 0.7832                      # 盤面で1秒あたりに残る速さの割合(転がり抵抗)
@@ -150,7 +149,6 @@ class Game:
         self.next_wave_t = 0.5
         self.dropped = 0
         self.all_gone_t = None
-        self.specials = []   # 発動中の必殺技
 
     def _hit(self, arb, space, data):
         """玉が板に当たったら、板は割れて玉は突き抜ける。割るのに使った分だけ玉は遅くなる。"""
@@ -163,30 +161,6 @@ class Game:
             self.breaking.add(k)
             self.to_break.append((k, body, body.velocity.length))
             body.velocity = body.velocity * KEEP[self.kind_of.get(body, 0)]
-
-    @staticmethod
-    def ball_th(x, y):
-        """玉がいる通路の位置を、うずまきのパラメータ th で表す。"""
-        dx, dy = x - CX, y - CY
-        phi = math.atan2(dy, dx) % (2 * math.pi)
-        th0 = TH_END - phi
-        th_r = (math.hypot(dx, dy) - R_IN - LANE / 2) / B
-        return th0 - 2 * math.pi * round((th0 - th_r) / (2 * math.pi))
-
-    def start_special(self, bl, x, y):
-        """止まった玉が必殺技を出す。進む先(内側)の割れていないガラスに向かって出る。"""
-        th_b = self.ball_th(x, y)
-        ahead = [k for k in range(N_PLANKS - 1, -1, -1) if self.planks[k]["alive"] and self.planks[k]["th"] < th_b]
-        hits, end, marks = SP.schedule(bl["col"], self.t, ahead, self.rng)
-        targets = []
-        for tb, k in hits:
-            th = self.planks[k]["th"]
-            (ax, ay), (bx, by) = wall_pt(th, 8), wall_pt(th + 2 * math.pi, -8)
-            targets.append((tb, k, (ax + bx) / 2, (ay + by) / 2))
-        sp = {"bid": bl["id"], "col": bl["col"], "t": self.t, "x": x, "y": y,
-              "targets": targets, "end": end, "marks": marks}
-        self.specials.append(sp)
-        self.events.append(("special", self.t, sp))
 
     def drop(self, col):
         m = 1.0
@@ -206,7 +180,7 @@ class Game:
 
     def step(self, dt):
         self.t += dt
-        if self.result is None and not self.balls and not self.queue and not self.specials and self.next_wave_t is not None \
+        if self.result is None and not self.balls and not self.queue and self.next_wave_t is not None \
                 and self.t >= self.next_wave_t and self.wave + 1 < len(WAVES):
             self.wave += 1
             n_b, col = WAVES[self.wave]
@@ -226,19 +200,7 @@ class Game:
             self.cleared += 1
             x, y = body.position
             self.events.append(("break", self.t, (k, x, y, speed)))
-        # 必殺技でガラスが割れる
-        for sp in list(self.specials):
-            for tb, k, mx, my in sp["targets"]:
-                if tb <= self.t and self.planks[k]["alive"]:
-                    p = self.planks[k]
-                    p["alive"] = False
-                    self.space.remove(p["shape"])
-                    self.cleared += 1
-                    self.events.append(("break", self.t, (k, mx, my, 700.0)))
-            if self.t >= sp["end"]:
-                self.specials.remove(sp)
-                self.events.append(("die", self.t, (sp["bid"], sp["x"], sp["y"], sp["col"])))
-        # 勢いがなくなった玉は必殺技を出す(画面の外へ落ちた玉はそのまま消える)
+        # 勢いがなくなった玉(と画面の外へ落ちた玉)は消える
         for bl in list(self.balls):
             b = bl["body"]
             x, y = b.position
@@ -246,15 +208,12 @@ class Game:
             if slow or y > H + 200 or x < -200 or x > W + 200:
                 self.space.remove(b, bl["shape"])
                 self.balls.remove(bl)
-                if slow and self.result is None:
-                    self.start_special(bl, x, y)
-                else:
-                    self.events.append(("die", self.t, (bl["id"], x, y, bl["col"])))
+                self.events.append(("die", self.t, (bl["id"], x, y, bl["col"])))
         if self.result is None:
             if self.cleared == N_PLANKS:
                 self.result, self.result_t = "success", self.t
                 self.events.append(("success", self.t, None))
-            elif not self.balls and not self.queue and not self.specials:
+            elif not self.balls and not self.queue:
                 if self.wave + 1 < len(WAVES):
                     if self.next_wave_t is None:
                         self.next_wave_t = self.t + WAVE_GAP
@@ -452,8 +411,6 @@ def render(seed):
     ending = None if fail else SE.Ending(W, H, seed, GD.BALLS, GD.draw_ball)
     shards, trails, dying, hub = [], {}, [], []
     spin, embers = {}, []
-    active = []   # 発動中の必殺技(描画用)
-    sp_rng = np.random.default_rng(seed + 555)
     ev_i = 0
     prev_t = 0.0
     for fi, fr in enumerate(frames):
@@ -472,8 +429,6 @@ def render(seed):
                     shards.append([mx + rng.uniform(-14, 14), my + rng.uniform(-14, 14),
                                    math.cos(a) * v, math.sin(a) * v, rng.uniform(0, math.pi),
                                    rng.uniform(-12, 12), rng.uniform(4, 11), et])
-            elif kind == "special":
-                active.append(data)
             elif kind == "die":   # 勢いがなくなった玉は、その場で薄くなって消える
                 bid, x, y, col = data
                 dying.append([et, x, y, col, trails.pop(bid, [])])
@@ -486,15 +441,6 @@ def render(seed):
             continue
         after = (t - end_t - (SCARE_DUR if fail else 0)) if over else 0
 
-        active = [sp for sp in active if t <= sp["end"] + 0.05]
-        shx, shy = 0.0, 0.0
-        for sp in active:
-            a, b = SP.shake(sp, t)
-            shx, shy = shx + a, shy + b
-        ctx.save()
-        ctx.translate(shx, shy)   # 鉄球・隕石の技で画面がゆれる
-        ctx.set_source_rgb(*BG)
-        ctx.paint()
         ctx.set_source_surface(static, 0, 0)
         ctx.paint()
         if fr["alive"] != alive_drawn:   # 板が割れたときだけ描き直す
@@ -584,10 +530,7 @@ def render(seed):
                 ctx.fill()
                 keep.append(e)
         embers = keep
-        for sp in active:   # 必殺技
-            SP.draw(ctx, sp, t, sp_rng, GD.draw_ball, text)
         ctx.restore()
-        ctx.restore()   # 画面のゆれ
 
         # ふつうの文字(参考動画と同じ等幅のカウンター)
         mono(ctx, f"GLASS CLEARED {fr['cleared']} / {N_PLANKS}", W / 2, 1585, 40, (0.62, 0.64, 0.68))
@@ -611,8 +554,6 @@ def render(seed):
         text(ctx, f"{N_BALLS}つのボールでガラスを全部", W / 2, 165, 74, sw=14)
         text(ctx, "割れる？", W / 2, 295, 124, rgb=GOLD, sw=18)
         text(ctx, "Will the ball break through all the glass?", W / 2, 360, 36, rgb=(0.85, 0.85, 0.9), sw=8)
-        for sp in active:   # 技の名前
-            SP.draw_name(ctx, sp, t, W, 1515, text)
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "ボールが尽きた…", W / 2, 1000, 120 * (1.15 - 0.15 * k), rgb=(1, 0.3, 0.3), sw=18)
@@ -641,7 +582,6 @@ def render(seed):
 MIX_GAIN = 0.72  # 通常部分の音量(約 -18dB になるよう調整)
 VOICE_GAIN = 0.55      # 掛け声の大きさ(ガラスの音より少し大きい程度)
 SFX_GAIN = 0.50        # ボールごとの効果音の大きさ
-SPECIAL_GAIN = 0.6     # 必殺技の効果音の大きさ
 END_MUSIC_GAIN = 1.16  # 成功後の曲の音量(通常部分と同じ約 -18dB になるよう調整)
 F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動画と同じくらい)
 
@@ -692,7 +632,6 @@ def synth_audio(res, duration, path):
     # ボールが落ちてくる瞬間の掛け声(ファイアー!! など)と、その種類の効果音
     snd = BV.drop_sounds(SR)
     fx = np.zeros_like(out)
-    sp_rng = np.random.default_rng(7)
 
     def add_x(sig, t0, gain, pan=0.0):
         i = int(t0 * SR)
@@ -706,9 +645,6 @@ def synth_audio(res, duration, path):
             voice, sfx = snd[data[1]]
             add_x(sfx, t + 0.05, SFX_GAIN)
             add_x(voice, t, VOICE_GAIN)
-        elif kind == "special":
-            for t0, sig in SP.sounds(data, SR, sp_rng):
-                add_x(sig, t0, SPECIAL_GAIN)
     extra += 0.6 * np.tanh(fx / 0.6)   # 音割れしないよう、大きすぎる瞬間だけやわらかく抑える
     if fail:
         sig = scream(SR)
