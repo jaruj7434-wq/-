@@ -2,7 +2,7 @@
 
 掛け声: Higgs Field の Seed Audio 1.0(男性プリセット「Knox」)で作った6本
         (assets/source/glass_spiral/voice/v0.wav〜v5.wav・git 管理外)。
-        ボヨーン! / ウッド! / アイアン!! / ファイアー!! / サンダー!! / メテオ!!!
+        スーパーボール! / ウッド! / アイアン!! / ファイアー!! / サンダー!! / メテオ!!!
 効果音: すべてこのファイルの中で合成する(弾む音・木の音・金属音・炎・電気・地響き)。
 """
 import os
@@ -11,7 +11,7 @@ import wave
 import numpy as np
 
 VOICE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "source", "glass_spiral", "voice")
-LINES = ["ボヨーン!", "ウッド!", "アイアン!!", "ファイアー!!", "サンダー!!", "メテオ!!!"]
+LINES = ["スーパーボール!", "ウッド!", "アイアン!!", "ファイアー!!", "サンダー!!", "メテオ!!!"]
 
 
 def _load_voice(k, sr):
