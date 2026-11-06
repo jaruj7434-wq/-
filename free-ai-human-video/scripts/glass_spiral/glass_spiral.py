@@ -33,7 +33,7 @@ import glass_drum as GD  # noqa: E402   ボールの絵(スーパーボール〜
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 import ball_voice as BV  # noqa: E402   ボールが落ちるときの掛け声と効果音
-import stylish_end as SE  # noqa: E402   成功したときのおしゃれな終わり方(映像と音楽)
+import jackpot_end as JP  # noqa: E402   成功したときの「大当たり」風の終わり方(映像と音)
 
 W, H = 1080, 1920
 FPS = 60
@@ -240,7 +240,7 @@ def simulate(seed, record=False):
                                      for b in g.balls],
                            "alive": [p["alive"] for p in g.planks]})
         if g.result is not None:
-            extra = OUTRO + SCARE_DUR if g.result == "fail" else SE.DURATION
+            extra = OUTRO + SCARE_DUR if g.result == "fail" else JP.DURATION
             if not record or g.t > g.result_t + extra:
                 break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t,
@@ -288,10 +288,11 @@ def plank_quad(th):
     return [(ax + nx, ay + ny), (bx + nx, by + ny), (bx - nx, by - ny), (ax - nx, ay - ny)]
 
 
-def draw_walls(ctx):
+def draw_walls(ctx, zoom=1.0):
     n = int(TH_END / 0.02)
     lines = [[wall_pt(TH_END * k / n) for k in range(n + 1)]]
-    for width, alpha in ((12, 0.06), (4, 0.9)):   # うっすら光る → 細い芯の線
+    lw = 1 / math.sqrt(zoom)   # 寄ったときに線が太くなりすぎないように
+    for width, alpha in ((12 * lw, 0.06), (4 * lw, 0.9)):   # うっすら光る → 細い芯の線
         for pts in lines:
             ctx.new_path()
             ctx.move_to(*pts[0])
@@ -317,7 +318,7 @@ def draw_walls(ctx):
     ctx.stroke()
 
 
-def draw_planks(ctx, planks, alive):
+def draw_planks(ctx, planks, alive, zoom=1.0):
     for p, a in zip(planks, alive):
         if not a:
             continue
@@ -331,7 +332,7 @@ def draw_planks(ctx, planks, alive):
         ctx.set_source_rgba(0.62 + tint, 0.85 + tint, 1.0, 0.42)   # すき通ったガラス
         ctx.fill_preserve()
         ctx.set_source_rgba(0.88, 0.97, 1.0, 0.85)                  # 光るふち
-        ctx.set_line_width(1.3)
+        ctx.set_line_width(1.3 / math.sqrt(zoom))
         ctx.stroke()
 
 
@@ -389,7 +390,7 @@ def render(seed):
     rng = np.random.default_rng(seed + 999)
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     ctx = cairo.Context(surf)
-    # 動かない背景と壁は最初に1回だけ描いておく
+    # 動かない背景は最初に1回だけ描いておく(壁とガラスはカメラの寄りに合わせて毎回描く)
     static = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     sc = cairo.Context(static)
     vg = cairo.RadialGradient(CX, CY + OFFSET_Y, 200, CX, CY + OFFSET_Y, 1250)
@@ -397,10 +398,9 @@ def render(seed):
     vg.add_color_stop_rgb(1, *BG)
     sc.set_source(vg)
     sc.paint()
-    sc.translate(0, OFFSET_Y)
-    draw_walls(sc)
-    wood_surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
-    alive_drawn = None
+    # カメラ: 残っているガラスがいつも同じくらいの大きさに見えるよう、割れるにつれて寄っていく。
+    # 新しいボールが落ちてくるときは、そのボールが画面に入るように少し引き、ボールが内側へ進むにつれてまた寄る。
+    cam_r = R_OUT + 30
 
     ff = subprocess.Popen(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgra",
@@ -408,7 +408,7 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    ending = None if fail else SE.Ending(W, H, seed, GD.BALLS, GD.draw_ball)
+    ending = None if fail else JP.Jackpot(W, H, seed, CX, CY + OFFSET_Y)
     shards, trails, dying, hub = [], {}, [], []
     spin, embers = {}, []
     ev_i = 0
@@ -441,18 +441,26 @@ def render(seed):
             continue
         after = (t - end_t - (SCARE_DUR if fail else 0)) if over else 0
 
+        # カメラの寄り具合
+        alive_k = [k for k, a in enumerate(fr["alive"]) if a]
+        target = (r_of(planks[alive_k[-1]]["th"] + 2 * math.pi) + 45) if alive_k else cam_r
+        for _, bx, by, _ in fr["balls"]:
+            if outside_board(bx, by):
+                target = R_OUT + 30
+            else:
+                target = max(target, math.hypot(bx - CX, by - CY) + BALL_R + 70)
+        target = min(R_OUT + 30, max(150.0, target))
+        cam_r += (target - cam_r) * (1 - math.exp(-dt / 0.35))
+        zoom = (R_OUT + 30) / cam_r
+
         ctx.set_source_surface(static, 0, 0)
         ctx.paint()
-        if fr["alive"] != alive_drawn:   # 板が割れたときだけ描き直す
-            wood_surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
-            wc = cairo.Context(wood_surf)
-            wc.translate(0, OFFSET_Y)
-            draw_planks(wc, planks, fr["alive"])
-            alive_drawn = fr["alive"]
-        ctx.set_source_surface(wood_surf, 0, 0)
-        ctx.paint()
         ctx.save()
-        ctx.translate(0, OFFSET_Y)
+        ctx.translate(CX, CY + OFFSET_Y)
+        ctx.scale(zoom, zoom)
+        ctx.translate(-CX, -CY)
+        draw_walls(ctx, zoom)
+        draw_planks(ctx, planks, fr["alive"], zoom)
         # 木くず
         keep = []
         for sh in shards:
@@ -582,7 +590,7 @@ def render(seed):
 MIX_GAIN = 0.72  # 通常部分の音量(約 -18dB になるよう調整)
 VOICE_GAIN = 0.55      # 掛け声の大きさ(ガラスの音より少し大きい程度)
 SFX_GAIN = 0.50        # ボールごとの効果音の大きさ
-END_MUSIC_GAIN = 1.16  # 成功後の曲の音量(通常部分と同じ約 -18dB になるよう調整)
+END_MUSIC_GAIN = 1.6   # 成功後の「大当たり」の音の大きさ(お祝いなので通常部分より少し大きめ)
 F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動画と同じくらい)
 
 
@@ -655,7 +663,7 @@ def synth_audio(res, duration, path):
         for k, m_ in enumerate((64, 63, 62, 61)):
             add(chime(midi_hz(m_), 0.8, 0.35), sad_t + k * 0.42)
     elif end_t is not None:   # 成功:おしゃれで気持ちのいい短い曲
-        sig = SE.music(SR, res.get("seed", 0)) * END_MUSIC_GAIN
+        sig = JP.music(SR, res.get("seed", 0)) * END_MUSIC_GAIN
         i0 = int(end_t * SR)
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += sig[:m]
