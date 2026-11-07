@@ -16,8 +16,8 @@ import cairo
 import numpy as np
 
 T_TR = 0.45          # トランジションの長さ
-CRACK = 0.3          # CMの最後、ひびが入ってから割れるまで
-SHATTER = 1.1        # 破片が飛び散る時間
+CRACK = 0.22         # CMの最後、ひびが入ってから割れるまで
+SHATTER = 1.4        # 破片が飛び散る時間
 
 
 def cm_length(path):
@@ -37,7 +37,6 @@ class CM:
         self.last = None
         self.impact = (W / 2, H * 0.52)             # 車がぶつかる場所(画面の真ん中あたり)
         rng = np.random.default_rng(seed + 31337)
-        self.cracks = self._make_cracks(rng)
         self.shards = self._make_shards(rng)
 
     # ------------------------------------------------ CMの映像を1コマずつ読む
@@ -58,41 +57,6 @@ class CM:
             self._keep = data   # 画像のメモリを持っておく
         return self.last
 
-    # ------------------------------------------------ ひびと破片の形
-    def _make_cracks(self, rng):
-        cx, cy = self.impact
-        lines = []
-        for i in range(16):   # 中心から放射状にのびるひび(ジグザグ)
-            a = i * 2 * math.pi / 16 + rng.uniform(-0.12, 0.12)
-            pts = [(cx, cy)]
-            r = 0.0
-            while r < 1500:
-                r += rng.uniform(60, 140)
-                aa = a + rng.uniform(-0.08, 0.08)
-                pts.append((cx + r * math.cos(aa), cy + r * math.sin(aa)))
-            lines.append(pts)
-        rings = [rng.uniform(70, 110), rng.uniform(190, 260), rng.uniform(360, 460)]
-        return lines, rings
-
-    def _make_shards(self, rng):
-        cx, cy = self.impact
-        n_ang = 16
-        radii = [0, 90, 220, 400, 650, 950, 1500]
-        angs = [i * 2 * math.pi / n_ang + rng.uniform(-0.1, 0.1) for i in range(n_ang)]
-        shards = []
-        for j in range(len(radii) - 1):
-            for i in range(n_ang):
-                a0, a1 = angs[i], angs[(i + 1) % n_ang] + (2 * math.pi if i == n_ang - 1 else 0)
-                r0, r1 = radii[j], radii[j + 1]
-                pts = [(cx + r0 * math.cos(a0), cy + r0 * math.sin(a0)), (cx + r1 * math.cos(a0), cy + r1 * math.sin(a0)),
-                       (cx + r1 * math.cos(a1), cy + r1 * math.sin(a1)), (cx + r0 * math.cos(a1), cy + r0 * math.sin(a1))]
-                mx = sum(p[0] for p in pts) / 4
-                my = sum(p[1] for p in pts) / 4
-                d = math.hypot(mx - cx, my - cy) + 1
-                sp = rng.uniform(700, 1500) * (0.6 + 0.4 * min(1.0, 300 / d))
-                vx, vy = (mx - cx) / d * sp, (my - cy) / d * sp - rng.uniform(100, 400)
-                shards.append((pts, mx, my, vx, vy, rng.uniform(-9, 9), rng.uniform(0.0, 0.08)))
-        return shards
 
     # ------------------------------------------------ 描画
     def draw_transition(self, ctx, age):
@@ -114,7 +78,10 @@ class CM:
         W, H = self.W, self.H
         a = age - T_TR
         img = self.frame()
-        if img is not None:
+        left = self.len - a
+        if img is not None and left < CRACK:   # ひびが入る(画面がガラスの破片に分かれて少しずれる)
+            self._draw_cracked(ctx, img, 1 - left / CRACK)
+        elif img is not None:
             ctx.set_source_surface(img, 0, 0)
             ctx.paint()
         if a < 0.35:
@@ -125,69 +92,168 @@ class CM:
         ctx.rectangle(0, 0, W, bar)
         ctx.rectangle(0, H - bar, W, bar)
         ctx.fill()
-        left = self.len - a
-        if left < CRACK:   # ひびが入る
-            self._draw_cracks(ctx, 1 - left / CRACK)
 
-    def _draw_cracks(self, ctx, k):
-        lines, rings = self.cracks
+    # ------------------------------------------------ 破片の形(ボロノイ分割:ぶつかった所ほど細かく、外ほど大きい)
+    def _make_shards(self, rng):
+        W, H = self.W, self.H
         cx, cy = self.impact
-        ctx.set_line_join(cairo.LINE_JOIN_MITER)
-        for w, col in ((5, (0, 0, 0, 0.35)), (2, (1, 1, 1, 0.95))):
-            ctx.set_line_width(w)
-            ctx.set_source_rgba(*col)
-            for pts in lines:
-                n = max(2, int(len(pts) * min(1.0, 0.3 + k)))
-                ctx.move_to(*pts[0])
-                for p in pts[1:n]:
-                    ctx.line_to(*p)
-                ctx.stroke()
-            for r in rings:
-                if r < 150 + 400 * k:
-                    ctx.arc(cx, cy, r, 0, 2 * math.pi)
-                    ctx.stroke()
-        g = cairo.RadialGradient(cx, cy, 0, cx, cy, 160)
-        g.add_color_stop_rgba(0, 1, 1, 1, 0.9 * k)
+        pts = [(cx + rng.uniform(-4, 4), cy + rng.uniform(-4, 4))]
+        while len(pts) < 150:
+            r = 1500 * rng.uniform(0, 1) ** 1.9
+            a = rng.uniform(0, 2 * math.pi)
+            x, y = cx + r * math.cos(a), cy + r * math.sin(a) * 1.15
+            if -40 < x < W + 40 and -40 < y < H + 40:
+                pts.append((x, y))
+        rect = [(-30, -30), (W + 30, -30), (W + 30, H + 30), (-30, H + 30)]
+        shards = []
+        for i, p in enumerate(pts):
+            poly = rect
+            for j, q in enumerate(pts):
+                if i == j:
+                    continue
+                nx, ny = q[0] - p[0], q[1] - p[1]
+                mx, my = (p[0] + q[0]) / 2, (p[1] + q[1]) / 2
+                poly = _clip(poly, nx, ny, nx * mx + ny * my)
+                if len(poly) < 3:
+                    break
+            if len(poly) < 3:
+                continue
+            gx = sum(v[0] for v in poly) / len(poly)
+            gy = sum(v[1] for v in poly) / len(poly)
+            d = math.hypot(gx - cx, gy - cy)
+            ux, uy = ((gx - cx) / d, (gy - cy) / d) if d > 1 else (0.0, -1.0)
+            near = max(0.0, 1 - d / 1400)
+            shards.append({
+                "poly": poly, "g": (gx, gy), "d": d, "u": (ux, uy),
+                # ひびが入ったときの小さなずれ(中心ほど大きい)
+                "jit": (rng.normal(0, 1.5 + 3 * near), rng.normal(0, 1.5 + 3 * near)),
+                "jrot": rng.normal(0, 0.004 + 0.01 * near), "tint": rng.uniform(-0.06, 0.1),
+                # 割れたあとの動き:手前(カメラ側)へ飛んでくる速さ、外向きの速さ、回転、3Dの傾き
+                "vz": rng.uniform(0.5, 1.6) + 1.2 * near, "vr": rng.uniform(80, 380) * (0.4 + near),
+                "spin": rng.normal(0, 1.8), "tilt": rng.uniform(1.5, 6.0) * rng.choice([-1, 1]),
+                "axis": rng.uniform(0, math.pi), "ph": rng.uniform(0, 2 * math.pi),
+                "delay": d / 5200.0,   # 割れが中心から外へ広がる
+            })
+        shards.sort(key=lambda s: s["vz"])   # 遠い(ゆっくり近づく)破片から描く
+        dust = [(rng.uniform(0, 2 * math.pi), rng.uniform(200, 1400), rng.uniform(0.8, 2.6), rng.uniform(0, 1))
+                for _ in range(260)]
+        return shards, dust
+
+    @staticmethod
+    def _path(ctx, poly):
+        ctx.new_path()
+        ctx.move_to(*poly[0])
+        for v in poly[1:]:
+            ctx.line_to(*v)
+        ctx.close_path()
+
+    def _draw_cracked(self, ctx, img, k):
+        """ひびが入った瞬間:画面がガラスの破片に分かれ、わずかにずれて光る(まだ飛ばない)。ひびは中心から外へ一気に走る。"""
+        shards, _ = self.shards
+        front = 120 + 1500 * k ** 1.4   # ひびの先が中心から外へ走る
+        ctx.set_source_surface(img, 0, 0)
+        ctx.paint()
+        for s in shards:
+            if s["d"] > front:
+                continue
+            gx, gy = s["g"]
+            ctx.save()
+            self._path(ctx, s["poly"])
+            ctx.clip()
+            ctx.translate(gx + s["jit"][0], gy + s["jit"][1])
+            ctx.rotate(s["jrot"])
+            ctx.translate(-gx, -gy)
+            ctx.set_source_surface(img, 0, 0)
+            ctx.paint()
+            if s["tint"] > 0:   # 破片ごとに光の当たり方が少し違う
+                ctx.set_source_rgba(1, 1, 1, s["tint"])
+                ctx.paint()
+            ctx.restore()
+            self._path(ctx, s["poly"])
+            ctx.set_source_rgba(0, 0, 0, 0.35)
+            ctx.set_line_width(2.4)
+            ctx.stroke_preserve()
+            ctx.set_source_rgba(0.92, 0.96, 1, 0.75 * max(0.0, 1 - s["d"] / 1700))
+            ctx.set_line_width(1.0)
+            ctx.stroke()
+        cx, cy = self.impact   # ぶつかった所は細かく砕けて白っぽい
+        g = cairo.RadialGradient(cx, cy, 0, cx, cy, 120)
+        g.add_color_stop_rgba(0, 1, 1, 1, 0.55 * k)
         g.add_color_stop_rgba(1, 1, 1, 1, 0)
         ctx.set_source(g)
-        ctx.arc(cx, cy, 160, 0, 2 * math.pi)
-        ctx.fill()
+        ctx.paint()
 
     def draw_shatter(self, ctx, age_r):
-        """発表会の演出の上で、CMの最後の画面が破片になって飛び散る。"""
+        """発表会の演出の上で、CMの最後の画面のガラスが割れ、破片がこちらへ飛んでくる(カメラがガラスを突き抜ける感じ)。
+        破片はスローモーションのようにだんだんゆっくりになり、傾くたびに光を反射する。"""
         if self.last is None or age_r > SHATTER:
             return
+        shards, dust = self.shards
         cx, cy = self.impact
-        if age_r < 0.12:   # ぶつかった瞬間の白い光
-            ctx.set_source_rgba(1, 1, 1, 0.9 * (1 - age_r / 0.12))
-            ctx.paint()
-        for pts, mx, my, vx, vy, spin, delay in self.shards:
-            a = age_r - delay
-            if a < 0:
-                a = 0.0
-            ox = vx * a
-            oy = vy * a + 0.5 * 2600 * a * a
-            al = max(0.0, 1 - age_r / SHATTER)
+        for s in shards:
+            a = max(0.0, age_r - s["delay"])
+            e = (1 - math.exp(-a * 3.2)) / 3.2          # だんだんゆっくり(スロー)になる時間
+            sc = 1 + s["vz"] * e * 2.2                    # 手前へ近づくほど大きく
+            gx, gy = s["g"]
+            ux, uy = s["u"]
+            px = cx + (gx - cx) * sc + ux * s["vr"] * e
+            py = cy + (gy - cy) * sc + uy * s["vr"] * e + 420 * a * a
+            al = max(0.0, min(1.0, 1 - (sc - 2.2) / 1.2)) * max(0.0, 1 - max(0.0, age_r - SHATTER * 0.45) / (SHATTER * 0.55))
+            if al <= 0.01:
+                continue
+            tl = s["tilt"] * e
             ctx.save()
-            ctx.translate(mx + ox, my + oy)
-            ctx.rotate(spin * a)
-            sc = max(0.2, 1 - 0.5 * a)
+            ctx.translate(px, py)
+            ctx.rotate(s["spin"] * e)
+            ctx.rotate(s["axis"])
+            ctx.scale(max(0.08, abs(math.cos(tl))), 1.0)   # 3Dで傾く(横につぶれて見える)
+            ctx.rotate(-s["axis"])
             ctx.scale(sc, sc)
-            ctx.translate(-mx, -my)
-            ctx.new_path()
-            ctx.move_to(*pts[0])
-            for p in pts[1:]:
-                ctx.line_to(*p)
-            ctx.close_path()
+            ctx.translate(-gx, -gy)
+            self._path(ctx, s["poly"])
             ctx.save()
             ctx.clip_preserve()
             ctx.set_source_surface(self.last, 0, 0)
             ctx.paint_with_alpha(al)
+            spec = max(0.0, math.sin(tl + s["ph"])) ** 16   # 傾いた瞬間にキラッと光る
+            if spec > 0.02:
+                ctx.set_source_rgba(1, 1, 1, 0.4 * spec * al)
+                ctx.paint()
+            ctx.set_source_rgba(0.6, 0.75, 0.85, 0.08 * al)   # ガラスの厚みの青み
+            ctx.paint()
             ctx.restore()
-            ctx.set_source_rgba(1, 1, 1, 0.8 * al)   # 破片のふちが光る
-            ctx.set_line_width(2.5)
+            ctx.set_source_rgba(1, 1, 1, 0.7 * al)          # 切り口が光る
+            ctx.set_line_width(1.6 / sc)
             ctx.stroke()
             ctx.restore()
+        for ang, v, sz, ph in dust:   # 細かいガラスの粉がキラキラ飛ぶ
+            if age_r > 0.9:
+                break
+            d = v * (1 - math.exp(-age_r * 3)) / 3
+            x, y = cx + d * math.cos(ang), cy + d * math.sin(ang) + 300 * age_r * age_r
+            tw = 0.5 + 0.5 * math.sin(age_r * 40 + ph * 20)
+            ctx.set_source_rgba(1, 1, 1, tw * (1 - age_r / 0.9))
+            ctx.arc(x, y, sz, 0, 2 * math.pi)
+            ctx.fill()
+        if age_r < 0.06:   # ぶつかった瞬間だけ、ごく短く光る
+            ctx.set_source_rgba(1, 1, 1, 0.45 * (1 - age_r / 0.06))
+            ctx.paint()
+
+
+def _clip(poly, nx, ny, c):
+    """多角形を半平面 nx*x + ny*y <= c で切る。"""
+    out = []
+    n = len(poly)
+    for i in range(n):
+        p, q = poly[i], poly[(i + 1) % n]
+        dp = nx * p[0] + ny * p[1] - c
+        dq = nx * q[0] + ny * q[1] - c
+        if dp <= 0:
+            out.append(p)
+        if (dp <= 0) != (dq <= 0):
+            t = dp / (dp - dq)
+            out.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+    return out
 
 
 # ---------------------------------------------------------------- 音
