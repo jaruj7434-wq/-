@@ -32,6 +32,7 @@ from ball_escape import FONT, midi_hz, text  # noqa: E402
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 ANGEL_DUR = 6.0   # 成功したときの発表演出の長さ(天使の演出は使わない)
+import premium_reveal as PR  # noqa: E402   発表会の場面の高級感(フレア・光・音)
 import cm_insert as CI  # noqa: E402   CM風の映像とトランジション・ガラスが割れる演出
 
 W, H = 1080, 1920
@@ -478,7 +479,7 @@ def draw_logo(ctx, age, cx, cy):
     """最後に出すロゴ(ユーザーが用意した画像を、拡大・背景透明・彩度アップ・メタリック加工したもの)。
     少し大きい所から縮みながら現れ、うしろに赤い光、表面に光が一度走る。"""
     if not os.path.exists(LOGO_PATH):   # ロゴ画像がないときは、ふつうの文字で車名を出す
-        text(ctx, "FAIRLADY Z", cx, cy + 40, 120 * min(1.0, 0.6 + age), rgb=(0.92, 0.94, 1.0), sw=0, alpha=min(1.0, age / 0.5))
+        PR.chrome_text(ctx, "FAIRLADY Z", cx, cy + 40, 104, age)
         return
     if not _LOGO:
         _LOGO.append(cairo.ImageSurface.create_from_png(LOGO_PATH))
@@ -546,6 +547,8 @@ def draw_reveal(ctx, sprite, age, src):
         ctx.arc(W / 2, 1330, 520, 0, 2 * math.pi)
         ctx.fill()
         ctx.restore()
+    if age > 0.3:   # スポットライトの中を漂うほこり
+        PR.draw_dust(ctx, age, W, min(1.0, (age - 0.3) / 0.8))
     # 車が真ん中に巨大になって現れる
     p = min(1.0, max(0.0, (age - 0.2) / 1.3))
     e = 1 - (1 - p) ** 3
@@ -577,6 +580,15 @@ def draw_reveal(ctx, sprite, age, src):
         band.add_color_stop_rgba(1, 1, 1, 1, 0)
         ctx.set_source(band)
         ctx.mask_surface(car, 0, 0)
+        for f in (0.28, 0.5, 0.72):   # 光の帯がボディの上を通るとき、キラッと光る
+            gx = x + (f - 0.5) * sprite.w * k
+            gy = y - sprite.h * k * 0.32
+            PR.glint(ctx, gx, gy, max(0.0, 1 - abs(cx_ - gx) / 140), 110)
+    # ヘッドライトが点いてレンズフレア(点いた瞬間に強く光って、少し落ち着く)
+    if age > 1.1 and e > 0.9:
+        fa = age - 1.1
+        fk = min(1.0, fa / 0.12) * (0.75 + 0.25 * math.exp(-fa * 3)) * (0.92 + 0.08 * math.sin(age * 9))
+        PR.flare(ctx, x + sprite.w * k * 0.36, y + sprite.h * k * 0.02, fk, W)
     # 車名(ロゴ画像があればそれ、なければ文字)
     if age > 1.7:
         draw_logo(ctx, age - 1.7, W / 2, 740)
@@ -991,17 +1003,10 @@ def synth_audio(res, duration, path):
                 put(cma, end_t + CI.T_TR, 1.0)
             put(CI.light_swell(SR), end_t + off - CI.GLARE, 0.45)
         t_rev = end_t + off   # ここから下の発表会の音は、CMのあとにずらす
-        root = ROOTS[GOAL]
-        for m_, a in ((root - 24, 0.5), (root - 12, 0.5), (root - 5, 0.35), (root, 0.35), (root + 4, 0.3)):
-            put(strings(m_, a, dur=5.0), t_rev + 0.3, 0.55)
-            put(brass(m_, a * 0.8, dur=2.5), t_rev + 0.3, 0.45)
-        put(timpani(1.0, dur=2.5), t_rev + 0.3, 0.6)
+        put(PR.reveal_sound(SR, ANGEL_DUR, ROOTS[GOAL] - 12, seed=7), t_rev, 0.55)   # 重低音の「ドォォン」+きらめく和音+金属の「キィィン」
         hybrid = load_voice(7)   # 発表演出では小さくアイドリングの音
         if hybrid is not None:
-            put(hybrid, t_rev + 1.2, 0.6)
-        put(cymbal(0.5, 7, dur=2.0), t_rev + 1.5, 0.35)
-        put(timpani(0.9, dur=1.6), t_rev + 1.7, 0.5)            # ロゴが出る「ドン」
-        put(cymbal(0.6, 11, dur=1.8), t_rev + 1.7, 0.3)
+            put(hybrid, t_rev + 0.9, 0.35)
     wet = out.copy()
     for d, g in ((0.043, 0.28), (0.071, 0.2), (0.113, 0.14)):   # 広い部屋の響き
         k = int(d * SR)
