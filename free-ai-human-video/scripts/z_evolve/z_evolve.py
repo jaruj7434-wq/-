@@ -32,6 +32,7 @@ from ball_escape import FONT, midi_hz, text  # noqa: E402
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 ANGEL_DUR = 6.0   # 成功したときの発表演出の長さ(天使の演出は使わない)
+import cm_insert as CI  # noqa: E402   CM風の映像とトランジション・ガラスが割れる演出
 
 W, H = 1080, 1920
 FPS = 60
@@ -43,6 +44,7 @@ ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 IMG_DIR = os.path.join(ROOT, "assets", "source", "fairlady_z")
 SND_DIR = os.path.join(ROOT, "assets", "source", "gtr", "sounds")   # エンジン音は GT-R 回の素材を使い回す
 OUT_DIR = os.path.join(ROOT, "assets", "output")
+CM_PATH = os.path.join(IMG_DIR, "cm.mp4")   # 最新のZができたあとに入れるCM風の映像(Higgs Field Seedance 2.5)
 
 NAMES = ["S30", "S130", "Z31", "Z32", "Z33", "Z34", "RZ34"]
 SHORT = ["1969", "1978", "1983", "1989", "2002", "2008", "2022"]   # 進化表に出す年
@@ -294,7 +296,7 @@ def simulate(seed, record=False):
                                      c["body"].angle) for c in g.cows],
                            "over": g.over_since})
         if g.result is not None:
-            extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR
+            extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR + cm_offset()
             if not record or g.t > g.result_t + extra:
                 break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "best": g.best}
@@ -636,6 +638,12 @@ def remix(seed):
     print("音を差し替えました:", final)
 
 
+def cm_offset():
+    """成功してから発表会の演出が始まるまでの秒数(CMの映像があればトランジション+CMの長さ)。"""
+    n = CI.cm_length(CM_PATH)
+    return CI.T_TR + n if n > 0 else 0.0
+
+
 def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
@@ -658,6 +666,8 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
+    cm = CI.CM(CM_PATH, W, H, FPS, seed) if (not fail and os.path.exists(CM_PATH)) else None
+    off = cm.reveal_off if cm else 0.0   # 発表会の演出が始まる時刻(成功から)
     reveal_src = None
     born = {}
     pops = []
@@ -680,6 +690,11 @@ def render(seed):
             ff.stdin.write(surf.get_data())
             continue
         after = (t - end_t - (SCARE_DUR if fail else 0)) if over else 0
+        age_s = (t - end_t) if over else -1.0
+        if cm is not None and CI.T_TR <= age_s < off:   # CM風の映像
+            cm.draw_cm(ctx, age_s)
+            ff.stdin.write(surf.get_data())
+            continue
         shake *= 0.85
         dx, dy = (math.sin(t * 61) * shake, math.cos(t * 53) * shake) if shake > 0.5 else (0, 0)
 
@@ -698,7 +713,8 @@ def render(seed):
             if over and not fail and st == GOAL:
                 if reveal_src is None:
                     reveal_src = (x, y)
-                continue
+                if age_s >= off:
+                    continue
             show_front, sx = (False, 1.0)
             if b_t is not None and st in fronts:
                 show_front, sx = turn_state(t - b_t)
@@ -707,7 +723,7 @@ def render(seed):
             else:
                 sprites[st].draw(ctx, x, y, ang, k, sx=sx)
         for cid, st, x, y, ang in cars:   # 年のタグ(車の上に、いつもまっすぐ)
-            if over and not fail and st == GOAL:
+            if over and not fail and st == GOAL and age_s >= off:
                 continue
             year_tag(ctx, x, y - sprites[st].h * 0.5 - 22, st)
         keep = []
@@ -722,12 +738,12 @@ def render(seed):
         if fr["over"] is not None and not over:   # あふれそうな警告
             if int(t * 6) % 2 == 0:
                 text(ctx, "つまりそう！", W / 2, OVER_Y + 70, 60, rgb=(1, 0.35, 0.35), sw=12)
-        if over and not fail and reveal_src is not None:
-            draw_reveal(ctx, sprites[GOAL], t - end_t, reveal_src)
+        if over and not fail and reveal_src is not None and age_s >= off:
+            draw_reveal(ctx, sprites[GOAL], age_s - off + (0.5 if cm else 0.0), reveal_src)
 
         # 上の帯(発表演出の間は消す)
-        hide = over and not fail
-        ui_a = 1.0 if not hide else max(0.0, 1 - (t - end_t) / 0.5)
+        hide = over and not fail and age_s >= off
+        ui_a = 1.0 if not hide else max(0.0, 1 - (age_s - off) / 0.5) * (0.0 if cm else 1.0)
         if ui_a > 0:
             text(ctx, "初代Zを合体させて", W / 2, 130, 66, sw=8, alpha=ui_a)
             text(ctx, "最新フェアレディZにできる？", W / 2, 236, 70, rgb=GOLD, sw=10, alpha=ui_a)
@@ -741,6 +757,11 @@ def render(seed):
             text(ctx, "つまった…" if fail_why == "overflow" else "時間切れ…", W / 2, 1100,
                  130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"{SHORT[res['best']]}年の{NAMES[res['best']]}までだった…", W / 2, 1230, 62, sw=10)
+        if cm is not None and over:
+            if age_s < CI.T_TR:   # 光の帯のトランジション
+                cm.draw_transition(ctx, age_s)
+            elif age_s >= off:    # CMの画面が割れて飛び散る
+                cm.draw_shatter(ctx, age_s - off)
 
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
@@ -949,22 +970,38 @@ def synth_audio(res, duration, path):
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += sig[:m]
     elif end_t is not None:   # 発表演出:重いオーケストラの和音がのび、静かなハイブリッドの起動音、光の帯でシンバル
+        off = cm_offset()
+
         def put(sig, t0, g):
             i0 = int(t0 * SR)
             m = min(len(sig), n_out - i0)
             if m > 0:
                 extra[i0:i0 + m] += g * sig[:m]
+        if off > 0:   # トランジションの「シュワッ」→ CMのエンジン音 → ガラスが割れる「ガシャーン」
+            put(CI.whoosh(SR), end_t, 0.35)
+            cma = CI.cm_audio(CM_PATH, SR)
+            if cma is not None and len(cma):
+                rms_c = np.sqrt(np.mean(cma ** 2))
+                cma = cma * (10 ** (-17.0 / 20) / max(1e-9, rms_c))
+                cma = np.clip(cma, -0.9, 0.9)
+                fade = np.ones(len(cma))
+                k = int(0.08 * SR)
+                fade[:k] = np.linspace(0, 1, k)
+                cma = cma * fade
+                put(cma, end_t + CI.T_TR, 1.0)
+            put(CI.glass_crash(SR), end_t + off - 0.03, 0.75)
+        t_rev = end_t + off   # ここから下の発表会の音は、CMのあとにずらす
         root = ROOTS[GOAL]
         for m_, a in ((root - 24, 0.5), (root - 12, 0.5), (root - 5, 0.35), (root, 0.35), (root + 4, 0.3)):
-            put(strings(m_, a, dur=5.0), end_t + 0.3, 0.55)
-            put(brass(m_, a * 0.8, dur=2.5), end_t + 0.3, 0.45)
-        put(timpani(1.0, dur=2.5), end_t + 0.3, 0.6)
+            put(strings(m_, a, dur=5.0), t_rev + 0.3, 0.55)
+            put(brass(m_, a * 0.8, dur=2.5), t_rev + 0.3, 0.45)
+        put(timpani(1.0, dur=2.5), t_rev + 0.3, 0.6)
         hybrid = load_voice(7)   # 発表演出では小さくアイドリングの音
         if hybrid is not None:
-            put(hybrid, end_t + 1.2, 0.6)
-        put(cymbal(0.5, 7, dur=2.0), end_t + 1.5, 0.35)
-        put(timpani(0.9, dur=1.6), end_t + 1.7, 0.5)            # ロゴが出る「ドン」
-        put(cymbal(0.6, 11, dur=1.8), end_t + 1.7, 0.3)
+            put(hybrid, t_rev + 1.2, 0.6)
+        put(cymbal(0.5, 7, dur=2.0), t_rev + 1.5, 0.35)
+        put(timpani(0.9, dur=1.6), t_rev + 1.7, 0.5)            # ロゴが出る「ドン」
+        put(cymbal(0.6, 11, dur=1.8), t_rev + 1.7, 0.3)
     wet = out.copy()
     for d, g in ((0.043, 0.28), (0.071, 0.2), (0.113, 0.14)):   # 広い部屋の響き
         k = int(d * SR)
