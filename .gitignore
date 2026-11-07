@@ -1,5 +1,7 @@
 # Higgs Field 生成物・素材(バイナリ)はコミットしない
 assets/output/
+keiba-history/assets/output/
+keiba-history/assets/source/
 assets/source/
 *.mp4
 *.mov
@@ -12,3 +14,5 @@ assets/source/
 
 # OS / エディタ
 .DS_Store
+*.m4a
+*.aac
