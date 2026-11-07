@@ -100,3 +100,4 @@ Kling 4.0 (image-to-video, 720p, 9:16)。start_image + end_image で、カメラ
 - カメラ: ② CAM_top 真上 / ① CAM_rear 後ろ / ③ CAM_line_overJockey 騎手の右肩越しに左のディープを真横に見る (ディープの頭は画面右) / ④ CAM_reverse_fromDeep ディープ側から右のドウデュースを真横に見る (ドウデュースの頭は画面左) / ⑥ CAM_deep_close
 - ガイドのレンダー (Higgs media): ③ 4586b2b6 / ④ 3ab414ae / ⑥ 14adf798 / 一覧 5aee5a47
 - 3Dガイドを構図の見本にして画像を作り直し: ③ 16ffa003 / ④ 4f68c5d1 (1回目 fd60ffa1 は騎手が正面を向いて顔が出たので横顔に修正) / ⑥ f090715e
+- 会話の動画 (3Dガイド版): ③ cd22d80c (4秒) / ④ 46e1a3a5 (3秒) / ⑤ 444120b7 (3秒) / ⑥ 90dab07e (3秒)
