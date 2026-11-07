@@ -760,8 +760,8 @@ def render(seed):
         if cm is not None and over:
             if age_s < CI.T_TR:   # 光の帯のトランジション
                 cm.draw_transition(ctx, age_s)
-            elif age_s >= off:    # CMの画面が割れて飛び散る
-                cm.draw_shatter(ctx, age_s - off)
+            elif age_s >= off:    # 真っ白な光が引いて発表会へ
+                cm.draw_whiteout(ctx, age_s - off)
 
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
@@ -977,7 +977,7 @@ def synth_audio(res, duration, path):
             m = min(len(sig), n_out - i0)
             if m > 0:
                 extra[i0:i0 + m] += g * sig[:m]
-        if off > 0:   # トランジションの「シュワッ」→ CMのエンジン音 → ガラスが割れる「ガシャーン」
+        if off > 0:   # トランジションの「シュワッ」→ CMのエンジン音 → ライトがまぶしくなる「フワーン、シャーン」
             put(CI.whoosh(SR), end_t, 0.35)
             cma = CI.cm_audio(CM_PATH, SR)
             if cma is not None and len(cma):
@@ -989,7 +989,7 @@ def synth_audio(res, duration, path):
                 fade[:k] = np.linspace(0, 1, k)
                 cma = cma * fade
                 put(cma, end_t + CI.T_TR, 1.0)
-            put(CI.glass_crash(SR), end_t + off - 0.03, 0.75)
+            put(CI.light_swell(SR), end_t + off - CI.GLARE, 0.45)
         t_rev = end_t + off   # ここから下の発表会の音は、CMのあとにずらす
         root = ROOTS[GOAL]
         for m_, a in ((root - 24, 0.5), (root - 12, 0.5), (root - 5, 0.35), (root, 0.35), (root + 4, 0.3)):
