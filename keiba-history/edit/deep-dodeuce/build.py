@@ -2,7 +2,7 @@
 """ディープ × ドウデュース「おい、別れの言葉は無しか？」完成版の書き出し。
 
 使い方: python3 edit/deep-dodeuce/build.py [A|B]
-  A/B = 騎手の声 (assets/output/deep-dodeuce/voice_A.mp3 / voice_B.mp3)
+  A〜F = 騎手の声 (assets/output/deep-dodeuce/voice_X.mp3)。C〜F は参考動画のテンポ・明るさに寄せて作り直した声 (2026-11-07)
 素材: assets/output/deep-dodeuce/v2/ (Higgs Field の job は prompts/deep-dodeuce/production-log.md)
 思い出シーン (M*.mp4) は淡い色・周辺減光・粒子・白フラッシュ + 年とレース名のテロップ
 """
@@ -51,6 +51,9 @@ SEGS = [
 ]
 LINE_SEG = "V07"
 LINE_OFFSET = 0.35
+# 声の仕上げ: 低音のこもりを削り (220Hz -3dB)、明瞭さを足し (3.2kHz +3dB)、圧縮して -14 LUFS に (参考動画のセリフに近い明るさ・音量)
+VOICE_FX = ("highpass=f=90,equalizer=f=220:t=q:w=1:g=-3,equalizer=f=3200:t=q:w=1.2:g=3,"
+            "acompressor=threshold=-20dB:ratio=3:attack=5:release=80,loudnorm=I=-14:TP=-1.5:LRA=7")
 LINE_TEXT = "おい、別れの言葉は無しか？"
 NOTE_TEXT = "※イメージ映像です。セリフは創作です"
 MEM_LOOK = ("eq=saturation=0.7:contrast=0.95:brightness=0.04,"
@@ -78,7 +81,7 @@ n = len(SEGS)
 vin = "".join(f"[v{i}]" for i in range(n))
 voice_i, bgm_i = n, n + 1
 args += ["-i", str(ROOT / f"voice_{VOICE}.mp3"), "-i", str(BGM)]
-line_end = line_at + 3.4
+line_end = line_at + 3.0
 txt = (
     f"drawtext=fontfile={FONT}:text='{NOTE_TEXT}':fontsize=26:fontcolor=white@0.9:"
     f"box=1:boxcolor=black@0.35:boxborderw=8:x=(w-tw)/2:y=h-150:enable='lt(t,4)',"
@@ -88,9 +91,9 @@ txt = (
 )
 ms = int(line_at * 1000)
 fc = ";".join(chains) + f";{vin}concat=n={n}:v=1:a=0[cat];[cat]{txt}[vout];" \
-    f"[{voice_i}:a]aresample=48000,volume=1.6,adelay={ms}|{ms},apad[vo];" \
+    f"[{voice_i}:a]aresample=48000,{VOICE_FX},adelay={ms}|{ms},apad[vo];" \
     f"[{bgm_i}:a]aresample=48000,apad,atrim=0:{total},volume=0.55," \
-    f"volume=enable='between(t,{line_at-0.3:.2f},{line_end:.2f})':volume=0.4," \
+    f"volume=enable='between(t,{line_at-0.3:.2f},{line_end:.2f})':volume=0.3," \
     f"afade=t=in:st=0:d=1.5,afade=t=out:st={total-3:.2f}:d=3[bg];" \
     f"[bg][vo]amix=inputs=2:duration=first:normalize=0,atrim=0:{total}[aout]"
 cmd = ["ffmpeg", "-y", "-loglevel", "error", *args, "-filter_complex", fc,
