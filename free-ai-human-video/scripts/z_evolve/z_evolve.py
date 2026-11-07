@@ -982,7 +982,7 @@ def synth_audio(res, duration, path):
             cma = CI.cm_audio(CM_PATH, SR)
             if cma is not None and len(cma):
                 rms_c = np.sqrt(np.mean(cma ** 2))
-                cma = cma * (10 ** (-17.0 / 20) / max(1e-9, rms_c))
+                cma = cma * (10 ** (-21.0 / 20) / max(1e-9, rms_c))   # 他の部分と同じくらいの大きさ(約 -17dB)に聞こえるよう調整
                 cma = np.clip(cma, -0.9, 0.9)
                 fade = np.ones(len(cma))
                 k = int(0.08 * SR)
