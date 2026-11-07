@@ -1,10 +1,11 @@
-"""「6つのボールでフルーツを全部つぶせる?」うずまきの通路に並んだフルーツを、軽いボールから重いボールへ順番につぶしていく物理ショート。
+"""「6つの刃物でフルーツを全部切れる?」うずまきの通路に並んだフルーツを、弱い刃物から強い刃物へ順番に切っていく物理ショート。
 
 18本目(ガラスの板こわし・glass_spiral.py)と同じうずまきのコースで、ガラスの板をフルーツにしたもの。
-ボールは軽い順に1個ずつ:ピンポン玉 → テニスボール → 野球ボール → サッカーボール → ボウリング球 → 鉄球。
-  後のボールほど速く打ち出され、フルーツをつぶしても遅くなりにくい。勢いがなくなったボールは消える。
-- フルーツがつぶれるたびに「グシャッ」という音(高さはボールの位置で変わる)と、果汁が飛び散る。
-- 全部つぶせば成功(大当たりの演出)、ボールが尽きたら失敗(幽霊)。
+刃物は弱い順に1本ずつ、くるくる回りながら進む:バターナイフ → ペティナイフ → 三徳包丁 → 出刃包丁 → 中華包丁 → 日本刀。
+  後の刃物ほど速く打ち出され、切っても遅くなりにくい。勢いがなくなった刃物は消える。
+  (当たり判定は回転する刃物を囲む円。動きは自然な物理のまま)
+- フルーツは切られると真っ二つに分かれて飛び、果汁が飛び散る。「シュパッ」という音(高さは刃物の位置で変わる)。
+- 全部切れば成功(フルーツがあふれる「フルーツフィーバー」演出)、刃物が尽きたら失敗(幽霊)。
 
 使い方:
     python fruit_spiral.py search [--want fail|success] [-n 200]
@@ -27,12 +28,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "ball_escape"))
 from ball_escape import midi_hz, text  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "glass_drum"))
-import sports_balls as GD  # noqa: E402   ボールの絵(ピンポン玉〜鉄球)
+import blades as GD  # noqa: E402   刃物の絵(バターナイフ〜日本刀)
 import fruits as FR  # noqa: E402   フルーツの絵
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 import ball_voice as BV  # noqa: E402   ボールが落ちるときの掛け声と効果音
-import jackpot_end as JP  # noqa: E402   成功したときの「大当たり」風の終わり方(映像と音)
+import fruit_fever as JP  # noqa: E402   成功したときの「フルーツフィーバー」演出(映像と音)
 
 W, H = 1080, 1920
 FPS = 60
@@ -273,8 +274,8 @@ BG = (0.02, 0.027, 0.047)
 STEEL = (0.62, 0.72, 0.88)
 WOOD = (0.75, 0.9, 1.0)   # ガラスの色(名前は9本目のまま)
 BALL_COL = {k: GD.BALLS[k][5] for k in range(6)}
-SHORT_NAMES = ["ピンポン", "テニス", "野球", "サッカー", "ボウリング", "鉄球"]   # 下に並べるときの短い名前
-VIS_R = [0.95, 1.08, 1.1, 1.25, 1.3, 1.22]   # 見た目の大きさ(ピンポン玉は小さく、サッカー・ボウリングは大きく)
+SHORT_NAMES = GD.SHORT   # 下に並べるときの短い名前
+VIS_R = [1.3, 1.35, 1.35, 1.4, 1.4, 1.15]   # 見た目の大きさ(日本刀は長いので少し小さめ)
 GOLD = (1, 0.86, 0.2)
 MONO = "JetBrains Mono"
 HUB_R = 46                             # 中心の小部屋(消えた玉が小さくなって集まる)
@@ -410,10 +411,11 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    ending = None if fail else JP.Jackpot(W, H, seed, CX, CY + OFFSET_Y, GD.draw_ball, main="全部つぶした!!", count=f"{N_PLANKS} / {N_PLANKS}")
+    ending = None if fail else JP.FruitFever(W, H, seed, CX, CY + OFFSET_Y, main="全部切った!!", count=f"{N_PLANKS} / {N_PLANKS}")
     shards, trails, dying, hub = [], {}, [], []
     spin, embers = {}, []
     stains = []   # 床に残る果汁のしみ
+    halves = []   # 真っ二つに切れたフルーツ
     ev_i = 0
     prev_t = 0.0
     for fi, fr in enumerate(frames):
@@ -427,10 +429,12 @@ def render(seed):
                 mx, my = planks[k]["mid"]
                 fk = planks[k]["fruit"]
                 juice, skin = FR.KINDS[fk][2], FR.KINDS[fk][1]
+                cut = math.atan2(my - CY, mx - CX) + math.pi / 2   # 刃物が進む向き(うずまきの接線)で切れる
+                halves.append([mx, my, fk, cut, et, rng.uniform(-6, 6), rng.uniform(90, 170)])
                 for j_ in range(14):   # 果汁のしずくと、皮のかけら
                     a = rng.uniform(0, 2 * math.pi)
                     v = rng.uniform(80, 420)
-                    col = skin if j_ < 4 else juice
+                    col = skin if j_ < 2 else juice
                     shards.append([mx + rng.uniform(-8, 8), my + rng.uniform(-8, 8),
                                    math.cos(a) * v, math.sin(a) * v, rng.uniform(0, math.pi),
                                    rng.uniform(-12, 12), rng.uniform(3, 9) * (1.6 if j_ < 4 else 1.0), et, col, j_ < 4])
@@ -467,6 +471,46 @@ def render(seed):
         ctx.translate(-CX, -CY)
         draw_walls(ctx, zoom)
         draw_planks(ctx, planks, fr["alive"], zoom)
+        # 真っ二つに切れたフルーツ(切り口を見せながら左右に分かれ、回って薄くなる)
+        keep = []
+        for hv in halves:
+            age = t - hv[4]
+            if age > 0.7:
+                continue
+            hx, hy, fk, cut, _, sp_, sep = hv
+            fa = 1 - age / 0.7
+            for sgn in (-1, 1):
+                d = sep * (1 - math.exp(-age * 6)) / 6 * 6
+                px = hx + sgn * d * math.cos(cut + math.pi / 2)
+                py = hy + sgn * d * math.sin(cut + math.pi / 2)
+                ctx.save()
+                ctx.translate(px, py)
+                ctx.rotate(cut + sgn * sp_ * age * 0.3)
+                ctx.rectangle(-FRUIT_R * 1.4, 0 if sgn > 0 else -FRUIT_R * 1.4, FRUIT_R * 2.8, FRUIT_R * 1.4)
+                ctx.clip()
+                ctx.push_group()
+                FR.draw_fruit(ctx, fk, 0, 0, FRUIT_R, -cut)
+                ctx.scale(1.0, 0.3)   # 切り口(果汁の色)
+                ctx.arc(0, 0, FRUIT_R * 0.95, 0, 2 * math.pi)
+                ctx.set_source_rgb(*FR.KINDS[fk][2])
+                ctx.fill()
+                ctx.pop_group_to_source()
+                ctx.paint_with_alpha(fa)
+                ctx.restore()
+            if age < 0.12:   # 切った瞬間の光の線
+                ctx.save()
+                ctx.translate(hx, hy)
+                ctx.rotate(cut)
+                ctx.scale(1.0, 0.06)
+                g = cairo.RadialGradient(0, 0, 0, 0, 0, FRUIT_R * 2.2)
+                g.add_color_stop_rgba(0, 1, 1, 1, 0.95 * (1 - age / 0.12))
+                g.add_color_stop_rgba(1, 1, 1, 1, 0)
+                ctx.set_source(g)
+                ctx.arc(0, 0, FRUIT_R * 2.2, 0, 2 * math.pi)
+                ctx.fill()
+                ctx.restore()
+            keep.append(hv)
+        halves = keep
         # 床に残る果汁のしみ(だんだん薄くなる)
         keep = []
         for st_ in stains:
@@ -544,12 +588,14 @@ def render(seed):
             tr = trails.setdefault(bid, [])
             if tr:   # 転がった距離のぶん回す
                 spin[bid] = spin.get(bid, 0.0) + math.hypot(x - tr[-1][0], y - tr[-1][1]) / (BALL_R * 1.2)
-            for j, (tx, ty) in enumerate(tr):   # 残像
-                a = (j + 1) / (len(tr) + 1)
-                ctx.new_path()
-                ctx.arc(tx, ty, BALL_R * (0.45 + 0.5 * a), 0, 2 * math.pi)
-                ctx.set_source_rgba(*BALL_COL[col], 0.2 * a)
-                ctx.fill()
+            for j in range(1, len(tr)):   # 刃物が通ったあとの細い光の筋(だんだん細く・薄く)
+                a = j / len(tr)
+                ctx.move_to(*tr[j - 1])
+                ctx.line_to(*tr[j])
+                ctx.set_source_rgba(0.9, 0.95, 1.0, 0.35 * a)
+                ctx.set_line_width(1 + 5 * a)
+                ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+                ctx.stroke()
             if False:   # (火の粉はなし)
                 for _ in range(2 if col == 3 else 4):
                     embers.append([x, y, rng.uniform(-80, 80), rng.uniform(-80, 80), t, rng.uniform(6, 13) * (1.5 if col == 5 else 1)])
@@ -573,13 +619,13 @@ def render(seed):
         ctx.restore()
 
         # ふつうの文字(参考動画と同じ等幅のカウンター)
-        mono(ctx, f"FRUIT SMASHED {fr['cleared']} / {N_PLANKS}", W / 2, 1585, 40, (0.62, 0.64, 0.68))
+        mono(ctx, f"FRUIT SLICED {fr['cleared']} / {N_PLANKS}", W / 2, 1585, 40, (0.62, 0.64, 0.68))
         # ボールの順番(今のボールは明るく、使ったボールはうすく)
         cur = fr["dropped"] - 1
         for k in range(len(WAVES)):
             x = W / 2 + (k - (len(WAVES) - 1) / 2) * 150
             a = 1.0 if k == cur and fr["balls"] else (0.28 if k <= cur else 0.7)
-            GD.draw_ball(ctx, k, x, 1680, 0.0, 26, t, a, None)
+            GD.draw_ball(ctx, k, x, 1680, -0.5, 38 if k < 5 else 30, t, a, None)
             text(ctx, SHORT_NAMES[k], x, 1745, 24, rgb=(1, 1, 1), sw=0, alpha=a)
 
 
@@ -591,12 +637,12 @@ def render(seed):
         ctx.rectangle(0, 0, W, 400)
         ctx.set_source(g)
         ctx.fill()
-        text(ctx, f"{N_BALLS}つのボールでフルーツを全部", W / 2, 165, 70, sw=14)
-        text(ctx, "つぶせる？", W / 2, 295, 124, rgb=GOLD, sw=18)
-        text(ctx, "Can the balls smash every fruit?", W / 2, 360, 36, rgb=(0.85, 0.85, 0.9), sw=8)
+        text(ctx, f"{N_BALLS}つの刃物でフルーツを全部", W / 2, 165, 70, sw=14)
+        text(ctx, "切れる？", W / 2, 295, 124, rgb=GOLD, sw=18)
+        text(ctx, "Can the blades slice every fruit?", W / 2, 360, 36, rgb=(0.85, 0.85, 0.9), sw=8)
         if over and fail:
             k = min(1.0, after / 0.25)
-            text(ctx, "ボールが尽きた…", W / 2, 1000, 120 * (1.15 - 0.15 * k), rgb=(1, 0.3, 0.3), sw=18)
+            text(ctx, "刃物が尽きた…", W / 2, 1000, 120 * (1.15 - 0.15 * k), rgb=(1, 0.3, 0.3), sw=18)
             text(ctx, f"あと{N_PLANKS - res['cleared']}個だったのに…", W / 2, 1130, 72, sw=12)
         elif over:
             ending.draw(surf, ctx, t - end_t)
@@ -627,16 +673,16 @@ F_LO, F_HI = 300.0, 1000.0             # 木の音の高さの範囲(参考動�
 
 
 def wood_tick(freq, amp):
-    """フルーツがつぶれる「グシャッ」という音(みずみずしい破裂音+低い「ボッ」+音の高さはボールの位置で変わる)。"""
-    n = int(0.22 * SR)
+    """フルーツを切る「シュパッ」という音(刃が空気を切る高い音+金属のきらめき+みずみずしい「ピチャ」。高さは刃物の位置で変わる)。"""
+    n = int(0.2 * SR)
     t = np.arange(n) / SR
     rng = np.random.default_rng(int(freq * 7))
     noise = rng.normal(0, 1, n)
-    wet = (noise - np.convolve(noise, np.ones(6) / 6, mode="same")) * np.exp(-t * 28)   # みずみずしいシャッ
-    body = np.convolve(noise, np.ones(18) / 18, mode="same") * np.exp(-t * 35) * 3       # つぶれるグシャ
-    pop = np.sin(2 * np.pi * np.cumsum(freq * 0.6 * (1 + 0.8 * np.exp(-t * 40))) / SR) * np.exp(-t * 30)   # ボッ(高さ=位置)
-    drip = np.sin(2 * np.pi * np.cumsum(freq * 2.2 * (1 - 0.5 * t / 0.22)) / SR) * np.exp(-((t - 0.07) / 0.02) ** 2) * 0.4   # ピチャ
-    return amp * (0.55 * wet + 0.5 * body + 0.7 * pop + drip) * np.minimum(1, t / 0.0008)
+    swish = (noise - np.convolve(noise, np.ones(3) / 3, mode="same")) * np.exp(-((t - 0.015) / 0.012) ** 2)   # シュッ
+    ring = np.sin(2 * np.pi * freq * 4.2 * t) * np.exp(-t * 45) + 0.5 * np.sin(2 * np.pi * freq * 6.9 * t) * np.exp(-t * 60)   # キン
+    juicy = np.convolve(noise, np.ones(10) / 10, mode="same") * np.exp(-((t - 0.04) / 0.025) ** 2) * 2.5   # パッ(果汁)
+    drip = np.sin(2 * np.pi * np.cumsum(freq * 1.6 * (1 - 0.4 * t / 0.2)) / SR) * np.exp(-((t - 0.08) / 0.02) ** 2) * 0.35
+    return amp * (0.8 * swish + 0.35 * ring + 0.6 * juicy + drip) * np.minimum(1, t / 0.0008)
 
 
 def tick_freq(x, y):
