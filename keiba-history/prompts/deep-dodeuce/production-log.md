@@ -159,3 +159,7 @@ Kling 4.0 (image-to-video, 720p, 9:16)。start_image + end_image で、カメラ
 | 9 | 真上、ディープは左の道・ドウデュースは右の道 | c82629c0 |
 | 10 | 山並み・太陽・空 | 6f9f2fcf |
 - 後半の動画 (Kling 4.0 720p 9:16、計42秒・約95cr、ユーザー指定: 常に並走): 1 83c0bd72 (3) / 2 ffe400e9 (3) / 3 0127251f (3) / 4 4beacba6 (4) / 5 d9a76380 (5) / 6 a8c8ad7c (4) / 7 2185ee66 (4) / 8→9 9cbe34f8 (8、start+end) / 9→10 06252dcd (8、start+end)
+- 後半9本すべて完成 (並走を確認、分かれ道でディープは左)
+- BGM: sonilo_music 90秒 e39cff49 (オリジナル。映画の曲は使わない)
+- 完成版: edit/deep-dodeuce/build.py A|B → assets/output/deep-dodeuce/deep_dodeuce_farewell_voiceA.mp4 / voiceB.mp4 (86秒)
+  - セリフ 27.35秒から (③の頭)、字幕「おい、別れの言葉は無しか？」、冒頭4秒「※イメージ映像です。セリフは創作です」、最後は白へフェード
