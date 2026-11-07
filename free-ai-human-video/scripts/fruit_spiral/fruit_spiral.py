@@ -69,6 +69,7 @@ DROP_EVERY = 0.35                      # 同じ波の玉どうしの間隔
 FAIL_WAIT = 0.8                        # 最後の玉が消えてから失敗確定まで
 MAX_T = 90.0
 OUTRO = 2.5
+TRIM_START = 0.5   # 動画の頭から切り落とす秒数(最初の刃物が落ち始める時刻。0秒からすぐ始まるように)
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "output")
 
@@ -655,9 +656,11 @@ def render(seed):
     duration = len(frames) / FPS
     synth_audio(res, duration, wav)
     # 叫び声の大きさを残すため、音量の自動調整(loudnorm)はかけない
+    # 冒頭の待ち時間(最初の刃物が落ちてくるまで)を切って、0秒からすぐ刃物が落ちてくるようにする
     subprocess.run(
-        ["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", wav,
-         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+        ["ffmpeg", "-y", "-loglevel", "error", "-ss", str(TRIM_START), "-i", silent, "-ss", str(TRIM_START), "-i", wav,
+         "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+         "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
          "-shortest", "-movflags", "+faststart", final], check=True)
     os.remove(silent)
     os.remove(wav)
@@ -776,8 +779,8 @@ def remix(seed):
     wav = os.path.join(OUT_DIR, f"fruit_spiral_{seed}.wav")
     dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", final],
                                capture_output=True, text=True).stdout)
-    synth_audio(res, dur, wav)
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", final, "-i", wav, "-map", "0:v", "-map", "1:a",
+    synth_audio(res, dur + TRIM_START, wav)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", final, "-ss", str(TRIM_START), "-i", wav, "-map", "0:v", "-map", "1:a",
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest",
                     "-movflags", "+faststart", tmp], check=True)
     os.replace(tmp, final)
