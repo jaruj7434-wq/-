@@ -40,7 +40,7 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
 TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 35.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 51.6))
 BALL_R = float(os.environ.get("BALL_R", 11.0))
 SPEED = float(os.environ.get("SPEED", 330.0))           # ボールの速さ(重力も摩擦もないので、ずっとこの速さで飛び回る)
 X0, X1 = 40.0, W - 40.0                                 # 箱の左右のかべ
@@ -48,11 +48,11 @@ Y0 = float(os.environ.get("Y0", 560.0))                 # 箱の天井
 Y1 = float(os.environ.get("Y1", 1760.0))                # 箱の床
 CY = (Y0 + Y1) / 2
 PRESS_H = float(os.environ.get("PRESS_H", 400.0))       # プレス板の高さ
-PERIOD = float(os.environ.get("PERIOD", 1.1))           # プレスの1往復の時間
+PERIOD = float(os.environ.get("PERIOD", 1.8))           # プレスの1往復の時間
 # (板は PERIOD の半分の時刻でくっつく)
 GAP = 0.0                                               # くっついたときの板と板のすきま(ぴったりくっつく)
 SPAWN_DELAY = 0.12                                      # 開き始めてから、増えたボールが出てくるまで
-OPEN_X = float(os.environ.get("OPEN_X", 280.0))                                         # 開いたときの板の先の位置(かべからの距離)
+OPEN_X = float(os.environ.get("OPEN_X", 100.0))                                         # 開いたときの板の先の位置(かべからの距離)
 MAX_BALLS = TARGET + 60
 OUTRO = 2.5
 
@@ -384,11 +384,8 @@ def render(seed):
                 keep.append(s)
         sparks = keep
         keep = []
-        for p in pluses:   # 増えた数がポンと出る
-            a = t - p[0]
-            if a < 0.7:
-                text(ctx, p[1], W / 2, CY - PRESS_H / 2 - 40 - 80 * a, 70 * (1.2 - 0.2 * min(1, a / 0.1)), rgb=GOLD, sw=10, alpha=1 - a / 0.7)
-                keep.append(p)
+        for p in pluses:   # (増えた数の表示はなし)
+            pass
         pluses = keep
         text(ctx, "1個のボールを", W / 2, 150, 72, sw=12)
         text(ctx, f"{TARGET}個に増やせる？", W / 2, 280, 104, rgb=GOLD, sw=16)
