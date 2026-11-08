@@ -40,7 +40,7 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
 TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 27.2))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 47.1))
 BALL_R = float(os.environ.get("BALL_R", 11.0))
 SPEED = float(os.environ.get("SPEED", 330.0))           # ボールの速さ(重力も摩擦もないので、ずっとこの速さで飛び回る)
 X0, X1 = 40.0, W - 40.0                                 # 箱の左右のかべ
@@ -48,11 +48,11 @@ Y0 = float(os.environ.get("Y0", 560.0))                 # 箱の天井
 Y1 = float(os.environ.get("Y1", 1760.0))                # 箱の床
 CY = (Y0 + Y1) / 2
 PRESS_H = float(os.environ.get("PRESS_H", 280.0))       # プレス板の高さ
-PERIOD = float(os.environ.get("PERIOD", 0.8))           # プレスの1往復の時間
+PERIOD = float(os.environ.get("PERIOD", 1.1))           # プレスの1往復の時間
 # (板は PERIOD の半分の時刻でくっつく)
 GAP = 0.0                                               # くっついたときの板と板のすきま(ぴったりくっつく)
 SPAWN_DELAY = 0.12                                      # 開き始めてから、増えたボールが出てくるまで
-OPEN_X = 150.0                                          # 開いたときの板の先の位置(かべからの距離)
+OPEN_X = float(os.environ.get("OPEN_X", 280.0))                                         # 開いたときの板の先の位置(かべからの距離)
 MAX_BALLS = TARGET + 60
 OUTRO = 2.5
 
@@ -217,7 +217,7 @@ def simulate(seed, record=False):
             frames.append({"t": g.t, "px": press_x(g.t), "n": len(g.balls) + len(g.trapped),
                            "balls": [(b.position.x, b.position.y, info["gen"], info["id"]) for b, info in g.balls.items()]})
         if g.result is not None:
-            extra = OUTRO + SCARE_DUR if g.result == "fail" else FV.DURATION + 1.0
+            extra = OUTRO + SCARE_DUR if g.result == "fail" else FV.DURATION
             if not record or g.t > g.result_t + extra:
                 break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "n": len(g.balls)}
@@ -352,8 +352,8 @@ def render(seed):
             ghost.draw(surf, t - end_t)
             ff.stdin.write(surf.get_data())
             continue
-        if ending is not None and over and t - end_t >= 1.0:
-            ending.draw(surf, ctx, t - end_t - 1.0)
+        if ending is not None and over:   # 1000個になった瞬間に虹色の演出
+            ending.draw(surf, ctx, t - end_t)
             ff.stdin.write(surf.get_data())
             continue
         after = (t - end_t - SCARE_DUR) if over else 0
@@ -467,7 +467,7 @@ def synth_audio(res, duration, path):
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += sig[:m]
     elif end_t is not None:
-        add(FV.music(SR).mean(axis=1) * 1.6, end_t + 1.0, 1.0, extra)
+        add(FV.music(SR).mean(axis=1) * 1.6, end_t, 1.0, extra)
     wet = out.copy()
     for d, g in ((0.043, 0.25), (0.071, 0.18), (0.113, 0.12)):
         k = int(d * SR)
