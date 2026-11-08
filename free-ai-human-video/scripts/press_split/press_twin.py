@@ -1,7 +1,7 @@
-"""「1個のボールを512個に増やせる?」左右2台のプレス機が一定の速さで閉じるたびに、はさまれたボールが2倍に増える物理ショート。
+"""「1個のボールを1000個に増やせる?」左右2台のプレス機が一定の速さで閉じるたびに、はさまれたボールが2倍に増える物理ショート。
 
 - 箱の中をボールが壁に当たりながら跳ね返り続ける(重力なし・止まらずに飛び回る)。
-- 左右のかべから2台のプレス機が、一定の速さで真ん中へ動いてくっつき、また戻る(PERIOD 秒ごと)。
+- 左右のかべから2台の小さめのプレス機が、なめらかに真ん中へ動いてくっつき、また戻る動きを PERIOD 秒ごとにくり返す。
 - 閉じていく板のあいだにはさまれたボールは、つぶれて見えなくなり、板と板はぴったりくっつく。
   開くと、はさまれたボールが2倍になって出てくる(1個なら2個、5個同時なら10個)。ボールをねらってはさむことはしない(動きに身を任せる・補正なし)。
 - 制限時間内に TARGET 個になれば成功、ならなければ失敗(幽霊)。
@@ -39,37 +39,31 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
-TARGET = int(os.environ.get("TARGET", 512))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 28.9))
+TARGET = int(os.environ.get("TARGET", 1000))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 27.2))
 BALL_R = float(os.environ.get("BALL_R", 11.0))
 SPEED = float(os.environ.get("SPEED", 330.0))           # ボールの速さ(重力も摩擦もないので、ずっとこの速さで飛び回る)
 X0, X1 = 40.0, W - 40.0                                 # 箱の左右のかべ
-Y0 = float(os.environ.get("Y0", 860.0))                 # 箱の天井
-Y1 = float(os.environ.get("Y1", 1360.0))                # 箱の床
+Y0 = float(os.environ.get("Y0", 560.0))                 # 箱の天井
+Y1 = float(os.environ.get("Y1", 1760.0))                # 箱の床
 CY = (Y0 + Y1) / 2
 PRESS_H = float(os.environ.get("PRESS_H", 280.0))       # プレス板の高さ
-PERIOD = float(os.environ.get("PERIOD", 1.0))           # プレスの1往復の時間
-CLOSE, HOLD, OPEN = 0.6, 0.08, 0.6                      # 閉じる・くっついたまま・開く時間(残りは開いたまま待つ)
+PERIOD = float(os.environ.get("PERIOD", 0.8))           # プレスの1往復の時間
+# (板は PERIOD の半分の時刻でくっつく)
 GAP = 0.0                                               # くっついたときの板と板のすきま(ぴったりくっつく)
-SPAWN_DELAY = 0.1                                       # 開き始めてから、増えたボールが出てくるまで
+SPAWN_DELAY = 0.12                                      # 開き始めてから、増えたボールが出てくるまで
 OPEN_X = 150.0                                          # 開いたときの板の先の位置(かべからの距離)
 MAX_BALLS = TARGET + 60
 OUTRO = 2.5
 
 
 def press_x(t):
-    """左のプレス板の先(右側の面)の x。右の板は左右対称。一定の速さで閉じて、くっついて、開く。"""
-    ph = t % PERIOD
+    """左のプレス板の先(右側の面)の x。右の板は左右対称。
+    なめらかに閉じてぴったりくっつき、なめらかに開く動きをくり返す(止まったり、急に向きが変わったりしない)。"""
+    ph = (t % PERIOD) / PERIOD
     x_open = X0 + OPEN_X
     x_shut = W / 2 - GAP / 2
-    span = x_shut - x_open
-    if ph < CLOSE:
-        return x_open + span * ph / CLOSE
-    if ph < CLOSE + HOLD:
-        return x_shut
-    if ph < CLOSE + HOLD + OPEN:
-        return x_shut - span * (ph - CLOSE - HOLD) / OPEN
-    return x_open
+    return x_open + (x_shut - x_open) * (1 - math.cos(2 * math.pi * ph)) / 2
 
 
 class Game:
@@ -96,7 +90,7 @@ class Game:
             self.plates.append((side, b))
         self._place_plates(0.0, 1e-3)
         sp.on_collision(1, 2, begin=self._wall)
-        sp.on_collision(1, 3, begin=self._wall)
+        sp.on_collision(1, 3, begin=self._plate_hit, pre_solve=self._plate_hit)
         self.balls = {}
         self.next_id = 0
         self.t = 0.0
@@ -104,7 +98,7 @@ class Game:
         self.result, self.result_t = None, None
         self.trapped = []   # プレスの中でつぶれているボール(開いたら2倍になって出てくる)
         a = self.rng.uniform(0, 2 * math.pi)
-        self.add_ball((W / 2 + self.rng.uniform(-200, 200), CY + self.rng.uniform(-300, 300)),
+        self.add_ball((W / 2, CY),   # 最初の1個はまん中から(向きはばらばら)
                       (SPEED * math.cos(a), SPEED * math.sin(a)), 0)
 
     def _place_plates(self, t, dt):
@@ -134,13 +128,35 @@ class Game:
         if len(self.events) < 200000:
             self.events.append(("bounce", self.t, None))
 
+    def _plate_hit(self, arb, space, data):
+        """閉じていく板に当たったボールは、板に押されていっしょに真ん中へ運ばれる(はさまれる)。"""
+        b = arb.shapes[0].body
+        info = self.balls.get(b)
+        if info is None:
+            return
+        if (self.t % PERIOD) < PERIOD / 2 and abs(b.position.y - CY) < PRESS_H / 2:
+            if "push" not in info:
+                self.events.append(("bounce", self.t, None))
+            info["push"] = -1 if b.position.x < W / 2 else 1
+
     def step(self, dt):
         t0 = self.t
         self.t += dt
         self._place_plates(self.t, dt)
         self.space.step(dt)
         # 速さはいつも同じ(重力も摩擦もない世界。押されて速くなりすぎたり、止まったりしない)
-        for b in self.balls:
+        xl = press_x(self.t)
+        vx = (xl - press_x(self.t - dt)) / dt
+        closing = (self.t % PERIOD) < PERIOD / 2
+        for b, info in self.balls.items():
+            side = info.get("push")
+            if side is not None and closing and abs(b.position.y - CY) < PRESS_H / 2 + BALL_R:
+                # 板の面にくっついて、板といっしょに動く
+                b.velocity = (vx * -side, 0)
+                fx = xl + BALL_R if side < 0 else W - xl - BALL_R
+                b.position = (fx, b.position.y)
+                continue
+            info.pop("push", None)
             v = b.velocity
             n = v.length
             if n > 1e-6:
@@ -148,28 +164,30 @@ class Game:
         ph0, ph = t0 % PERIOD, self.t % PERIOD
         # 閉じていく板のあいだにはさまれたボールは、つぶれて消える(板がぴったりくっつけるように)
         gap = 2 * (W / 2 - press_x(self.t))
-        if ph < CLOSE + HOLD and gap < BALL_R * 2.3:
-            caught = [b for b in self.balls
-                      if abs(b.position.x - W / 2) < gap / 2 + BALL_R * 0.6 and abs(b.position.y - CY) < PRESS_H / 2 + BALL_R * 0.3]
+        half = PERIOD / 2
+        if ph < half + 0.01 and gap < BALL_R * 2.3:
+            caught = [b for b, info in self.balls.items()
+                      if (abs(b.position.x - W / 2) < gap / 2 + BALL_R * 0.6 or info.get("push") is not None)
+                      and abs(b.position.y - CY) < PRESS_H / 2 + BALL_R * 0.3]
             for b in caught:
                 info = self.balls.pop(b)
                 self.space.remove(b, info["shape"])
                 self.trapped.append((b.position.y, info["gen"]))
             if caught:
                 self.events.append(("squash", self.t, len(caught)))
-        if ph0 < CLOSE <= ph:
+        if ph0 < half <= ph:
             self.events.append(("slam", self.t, None))
-        if ph0 < CLOSE + HOLD <= ph:
+        if ph0 < half + 0.04 <= ph:
             self.events.append(("open", self.t, None))
         # 開き始めたら、はさまれたボールが2倍になって出てくる
-        if ph0 < CLOSE + HOLD + SPAWN_DELAY <= ph and self.trapped:
+        if ph0 < half + SPAWN_DELAY <= ph and self.trapped:
             k = 0
             for y, gen in self.trapped:
                 for sgn in (-1, 1):
                     if len(self.balls) >= MAX_BALLS:
                         break
-                    a = math.pi / 2 * sgn + self.rng.uniform(-0.7, 0.7)
-                    self.add_ball((W / 2 + self.rng.uniform(-3, 3), y + sgn * BALL_R * 0.4),
+                    a = self.rng.uniform(0, 2 * math.pi)   # 出てくる向きはばらばら
+                    self.add_ball((W / 2 + self.rng.uniform(-3, 3), y + sgn * BALL_R * 0.6),
                                   (SPEED * math.cos(a), SPEED * math.sin(a)), gen + 1)
                 k += 1
             self.trapped = []
@@ -372,15 +390,15 @@ def render(seed):
                 text(ctx, p[1], W / 2, CY - PRESS_H / 2 - 40 - 80 * a, 70 * (1.2 - 0.2 * min(1, a / 0.1)), rgb=GOLD, sw=10, alpha=1 - a / 0.7)
                 keep.append(p)
         pluses = keep
-        text(ctx, "1個のボールを", W / 2, 300, 76, sw=12)
-        text(ctx, f"{TARGET}個に増やせる？", W / 2, 430, 108, rgb=GOLD, sw=16)
+        text(ctx, "1個のボールを", W / 2, 150, 72, sw=12)
+        text(ctx, f"{TARGET}個に増やせる？", W / 2, 280, 104, rgb=GOLD, sw=16)
         n = fr["n"]
         pop = 1.0 + (0.25 if n > prev_n else 0.0)
         prev_n = n
-        text(ctx, f"{min(n, TARGET)}", W / 2 - 40, 640, 110 * pop, rgb=(1, 1, 1), sw=12)
-        text(ctx, f"/ {TARGET} 個", W / 2 + 180, 640, 48, rgb=(0.8, 0.85, 0.9), sw=6)
+        text(ctx, f"{min(n, TARGET)}", W / 2 - 50, 470, 100 * pop, rgb=(1, 1, 1), sw=12)
+        text(ctx, f"/ {TARGET} 個", W / 2 + 180, 470, 46, rgb=(0.8, 0.85, 0.9), sw=6)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
-        text(ctx, f"残り {left:4.1f}秒", W / 2, 1500, 60, rgb=(1, 0.4, 0.4) if left < 8 else (0.9, 0.9, 0.92), sw=8)
+        text(ctx, f"残り {left:4.1f}秒", W / 2, 1855, 56, rgb=(1, 0.4, 0.4) if left < 8 else (0.9, 0.9, 0.92), sw=8)
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "時間切れ…", W / 2, 1080, 130 * (1.15 - 0.15 * k), rgb=(1, 0.3, 0.3), sw=18)
