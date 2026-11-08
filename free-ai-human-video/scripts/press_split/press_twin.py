@@ -3,7 +3,7 @@
 - 箱の中をボールが壁に当たりながら跳ね返り続ける(重力なし・止まらずに飛び回る)。
 - 左右のかべから2台の小さめのプレス機が、なめらかに真ん中へ動いてくっつき、また戻る動きを PERIOD 秒ごとにくり返す。
 - 閉じていく板のあいだにはさまれたボールは、つぶれて見えなくなり、板と板はぴったりくっつく。
-  開くと、はさまれたボールが2倍になって出てくる(1個なら2個、5個同時なら10個)。ボールをねらってはさむことはしない(動きに身を任せる・補正なし)。
+  開くと、はさまれたボールが2倍になって上下にはじき出される(1個なら2個、5個同時なら10個)。ボールをねらってはさむことはしない(動きに身を任せる・補正なし)。
 - 制限時間内に TARGET 個になれば成功、ならなければ失敗(幽霊)。
 - 音: 壁に当たる「コッ」、プレスがくっつく「ガシャン」、開くときの「プシュー」、増えるたびに「ポポポポン」(数が増えるほど高く)。
 
@@ -40,14 +40,14 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
 TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 47.1))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 35.0))
 BALL_R = float(os.environ.get("BALL_R", 11.0))
 SPEED = float(os.environ.get("SPEED", 330.0))           # ボールの速さ(重力も摩擦もないので、ずっとこの速さで飛び回る)
 X0, X1 = 40.0, W - 40.0                                 # 箱の左右のかべ
 Y0 = float(os.environ.get("Y0", 560.0))                 # 箱の天井
 Y1 = float(os.environ.get("Y1", 1760.0))                # 箱の床
 CY = (Y0 + Y1) / 2
-PRESS_H = float(os.environ.get("PRESS_H", 280.0))       # プレス板の高さ
+PRESS_H = float(os.environ.get("PRESS_H", 400.0))       # プレス板の高さ
 PERIOD = float(os.environ.get("PERIOD", 1.1))           # プレスの1往復の時間
 # (板は PERIOD の半分の時刻でくっつく)
 GAP = 0.0                                               # くっついたときの板と板のすきま(ぴったりくっつく)
@@ -186,7 +186,7 @@ class Game:
                 for sgn in (-1, 1):
                     if len(self.balls) >= MAX_BALLS:
                         break
-                    a = self.rng.uniform(0, 2 * math.pi)   # 出てくる向きはばらばら
+                    a = math.pi / 2 * sgn + self.rng.uniform(-0.35, 0.35)   # 上下にはじき出す(すぐ次のプレスにはさまれないように)
                     self.add_ball((W / 2 + self.rng.uniform(-3, 3), y + sgn * BALL_R * 0.6),
                                   (SPEED * math.cos(a), SPEED * math.sin(a)), gen + 1)
                 k += 1
