@@ -14,7 +14,7 @@ import math
 import cairo
 import numpy as np
 
-import space_items as FR
+import stones as FR
 from jackpot_end import Jackpot, _rainbow, _kyuin, _sq, _bell, _boom, _lp
 
 DURATION = 8.5

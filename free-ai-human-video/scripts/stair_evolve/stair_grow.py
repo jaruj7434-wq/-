@@ -1,15 +1,14 @@
-"""「小石は階段を落ちて太陽になれる?」光る階段を転がり落ちる小石が、新しい段に当たるたびに進化していく物理ショート。
+"""「小石は階段を落ちて巨大化できる?」光る階段を転がり落ちる小石が、新しい段に当たるたびにどんどん大きくなっていく物理ショート。
 
-参考動画(猫が階段を落ちるたびに大きくなる)の形で、進化するたびに大きく・重くなる:
-  小石 → 岩 → 隕石 → 月 → 地球 → 木星 → 太陽(最終形態)
-- 新しい段に初めて当たるたびにゲージが1つたまり、EVOLVE_EVERY 個たまると1段階進化する(同じ段に何度当たっても1回だけ)。
-- 大きく重くなるほど大きく跳ねて段を飛ばしやすい。階段の一番下の床(ゴール)に着く前に太陽になれれば成功、
-  なれなかったら失敗(幽霊)。動きは自然な物理のまま(ねらい・補正なし)。
-- 進化するたびに「ボヨン」という面白い音が鳴り、段階が上がるほど低くなる。
+参考動画(猫が階段を落ちるたびに大きくなる)と同じく、当たるたびに大きく・重くなる(1回で約1.2倍)。
+- 新しい段に初めて当たるたびに1段階大きくなる(同じ段に何度当たっても1回だけ)。LEVELS 回大きくなれば「巨大化成功」。
+- 大きく重くなるほど大きく跳ねて段を飛ばしやすい。階段の一番下の床(GOAL)に着く前に巨大化できれば成功、
+  できなかったら失敗(幽霊)。段の上で止まっても失敗。動きは自然な物理のまま(ねらい・補正なし)。
+- 大きくなるたびに「ボヨン」という面白い音が鳴り、大きくなるほど低く・大きくなる。
 
 使い方:
-    python stair_evolve.py search [--want fail|success] [-n 200]
-    python stair_evolve.py render --seed N
+    python stair_grow.py search [--want fail|success] [-n 200]
+    python stair_grow.py render --seed N
 """
 import argparse
 import math
@@ -39,17 +38,22 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
-GOAL = len(S.NAMES) - 1
-RADII = [18.0, 27.0, 38.0, 50.0, 64.0, 80.0, 98.0]     # 段階ごとの大きさ(半径 px)
-DENSITY = [1.0, 1.0, 1.3, 1.1, 1.2, 0.9, 0.8]          # 重さのちがい
+GOAL = int(os.environ.get("LEVELS", 12))                # 何回大きくなれば巨大化成功か
+R0, GROW = 16.0, float(os.environ.get("GROW", 1.2))     # 最初の大きさ(半径 px)と、1回で大きくなる倍率
+RADII = [R0 * GROW ** k for k in range(GOAL + 1)]
+DENSITY = [1.0] * (GOAL + 1)
+
+
+def mult(st):
+    return RADII[st] / RADII[0]
 GRAVITY = 1500.0
 ELAST = float(os.environ.get("ELAST", 0.35))             # 反発係数(跳ねやすさ)
-FRICTION = float(os.environ.get("FRICTION", 0.45))
+FRICTION = float(os.environ.get("FRICTION", 0.35))
 N_STEPS = int(os.environ.get("N_STEPS", 16))             # 床の前にある段の数
-STEP_W = (float(os.environ.get("STEP_W0", 380)), float(os.environ.get("STEP_W1", 670)))   # 段の奥行き(最初 → 最後)
+STEP_W = (float(os.environ.get("STEP_W0", 380)), float(os.environ.get("STEP_W1", 900)))   # 段の奥行き(最初 → 最後)
 STEP_H = (float(os.environ.get("STEP_H0", 150)), float(os.environ.get("STEP_H1", 300)))   # 段の高さ(最初 → 最後)
-EVOLVE_EVERY = int(os.environ.get("EVOLVE_EVERY", 2))   # 新しい段に何回当たると1段階進化するか
-TILT = float(os.environ.get("TILT", 0.18))                                            # 段がほんの少し下り坂(止まらないように)
+EVOLVE_EVERY = int(os.environ.get("EVOLVE_EVERY", 1))   # 新しい段に何回当たると1段階進化するか
+TILT = float(os.environ.get("TILT", 0.24))                                            # 段がほんの少し下り坂(止まらないように)
 FLOOR_W = 3000.0
 MAX_T = 40.0
 OUTRO = 2.5
@@ -100,7 +104,8 @@ class Game:
         sp.on_collision(1, 2, begin=self._hit_step)
         sp.on_collision(1, 3, begin=self._hit_floor)
         self.stage = 0
-        self.poly = {k: S.rock_poly(self.rng, RADII[k]) for k in (0, 1)}
+        base = S.rock_poly(self.rng, 1.0)   # 形は同じまま、大きさだけ変わる
+        self.poly = {k: [(x * RADII[k], y * RADII[k]) for x, y in base] for k in range(GOAL + 1)}
         self.body = None
         self.shape = None
         self._make(0, (60.0, -260.0), (self.rng.uniform(250, 420), 0.0), self.rng.uniform(-3, 3))
@@ -115,7 +120,7 @@ class Game:
     def _make(self, st, pos, vel, w):
         r = RADII[st]
         mass = DENSITY[st] * math.pi * r * r / 400.0
-        if st <= 1:
+        if True:   # いつも同じ形の石(大きさだけ変わる)
             poly = self.poly[st]
             moment = pymunk.moment_for_poly(mass, poly)
             b = pymunk.Body(mass, moment)
@@ -220,7 +225,7 @@ def search(n, want):
     pick = succ if want == "success" else [r for r in rs if r[1] != "success"]
     pick.sort(key=lambda r: (-r[3], -r[2]))
     for r in pick[:15]:
-        print(f"seed={r[0]:4d}  {r[1]}  {r[2]:5.2f}秒  最高 {S.NAMES[r[3]]}")
+        print(f"seed={r[0]:4d}  {r[1]}  {r[2]:5.2f}秒  最高 ×{mult(r[3]):.1f}")
 
 
 # ---------------------------------------------------------------- 描画
@@ -242,32 +247,31 @@ def neon_line(ctx, pts, col, zoom, a=1.0):
         ctx.stroke()
 
 
-def draw_chart(ctx, stage, t):
-    """上の進化表(7段階)。たどり着いた段階は明るく、ゴールの太陽は金の輪。"""
+def draw_gauge(ctx, stage, t):
+    """上の大きさゲージ:今の大きさ(×何倍)と、巨大化までのメモリ。"""
     y = 400
-    xs = [90 + k * 150 for k in range(len(S.NAMES))]
-    for k, x in enumerate(xs):
-        reached = k <= stage
-        ctx.save()
-        ctx.push_group()
-        S.draw_stage(ctx, k, x, y, 0.3, 34 if k < GOAL else 38, None, t)
-        ctx.pop_group_to_source()
-        ctx.paint_with_alpha(1.0 if reached else 0.28)
-        ctx.restore()
-        text(ctx, S.NAMES[k], x, y + 68, 26, rgb=GOLD if k == GOAL else (1, 1, 1), sw=5, alpha=1.0 if reached else 0.45)
-        if k == GOAL:
-            ctx.arc(x, y, 50, 0, 2 * math.pi)
-            ctx.set_source_rgba(*GOLD, 0.9)
-            ctx.set_line_width(3)
-            ctx.stroke()
-        if k < len(xs) - 1:
-            mx = (x + xs[k + 1]) / 2
-            ctx.move_to(mx - 5, y - 7)
-            ctx.line_to(mx + 6, y)
-            ctx.line_to(mx - 5, y + 7)
-            ctx.close_path()
-            ctx.set_source_rgba(1, 1, 1, 0.4)
-            ctx.fill()
+    x0, x1 = 120, W - 120
+    ctx.set_source_rgba(1, 1, 1, 0.15)
+    ctx.rectangle(x0, y - 14, x1 - x0, 28)
+    ctx.fill()
+    f = stage / GOAL
+    g = cairo.LinearGradient(x0, 0, x1, 0)
+    g.add_color_stop_rgb(0, 0.4, 0.8, 1.0)
+    g.add_color_stop_rgb(1, 1.0, 0.85, 0.2)
+    ctx.set_source(g)
+    ctx.rectangle(x0, y - 14, (x1 - x0) * f, 28)
+    ctx.fill()
+    for k in range(1, GOAL):
+        x = x0 + (x1 - x0) * k / GOAL
+        ctx.move_to(x, y - 14)
+        ctx.line_to(x, y + 14)
+    ctx.set_source_rgba(0, 0, 0, 0.6)
+    ctx.set_line_width(2)
+    ctx.stroke()
+    S.draw_stage(ctx, 0, x0 - 50, y, 0.3, 14)
+    S.draw_stage(ctx, 0, x1 + 52, y, 0.3, 40)
+    text(ctx, f"×{mult(stage):.1f}", W / 2, y + 80, 58, rgb=GOLD if stage >= GOAL else (1, 1, 1), sw=8)
+    text(ctx, f"巨大化 ×{mult(GOAL):.0f}", x1 + 10, y - 40, 30, rgb=GOLD, sw=5)
 
 
 def render(seed):
@@ -276,9 +280,9 @@ def render(seed):
     steps, floor = res["steps"], res["floor"]
     fail = result == "fail"
     os.makedirs(OUT_DIR, exist_ok=True)
-    silent = os.path.join(OUT_DIR, f"stair_evolve_{seed}_video.mp4")
-    wav = os.path.join(OUT_DIR, f"stair_evolve_{seed}.wav")
-    final = os.path.join(OUT_DIR, f"stair_evolve_{seed}.mp4")
+    silent = os.path.join(OUT_DIR, f"stair_grow_{seed}_video.mp4")
+    wav = os.path.join(OUT_DIR, f"stair_grow_{seed}.wav")
+    final = os.path.join(OUT_DIR, f"stair_grow_{seed}.mp4")
     rng = np.random.default_rng(seed + 99)
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     ctx = cairo.Context(surf)
@@ -289,8 +293,8 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    ending = None if fail else FV.FruitFever(W, H, seed, W / 2, H * 0.55, main="太陽になった!!", count="LEVEL MAX")
-    cam_x, cam_y, cam_z = frames[0]["x"], frames[0]["y"], 2.4
+    ending = None if fail else FV.FruitFever(W, H, seed, W / 2, H * 0.55, main="巨大化成功!!", count=f"×{mult(GOAL):.1f}")
+    cam_x, cam_y, cam_z = frames[0]["x"], frames[0]["y"], 2.5
     pops, trail = [], []
     lit = {}   # 光った段(当たって進化した段は少しのあいだ明るく光る)
     ev_i = 0
@@ -318,7 +322,7 @@ def render(seed):
         after = (t - end_t - SCARE_DUR) if over else 0
         st = fr["stage"]
         # カメラ:転がるモノを追いかけ、大きくなるほど引いて見せる
-        tz = 2.4 - 0.22 * st   # 最初は大きく寄って、育つにつれて引いていく
+        tz = 2.5 * (R0 / RADII[st]) ** 0.32   # 大きくなるにつれて少しずつ引く(画面の中でも石がどんどん大きく見える)
         k = 1 - math.exp(-dt / 0.25)
         cam_x += (fr["x"] + 60 / cam_z * 2 - cam_x) * k
         cam_y += (fr["y"] + 40 - cam_y) * k
@@ -352,7 +356,7 @@ def render(seed):
         for j, (tx, ty) in enumerate(trail[:-1]):
             a = (j + 1) / len(trail)
             ctx.arc(tx, ty, RADII[st] * (0.3 + 0.5 * a), 0, 2 * math.pi)
-            ctx.set_source_rgba(*S.COLORS[st], 0.12 * a)
+            ctx.set_source_rgba(*S.COLORS[0], 0.12 * a)
             ctx.fill()
         # 進化した瞬間:ぷくっとふくらむ+光の輪+キラキラ
         sc = 1.0
@@ -360,7 +364,7 @@ def render(seed):
             a = t - p[0]
             if 0 <= a < 0.3 and p[3] == st:
                 sc = 0.6 + 0.4 * (a / 0.3) + 0.25 * math.sin(math.pi * a / 0.3)
-        S.draw_stage(ctx, st, fr["x"], fr["y"], fr["ang"], RADII[st] * sc, res["poly"].get(st), t)
+        S.draw_stage(ctx, 0, fr["x"], fr["y"], fr["ang"], RADII[st] * sc, [(x * sc, y * sc) for x, y in res["poly"][st]], t)
         keep = []
         for p in pops:
             a = t - p[0]
@@ -374,10 +378,10 @@ def render(seed):
                     aa = q * 2 * math.pi / 10 + p[3]
                     d = r0 * (1.3 + 4 * a)
                     ctx.arc(p[1] + d * math.cos(aa), p[2] + d * math.sin(aa), 5 / cam_z * (1 - a / 0.7) + 1, 0, 2 * math.pi)
-                    ctx.set_source_rgba(*S.COLORS[p[3]], 1 - a / 0.7)
+                    ctx.set_source_rgba(1, 0.9, 0.5, 1 - a / 0.7)
                     ctx.fill()
                 if a < 0.6:   # 進化した名前がポンと出る
-                    text(ctx, S.NAMES[p[3]] + "!", p[1], p[2] - r0 * 1.6 - 40 * a, 60 / cam_z * (1.2 - 0.2 * min(1, a / 0.1)),
+                    text(ctx, f"×{mult(p[3]):.1f}", p[1], p[2] - r0 * 1.6 - 40 * a, 60 / cam_z * (1.2 - 0.2 * min(1, a / 0.1)),
                          rgb=GOLD if p[3] == GOAL else (1, 1, 1), sw=8 / cam_z, alpha=1 - a / 0.6)
                 keep.append(p)
         pops = keep
@@ -391,13 +395,13 @@ def render(seed):
         ctx.set_source(g)
         ctx.fill()
         text(ctx, "小石は階段を落ちて", W / 2, 150, 72, sw=12)
-        text(ctx, "太陽になれる？", W / 2, 280, 118, rgb=GOLD, sw=16)
-        draw_chart(ctx, st, t)
+        text(ctx, "巨大化できる？", W / 2, 280, 118, rgb=GOLD, sw=16)
+        draw_gauge(ctx, st, t)
         if over and fail:
             k = min(1.0, after / 0.25)
             stuck = any(e[0] == "fail" and e[2] == "stuck" for e in events)
             text(ctx, "止まってしまった…" if stuck else "床に着いてしまった…", W / 2, 1050, 96 * (1.15 - 0.15 * k), rgb=(1, 0.3, 0.3), sw=16)
-            text(ctx, f"{S.NAMES[res['stage']]}までだった…", W / 2, 1180, 72, sw=12)
+            text(ctx, f"×{mult(res['stage']):.1f}までだった…", W / 2, 1180, 72, sw=12)
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
             print(f"  描画 {fi}/{len(frames)}", file=sys.stderr)
@@ -411,11 +415,13 @@ def render(seed):
          "-shortest", "-movflags", "+faststart", final], check=True)
     os.remove(silent)
     os.remove(wav)
-    print(f"完成: {os.path.abspath(final)}  ({'失敗' if fail else '成功'} 最高 {S.NAMES[res['stage']]} / 長さ {duration:.1f}秒)")
+    print(f"完成: {os.path.abspath(final)}  ({'失敗' if fail else '成功'} 最高 ×{mult(res['stage']):.1f} / 長さ {duration:.1f}秒)")
 
 
 # ---------------------------------------------------------------- 音
-EVOLVE_F = [0, 620, 470, 350, 255, 185, 130]   # 進化した段階ごとの「ボヨン」の高さ(だんだん低く)
+def grow_freq(st):
+    """大きくなった段階ごとの「ボヨン」の高さ(だんだん低く)。"""
+    return 680.0 * 0.86 ** st
 
 
 def boing(f0, dur=0.55, seed=0):
@@ -456,11 +462,11 @@ def synth_audio(res, duration, path):
         if kind == "bump":
             i, speed, st = data
             if t - last_bump > 0.06 and speed > 60:
-                add(thud(260 - 25 * st, 0.15 + 0.35 * min(1.0, speed / 900), int(t * 1000)), t)
+                add(thud(260 * 0.9 ** st + 40, (0.1 + 0.3 * min(1.0, speed / 900)) * (0.7 + 0.05 * st), int(t * 1000)), t)
                 last_bump = t
         elif kind == "evolve":
             st = data[0]
-            add(boing(EVOLVE_F[st], 0.5 + 0.06 * st, st), t, 0.55)
+            add(boing(grow_freq(st), 0.45 + 0.04 * st, st), t, 0.3 + 0.045 * st)   # 大きくなるほど低く・大きく・長く
         elif kind == "floor":
             add(thud(90, 0.6, 5), t)
     extra = np.zeros(n_out)
