@@ -189,3 +189,5 @@ Kling 4.0 (image-to-video, 720p, 9:16)。start_image + end_image で、カメラ
   C Dylan a7d606de / D Benji f46f8133 / E Archie 7196b419 / F Fraser 0ae3f9bd (どれも約2.6〜2.8秒、中心周波数 730〜1040Hz)
 - build.py: 声に EQ (220Hz -3dB, 3.2kHz +3dB) + コンプ + -14 LUFS、セリフ中の BGM を 0.3 に下げる
 - 比較用: assets/output/deep-dodeuce/voice_compare.m4a (参考 → C → D → E → F)
+
+- 2026-11-08 ユーザー指定: 冒頭の「※イメージ映像です」とセリフ字幕を消す (build.py の SHOW_TEXT=False)。思い出シーンの年・レース名テロップは残す。イメージ映像・創作である旨は投稿の概要欄に書く

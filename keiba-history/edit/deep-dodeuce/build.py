@@ -82,13 +82,18 @@ vin = "".join(f"[v{i}]" for i in range(n))
 voice_i, bgm_i = n, n + 1
 args += ["-i", str(ROOT / f"voice_{VOICE}.mp3"), "-i", str(BGM)]
 line_end = line_at + 3.0
-txt = (
-    f"drawtext=fontfile={FONT}:text='{NOTE_TEXT}':fontsize=26:fontcolor=white@0.9:"
-    f"box=1:boxcolor=black@0.35:boxborderw=8:x=(w-tw)/2:y=h-150:enable='lt(t,4)',"
-    f"drawtext=fontfile={FONT}:text='{LINE_TEXT}':fontsize=44:fontcolor=white:"
-    f"borderw=3:bordercolor=black@0.8:x=(w-tw)/2:y=h-300:enable='between(t,{line_at:.2f},{line_end:.2f})',"
-    f"fade=t=in:st=0:d=0.8,fade=t=out:st={total-1.2:.2f}:d=1.2:color=white"
-)
+# ユーザー指定 (2026-11-08): 冒頭の「※イメージ映像です」と、セリフの字幕は画面に出さない
+# (「イメージ映像・セリフは創作」は投稿の概要欄に書く)。出したい場合は SHOW_TEXT = True
+SHOW_TEXT = False
+txt = ""
+if SHOW_TEXT:
+    txt = (
+        f"drawtext=fontfile={FONT}:text='{NOTE_TEXT}':fontsize=26:fontcolor=white@0.9:"
+        f"box=1:boxcolor=black@0.35:boxborderw=8:x=(w-tw)/2:y=h-150:enable='lt(t,4)',"
+        f"drawtext=fontfile={FONT}:text='{LINE_TEXT}':fontsize=44:fontcolor=white:"
+        f"borderw=3:bordercolor=black@0.8:x=(w-tw)/2:y=h-300:enable='between(t,{line_at:.2f},{line_end:.2f})',"
+    )
+txt += f"fade=t=in:st=0:d=0.8,fade=t=out:st={total-1.2:.2f}:d=1.2:color=white"
 ms = int(line_at * 1000)
 fc = ";".join(chains) + f";{vin}concat=n={n}:v=1:a=0[cat];[cat]{txt}[vout];" \
     f"[{voice_i}:a]aresample=48000,{VOICE_FX},adelay={ms}|{ms},apad[vo];" \
