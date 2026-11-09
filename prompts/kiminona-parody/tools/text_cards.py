@@ -55,7 +55,7 @@ def card_still(kind, t=0.0):
     img = background(t); d = ImageDraw.Draw(img)
     if kind == "c1":   # 参考 15.02-16.27:小さい行 + 大きい名前 + 監督最新作
         htext(d, "『秒速5キロカロリー』『言の葉の丼』", 945, 276, font(34, "Bold"))
-        htext(d, "大盛 増太郎", 945, 368, font(176, "SemiBold"))
+        htext(d, "マルコメ", 945, 368, font(176, "SemiBold"))
         htext(d, "監督最新作", 945, 640, font(132, "SemiBold"))
     elif kind == "c2": # 参考 24.52-26.44:横書き2行
         htext(d, "千年ぶりの食べ放題の", 950, 352, font(112), pitch=112)
@@ -75,7 +75,7 @@ def card_still(kind, t=0.0):
         grad[:] = np.array([110, 150, 215]) * (1 - xs) + np.array([205, 130, 200]) * xs
         img.paste(Image.fromarray(grad.astype(np.uint8)), (0, 0), date)
         f = font(30, "Bold"); f2 = font(22, "Bold")
-        for i, line in enumerate(["監督/脚本 大盛 増太郎",
+        for i, line in enumerate(["監督/脚本 マルコメ",
                                   "作画監督 油野 揚男　　キャラクターデザイン 満腹 太",
                                   "慶太　　ふとみ",
                                   "音楽 ハラペコーズ"]):
