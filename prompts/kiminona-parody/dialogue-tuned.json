@@ -1,0 +1,182 @@
+{
+ "01": {
+  "start": 2.16,
+  "ref_len": 14.24,
+  "gen_len": 12.5,
+  "out_len": 14.24,
+  "tempo": 0.88,
+  "pitch_st": 4.0,
+  "f0": 198.0
+ },
+ "02": {
+  "start": 26.32,
+  "ref_len": 0.96,
+  "gen_len": 1.96,
+  "out_len": 1.4,
+  "tempo": 1.35,
+  "pitch_st": 0.0,
+  "f0": 119.0
+ },
+ "03": {
+  "start": 27.28,
+  "ref_len": 2.62,
+  "gen_len": 3.08,
+  "out_len": 2.62,
+  "tempo": 1.18,
+  "pitch_st": 0.0,
+  "f0": 187.0
+ },
+ "04": {
+  "start": 31.54,
+  "ref_len": 4.46,
+  "gen_len": 4.68,
+  "out_len": 4.46,
+  "tempo": 1.05,
+  "pitch_st": 6.0,
+  "f0": 217.0
+ },
+ "05": {
+  "start": 36.0,
+  "ref_len": 4.56,
+  "gen_len": 4.91,
+  "out_len": 4.56,
+  "tempo": 1.08,
+  "pitch_st": 6.0,
+  "f0": 260.0
+ },
+ "06": {
+  "start": 44.26,
+  "ref_len": 0.96,
+  "gen_len": 2.33,
+  "out_len": 1.72,
+  "tempo": 1.35,
+  "pitch_st": 0.0,
+  "f0": 120.0
+ },
+ "07": {
+  "start": 45.5,
+  "ref_len": 3.78,
+  "gen_len": 4.43,
+  "out_len": 3.78,
+  "tempo": 1.17,
+  "pitch_st": 5.4,
+  "f0": 218.0
+ },
+ "08": {
+  "start": 50.18,
+  "ref_len": 2.52,
+  "gen_len": 3.0,
+  "out_len": 2.52,
+  "tempo": 1.19,
+  "pitch_st": 4.0,
+  "f0": 233.0
+ },
+ "09": {
+  "start": 54.28,
+  "ref_len": 0.96,
+  "gen_len": 1.64,
+  "out_len": 1.22,
+  "tempo": 1.35,
+  "pitch_st": 0.0,
+  "f0": 114.0
+ },
+ "10": {
+  "start": 55.24,
+  "ref_len": 0.78,
+  "gen_len": 1.64,
+  "out_len": 1.22,
+  "tempo": 1.35,
+  "pitch_st": 0.0,
+  "f0": null
+ },
+ "12": {
+  "start": 58.82,
+  "ref_len": 1.42,
+  "gen_len": 1.3,
+  "out_len": 1.42,
+  "tempo": 0.92,
+  "pitch_st": 0.0,
+  "f0": 191.0
+ },
+ "13": {
+  "start": 60.24,
+  "ref_len": 2.14,
+  "gen_len": 2.57,
+  "out_len": 2.14,
+  "tempo": 1.2,
+  "pitch_st": 2.4,
+  "f0": 224.0
+ },
+ "14": {
+  "start": 62.38,
+  "ref_len": 0.76,
+  "gen_len": 1.26,
+  "out_len": 0.93,
+  "tempo": 1.35,
+  "pitch_st": 0.0,
+  "f0": 149.0
+ },
+ "15": {
+  "start": 62.38,
+  "ref_len": 0.76,
+  "gen_len": 1.57,
+  "out_len": 1.16,
+  "tempo": 1.35,
+  "pitch_st": 0.0,
+  "f0": 274.0
+ },
+ "16": {
+  "start": 69.46,
+  "ref_len": 6.54,
+  "gen_len": 7.14,
+  "out_len": 6.54,
+  "tempo": 1.09,
+  "pitch_st": 6.0,
+  "f0": 201.0
+ },
+ "17": {
+  "start": 76.52,
+  "ref_len": 5.82,
+  "gen_len": 4.34,
+  "out_len": 5.29,
+  "tempo": 0.82,
+  "pitch_st": 0.0,
+  "f0": 125.0
+ },
+ "18": {
+  "start": 82.34,
+  "ref_len": 1.38,
+  "gen_len": 1.99,
+  "out_len": 1.48,
+  "tempo": 1.35,
+  "pitch_st": 6.0,
+  "f0": 233.0
+ },
+ "20": {
+  "start": 84.22,
+  "ref_len": 2.06,
+  "gen_len": 2.93,
+  "out_len": 2.17,
+  "tempo": 1.35,
+  "pitch_st": 0.0,
+  "f0": 125.0
+ },
+ "19": {
+  "start": 87.76,
+  "ref_len": 1.0,
+  "gen_len": 2.11,
+  "out_len": 1.56,
+  "tempo": 1.35,
+  "pitch_st": 0.0,
+  "f0": 102.0
+ },
+ "11": {
+  "start": 56.56,
+  "ref_len": 1.22,
+  "gen_len": 1.88,
+  "out_len": 1.39,
+  "tempo": 1.35,
+  "pitch_st": 6.0,
+  "f0": 251.0
+ }
+}
