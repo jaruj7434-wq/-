@@ -64,8 +64,8 @@ def card_still(kind, t=0.0):
         vtext(img, "痩せることのない", 1055, 200, 92, 99)
         vtext(img, "二人の出逢い。", 828, 314, 92, 99)
     elif kind == "c4": # 参考 63.31-64.11:縦書き2列
-        vtext(img, "動き出した、", 1070, 246, 104, 136)
-        vtext(img, "奇跡のリバウンド。", 848, 246, 96, 100)
+        vtext(img, "動き出した、", 1065, 108, 90, 96)
+        vtext(img, "奇跡のリバウンド。", 855, 108, 90, 96)
     elif kind == "end":# 参考 89.38-91.09:キャッチコピー + 公開日 + クレジット
         htext(d, "この秋、日本中がおかわりする。", 966, 128, font(92), pitch=103)
         date = Image.new("L", (W, H), 0); dd = ImageDraw.Draw(date)
