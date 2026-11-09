@@ -1,0 +1,156 @@
+{
+ "1a": {
+  "start": 2.16,
+  "ref_len": 4.34,
+  "gen_len": 4.26,
+  "out_len": 4.26,
+  "tempo": 0.98
+ },
+ "1b": {
+  "start": 6.5,
+  "ref_len": 3.0,
+  "gen_len": 2.86,
+  "out_len": 2.92,
+  "tempo": 0.95
+ },
+ "1c": {
+  "start": 10.0,
+  "ref_len": 6.4,
+  "gen_len": 3.35,
+  "out_len": 3.81,
+  "tempo": 0.88
+ },
+ "02": {
+  "start": 26.32,
+  "ref_len": 0.96,
+  "gen_len": 1.74,
+  "out_len": 1.34,
+  "tempo": 1.3
+ },
+ "03": {
+  "start": 27.7,
+  "ref_len": 2.62,
+  "gen_len": 3.59,
+  "out_len": 2.77,
+  "tempo": 1.3
+ },
+ "04": {
+  "start": 31.54,
+  "ref_len": 4.46,
+  "gen_len": 3.99,
+  "out_len": 4.46,
+  "tempo": 0.89
+ },
+ "05": {
+  "start": 36.0,
+  "ref_len": 4.56,
+  "gen_len": 5.23,
+  "out_len": 4.56,
+  "tempo": 1.15
+ },
+ "06": {
+  "start": 44.26,
+  "ref_len": 0.96,
+  "gen_len": 2.08,
+  "out_len": 1.6,
+  "tempo": 1.3
+ },
+ "07": {
+  "start": 45.9,
+  "ref_len": 3.78,
+  "gen_len": 4.68,
+  "out_len": 3.78,
+  "tempo": 1.24
+ },
+ "08": {
+  "start": 50.18,
+  "ref_len": 2.52,
+  "gen_len": 2.84,
+  "out_len": 2.52,
+  "tempo": 1.13
+ },
+ "09": {
+  "start": 54.28,
+  "ref_len": 0.96,
+  "gen_len": 1.66,
+  "out_len": 1.22,
+  "tempo": 1.3
+ },
+ "10": {
+  "start": 55.52,
+  "ref_len": 0.78,
+  "gen_len": 0.99,
+  "out_len": 0.78,
+  "tempo": 1.27
+ },
+ "11": {
+  "start": 56.56,
+  "ref_len": 1.22,
+  "gen_len": 2.37,
+  "out_len": 1.82,
+  "tempo": 1.3
+ },
+ "12": {
+  "start": 58.82,
+  "ref_len": 1.42,
+  "gen_len": 1.43,
+  "out_len": 1.43,
+  "tempo": 1.01
+ },
+ "13": {
+  "start": 60.24,
+  "ref_len": 2.14,
+  "gen_len": 2.31,
+  "out_len": 2.14,
+  "tempo": 1.08
+ },
+ "14": {
+  "start": 62.38,
+  "ref_len": 0.76,
+  "gen_len": 1.12,
+  "out_len": 0.86,
+  "tempo": 1.3
+ },
+ "15": {
+  "start": 62.38,
+  "ref_len": 0.76,
+  "gen_len": 1.26,
+  "out_len": 0.97,
+  "tempo": 1.3
+ },
+ "16": {
+  "start": 69.46,
+  "ref_len": 6.54,
+  "gen_len": 6.56,
+  "out_len": 6.56,
+  "tempo": 1.0
+ },
+ "17": {
+  "start": 76.52,
+  "ref_len": 5.82,
+  "gen_len": 6.18,
+  "out_len": 5.82,
+  "tempo": 1.06
+ },
+ "18": {
+  "start": 82.34,
+  "ref_len": 1.38,
+  "gen_len": 2.74,
+  "out_len": 2.11,
+  "tempo": 1.3
+ },
+ "20": {
+  "start": 84.55,
+  "ref_len": 2.06,
+  "gen_len": 2.23,
+  "out_len": 2.06,
+  "tempo": 1.08
+ },
+ "19": {
+  "start": 87.76,
+  "ref_len": 1.0,
+  "gen_len": 1.72,
+  "out_len": 1.32,
+  "tempo": 1.3
+ }
+}
