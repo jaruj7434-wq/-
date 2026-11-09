@@ -1,0 +1,5 @@
+# ビルド結果(投稿用 zip・カバー画像・動画)はスクリプトで作り直せるのでコミットしない
+dist/
+
+# ダウンロードしたフォントなどの素材(tools/build_chougoushi.py が自動で取得する)
+assets/source/

@@ -61,6 +61,7 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
       <div class="ctl">
         <button id="pauseBtn" type="button">一時停止</button>
         <button id="soundBtn" type="button" aria-pressed="true">音 ON</button>
+        <button id="langBtn" type="button">EN</button>
       </div>
     </div>
   </div>
@@ -80,6 +81,7 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
   const fit = document.getElementById('fit');
   const pauseBtn = document.getElementById('pauseBtn');
   const soundBtn = document.getElementById('soundBtn');
+  const langBtn = document.getElementById('langBtn');
 
   const css = getComputedStyle(document.documentElement);
   const tok = n => css.getPropertyValue(n).trim();
@@ -90,28 +92,69 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
   const FONT = '"DotGothic16", ui-monospace, monospace';
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // ---------- 言語(日本語 / 英語) ----------
+  // 保存された設定があればそれを使い、なければブラウザの言語が日本語なら日本語、それ以外は英語
+  const LANG_KEY = 'chougou-lang';
+  let lang = (() => {
+    try { const v = localStorage.getItem(LANG_KEY); if (v === 'ja' || v === 'en') return v; } catch (e) {}
+    return /^ja/i.test(navigator.language || '') ? 'ja' : 'en';
+  })();
+  const TXT = {
+    ja: {
+      title1: '弾丸の', title2: '調合師', title2Size: 56,
+      sub: ['ウェーブを越えるたびに3つのパーツから1つ選び、', '自分だけの弾を作ろう。全6ウェーブ・約5分。'],
+      controls: [['PC', '矢印キー / WASD で移動'], ['', 'Shift で低速、P で一時停止、M で音'], ['スマホ', '画面をドラッグで移動'], ['', 'ショットは自動で発射されます'], ['', '白い点だけが当たり判定です']],
+      record: s => 'プレイ ' + s.plays + '回 / 合計 ' + Math.round(s.sec / 60) + '分 / 最高 WAVE ' + s.bestWave + ' / クリア ' + s.clears + '回',
+      start: 'タップ / Enter でスタート', again: 'タップ / Enter でもう一度',
+      firstPick: '最初のパーツを選ぼう', waveClear: w => 'WAVE ' + w + ' 突破', pickSub: 'パーツを1つ選んで、弾に組み込む',
+      recipeNow: 'いまのレシピ', recipeEmpty: '(まだ何も入っていない)', pickHint: 'タップ / 1・2・3 キー / 矢印+Enter で選ぶ',
+      isNew: '新規', lives: '残機', warn: '警告  大型機 接近',
+      cleared: '全ウェーブ突破!', newHi: 'ハイスコア更新!', bossDown: 'ボス撃破', bossFight: 'ボス戦',
+      reached: w => w + ' まで到達', maxCombo: n => '最大 ' + n + ' COMBO', recipeEnd: '今回のレシピ', none: '(なし)',
+      paused: '一時停止中', resume: 'タップ / P で再開',
+      btnPause: '一時停止', btnResume: '再開', btnSound: on => '音 ' + (on ? 'ON' : 'OFF'), btnLang: 'EN', canvas: '弾丸の調合師 ゲーム画面',
+    },
+    en: {
+      title1: 'BULLET', title2: 'ALCHEMIST', title2Size: 44,
+      sub: ['After every wave, pick 1 of 3 parts', 'and brew your own bullets. 6 waves, about 5 min.'],
+      controls: [['PC', 'Move: Arrow keys / WASD'], ['', 'Shift: slow  P: pause  M: sound'], ['Mobile', 'Drag anywhere to move'], ['', 'Your ship fires automatically'], ['', 'Only the white dot can be hit']],
+      record: s => 'Plays ' + s.plays + ' / Total ' + Math.round(s.sec / 60) + ' min / Best wave ' + s.bestWave + ' / Clears ' + s.clears,
+      start: 'Tap / Enter to start', again: 'Tap / Enter to play again',
+      firstPick: 'Pick your first part', waveClear: w => 'WAVE ' + w + ' CLEARED', pickSub: 'Add 1 part to your bullet recipe',
+      recipeNow: 'Current recipe', recipeEmpty: '(empty)', pickHint: 'Tap / keys 1-3 / arrows + Enter',
+      isNew: 'NEW', lives: 'Lives', warn: 'WARNING: BOSS INCOMING',
+      cleared: 'ALL WAVES CLEARED!', newHi: 'NEW HIGH SCORE!', bossDown: 'Boss defeated', bossFight: 'Boss fight',
+      reached: w => 'Reached ' + w, maxCombo: n => 'Max ' + n + ' COMBO', recipeEnd: 'Your recipe', none: '(none)',
+      paused: 'PAUSED', resume: 'Tap / P to resume',
+      btnPause: 'Pause', btnResume: 'Resume', btnSound: on => 'Sound ' + (on ? 'ON' : 'OFF'), btnLang: '日本語', canvas: 'Bullet Alchemist game screen',
+    },
+  };
+  const T = () => TXT[lang];
+
   // ---------- パーツ(弾のレシピ) ----------
   const PARTS = {
-    split:  { name: '分裂', max: 4, col: C.mint,   desc: l => `同時に撃つ弾が1発増える(${l + 1}発 → ${l + 2}発)` },
-    rapid:  { name: '連射', max: 3, col: C.mint,   desc: () => '弾を撃つ間隔が短くなる' },
-    heavy:  { name: '重弾', max: 3, col: C.amber,  desc: () => '弾の威力が +1 され、弾が大きくなる' },
-    pierce: { name: '貫通', max: 3, col: C.ink,    desc: () => '弾が敵をもう1体つらぬいて飛ぶ' },
-    bounce: { name: '反射', max: 3, col: C.lilac,  desc: () => '画面の左右の壁で、もう1回跳ね返る' },
-    homing: { name: '追尾', max: 3, col: C.lilac,  desc: () => '弾が近くの敵に向かって曲がっていく(強さ +1)' },
-    frost:  { name: '冷気', max: 3, col: C.ice,    desc: () => '当たった敵の動きと攻撃が、しばらく遅くなる' },
-    blast:  { name: '炸裂', max: 3, col: C.orange, desc: () => '当たると爆発し、周りの敵にもダメージ(範囲と威力 +)' },
-    chain:  { name: '連鎖', max: 3, col: C.ice,    desc: () => '当たると近くの敵に電撃が飛ぶ(飛ぶ数 +1)' },
-    fork:   { name: '分岐', max: 3, col: C.mint,   desc: () => '当たると小さな弾に分かれて飛び散る(数 +1)' },
-    burn:   { name: '燃焼', max: 3, col: C.orange, desc: () => '当たった敵が燃え、少しずつダメージを受ける' },
+    split:  { max: 4, col: C.mint,   ja: ['分裂', l => `同時に撃つ弾が1発増える(${l + 1}発 → ${l + 2}発)`], en: ['Split', l => `Fire 1 more bullet at once (${l + 1} → ${l + 2})`] },
+    rapid:  { max: 3, col: C.mint,   ja: ['連射', () => '弾を撃つ間隔が短くなる'], en: ['Rapid', () => 'Less time between shots'] },
+    heavy:  { max: 3, col: C.amber,  ja: ['重弾', () => '弾の威力が +1 され、弾が大きくなる'], en: ['Heavy', () => 'Bullet damage +1, and bullets get bigger'] },
+    pierce: { max: 3, col: C.ink,    ja: ['貫通', () => '弾が敵をもう1体つらぬいて飛ぶ'], en: ['Pierce', () => 'Bullets pass through 1 more enemy'] },
+    bounce: { max: 3, col: C.lilac,  ja: ['反射', () => '画面の左右の壁で、もう1回跳ね返る'], en: ['Bounce', () => 'Bullets bounce off the side walls 1 more time'] },
+    homing: { max: 3, col: C.lilac,  ja: ['追尾', () => '弾が近くの敵に向かって曲がっていく(強さ +1)'], en: ['Homing', () => 'Bullets curve toward nearby enemies (strength +1)'] },
+    frost:  { max: 3, col: C.ice,    ja: ['冷気', () => '当たった敵の動きと攻撃が、しばらく遅くなる'], en: ['Frost', () => 'Enemies you hit move and attack slower for a while'] },
+    blast:  { max: 3, col: C.orange, ja: ['炸裂', () => '当たると爆発し、周りの敵にもダメージ(範囲と威力 +)'], en: ['Blast', () => 'Hits explode and damage nearby enemies (bigger, stronger)'] },
+    chain:  { max: 3, col: C.ice,    ja: ['連鎖', () => '当たると近くの敵に電撃が飛ぶ(飛ぶ数 +1)'], en: ['Chain', () => 'Hits send lightning to nearby enemies (+1 jump)'] },
+    fork:   { max: 3, col: C.mint,   ja: ['分岐', () => '当たると小さな弾に分かれて飛び散る(数 +1)'], en: ['Fork', () => 'Hits split into small bullets (+1 bullet)'] },
+    burn:   { max: 3, col: C.orange, ja: ['燃焼', () => '当たった敵が燃え、少しずつダメージを受ける'], en: ['Burn', () => 'Enemies you hit burn and take damage over time'] },
   };
-  const HEAL = { name: '修理', col: C.coral, desc: () => '残機を1つ回復する' };
+  const HEAL = { col: C.coral, ja: ['修理', () => '残機を1つ回復する'], en: ['Repair', () => 'Restore 1 life'] };
+  const pName = p => p[lang][0];
+  const pDesc = (p, l) => p[lang][1](l);
   const FIRST_POOL = ['split', 'rapid', 'heavy', 'pierce', 'bounce', 'homing', 'blast', 'chain', 'fork'];
 
   // 画面で使う日本語のフォント字形を先読みする(canvas だけだと読み込まれないため)
   try {
-    const jp = '弾丸の調合師ウェーブを越えるたびに3つのパーツから1つ選び自分だけの弾を作ろう全6約5分間PC矢印キーWASDで移動低速一時停止音スマホ画面ドラッグショットは自動発射白い点当たり判定タップでスタート再開もう一度ハイスコア更新警告大型機接近突破クリア最初選ぶ残機回復記録プレイ回合計最高時間新規' +
-      Object.values(PARTS).map(p => p.name + p.desc(1)).join('') + HEAL.name + HEAL.desc();
-    document.fonts.load('16px "DotGothic16"', jp);
+    const all = JSON.stringify(TXT) + Object.values(PARTS).concat(HEAL).map(p => p.ja[0] + p.ja[1](1) + p.en[0] + p.en[1](1)).join('') +
+      TXT.ja.record({ plays: 0, sec: 0, bestWave: 0, clears: 0 }) + TXT.ja.waveClear(1) + TXT.ja.reached('WAVE 1') + TXT.ja.maxCombo(1);
+    document.fonts.load('16px "DotGothic16"', all);
   } catch (e) {}
 
   // ---------- 画面サイズ ----------
@@ -235,13 +278,23 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
   }
   function toggleMute() { muted = !muted; store.set(KEY.mute, muted); syncBtns(); }
   function syncBtns() {
-    pauseBtn.textContent = state === 'pause' ? '再開' : '一時停止';
+    pauseBtn.textContent = state === 'pause' ? T().btnResume : T().btnPause;
     pauseBtn.disabled = !(state === 'play' || state === 'pause');
-    soundBtn.textContent = muted ? '音 OFF' : '音 ON';
+    soundBtn.textContent = T().btnSound(!muted);
     soundBtn.setAttribute('aria-pressed', String(!muted));
+    langBtn.textContent = T().btnLang;
+    langBtn.lang = lang === 'ja' ? 'en' : 'ja';
+    document.documentElement.lang = lang;
+    cv.setAttribute('aria-label', T().canvas);
+  }
+  function toggleLang() {
+    lang = lang === 'ja' ? 'en' : 'ja';
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    syncBtns();
   }
   pauseBtn.addEventListener('click', () => { togglePause(); pauseBtn.blur(); });
   soundBtn.addEventListener('click', () => { audio(); toggleMute(); soundBtn.blur(); });
+  langBtn.addEventListener('click', () => { toggleLang(); langBtn.blur(); });
 
   // ---------- パーツ選択(ドラフト) ----------
   const CARD = { x: 24, w: W - 48, h: 108, y0: 168, gap: 14 };
@@ -252,7 +305,7 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
     const pool = (first ? FIRST_POOL : Object.keys(PARTS)).filter(k => (R[k] || 0) < PARTS[k].max);
     const opts = shuffle(pool.slice()).slice(0, 3);
     if (!first && P.lives < 3 && Math.random() < 0.45) opts[opts.length - 1] = 'heal';
-    G.draft = { opts, sel: 0, title: first ? '最初のパーツを選ぼう' : 'WAVE ' + G.wave + ' 突破' };
+    G.draft = { opts, sel: 0, first };
     state = 'draft';
     lock = 0.4;
     drag = null;
@@ -271,7 +324,7 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
     G.waveT = 0;
     G.spawnT = 1;
     P.inv = Math.max(P.inv, 1);
-    if (G.wave === WAVES) { G.bossT = 2.5; banner('警告  大型機 接近', 2.6); sfx.warn(); }
+    if (G.wave === WAVES) { G.bossT = 2.5; banner('warn', 2.6); sfx.warn(); }
     else banner('WAVE ' + G.wave + ' / ' + WAVES, 1.8);
     state = 'play';
     last = performance.now();
@@ -466,6 +519,7 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
     if (Math.random() < 0.015 && P.lives < MAX_LIVES) items.push({ x: e.x, y: e.y, vy: -60, t: 0 });
   }
   function hurt() {
+    if (G.god) return;
     P.lives--;
     P.inv = 2.2;
     G.combo = 0;
@@ -709,16 +763,17 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
     ctx.fillText(s, x, y);
     ctx.globalAlpha = 1;
   }
-  // 日本語は単語の区切りがないので、1文字ずつ幅を測って折り返す
+  // 折り返し:英語は単語ごと、日本語は1文字ずつ幅を測って折り返す
   function wrap(s, maxW, size) {
     ctx.font = size + 'px ' + FONT;
+    const tokens = s.match(/[A-Za-z0-9+().,!:'\-→]+|\s+|[^\sA-Za-z0-9]/g) || [];
     const lines = [];
     let cur = '';
-    for (const ch of s) {
-      if (ctx.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch; }
-      else cur += ch;
+    for (const tk of tokens) {
+      if (ctx.measureText(cur + tk).width > maxW && cur.trim()) { lines.push(cur.trimEnd()); cur = /^\s+$/.test(tk) ? '' : tk; }
+      else cur += tk;
     }
-    if (cur) lines.push(cur);
+    if (cur.trim()) lines.push(cur.trimEnd());
     return lines;
   }
 
@@ -835,7 +890,7 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
     const keysR = Object.keys(R);
     if (!keysR.length) return y;
     ctx.font = '11px ' + FONT;
-    const chips = keysR.map(k => ({ k, label: PARTS[k].name + lv(k), w: ctx.measureText(PARTS[k].name + lv(k)).width + 10 }));
+    const chips = keysR.map(k => { const label = pName(PARTS[k]) + lv(k); return { k, label, w: ctx.measureText(label).width + 10 }; });
     const rows = [[]];
     let rowW = 0;
     for (const c of chips) {
@@ -885,7 +940,8 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
     drawRecipe(10, H - 40 - (rows - 1) * 18, W - 20);
 
     if (G.banner.t > 0 && state === 'play') {
-      text(G.banner.text, W / 2, H * 0.4, 26, G.banner.text.startsWith('警告') ? C.coral : C.ink, 'center', 'middle', Math.min(1, G.banner.t * 2));
+      const warn = G.banner.text === 'warn';
+      text(warn ? T().warn : G.banner.text, W / 2, H * 0.4, warn && lang === 'en' ? 20 : 26, warn ? C.coral : C.ink, 'center', 'middle', Math.min(1, G.banner.t * 2));
     }
   }
 
@@ -893,12 +949,13 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
 
   function drawDraft() {
     dim(0.72);
-    const d = G.draft;
-    text(d.title, W / 2, 112, 22, C.ink, 'center', 'middle');
-    text('パーツを1つ選んで、弾に組み込む', W / 2, 140, 12, C.lilac, 'center', 'middle');
+    const d = G.draft, L = T();
+    text(d.first ? L.firstPick : L.waveClear(G.wave), W / 2, 112, 22, C.ink, 'center', 'middle');
+    text(L.pickSub, W / 2, 140, 12, C.lilac, 'center', 'middle');
     d.opts.forEach((k, i) => {
       const p = k === 'heal' ? HEAL : PARTS[k];
       const cur = k === 'heal' ? 0 : lv(k);
+      const name = pName(p);
       const y = cardY(i), sel = i === d.sel;
       ctx.fillStyle = sel ? '#20265a' : C.deep;
       ctx.fillRect(CARD.x, y, CARD.w, CARD.h);
@@ -908,68 +965,58 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
       // 札(アイコン)
       ctx.fillStyle = p.col;
       ctx.fillRect(CARD.x + 14, y + 24, 60, 60);
-      text(p.name, CARD.x + 44, y + 54, 20, C.deep, 'center', 'middle');
+      text(name, CARD.x + 44, y + 54, lang === 'ja' ? 20 : 13, C.deep, 'center', 'middle');
       text(String(i + 1), CARD.x + 14, y + 8, 11, C.ink, 'left', 'top', 0.5);
       // 名前とレベル
-      text(p.name, CARD.x + 88, y + 14, 17, C.ink);
-      const tag = k === 'heal' ? '残機 ' + P.lives + ' → ' + (P.lives + 1) : cur === 0 ? '新規' : 'Lv' + cur + ' → Lv' + (cur + 1);
+      text(name, CARD.x + 88, y + 14, 17, C.ink);
+      const tag = k === 'heal' ? L.lives + ' ' + P.lives + ' → ' + (P.lives + 1) : cur === 0 ? L.isNew : 'Lv' + cur + ' → Lv' + (cur + 1);
       text(tag, CARD.x + CARD.w - 12, y + 17, 11, cur === 0 && k !== 'heal' ? C.amber : C.ink, 'right', 'top', 0.85);
-      wrap(p.desc(cur), CARD.w - 102, 12).slice(0, 3).forEach((ln, li) => text(ln, CARD.x + 88, y + 44 + li * 17, 12, C.ink, 'left', 'top', 0.85));
+      wrap(pDesc(p, cur), CARD.w - 102, 12).slice(0, 3).forEach((ln, li) => text(ln, CARD.x + 88, y + 44 + li * 17, 12, C.ink, 'left', 'top', 0.85));
     });
     const by = cardY(d.opts.length) + 6;
-    text('いまのレシピ', W / 2, by, 11, C.ink, 'center', 'top', 0.6);
+    text(L.recipeNow, W / 2, by, 11, C.ink, 'center', 'top', 0.6);
     if (Object.keys(R).length) drawRecipe(20, by + 18, W - 40, 'center');
-    else text('(まだ何も入っていない)', W / 2, by + 20, 11, C.ink, 'center', 'top', 0.4);
-    text('タップ / 1・2・3 キー / 矢印+Enter で選ぶ', W / 2, H - 22, 11, C.ink, 'center', 'middle', 0.5);
+    else text(L.recipeEmpty, W / 2, by + 20, 11, C.ink, 'center', 'top', 0.4);
+    text(L.pickHint, W / 2, H - 22, 11, C.ink, 'center', 'middle', 0.5);
   }
 
   function drawTitle() {
+    const L = T();
     drawShip(W / 2, 486 + Math.sin(blink * 2) * 6, 1.6);
-    text('弾丸の', W / 2, 118, 30, C.lilac, 'center', 'middle');
-    text('調合師', W / 2, 170, 56, C.mint, 'center', 'middle');
-    const sub = ['ウェーブを越えるたびに3つのパーツから1つ選び、', '自分だけの弾を作ろう。全6ウェーブ・約5分。'];
-    sub.forEach((s, i) => text(s, W / 2, 222 + i * 18, 12, C.ink, 'center', 'middle', 0.85));
+    text(L.title1, W / 2, 118, 30, C.lilac, 'center', 'middle');
+    text(L.title2, W / 2, 170, L.title2Size, C.mint, 'center', 'middle');
+    L.sub.forEach((s, i) => text(s, W / 2, 222 + i * 18, 12, C.ink, 'center', 'middle', 0.85));
 
     ctx.fillStyle = 'rgba(22, 26, 66, 0.82)';
     ctx.fillRect(28, 262, W - 56, 118);
-    const lines = [
-      ['PC', '矢印キー / WASD で移動'],
-      ['', 'Shift で低速、P で一時停止、M で音'],
-      ['スマホ', '画面をドラッグで移動'],
-      ['', 'ショットは自動で発射されます'],
-      ['', '白い点だけが当たり判定です'],
-    ];
-    lines.forEach(([a, b], i) => {
+    L.controls.forEach(([a, b], i) => {
       text(a, 42, 274 + i * 20, 12, C.amber);
       text(b, 98, 274 + i * 20, 12, C.ink);
     });
     // 遊んだ記録(試遊の手応えを測るため)
-    const rec = 'プレイ ' + stats.plays + '回 / 合計 ' + Math.round(stats.sec / 60) + '分 / 最高 WAVE ' + stats.bestWave + ' / クリア ' + stats.clears + '回';
-    text(rec, W / 2, 398, 10, C.ink, 'center', 'middle', 0.5);
+    text(L.record(stats), W / 2, 398, 10, C.ink, 'center', 'middle', 0.5);
 
-    text('タップ / Enter でスタート', W / 2, 566, 16, C.ink, 'center', 'middle', 0.55 + Math.sin(blink * 4) * 0.45);
+    text(L.start, W / 2, 566, 16, C.ink, 'center', 'middle', 0.55 + Math.sin(blink * 4) * 0.45);
     text('HI SCORE  ' + pad(hi, 7), W / 2, 600, 12, C.ink, 'center', 'middle', 0.6);
   }
   function drawResult() {
+    const L = T();
     dim(0.7);
-    if (G.cleared) {
-      text('全ウェーブ突破!', W / 2, 150, 30, C.mint, 'center', 'middle');
-    } else {
-      text('GAME OVER', W / 2, 150, 34, C.coral, 'center', 'middle');
-    }
+    if (G.cleared) text(L.cleared, W / 2, 150, lang === 'ja' ? 30 : 26, C.mint, 'center', 'middle');
+    else text('GAME OVER', W / 2, 150, 34, C.coral, 'center', 'middle');
     text('SCORE  ' + pad(G.score, 7), W / 2, 206, 20, C.ink, 'center', 'middle');
-    if (G.newHi) text('ハイスコア更新!', W / 2, 234, 15, C.amber, 'center', 'middle');
-    const reached = G.cleared ? 'ボス撃破' : (G.wave === WAVES ? 'ボス戦' : 'WAVE ' + Math.max(1, G.wave)) + ' まで到達';
-    text(reached + '  /  ' + mmss(Math.round(G.time)) + '  /  最大 ' + G.bestCombo + ' COMBO', W / 2, 264, 12, C.lilac, 'center', 'middle');
-    text('今回のレシピ', W / 2, 300, 12, C.ink, 'center', 'middle', 0.6);
+    if (G.newHi) text(L.newHi, W / 2, 234, 15, C.amber, 'center', 'middle');
+    const reached = G.cleared ? L.bossDown : L.reached(G.wave === WAVES ? L.bossFight : 'WAVE ' + Math.max(1, G.wave));
+    text(reached + '  /  ' + mmss(Math.round(G.time)) + '  /  ' + L.maxCombo(G.bestCombo), W / 2, 264, 12, C.lilac, 'center', 'middle');
+    text(L.recipeEnd, W / 2, 300, 12, C.ink, 'center', 'middle', 0.6);
     const yEnd = drawRecipe(30, 316, W - 60, 'center');
-    if (!Object.keys(R).length) text('(なし)', W / 2, 324, 11, C.ink, 'center', 'top', 0.5);
-    if (lock <= 0) text('タップ / Enter でもう一度', W / 2, Math.max(yEnd + 70, 420), 15, C.ink, 'center', 'middle', 0.55 + Math.sin(blink * 4) * 0.45);
+    if (!Object.keys(R).length) text(L.none, W / 2, 324, 11, C.ink, 'center', 'top', 0.5);
+    if (lock <= 0) text(L.again, W / 2, Math.max(yEnd + 70, 420), 15, C.ink, 'center', 'middle', 0.55 + Math.sin(blink * 4) * 0.45);
   }
   function drawPause() {
     dim(0.55);
-    text('一時停止中', W / 2, 280, 26, C.ink, 'center', 'middle');
-    text('タップ / P で再開', W / 2, 320, 13, C.ink, 'center', 'middle', 0.7);
+    text(T().paused, W / 2, 280, 26, C.ink, 'center', 'middle');
+    text(T().resume, W / 2, 320, 13, C.ink, 'center', 'middle', 0.7);
   }
 
   function draw() {
@@ -1006,6 +1053,16 @@ canvas { display: block; touch-action: none; cursor: crosshair; }
     else if (state !== 'pause') { updStars(dt * 0.4); updFx(dt); }
     draw();
     requestAnimationFrame(frame);
+  }
+  // 宣伝用の画像・動画を撮るときだけ使う操作口(URL に ?capture を付けて開いたときのみ有効)
+  if (/[?&]capture\b/.test(location.search)) {
+    window.__capture = {
+      run(recipe, wave) { audio(); reset(); R = Object.assign({}, recipe); G.wave = wave || 3; G.spawnT = 0.2; G.god = true; state = 'play'; syncBtns(); },
+      draft(recipe, wave) { reset(); R = Object.assign({}, recipe); G.wave = wave || 2; openDraft(); lock = 0; syncBtns(); },
+      setLang(l) { lang = l; syncBtns(); },
+      state: () => state,
+      counts: () => ({ en: en.filter(e => e.y > 90 && e.y < H * 0.75).length, eb: eb.length, boss: !!(G.boss && G.boss.y >= 130) }),
+    };
   }
   reset();
   syncBtns();
