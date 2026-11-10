@@ -16,7 +16,9 @@ F_BODY = os.path.expanduser('~/.fonts/NotoSansJP-VF.ttf')
 GOLD = (255, 196, 46); WHITE = (255, 255, 255); INK = (12, 12, 16)
 F_MIN = os.path.expanduser('~/.fonts/ShipporiMinchoB1-ExtraBold.ttf')
 CHAMP = (226, 190, 120)  # 見出しの強調: 落ち着いたシャンパンゴールド
-GAPS = [0.4, 1.0, 0.6, 0.5, 0.5, 0.9, 0.5, 0.8, 0.9, 0.6, 0.8, 0.6, 0.6, 0.8, 0.6, 0.8, 1.4, 1.0]
+GAPS = [0.4, 1.0, 0.6, 0.5, 0.5, 0.9, 0.5, 0.8, 0.9, 0.6, 0.8, 0.6, 0.6, 0.8, 0.6, 0.8, 1.4, 1.0, 0.4]
+# 19 = 締めの呼びかけ (谷上がカメラ目線でコメントを促す)。vo/line_19.mp3 と clips/T19.mp4 があれば入れる
+N = 19 if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vo/line_19.mp3')) else 18
 TRIM = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,"
         "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse")
 TANIUE = json.loads(os.environ.get('TANIUE', '{"3":"T03","8":"T08","10":"T10","12":"T12","16":"T16","tail":"V19"}'))
@@ -36,21 +38,22 @@ SUBS = {1: '世界一まで、あと一歩のところで。', 2: '{ソラ}を�
         14: '池添はスタンドに手を上げました。\n「この馬が1番なんだ」と伝えるために。',
         15: '世界最強を証明したからこそ、\n悔しさが残りました。',
         16: '池添は言います。\n「僕にとって、かけがえのない存在。財産です」',
-        17: 'この馬で、世界一になりたかった。'}
+        17: 'この馬で、世界一になりたかった。',
+        19: 'あなたは、あの日の凱旋門賞、どう見ましたか。\nぜひ、{コメント}で聞かせてください。'}
 
 def run(*a): subprocess.run(a, check=True)
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).decode())
 # --- ナレーション: 前後の無音を削って行間を足す
 os.makedirs('vo/t', exist_ok=True); D = {}
-for i in range(1, 19):
+for i in range(1, N + 1):
     run('ffmpeg', '-y', '-loglevel', 'error', '-i', f'vo/line_{i:02d}.mp3', '-af', TRIM + f',apad=pad_dur={GAPS[i-1]}', '-ar', '48000', '-ac', '1', f'vo/t/{i:02d}.wav')
     D[i] = dur(f'vo/t/{i:02d}.wav') - GAPS[i - 1]
 with open('vo/t/list.txt', 'w') as f:
-    for i in range(1, 19): f.write(f"file '{i:02d}.wav'\n")
+    for i in range(1, N + 1): f.write(f"file '{i:02d}.wav'\n")
 run('ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 'vo/t/list.txt', '-af', 'loudnorm=I=-16:TP=-1.5', '-ar', '48000', 'vo/narr.wav')
 S, t = {}, 0.0
-for i in range(1, 19): S[i] = t; t += D[i] + GAPS[i - 1]
-NARR = t; TAIL = 3.0; TOTAL = NARR + TAIL
+for i in range(1, N + 1): S[i] = t; t += D[i] + GAPS[i - 1]
+NARR = t; TAIL = 3.0 if N == 18 else 1.6; TOTAL = NARR + TAIL
 
 # --- 文字の部品
 _fc = {}
@@ -144,6 +147,7 @@ def add(im, x, y, t0, t1, anchor='c'):
 E = lambda i: S[i] + D[i] + GAPS[i - 1]  # 行の終わり (次の行の始まり)
 # 字幕 (セリフの間だけ。18 は名前の文字があるので出さない)
 for i, s in SUBS.items():
+    if i > N: continue
     sb = subband(s); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + D[i] + 0.25)
 # 見出し・テロップ (明朝・シャンパンゴールド・細い罫線。レースの場面は画面上部、谷上の場面は頭にかからない大きさ)
 add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP))), W // 2, 140, S[1] + 0.1, E(1))
@@ -158,13 +162,23 @@ add(label('主戦　池添謙一'), W // 2, 60, S[10] + D[10] * 0.55, E(10))
 add(stack(label('2013.12.22　中山競馬場', 30), mtext('有馬記念　{ラストラン}', 72)), W // 2, 40, S[12] + 0.2, E(12))
 add(veil(stack(mtext('{8馬身差}', 136), rule(300), mtext('の圧勝', 60))), W // 2, 140, S[13] + 0.3, E(13))
 add(mtext('―― 池添謙一（インタビュー）', 32), W // 2, 1690, S[16] + 0.8, E(16))
+def bubble(w=86, h=66):
+    # コメントの吹き出し (細い金の線)
+    im = Image.new('RGBA', (w + 8, h + 26), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    d.rounded_rectangle((4, 4, w + 4, h + 4), 18, outline=CHAMP + (240,), width=4)
+    d.polygon([(22, h + 2), (22, h + 24), (44, h + 2)], fill=CHAMP + (240,))
+    for k in range(3): d.ellipse((w // 2 - 22 + k * 22 - 5, h // 2 - 1, w // 2 - 22 + k * 22 + 5, h // 2 + 9), fill=CHAMP + (240,))
+    return im
+if N == 19:
+    add(veil(stack(bubble(), mtext('あなたは、どう見ましたか', 54), rule(320), mtext('{コメント}で聞かせてください', 44), gap=6), pad=50, a=110),
+        W // 2, 90, S[19] + 0.3, TOTAL)
 json.dump(dict(S=S, D=D, NARR=NARR, TOTAL=TOTAL), open('timing.json', 'w'))
 
 # --- 映像
 SH = {1: ('V01', 'k'), 2: ('V02', 'white'), 3: (TANIUE['3'], 'wan'), 4: ('V04', 'k'), 5: ('V05', 'k'), 6: ('V06', 'k'),
       7: ('V07', 'k'), 8: (TANIUE['8'], TANIUE.get('8k', 'wan')), 9: (TANIUE.get('9', 'V09'), 'k'), 10: (TANIUE['10'], 'wan'), 11: ('V11', 'k'),
       12: (TANIUE['12'], 'wan'), 13: ('V13', 'k'), 14: ('V14', 'k'), 15: ('V15', 'k'), 16: (TANIUE['16'], TANIUE.get('16k', 'wan')),
-      17: ('V01', 'memory'), 18: ('V18', 'k')}
+      17: ('V01', 'memory'), 18: ('V18', 'k'), 19: ('T19', 'wan')}
 args, ch, n = [], [], 0
 def clip(name, kind, L):
     global n
@@ -175,13 +189,13 @@ def clip(name, kind, L):
     if kind == 'white': f += f',fade=t=out:st={max(0, L - 0.6):.2f}:d=0.6:color=white'
     if kind == 'memory': f += f',fade=t=in:st=0:d=0.3:color=white,fade=t=out:st={L - 0.3:.2f}:d=0.3:color=white'
     ch.append(f + f'[v{n}]'); n += 1
-for i in range(1, 19): clip(*SH[i], D[i] + GAPS[i - 1])
-clip(TANIUE['tail'], 'k', TAIL)
+for i in range(1, N + 1): clip(*SH[i], D[i] + GAPS[i - 1] + (TAIL if i == 19 else 0))
+if N == 18: clip(TANIUE['tail'], 'k', TAIL)
 vin = ''.join(f'[v{k}]' for k in range(n))
 fc = ';'.join(ch) + f';{vin}concat=n={n}:v=1:a=0[b0]'
 base = n
 args += ['-loop', '1', '-framerate', '30', '-t', f'{TOTAL:.2f}', '-i', 'clips/title.png']
-fc += f';[{base}:v]scale={W}:{H},format=rgba,fade=t=in:st={S[18] + 0.3:.2f}:d=0.8:alpha=1[ttl];[b0][ttl]overlay=0:0:enable=\'gte(t,{S[18] + 0.3:.2f})\'[b1]'
+fc += f';[{base}:v]scale={W}:{H},format=rgba,fade=t=in:st={S[18] + 0.3:.2f}:d=0.8:alpha=1[ttl];[b0][ttl]overlay=0:0:enable=\'between(t,{S[18] + 0.3:.2f},{(S[19] if N == 19 else TOTAL):.2f})\'[b1]'
 cur = 'b1'; k = base + 1
 for j, (p, x, y, t0, t1) in enumerate(EL):
     args += ['-loop', '1', '-framerate', '30', '-t', f'{TOTAL:.2f}', '-i', p]
