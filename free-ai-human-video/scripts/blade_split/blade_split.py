@@ -1,4 +1,4 @@
-"""「おじさんフルーツを300人に増やせる?」円形の場所で2枚の刃が逆向き・別の速さで回り、刃と刃にはさまれると増殖する物理ショート。
+"""「おじさんフルーツを350人に増やせる?」円形の場所で2枚の刃が逆向き・別の速さで回り、刃と刃にはさまれると増殖する物理ショート。
 
 - 円の中を、顔のついたおじさんフルーツ(Higgs Field で生成した写真6種類)が、かべや刃に当たりながら跳ね返り続ける
   (重力なし・止まらずに同じ速さで飛び回る)。
@@ -42,8 +42,8 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
-TARGET = int(os.environ.get("TARGET", 300))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 30.1))
+TARGET = int(os.environ.get("TARGET", 350))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 29.9))
 OBJ_R = float(os.environ.get("OBJ_R", 20.0))            # おじさんの大きさ(半径)
 SPEED = float(os.environ.get("SPEED", 300.0))           # 飛び回る速さ(ずっと同じ)
 CX, CY = W / 2, 1150.0                                  # 円の中心
@@ -54,7 +54,7 @@ W_B = float(os.environ.get("W_B", -1.3))                # 刃B の回る速さ(�
 # 増殖するたびに変わるフルーツの順番(OJ.NAMES の番号): りんご → もも → オレンジ → いちご → レモン → スイカ → …
 ROUND_KINDS = [0, 4, 1, 3, 2, 5]
 START_KIND = 5   # 最初の1人(スイカのおじさん)
-SPAWN_DELAY = 0.22
+SPAWN_DELAY = 0.0 
 BLADE_CAT, FRUIT_CAT = 0b10, 0b01
 PASS_MASK = pymunk.ShapeFilter.ALL_MASKS() ^ BLADE_CAT
 HELD_MASK = pymunk.ShapeFilter.ALL_MASKS() ^ BLADE_CAT ^ FRUIT_CAT   # はさまれ中は、刃ともほかのおじさんともぶつからない
@@ -246,6 +246,15 @@ class Game:
                 self.events.append(("fail", self.t, None))
 
 
+def squeeze(info, gap):
+    """刃のあいだに閉じこめられたおじさんの、すきまの向きのつぶれ具合(1 = つぶれていない)。"""
+    if "hold" not in info:
+        return 1.0
+    rho, _ = info["hold"]
+    w = rho * min(gap, 2 * math.pi - gap) - 10   # すきまの幅(刃の太さぶんを引く)
+    return max(0.12, min(1.0, w / (2 * OBJ_R * 1.25)))
+
+
 def simulate(seed, record=False):
     g = Game(seed)
     frames = []
@@ -255,7 +264,8 @@ def simulate(seed, record=False):
             g.step(dt)
         if record:
             frames.append({"t": g.t, "aA": g.blades[0].angle, "aB": g.blades[1].angle, "n": len(g.objs),
-                           "objs": [(b.position.x, b.position.y, b.angle, info["kind"], info["id"], info.get("hit"))
+                           "objs": [(b.position.x, b.position.y, b.angle, info["kind"], info["id"], info.get("hit"),
+                                     squeeze(info, g.gap()))
                                     for b, info in g.objs.items()]})
         if g.result is not None:
             extra = OUTRO + SCARE_DUR if g.result == "fail" else FV.DURATION
@@ -385,7 +395,7 @@ def render(seed):
         ctx.arc(CX, CY, R, 0, 2 * math.pi)
         ctx.fill()
         draw_ring(ctx)
-        for x, y, ang, kind, oid, hit in fr["objs"]:
+        for x, y, ang, kind, oid, hit, sq in fr["objs"]:
             if oid not in born:
                 born[oid] = t
             a = t - born[oid]
@@ -397,6 +407,13 @@ def render(seed):
                 ctx.rotate(hit[1])
                 ctx.scale(1 - 0.28 * e, 1 + 0.18 * e)
                 ctx.rotate(-hit[1])
+                ctx.translate(-x, -y)
+            if sq < 1.0:   # 刃のあいだで押しつぶされる(すきまの向きに細くなる)
+                tg = math.atan2(y - CY, x - CX) + math.pi / 2
+                ctx.translate(x, y)
+                ctx.rotate(tg)
+                ctx.scale(sq, 1 + 0.25 * (1 - sq))
+                ctx.rotate(-tg)
                 ctx.translate(-x, -y)
             OJ.draw_fruit(ctx, kind, x, y, OBJ_R * 1.25 * k, ang * 0.3)
             ctx.restore()
