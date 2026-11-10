@@ -29,6 +29,7 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else 'orfevre_arc_v2.mp4'
 WHATIF = os.environ.get('WHATIF') == '1'
 # NOSORA=1 (v10〜): 「ソラを使って、負けた。」を入れない。02 は「もしも〜」だけ (vo/line_02.mp3 = 02b のみ)、映像は幻のゴール P02 だけ
 NOSORA = os.environ.get('NOSORA') == '1'
+# SKIP1=1 (v12〜): 01 を入れない。PRE=0 と合わせて「もしも〜」(02) から始める
 SUBS = {1: '世界一まで、あと一歩のところで。', 2: '{ソラ}を使って、負けた。',
         3: '2012年、フランス・凱旋門賞。\n日本の夢を背負った、金色の馬がいました。',
         4: '直線、外から一気に先頭へ。\n誰もが「勝った」と思いました。',
@@ -59,13 +60,16 @@ def run(*a): subprocess.run(a, check=True)
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).decode())
 # --- ナレーション: 前後の無音を削って行間を足す
 os.makedirs('vo/t', exist_ok=True); D = {}
+SKIP1 = os.environ.get('SKIP1') == '1'
+FIRST = 2 if SKIP1 else 1
 for i in range(1, N + 1):
     run('ffmpeg', '-y', '-loglevel', 'error', '-i', f'vo/line_{i:02d}.mp3', '-af', TRIM + f',apad=pad_dur={GAPS[i-1]}', '-ar', '48000', '-ac', '1', f'vo/t/{i:02d}.wav')
     D[i] = dur(f'vo/t/{i:02d}.wav') - GAPS[i - 1]
 with open('vo/t/list.txt', 'w') as f:
-    for i in range(1, N + 1): f.write(f"file '{i:02d}.wav'\n")
+    for i in range(FIRST, N + 1): f.write(f"file '{i:02d}.wav'\n")
 run('ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 'vo/t/list.txt', '-af', 'loudnorm=I=-16:TP=-1.5', '-ar', '48000', 'vo/narr.wav')
 S, t = {}, 0.0
+if SKIP1: D[1] = 0.0; GAPS[0] = 0.0
 for i in range(1, N + 1): S[i] = t; t += D[i] + GAPS[i - 1]
 NARR = t; TAIL = 3.0 if N == 18 else 1.6; TOTAL = NARR + TAIL
 # 冒頭のタイトル「残り100メートルの悲劇」(掴み)。PRE 秒ぶん全体を後ろにずらす。PRE=0 で無し
@@ -164,7 +168,7 @@ def add(im, x, y, t0, t1, anchor='c'):
 E = lambda i: S[i] + D[i] + GAPS[i - 1]  # 行の終わり (次の行の始まり)
 # 字幕 (セリフの間だけ。18 は名前の文字があるので出さない)
 for i, s in SUBS.items():
-    if i > N: continue
+    if i > N or i < FIRST: continue
     if str(i) in SPLIT and '\n' in s:
         ts = SPLIT[str(i)][0]; a_, b_ = s.split('\n', 1)
         sb = subband(a_); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + ts)
@@ -172,7 +176,8 @@ for i, s in SUBS.items():
         continue
     sb = subband(s); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + D[i] + 0.25)
 # 見出し・テロップ (明朝・シャンパンゴールド・細い罫線。レースの場面は画面上部、谷上の場面は頭にかからない大きさ)
-if L1V3:
+if SKIP1: pass
+elif L1V3:
     add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP), mtext('届かなかった', 56))), W // 2, 140, S[1] + 0.1, E(1))
 else:
     add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP))), W // 2, 140, S[1] + 0.1, E(1))
@@ -181,7 +186,7 @@ if not NOSORA:
 if WHATIF:
     # 02 後半「もしも、あの日の鞍上が池添謙一だったら」: 幻のゴールに明朝の「もしも――」
     t2 = S[2] + SPLIT['2'][0] if '2' in SPLIT else S[2]
-    add(veil(stack(mtext('もしも――', 120), rule(300), mtext('鞍上が　{池添謙一}だったら', 52)), pad=50, a=100), W // 2, 140, t2 + 0.3, E(2))
+    add(veil(stack(mtext('もしも――', 120), rule(300), mtext('鞍上が　{池添謙一}だったら', 52)), pad=50, a=100), W // 2, 140, 0.0 if SKIP1 else t2 + 0.3, E(2))
     # 03 後半で名前をはっきり出す
     t3 = S[3] + SPLIT['3'][0]
     add(veil(stack(label('2011年　三冠馬', 32), mtext('オルフェーヴル', 112, CHAMP)), pad=50, a=110), W // 2, 140, t3 + 0.9, E(3))
@@ -229,12 +234,12 @@ def clip(name, kind, L):
     if kind == 'slow1': f += ',setpts=1.25*PTS'
     if kind == 'memory': f += ',setpts=1.6*PTS,eq=saturation=0.55:brightness=0.03,vignette=angle=PI/4,gblur=sigma=0.8'
     f += f',tpad=stop_mode=clone:stop_duration={L},trim=duration={L:.3f},setpts=PTS-STARTPTS'
-    if kind == 'dream': f += ',fade=t=in:st=0:d=0.5:color=white'
+    if kind == 'dream' and not SKIP1: f += ',fade=t=in:st=0:d=0.5:color=white'
     if kind == 'white': f += f',fade=t=out:st={max(0, L - 0.6):.2f}:d=0.6:color=white'
     if kind == 'memory': f += f',fade=t=in:st=0:d=0.3:color=white,fade=t=out:st={L - 0.3:.2f}:d=0.3:color=white'
     ch.append(f + f'[v{n}]'); n += 1
 if PRE > 0: clip('V05', 'pre', PRE)
-for i in range(1, N + 1):
+for i in range(FIRST, N + 1):
     L = D[i] + GAPS[i - 1] + (TAIL if i == 19 else 0)
     if str(i) in SPLIT:
         ts, nm = SPLIT[str(i)][:2]; kd = SPLIT[str(i)][2] if len(SPLIT[str(i)]) > 2 else 'k'
@@ -254,14 +259,14 @@ for j, (p, x, y, t0, t1) in enumerate(EL):
     cur = f'c{j}'; k += 1
 # 下の金の進行バー
 args += ['-f', 'lavfi', '-t', f'{TOTAL:.2f}', '-i', f'color=c=0xFFC42E:s={W}x10:r=30']
-fc += f";[{cur}][{k}:v]overlay=x='-w+w*t/{TOTAL:.2f}':y=H-10,{'' if PRE > 0 else 'fade=t=in:st=0:d=0.5,'}fade=t=out:st={TOTAL - 1.0:.2f}:d=1.0[vout]"; k += 1
+fc += f";[{cur}][{k}:v]overlay=x='-w+w*t/{TOTAL:.2f}':y=H-10,{'' if PRE > 0 or SKIP1 else 'fade=t=in:st=0:d=0.5,'}fade=t=out:st={TOTAL - 1.0:.2f}:d=1.0[vout]"; k += 1
 # DUCK=1: ナレーションの間だけ BGM を下げる (セリフのない所は BGM が前に出る)
 DUCKF = ('[bg0];[bg0][nk]sidechaincompress=threshold=0.012:ratio=5:attack=25:release=500' if os.environ.get('DUCK') == '1'
          else '[bg0];[nk]anullsink;[bg0]anull')
 args += ['-i', 'vo/narr.wav', '-i', os.environ.get('BGM', 'clips/bgm.m4a'), '-f', 'lavfi', '-t', '2.5', '-i',
          "aevalsrc='0.9*sin(2*PI*(70-35*t)*t)*exp(-2.2*t)':s=48000"]  # タイトルの低い衝撃音
 fc += (f';[{k}:a]aresample=48000,adelay={int(PRE * 1000)}:all=1,apad,atrim=0:{TOTAL:.2f},asplit=2[na][nk];[{k+1}:a]aresample=48000,apad,atrim=0:{TOTAL:.2f},volume={os.environ.get("BGM_VOL", "0.20")},'
-       f'afade=t=in:st=0:d={0.05 if PRE > 0 else 1.0},afade=t=out:st={TOTAL - 3:.2f}:d=3{DUCKF}[bg];[na][bg]amix=inputs=2:duration=first:normalize=0[mx];'
+       f'afade=t=in:st=0:d={0.05 if PRE > 0 or SKIP1 else 1.0},afade=t=out:st={TOTAL - 3:.2f}:d=3{DUCKF}[bg];[na][bg]amix=inputs=2:duration=first:normalize=0[mx];'
        f'[{k+2}:a]aresample=48000,volume={0.8 if PRE > 0 else 0},apad,atrim=0:{TOTAL:.2f}[hit];[mx][hit]amix=inputs=2:duration=first:normalize=0[aout]')
 run('ffmpeg', '-y', '-loglevel', 'error', *args, '-filter_complex', fc, '-map', '[vout]', '-map', '[aout]',
     '-c:v', 'libx264', '-crf', '20', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-t', f'{TOTAL:.2f}', OUT)

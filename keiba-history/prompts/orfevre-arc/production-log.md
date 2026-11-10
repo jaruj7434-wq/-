@@ -157,3 +157,11 @@
 - BGM: edit/orfevre-arc/bgm_mix_v11.sh → clips/bgm_mix5.m4a (01 以降を 0.51秒うしろへ)
 - 使用: 声1本 (約0.2クレジット)
 - v11 書き出し: `... WHATIF=1 NOSORA=1 L1V3=1 BGM=clips/bgm_mix5.m4a ...` (edit/orfevre-arc/bgm_mix_v11.sh 参照) → 112.9秒、平均 -16.8dB・最大 -1.4dB → Higgs media 333fd030 → assets/output/orfevre-arc/orfevre_arc_v11.mp4
+
+## v12 (ユーザー指定 2026-11-10): 「もしも、鞍上が〜」から始める
+- ユーザーの選択: 冒頭タイトル「残り100メートルの悲劇」と 01「世界一まで、あと一歩、届かなかった。」は両方カット
+- 0秒目から幻のゴール + 「もしも―― 鞍上が池添謙一だったら」のテロップ + BGM (白・黒からのフェードなし。1フレーム目から見える)
+- render_orf.py: PRE=0 と SKIP1=1 (01 の声・映像・字幕・見出しを入れない)
+- BGM: edit/orfevre-arc/bgm_mix_v12.sh → clips/bgm_mix6.m4a (全体を 6.11秒前へ。A の前半はなくなり、E から始まる)
+- 新しい生成なし (0クレジット)
+- v12 書き出し: `PRE=0 ... WHATIF=1 NOSORA=1 L1V3=1 SKIP1=1 BGM=clips/bgm_mix6.m4a ...` (edit/orfevre-arc/bgm_mix_v12.sh 参照) → 106.8秒、平均 -16.9dB・最大 -1.3dB、0秒目から BGM 約-16dB → Higgs media 86dcfb8b → assets/output/orfevre-arc/orfevre_arc_v12.mp4
