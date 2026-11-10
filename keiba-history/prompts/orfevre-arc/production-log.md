@@ -66,3 +66,5 @@
 - テロップ・字幕: edit/orfevre-arc/render_orf.py (Higgs サンドボックスで実行。フォントがそこにあるため)
   - 見た目はこれまでと同じ: 見出し Dela Gothic One + 縁取り、強調は金、字幕は黒い角丸の帯 (Noto Sans JP Bold)、下に金の進行バー、1080x1920
   - 名前は最後まで出さない (字幕も 18 は出さず、名前の文字だけ)
+- v2 書き出し: サンドボックス ~/orfed で `TANIUE='{"3":"T03c","8":"T08c","10":"T10c","12":"T12c","16":"T16c","tail":"V19c"}' python3 render_orf.py orfevre_arc_v2.mp4` → 1080x1920, 100.3秒 → Higgs media a7450cc4 → assets/output/orfevre-arc/orfevre_arc_v2.mp4
+  - テロップ29個 (字幕17 + 見出し・名前・出典12)。名前は最後 (94.0秒) まで出さない
