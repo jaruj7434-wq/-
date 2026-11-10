@@ -123,3 +123,8 @@
 - render_orf.py: BGM (ファイル)・BGM_VOL・DUCK=1 (ナレーションの間だけ BGM を下げる sidechaincompress) を追加
 - v7 書き出し: `TANIUE=... SPLIT='{"3":[3.45,"H03"]}' BGM=clips/bgm_mix.m4a BGM_VOL=0.32 DUCK=1 python3 render_orf.py orfevre_arc_v7.mp4` → 107.4秒、平均 -17.0dB・最大 -1.4dB (v6 と同じ音量感) → Higgs media 0e0f7b66 → assets/output/orfevre-arc/orfevre_arc_v7.mp4
   - BGM の使用: 通し3曲 + 場面ごと4曲 ≒ 約27クレジット
+
+## v8 (ユーザー指定 2026-11-10): BGM を冒頭0秒からしっかり流す
+- A を 3秒うしろに置いていたのをやめ、0秒から流す。止まる位置 (敗れる瞬間) がずれないよう A を atempo 0.89 (約107bpm) にして約28秒で止まるようにした。冒頭の静かな所は音量を上げる (タイトルの0〜2.6秒 ×6、〜8秒 ×1.8、8〜11秒でなめらかに等倍へ。最後に alimiter)。最初の ×2.5 案はタイトル中の BGM が約-30dB と小さかったため作り直し → clips/bgm_mix2.m4a
+- 新しい生成なし (0クレジット)
+- v8 書き出し: BGM=clips/bgm_mix2.m4a (他は v7 と同じ) → 107.4秒、タイトル中の音量 約-23dB (v7 は約-31dB)、平均 -17.0dB・最大 -1.4dB → Higgs media c9dcafd3 → assets/output/orfevre-arc/orfevre_arc_v8.mp4
