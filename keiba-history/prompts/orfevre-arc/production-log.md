@@ -150,3 +150,10 @@
 - BGM: edit/orfevre-arc/bgm_mix_v10.sh → clips/bgm_mix4.m4a (02 が約2.8秒短くなった分、E 以降を前へ)
 - 新しい生成なし (0クレジット)
 - v10 書き出し: `TANIUE=... SPLIT='{"3":[3.45,"H03"]}' WHATIF=1 NOSORA=1 BGM=clips/bgm_mix4.m4a BGM_VOL=0.32 DUCK=1 python3 render_orf.py orfevre_arc_v10.mp4` → 112.4秒、平均 -16.9dB・最大 -1.3dB → Higgs media 65830409 → assets/output/orfevre-arc/orfevre_arc_v10.mp4
+
+## v11 (ユーザー指定 2026-11-10): 冒頭のナレーションを「世界一まで、あと一歩、届かなかった。」に
+- 声 (ElevenLabs v4、谷上-2) c7458a6c → vo/line_01.mp3 (旧は line_01_v2.mp3)。3.31秒 (旧 2.81秒、+0.5秒)
+- 字幕と見出しを「世界一まで、／あと一歩／届かなかった」に (render_orf.py の L1V3=1)。V01 (3秒) が足りないので 01 だけ 1.25倍ゆっくり (slow1)
+- BGM: edit/orfevre-arc/bgm_mix_v11.sh → clips/bgm_mix5.m4a (01 以降を 0.51秒うしろへ)
+- 使用: 声1本 (約0.2クレジット)
+- v11 書き出し: `... WHATIF=1 NOSORA=1 L1V3=1 BGM=clips/bgm_mix5.m4a ...` (edit/orfevre-arc/bgm_mix_v11.sh 参照) → 112.9秒、平均 -16.8dB・最大 -1.4dB → Higgs media 333fd030 → assets/output/orfevre-arc/orfevre_arc_v11.mp4

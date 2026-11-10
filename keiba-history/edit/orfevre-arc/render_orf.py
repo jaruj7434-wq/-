@@ -52,6 +52,9 @@ if WHATIF:
     SUBS[3] = '2012年、フランス・凱旋門賞。\n日本の夢を背負った、三冠馬・{オルフェーヴル}。'
 if NOSORA:
     SUBS[2] = 'もしも、あの日の鞍上が、池添謙一だったら――。\n結果は、変わっていたのかもしれない。'
+# L1V3=1 (v11〜): 01 を「世界一まで、あと一歩、届かなかった。」に (vo/line_01.mp3 を差し替え済み)
+L1V3 = os.environ.get('L1V3') == '1'
+if L1V3: SUBS[1] = '世界一まで、あと一歩、届かなかった。'
 def run(*a): subprocess.run(a, check=True)
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).decode())
 # --- ナレーション: 前後の無音を削って行間を足す
@@ -169,7 +172,10 @@ for i, s in SUBS.items():
         continue
     sb = subband(s); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + D[i] + 0.25)
 # 見出し・テロップ (明朝・シャンパンゴールド・細い罫線。レースの場面は画面上部、谷上の場面は頭にかからない大きさ)
-add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP))), W // 2, 140, S[1] + 0.1, E(1))
+if L1V3:
+    add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP), mtext('届かなかった', 56))), W // 2, 140, S[1] + 0.1, E(1))
+else:
+    add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP))), W // 2, 140, S[1] + 0.1, E(1))
 if not NOSORA:
     add(veil(stack(mtext('{ソラ}を使って', 66), rule(), mtext('負けた', 124))), W // 2, 140, S[2], S[2] + SPLIT['2'][0] if '2' in SPLIT else E(2))
 if WHATIF:
@@ -210,6 +216,7 @@ SH = {1: ('V01', 'k'), 2: ('V02', 'white'), 3: (TANIUE['3'], 'wan'), 4: ('V04', 
       12: (TANIUE['12'], 'wan'), 13: ('V13', 'k'), 14: ('V14', 'k'), 15: ('V15', 'k'), 16: (TANIUE['16'], TANIUE.get('16k', 'wan')),
       17: ('V01', 'memory'), 18: ('V18', 'k'), 19: ('T19', 'wan')}
 if NOSORA: SH[2] = ('P02', 'dream')
+if L1V3: SH[1] = ('V01', 'slow1')  # 01 が約3.7秒になり V01 (3秒) が足りないので少しゆっくり
 args, ch, n = [], [], 0
 def clip(name, kind, L):
     global n
@@ -219,6 +226,7 @@ def clip(name, kind, L):
                             "scale=w='trunc(1080*(1+0.03*t)/2)*2':h=-2:eval=frame,crop=1080:1920")
     # dream: 幻のゴール (ゆっくり・淡い金色・柔らかい光・白から入る)
     if kind == 'dream': f += ',setpts=1.65*PTS,eq=saturation=0.75:brightness=0.04:gamma=1.05,colorbalance=rm=0.06:bm=-0.05,gblur=sigma=0.7,vignette=angle=PI/4'
+    if kind == 'slow1': f += ',setpts=1.25*PTS'
     if kind == 'memory': f += ',setpts=1.6*PTS,eq=saturation=0.55:brightness=0.03,vignette=angle=PI/4,gblur=sigma=0.8'
     f += f',tpad=stop_mode=clone:stop_duration={L},trim=duration={L:.3f},setpts=PTS-STARTPTS'
     if kind == 'dream': f += ',fade=t=in:st=0:d=0.5:color=white'
