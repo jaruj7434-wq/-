@@ -31,6 +31,7 @@ from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 sys.path.insert(0, HERE)
 import ojisan as OJ  # noqa: E402
 import blade_fever as FV  # noqa: E402
+import ojisan_voice as OV  # noqa: E402   増殖した瞬間のおじさんの声
 sys.path.insert(0, os.path.join(HERE, "..", "press_split"))
 from press_split import note_hz, pop, hiss  # noqa: E402
 
@@ -425,6 +426,9 @@ def boing(f0, seed):
     return (np.sin(ph) + 0.3 * np.sin(2 * ph)) * np.minimum(1, t / 0.003) * np.exp(-t * 9)
 
 
+VOICE_GAIN = 0.7   # おじさんの声の大きさ(効果音より少し前に出る)
+
+
 def synth_audio(res, duration, path):
     events, end_t, fail = res["events"], res["result_t"], res["result"] == "fail"
     n_out = int((duration + 3) * SR)
@@ -438,6 +442,8 @@ def synth_audio(res, duration, path):
         if i < n_out:
             b[i:j] += g * sig[: j - i]
 
+    voices = [OV.voice(k, SR) for k in range(6)]
+    voices = [v / np.sqrt(np.mean(v ** 2)) * 0.13 for v in voices]   # どの声も同じくらいの大きさに
     last_b = -1.0
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.01:
@@ -452,6 +458,7 @@ def synth_audio(res, duration, path):
             add(hiss(int(t * 100))[: int(0.12 * SR)], t, 0.12)
         elif kind == "split":
             k, total, rk = data
+            add(voices[rk], t + 0.02, VOICE_GAIN, extra)   # 「Appleeee~!」(ビブラートつきのおじさんの声)
             base = int(2.0 * math.log2(max(2, total)))
             for j in range(min(8, k)):   # 「ボヨボヨボヨン」と駆け上がる
                 add(boing(note_hz(base + j) * 0.75, j), t + j * 0.04, 0.3)
