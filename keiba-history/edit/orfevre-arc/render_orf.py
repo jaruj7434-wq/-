@@ -22,6 +22,8 @@ N = 19 if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__))
 TRIM = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,"
         "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse")
 TANIUE = json.loads(os.environ.get('TANIUE', '{"3":"T03","8":"T08","10":"T10","12":"T12","16":"T16","tail":"V19"}'))
+# 行の途中で映像を切り替える: {"3": [行頭からの秒, "H03"]} → 前半は元の映像 (谷上)、後半は H03 (字幕も改行の位置で2枚に分ける)
+SPLIT = json.loads(os.environ.get('SPLIT', '{}'))
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'orfevre_arc_v2.mp4'
 SUBS = {1: '世界一まで、あと一歩のところで。', 2: '{ソラ}を使って、負けた。',
         3: '2012年、フランス・凱旋門賞。\n日本の夢を背負った、金色の馬がいました。',
@@ -151,11 +153,16 @@ E = lambda i: S[i] + D[i] + GAPS[i - 1]  # 行の終わり (次の行の始ま�
 # 字幕 (セリフの間だけ。18 は名前の文字があるので出さない)
 for i, s in SUBS.items():
     if i > N: continue
+    if str(i) in SPLIT and '\n' in s:
+        ts = SPLIT[str(i)][0]; a_, b_ = s.split('\n', 1)
+        sb = subband(a_); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + ts)
+        sb = subband(b_); add(sb, W // 2, 1560 - sb.height // 2, S[i] + ts, S[i] + D[i] + 0.25)
+        continue
     sb = subband(s); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + D[i] + 0.25)
 # 見出し・テロップ (明朝・シャンパンゴールド・細い罫線。レースの場面は画面上部、谷上の場面は頭にかからない大きさ)
 add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP))), W // 2, 140, S[1] + 0.1, E(1))
 add(veil(stack(mtext('{ソラ}を使って', 66), rule(), mtext('負けた', 124))), W // 2, 140, S[2], E(2))
-add(stack(label('2012.10.7　ロンシャン競馬場', 30), mtext('凱旋門賞', 86)), W // 2, 40, S[3] + 0.2, E(3))
+add(stack(label('2012.10.7　ロンシャン競馬場', 30), mtext('凱旋門賞', 86)), W // 2, 40, S[3] + 0.2, S[3] + SPLIT['3'][0] if '3' in SPLIT else E(3))
 add(veil(stack(mtext('ソラを使う', 42, CHAMP), mtext('先頭に立って、気を抜くこと', 32)), pad=40, a=110), W // 2, 1160, S[5] + 0.3, E(5))
 add(veil(stack(mtext('{クビ差}', 150), rule(300), mtext('2着', 76))), W // 2, 140, S[6] + D[6] * 0.55, E(6))
 add(label('鞍上　C.スミヨン'), 40, 200, S[7] + 0.2, E(7), anchor='l')
@@ -198,7 +205,11 @@ def clip(name, kind, L):
     if kind == 'memory': f += f',fade=t=in:st=0:d=0.3:color=white,fade=t=out:st={L - 0.3:.2f}:d=0.3:color=white'
     ch.append(f + f'[v{n}]'); n += 1
 if PRE > 0: clip('V05', 'pre', PRE)
-for i in range(1, N + 1): clip(*SH[i], D[i] + GAPS[i - 1] + (TAIL if i == 19 else 0))
+for i in range(1, N + 1):
+    L = D[i] + GAPS[i - 1] + (TAIL if i == 19 else 0)
+    if str(i) in SPLIT:
+        ts, nm = SPLIT[str(i)]; clip(*SH[i], ts); clip(nm, 'k', L - ts)
+    else: clip(*SH[i], L)
 if N == 18: clip(TANIUE['tail'], 'k', TAIL)
 vin = ''.join(f'[v{k}]' for k in range(n))
 fc = ';'.join(ch) + f';{vin}concat=n={n}:v=1:a=0[b0]'
