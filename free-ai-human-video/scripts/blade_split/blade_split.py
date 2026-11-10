@@ -42,8 +42,8 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
-TARGET = int(os.environ.get("TARGET", 3000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 29.9))
+TARGET = int(os.environ.get("TARGET", 3200))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 40.5))
 OBJ_R = float(os.environ.get("OBJ_R", 20.0))            # おじさんの大きさ(半径)
 SPEED = float(os.environ.get("SPEED", 300.0))           # 飛び回る速さ(ずっと同じ)
 CX, CY = W / 2, 1150.0                                  # 円の中心
