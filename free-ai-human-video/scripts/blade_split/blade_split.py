@@ -501,13 +501,10 @@ def synth_audio(res, duration, path):
         if i < n_out:
             b[i:j] += g * sig[: j - i]
 
-    voices, shorts = [], []
-    for k in range(6):
+    voices = []
+    for k in range(6):   # 早回しはせず、言葉を最後まで言い切らせる
         v = OV.voice(k, SR)
-        v = v / np.sqrt(np.mean(v ** 2)) * 0.22
-        voices.append(v)   # 1回目:はっきり聞こえる声
-        sp = max(1.0, len(v) / SR / 0.45)   # 2回目からは短く(約0.45秒以内)
-        shorts.append(np.interp(np.arange(0, len(v) - 1, sp), np.arange(len(v)), v))
+        voices.append(v / np.sqrt(np.mean(v ** 2)) * 0.22)
     last_b = -1.0
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.01:
@@ -522,12 +519,12 @@ def synth_audio(res, duration, path):
             add(hiss(int(t * 100))[: int(0.12 * SR)], t, 0.12)
         elif kind == "split":
             k, total, rk = data
-            # 1回目ははっきり大きく。増えた数だけ、そのあとに短い声が少し小さめに続く(全部で1.2秒以内)
+            # 1回目ははっきり大きく(聞き取れるように1人だけ)。増えた数だけ、うしろで小さく「わいわい」重なる
             add(voices[rk], t + 0.02, VOICE_GAIN)
             if k > 1:
-                gap = min(0.16, 1.0 / (k - 1))
-                for j in range(1, k):
-                    add(shorts[rk], t + 0.25 + (j - 1) * gap, VOICE_GAIN * 0.45 / (1 + 0.12 * min(k, 40) ** 0.5))
+                crowd = min(k - 1, 40)
+                for j in range(crowd):
+                    add(voices[rk], t + 0.25 + 0.9 * j / max(1, crowd), VOICE_GAIN * 0.5 / (1 + crowd ** 0.6))
     if fail:
         sig = scream(SR)
         i0 = int(end_t * SR)
