@@ -1,0 +1,488 @@
+"""「おじさんフルーツを240人に増やせる?」円形の場所で2枚の刃が逆向き・別の速さで回り、刃と刃にはさまれると増殖する物理ショート。
+
+- 円の中を、顔のついたおじさんフルーツ(Higgs Field で生成した写真6種類)が、かべや刃に当たりながら跳ね返り続ける
+  (重力なし・止まらずに同じ速さで飛び回る)。
+- まん中の軸から2枚の刃がのびていて、1枚は時計回り、もう1枚は反時計回りに、ちがう速さで回る(一定の速さ)。
+- 2枚の刃が近づいて重なるとき、そのあいだ(せまくなっていくすきま)にはさまれたおじさんは見えなくなり、
+  刃が重なり終わると2人に増えて内側と外側へはじき出される(1人なら2人、5人なら10人)。ねらってはさむことはしない(補正なし)。
+- 制限時間内に TARGET 人になれば成功(おじさんフィーバー)、ならなければ失敗(幽霊)。
+
+使い方:
+    python blade_split.py search [--want fail|success] [-n 200]
+    python blade_split.py render --seed N
+"""
+import argparse
+import math
+import os
+import subprocess
+import sys
+import wave
+from multiprocessing import Pool
+
+import cairo
+import numpy as np
+import pymunk
+
+HERE = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(HERE, "..", "ball_escape"))
+from ball_escape import text  # noqa: E402
+sys.path.insert(0, os.path.join(HERE, "..", "common"))
+from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
+sys.path.insert(0, HERE)
+import ojisan as OJ  # noqa: E402
+import blade_fever as FV  # noqa: E402
+sys.path.insert(0, os.path.join(HERE, "..", "press_split"))
+from press_split import note_hz, pop, hiss  # noqa: E402
+
+W, H = 1080, 1920
+FPS = 60
+SUBSTEPS = 4
+SR = 48000
+OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
+
+# ---------------------------------------------------------------- 物理の設定
+TARGET = int(os.environ.get("TARGET", 240))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 25.0))
+OBJ_R = float(os.environ.get("OBJ_R", 20.0))            # おじさんの大きさ(半径)
+SPEED = float(os.environ.get("SPEED", 300.0))           # 飛び回る速さ(ずっと同じ)
+CX, CY = W / 2, 1150.0                                  # 円の中心
+R = 470.0                                               # 円の半径
+HUB = 46.0                                              # まん中の軸の半径
+W_A = float(os.environ.get("W_A", 1.7))                 # 刃A の回る速さ(ラジアン/秒・時計回り)
+W_B = float(os.environ.get("W_B", -1.0))                # 刃B の回る速さ(反時計回り)
+SPAWN_DELAY = 0.12                                      # 刃が重なってから、増えたおじさんが出てくるまで
+MAX_OBJ = TARGET + 40
+CARRY = int(os.environ.get("CARRY", 1))                 # 刃に当たったら運ばれる
+OUTRO = 2.5
+
+
+class Game:
+    def __init__(self, seed):
+        self.rng = np.random.default_rng(seed)
+        sp = pymunk.Space()
+        sp.gravity = (0, 0)
+        sp.iterations = 20
+        self.space = sp
+        st = sp.static_body
+        n = 96
+        pts = [(CX + (R + 14) * math.cos(2 * math.pi * k / n), CY + (R + 14) * math.sin(2 * math.pi * k / n)) for k in range(n + 1)]
+        for a, b in zip(pts, pts[1:]):
+            s = pymunk.Segment(st, a, b, 14)
+            s.elasticity, s.friction = 1.0, 0.0
+            s.collision_type = 2
+            sp.add(s)
+        hub = pymunk.Circle(st, HUB, (CX, CY))
+        hub.elasticity, hub.friction = 1.0, 0.0
+        hub.collision_type = 2
+        sp.add(hub)
+        # 2枚の刃(軸のまわりを回る)
+        self.blades = []
+        for w, a0 in ((W_A, 0.0), (W_B, math.pi)):
+            b = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+            b.position = (CX, CY)
+            b.angle = a0
+            b.angular_velocity = w
+            s = pymunk.Segment(b, (HUB, 0), (R - 4, 0), 7)
+            s.elasticity, s.friction = 1.0, 0.0
+            s.collision_type = 3
+            sp.add(b, s)
+            self.blades.append(b)
+        sp.on_collision(1, 2, begin=self._bump)
+        sp.on_collision(1, 3, begin=self._blade_hit, pre_solve=self._blade_hit)
+        self.objs = {}
+        self.next_id = 0
+        self.t = 0.0
+        self.events = []
+        self.trapped = []
+        self.spawn_at = None
+        self.result, self.result_t = None, None
+        a = self.rng.uniform(0, 2 * math.pi)
+        rr = self.rng.uniform(150, 350)
+        d = self.rng.uniform(0, 2 * math.pi)
+        self.add_obj((CX + rr * math.cos(a), CY + rr * math.sin(a)), (SPEED * math.cos(d), SPEED * math.sin(d)),
+                     int(self.rng.integers(0, len(OJ.NAMES))))
+
+    def add_obj(self, pos, vel, kind):
+        m = 1.0
+        b = pymunk.Body(m, pymunk.moment_for_circle(m, 0, OBJ_R))
+        b.position = pos
+        b.velocity = vel
+        b.angular_velocity = self.rng.uniform(-2.5, 2.5)
+        s = pymunk.Circle(b, OBJ_R)
+        s.elasticity, s.friction = 1.0, 0.0
+        s.collision_type = 1
+        self.space.add(b, s)
+        self.objs[b] = {"id": self.next_id, "shape": s, "kind": kind}
+        self.next_id += 1
+
+    def _bump(self, arb, space, data):
+        if len(self.events) < 300000:
+            self.events.append(("bump", self.t, None))
+
+    def _blade_hit(self, arb, space, data):
+        """刃に当たったおじさんは、刃に押されていっしょに回る(はさまれるまで運ばれる)。"""
+        b = arb.shapes[0].body
+        info = self.objs.get(b)
+        if info is None:
+            return
+        if "ride" not in info:
+            self._bump(arb, space, data)
+        info["ride"] = 0 if arb.shapes[1].body is self.blades[0] else 1
+
+    def gap(self):
+        """刃A から進む向きに見た、刃B までの角度(これがせまくなってゼロになると重なる)。"""
+        a, b = self.blades[0].angle, self.blades[1].angle
+        return (b - a) % (2 * math.pi)
+
+    def step(self, dt):
+        g0 = self.gap()
+        self.t += dt
+        self.space.step(dt)
+        g1 = self.gap()
+        for b, info in self.objs.items():   # 速さはいつも同じ(刃に運ばれているものは刃といっしょに回る)
+            ride = info.get("ride")
+            if ride is not None and CARRY:
+                bl = self.blades[ride]
+                dx, dy = b.position.x - CX, b.position.y - CY
+                rho = math.hypot(dx, dy)
+                a = bl.angle + (OBJ_R + 8) / max(rho, 1) * (1 if bl.angular_velocity > 0 else -1)
+                b.position = (CX + rho * math.cos(a), CY + rho * math.sin(a))
+                w = bl.angular_velocity
+                b.velocity = (-w * rho * math.sin(a), w * rho * math.cos(a))
+                continue
+            v = b.velocity
+            n = v.length
+            if n > 1e-6:
+                b.velocity = v * (SPEED / n)
+        aA = self.blades[0].angle
+        # せまくなっていくすきまにいるおじさんは、はさまれて見えなくなる
+        caught = []
+        for b in self.objs:
+            dx, dy = b.position.x - CX, b.position.y - CY
+            rho = math.hypot(dx, dy)
+            al = (math.atan2(dy, dx) - aA) % (2 * math.pi)   # 刃A から見た角度
+            if al < g1 and rho * g1 < OBJ_R * 2.4 and rho > HUB:
+                caught.append((b, rho))
+        for b, rho in caught:
+            info = self.objs.pop(b)
+            self.space.remove(b, info["shape"])
+            self.trapped.append((rho, info["kind"]))
+        if caught:
+            self.events.append(("squash", self.t, len(caught)))
+        # 刃が重なった(すきまがゼロをこえて大きくなった)
+        if g1 > g0 + math.pi:
+            self.events.append(("cross", self.t, aA))
+            if self.trapped:
+                self.spawn_at = (self.t + SPAWN_DELAY, aA)
+        if self.spawn_at is not None and self.t >= self.spawn_at[0]:
+            _, a_cross = self.spawn_at
+            self.spawn_at = None
+            k = 0
+            # 重なった場所(2枚の刃のまんなかの向き)から、内側と外側へはじき出す
+            mid = a_cross + (W_A + W_B) / 2 * SPAWN_DELAY   # 重なった場所は2枚の刃の動きの平均の向きへ少し進む
+            for rho, kind in self.trapped:
+                for sgn in (-1, 1):
+                    if len(self.objs) >= MAX_OBJ:
+                        break
+                    rr = min(R - OBJ_R - 4, max(HUB + OBJ_R + 4, rho + sgn * OBJ_R * 0.6))
+                    px, py = CX + rr * math.cos(mid), CY + rr * math.sin(mid)
+                    d = mid + (0 if sgn > 0 else math.pi) + self.rng.uniform(-0.4, 0.4)
+                    nk = kind if sgn > 0 else int(self.rng.integers(0, len(OJ.NAMES)))
+                    self.add_obj((px, py), (SPEED * math.cos(d), SPEED * math.sin(d)), nk)
+                k += 1
+            self.trapped = []
+            self.events.append(("split", self.t, (k, len(self.objs))))
+        for b in list(self.objs):   # 円の外へ抜けたもの(めったにない)は消す
+            if math.hypot(b.position.x - CX, b.position.y - CY) > R + 30:
+                info = self.objs.pop(b)
+                self.space.remove(b, info["shape"])
+        if self.result is None:
+            if len(self.objs) + len(self.trapped) >= TARGET:
+                self.result, self.result_t = "success", self.t
+                self.events.append(("success", self.t, None))
+            elif self.t >= TIME_LIMIT:
+                self.result, self.result_t = "fail", self.t
+                self.events.append(("fail", self.t, None))
+
+
+def simulate(seed, record=False):
+    g = Game(seed)
+    frames = []
+    dt = 1 / FPS / SUBSTEPS
+    while True:
+        for _ in range(SUBSTEPS):
+            g.step(dt)
+        if record:
+            frames.append({"t": g.t, "aA": g.blades[0].angle, "aB": g.blades[1].angle, "n": len(g.objs) + len(g.trapped),
+                           "objs": [(b.position.x, b.position.y, b.angle, info["kind"], info["id"]) for b, info in g.objs.items()]})
+        if g.result is not None:
+            extra = OUTRO + SCARE_DUR if g.result == "fail" else FV.DURATION
+            if not record or g.t > g.result_t + extra:
+                break
+    return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "n": len(g.objs) + len(g.trapped)}
+
+
+def score(seed):
+    r = simulate(seed)
+    return seed, r["result"], r["result_t"], r["n"]
+
+
+def search(n, want):
+    with Pool(os.cpu_count()) as p:
+        rs = p.map(score, range(n))
+    succ = [r for r in rs if r[1] == "success"]
+    print(f"{n} シード中 成功 {len(succ)} 件 / 失敗 {n - len(succ)} 件")
+    pick = succ if want == "success" else [r for r in rs if r[1] != "success"]
+    pick.sort(key=lambda r: -r[2] if want == "success" else -r[3])
+    for r in pick[:15]:
+        print(f"seed={r[0]:4d}  {r[1]}  {r[2]:5.2f}秒  {r[3]}人")
+
+
+# ---------------------------------------------------------------- 描画
+BG = (0.03, 0.025, 0.05)
+GOLD = (1, 0.86, 0.2)
+
+
+def draw_ring(ctx):
+    for wdt, a in ((28, 0.08), (12, 0.2), (6, 0.95)):
+        ctx.arc(CX, CY, R + 8, 0, 2 * math.pi)
+        ctx.set_source_rgba(0.6, 0.75, 0.95, a)
+        ctx.set_line_width(wdt)
+        ctx.stroke()
+
+
+def draw_blade(ctx, ang, col_edge):
+    """刃:根元が太く先が細い、光る鋼の刃(片側に刃先のきらめき)。"""
+    ctx.save()
+    ctx.translate(CX, CY)
+    ctx.rotate(ang)
+    ctx.new_path()
+    ctx.move_to(HUB - 6, -16)
+    ctx.line_to(R - 30, -9)
+    ctx.line_to(R - 2, 0)
+    ctx.line_to(R - 30, 9)
+    ctx.line_to(HUB - 6, 16)
+    ctx.close_path()
+    g = cairo.LinearGradient(0, -16, 0, 16)
+    g.add_color_stop_rgb(0, 0.95, 0.97, 1.0)
+    g.add_color_stop_rgb(0.45, 0.7, 0.74, 0.8)
+    g.add_color_stop_rgb(1, 0.35, 0.38, 0.44)
+    ctx.set_source(g)
+    ctx.fill_preserve()
+    ctx.set_source_rgba(*col_edge, 0.9)
+    ctx.set_line_width(2.5)
+    ctx.stroke()
+    ctx.restore()
+
+
+def draw_hub(ctx, t):
+    g = cairo.RadialGradient(CX - 12, CY - 12, 4, CX, CY, HUB)
+    g.add_color_stop_rgb(0, 0.95, 0.95, 1.0)
+    g.add_color_stop_rgb(1, 0.3, 0.32, 0.38)
+    ctx.set_source(g)
+    ctx.arc(CX, CY, HUB, 0, 2 * math.pi)
+    ctx.fill()
+    for k in range(6):
+        a = k * math.pi / 3 + t * 0.5
+        ctx.arc(CX + 26 * math.cos(a), CY + 26 * math.sin(a), 5, 0, 2 * math.pi)
+        ctx.set_source_rgb(0.25, 0.27, 0.3)
+        ctx.fill()
+
+
+def render(seed):
+    res = simulate(seed, record=True)
+    events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
+    fail = result == "fail"
+    os.makedirs(OUT_DIR, exist_ok=True)
+    silent = os.path.join(OUT_DIR, f"blade_split_{seed}_video.mp4")
+    wav = os.path.join(OUT_DIR, f"blade_split_{seed}.wav")
+    final = os.path.join(OUT_DIR, f"blade_split_{seed}.mp4")
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    ff = subprocess.Popen(
+        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgra",
+         "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-c:v", "libx264",
+         "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
+        stdin=subprocess.PIPE)
+    ghost = GhostScare(W, H, seed) if fail else None
+    ending = None if fail else FV.FruitFever(W, H, seed, CX, CY, main=f"{TARGET}人達成!!", count=f"{TARGET} / {TARGET}")
+    born = {}
+    sparks = []
+    rng = np.random.default_rng(seed + 7)
+    last_cross = -9.0
+    ev_i = 0
+    prev_n = 1
+    for fi, fr in enumerate(frames):
+        t = fr["t"]
+        while ev_i < len(events) and events[ev_i][1] <= t:
+            kind, et, data = events[ev_i]
+            if kind == "cross":
+                last_cross = et
+                for _ in range(30):   # 刃が重なった所に火花
+                    rr = rng.uniform(HUB, R)
+                    a = rng.uniform(0, 2 * math.pi)
+                    sparks.append([CX + rr * math.cos(data), CY + rr * math.sin(data), math.cos(a) * rng.uniform(100, 500),
+                                   math.sin(a) * rng.uniform(100, 500), et])
+            ev_i += 1
+        over = end_t is not None and t >= end_t
+        if ghost is not None and over and t - end_t < SCARE_DUR:
+            ghost.draw(surf, t - end_t)
+            ff.stdin.write(surf.get_data())
+            continue
+        if ending is not None and over:
+            ending.draw(surf, ctx, t - end_t)
+            ff.stdin.write(surf.get_data())
+            continue
+        after = (t - end_t - SCARE_DUR) if over else 0
+        ctx.set_source_rgb(*BG)
+        ctx.paint()
+        g = cairo.RadialGradient(CX, CY, 50, CX, CY, R + 100)
+        g.add_color_stop_rgba(0, 0.16, 0.13, 0.25, 0.9)
+        g.add_color_stop_rgba(1, 0.05, 0.04, 0.08, 0.9)
+        ctx.set_source(g)
+        ctx.arc(CX, CY, R, 0, 2 * math.pi)
+        ctx.fill()
+        draw_ring(ctx)
+        for x, y, ang, kind, oid in fr["objs"]:
+            if oid not in born:
+                born[oid] = t
+            a = t - born[oid]
+            k = 1.0 if a > 0.15 else 0.7 + 0.3 * a / 0.15 + 0.25 * math.sin(math.pi * a / 0.15)
+            OJ.draw_fruit(ctx, kind, x, y, OBJ_R * 1.25 * k, ang * 0.3)
+        draw_blade(ctx, fr["aA"], (1.0, 0.5, 0.4))
+        draw_blade(ctx, fr["aB"], (0.4, 0.75, 1.0))
+        draw_hub(ctx, t)
+        if t - last_cross < 0.25:
+            fl = 1 - (t - last_cross) / 0.25
+            g = cairo.RadialGradient(CX, CY, 10, CX, CY, R)
+            g.add_color_stop_rgba(0, 1, 0.95, 0.7, 0.45 * fl)
+            g.add_color_stop_rgba(1, 1, 0.9, 0.5, 0)
+            ctx.set_source(g)
+            ctx.arc(CX, CY, R, 0, 2 * math.pi)
+            ctx.fill()
+        keep = []
+        for s in sparks:
+            a = t - s[4]
+            if a < 0.35:
+                ctx.arc(s[0] + s[2] * a, s[1] + s[3] * a, 3.5 * (1 - a / 0.35) + 0.5, 0, 2 * math.pi)
+                ctx.set_source_rgba(1, 0.95, 0.6, 1 - a / 0.35)
+                ctx.fill()
+                keep.append(s)
+        sparks = keep
+        text(ctx, "おじさんフルーツを", W / 2, 170, 74, sw=12)
+        text(ctx, f"{TARGET}人に増やせる？", W / 2, 300, 104, rgb=GOLD, sw=16)
+        n = fr["n"]
+        pop_ = 1.0 + (0.25 if n > prev_n else 0.0)
+        prev_n = n
+        text(ctx, f"{min(n, TARGET)}", W / 2 - 50, 500, 100 * pop_, rgb=(1, 1, 1), sw=12)
+        text(ctx, f"/ {TARGET} 人", W / 2 + 180, 500, 46, rgb=(0.8, 0.85, 0.9), sw=6)
+        left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
+        text(ctx, f"残り {left:4.1f}秒", W / 2, 1780, 60, rgb=(1, 0.4, 0.4) if left < 8 else (0.9, 0.9, 0.92), sw=8)
+        if over and fail:
+            k = min(1.0, after / 0.25)
+            text(ctx, "時間切れ…", W / 2, 1080, 130 * (1.15 - 0.15 * k), rgb=(1, 0.3, 0.3), sw=18)
+            text(ctx, f"あと{TARGET - res['n']}人だったのに…", W / 2, 1210, 72, sw=12)
+        ff.stdin.write(surf.get_data())
+        if fi % 300 == 0:
+            print(f"  描画 {fi}/{len(frames)}", file=sys.stderr)
+    ff.stdin.close()
+    ff.wait()
+    duration = len(frames) / FPS
+    synth_audio(res, duration, wav)
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", wav,
+         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+         "-shortest", "-movflags", "+faststart", final], check=True)
+    os.remove(silent)
+    os.remove(wav)
+    print(f"完成: {os.path.abspath(final)}  ({'失敗' if fail else '成功'} {res['n']}人 / 長さ {duration:.1f}秒)")
+
+
+# ---------------------------------------------------------------- 音
+def shing(seed):
+    """刃と刃が重なる「シャキーン」(金属がこすれて鳴る高い音)。"""
+    rng = np.random.default_rng(seed)
+    t = np.arange(int(0.7 * SR)) / SR
+    n = rng.normal(0, 1, len(t))
+    scrape = (n - np.convolve(n, np.ones(2) / 2, "same")) * np.exp(-((t - 0.03) / 0.03) ** 2)
+    ring = sum(a * np.sin(2 * np.pi * f * t) * np.exp(-t * d) for f, a, d in ((2200, 1, 6), (3350, 0.6, 8), (5100, 0.3, 11)))
+    return 0.6 * scrape + 0.4 * ring * np.minimum(1, t / 0.01)
+
+
+def boing(f0, seed):
+    """おじさんが増えて飛び出す、間の抜けた「ボヨン」(ビブラートつき)。"""
+    t = np.arange(int(0.3 * SR)) / SR
+    f = f0 * (1 + 0.7 * np.exp(-t * 25)) * (1 + 0.08 * np.sin(2 * np.pi * 13 * t))
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    return (np.sin(ph) + 0.3 * np.sin(2 * ph)) * np.minimum(1, t / 0.003) * np.exp(-t * 9)
+
+
+def synth_audio(res, duration, path):
+    events, end_t, fail = res["events"], res["result_t"], res["result"] == "fail"
+    n_out = int((duration + 3) * SR)
+    out = np.zeros(n_out)
+    extra = np.zeros(n_out)
+
+    def add(sig, t0, g=1.0, buf=None):
+        b = out if buf is None else buf
+        i = int(t0 * SR)
+        j = min(n_out, i + len(sig))
+        if i < n_out:
+            b[i:j] += g * sig[: j - i]
+
+    last_b = -1.0
+    for kind, t, data in events:
+        if end_t is not None and t > end_t + 0.01:
+            continue
+        if kind == "bump":
+            if t - last_b > 0.05:
+                add(pop(note_hz(int(t * 7) % 5) * 0.5, 0) * 0.5, t, 0.08)   # 当たったときの小さな「ポコッ」
+                last_b = t
+        elif kind == "cross":
+            add(shing(int(t * 100)), t, 0.4)
+        elif kind == "squash":
+            add(hiss(int(t * 100))[: int(0.12 * SR)], t, 0.12)
+        elif kind == "split":
+            k, total = data
+            base = int(2.0 * math.log2(max(2, total)))
+            for j in range(min(8, k)):   # 「ボヨボヨボヨン」と駆け上がる
+                add(boing(note_hz(base + j) * 0.75, j), t + j * 0.04, 0.3)
+    if fail:
+        sig = scream(SR)
+        i0 = int(end_t * SR)
+        m = min(len(sig), n_out - i0)
+        extra[i0:i0 + m] += sig[:m]
+    elif end_t is not None:
+        add(FV.music(SR).mean(axis=1) * 1.6, end_t, 1.0, extra)
+    wet = out.copy()
+    for d, g in ((0.043, 0.25), (0.071, 0.18), (0.113, 0.12)):
+        k = int(d * SR)
+        wet[k:] += out[:-k] * g
+    wet = wet[: int(duration * SR)]
+    ref = np.percentile(np.abs(wet[np.abs(wet) > 1e-4]), 99.5)
+    wet = np.tanh(1.5 * wet / max(1e-9, ref)) / np.tanh(1.5) * 0.7
+    body = wet[: int((end_t or duration) * SR)]
+    rms = np.sqrt(np.mean(body ** 2))
+    if rms > 0:   # 通常部分の平均音量を約 -18dB にそろえる
+        wet *= min(4.0, 10 ** (-18.0 / 20) / rms)
+    wet = wet + (0.95 if fail else 1.0) * extra[: len(wet)]
+    mag = np.abs(wet)
+    wet = np.where(mag < 0.7, wet, np.sign(wet) * (0.7 + 0.1 * np.tanh((mag - 0.7) / 0.1)))
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes((wet * 32767).astype(np.int16).tobytes())
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("mode", choices=["search", "render"])
+    ap.add_argument("--seed", type=int)
+    ap.add_argument("--want", choices=["fail", "success"], default="success")
+    ap.add_argument("-n", type=int, default=200)
+    a = ap.parse_args()
+    if a.mode == "search":
+        search(a.n, a.want)
+    else:
+        render(a.seed)
