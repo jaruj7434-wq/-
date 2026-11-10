@@ -54,7 +54,9 @@ W_B = float(os.environ.get("W_B", -1.3))                # 刃B の回る速さ(�
 # 増殖するたびに変わるフルーツの順番(OJ.NAMES の番号): りんご → もも → オレンジ → いちご → レモン → スイカ → …
 ROUND_KINDS = [0, 4, 1, 3, 2, 5]
 START_KIND = 5   # 最初の1人(スイカのおじさん)
-SPAWN_DELAY = 0.22                                      # 刃が重なってから、増えたおじさんが出てくるまで
+SPAWN_DELAY = 0.22
+BLADE_CAT, FRUIT_CAT = 0b10, 0b01
+PASS_MASK = pymunk.ShapeFilter.ALL_MASKS() ^ BLADE_CAT   # はさまれたおじさんは少しのあいだ刃をすり抜ける(刃にくっつかない)                                      # 刃が重なってから、増えたおじさんが出てくるまで
 MAX_OBJ = TARGET + 40
 CAP_W = float(os.environ.get("CAP_W", 5.0))              # すきまの幅がおじさんの半径の何倍より狭くなったら「はさまれた」とするか
 OUTRO = 2.5
@@ -87,6 +89,7 @@ class Game:
             b.angle = a0
             b.angular_velocity = w
             s = pymunk.Segment(b, (HUB, 0), (R - 4, 0), 7)
+            s.filter = pymunk.ShapeFilter(categories=BLADE_CAT)
             s.elasticity, s.friction = 1.0, 0.0
             s.collision_type = 3
             sp.add(b, s)
@@ -117,6 +120,7 @@ class Game:
         s = pymunk.Circle(b, OBJ_R)
         s.elasticity, s.friction = 1.0, 0.0
         s.collision_type = 1
+        s.filter = pymunk.ShapeFilter(categories=FRUIT_CAT)
         self.space.add(b, s)
         self.objs[b] = {"id": self.next_id, "shape": s, "kind": kind}
         self.next_id += 1
@@ -150,18 +154,26 @@ class Game:
             if n > 1e-6:
                 b.velocity = v * ((n + (SPEED - n) * k) / n)
         aA = self.blades[0].angle
-        # せまくなっていくすきまにいるおじさんは、はさまれて見えなくなる
+        # はさまれて刃をすり抜けていたおじさんは、少したったら元にもどる
+        for b, info in self.objs.items():
+            if info.get("pass_until") is not None and self.t >= info["pass_until"]:
+                info["pass_until"] = None
+                info["shape"].filter = pymunk.ShapeFilter(categories=FRUIT_CAT)
+        # せまくなっていくすきまにいるおじさんは、はさまれる(消えずにそのまま。重なり終わると新しいフルーツが1人ずつ追加される)
         caught = []
-        for b in self.objs:
+        for b, info in self.objs.items():
+            if info.get("pass_until") is not None:
+                continue
             dx, dy = b.position.x - CX, b.position.y - CY
             rho = math.hypot(dx, dy)
             al = (math.atan2(dy, dx) - aA) % (2 * math.pi)   # 刃A から見た角度
             if al < g1 and rho * g1 < OBJ_R * CAP_W and rho > HUB:
                 caught.append((b, rho))
         for b, rho in caught:
-            info = self.objs.pop(b)
-            self.space.remove(b, info["shape"])
-            self.trapped.append((rho, info["kind"]))
+            info = self.objs[b]
+            info["pass_until"] = self.t + 10.0   # 増えるまで刃をすり抜ける
+            info["shape"].filter = pymunk.ShapeFilter(categories=FRUIT_CAT, mask=PASS_MASK)
+            self.trapped.append((b, rho, info["kind"]))
         if caught:
             self.events.append(("squash", self.t, len(caught)))
         # 刃が重なった(すきまがゼロをこえて大きくなった)
@@ -177,16 +189,25 @@ class Game:
             # 2枚の刃は重なった所から離れていく。そのあいだ(今ひらいたすきま)のまんなかから出す(刃にくっつかないように)
             mid = (self.blades[0].angle + self.blades[1].angle) / 2 if abs(self.blades[0].angle - self.blades[1].angle) < math.pi \
                 else (self.blades[0].angle + self.blades[1].angle) / 2 + math.pi
-            for rho, kind in self.trapped:
+            nk = ROUND_KINDS[self.round % len(ROUND_KINDS)]   # この回に追加されるフルーツ
+            for ob, rho, kind in self.trapped:
+                if ob not in self.objs:
+                    continue
+                # はさまれていたおじさんはそのまま残って内側へ、新しいフルーツのおじさんが1人追加されて外側へ
                 for sgn in (-1, 1):
-                    if len(self.objs) >= MAX_OBJ:
-                        break
                     rr = min(R - OBJ_R - 4, max(HUB + OBJ_R + 4, rho + sgn * OBJ_R * 0.6))
                     px, py = CX + rr * math.cos(mid), CY + rr * math.sin(mid)
                     d = mid + (0 if sgn > 0 else math.pi) + self.rng.uniform(-0.4, 0.4)
-                    self.rng.integers(0, len(OJ.NAMES)) if sgn < 0 else None   # (乱数の順番をそろえる)
-                    nk = ROUND_KINDS[self.round % len(ROUND_KINDS)]   # この回に増えた分は、この回のフルーツになる
-                    self.add_obj((px, py), (SPEED * math.cos(d), SPEED * math.sin(d)), nk)
+                    vel = (SPEED * math.cos(d), SPEED * math.sin(d))
+                    if sgn < 0:
+                        ob.position = (px, py)
+                        ob.velocity = vel
+                        self.objs[ob]["pass_until"] = self.t + 0.3
+                    elif len(self.objs) < MAX_OBJ:
+                        self.add_obj((px, py), vel, nk)
+                        nb = list(self.objs)[-1]
+                        self.objs[nb]["pass_until"] = self.t + 0.3
+                        self.objs[nb]["shape"].filter = pymunk.ShapeFilter(categories=FRUIT_CAT, mask=PASS_MASK)
                 k += 1
             self.trapped = []
             self.events.append(("split", self.t, (k, len(self.objs), ROUND_KINDS[self.round % len(ROUND_KINDS)])))
@@ -196,7 +217,7 @@ class Game:
                 info = self.objs.pop(b)
                 self.space.remove(b, info["shape"])
         if self.result is None:
-            if len(self.objs) + len(self.trapped) >= TARGET:
+            if len(self.objs) >= TARGET:
                 self.result, self.result_t = "success", self.t
                 self.events.append(("success", self.t, None))
             elif self.t >= TIME_LIMIT:
@@ -212,14 +233,14 @@ def simulate(seed, record=False):
         for _ in range(SUBSTEPS):
             g.step(dt)
         if record:
-            frames.append({"t": g.t, "aA": g.blades[0].angle, "aB": g.blades[1].angle, "n": len(g.objs) + len(g.trapped),
+            frames.append({"t": g.t, "aA": g.blades[0].angle, "aB": g.blades[1].angle, "n": len(g.objs),
                            "objs": [(b.position.x, b.position.y, b.angle, info["kind"], info["id"], info.get("hit"))
                                     for b, info in g.objs.items()]})
         if g.result is not None:
             extra = OUTRO + SCARE_DUR if g.result == "fail" else FV.DURATION
             if not record or g.t > g.result_t + extra:
                 break
-    return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "n": len(g.objs) + len(g.trapped)}
+    return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "n": len(g.objs)}
 
 
 def score(seed):
@@ -426,7 +447,7 @@ def boing(f0, seed):
     return (np.sin(ph) + 0.3 * np.sin(2 * ph)) * np.minimum(1, t / 0.003) * np.exp(-t * 9)
 
 
-VOICE_GAIN = 0.7   # おじさんの声の大きさ(効果音より少し前に出る)
+VOICE_GAIN = 1.6   # おじさんの声の大きさ(効果音より少し前に出る)
 
 
 def synth_audio(res, duration, path):

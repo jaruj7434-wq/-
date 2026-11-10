@@ -22,7 +22,7 @@ def _load(k):
     return x, sr
 
 
-def voice(k, sr_out, pitch=0.86, vib_hz=7.0, vib_depth=0.09):
+def voice(k, sr_out, pitch=0.74, vib_hz=8.5, vib_depth=0.2):
     """k 番目のフルーツの声。pitch<1 で低く・ゆっくり、vib_depth はビブラートの深さ(音の高さのゆれ ±%)。"""
     x, sr = _load(k)
     n_out = int(len(x) / pitch * sr_out / sr)
@@ -33,7 +33,12 @@ def voice(k, sr_out, pitch=0.86, vib_hz=7.0, vib_depth=0.09):
     pos = np.cumsum(rate) * sr / sr_out
     pos = np.clip(pos, 0, len(x) - 2)
     y = np.interp(pos, np.arange(len(x)), x)
-    y = np.tanh(1.6 * y / max(1e-9, np.abs(y).max())) / np.tanh(1.6)   # 少し押し出しの強い声に
+    # 変な声に:ゆらぎ方の違う「もう1人のおじさん」を少し高い声で重ね、ガラガラした感じ(ひずみ)を足す
+    rate2 = pitch * 1.12 * (1 + depth * 0.8 * np.sin(2 * np.pi * vib_hz * 0.73 * t + 1.3))
+    pos2 = np.clip(np.cumsum(rate2) * sr / sr_out, 0, len(x) - 2)
+    y = y + 0.45 * np.interp(pos2, np.arange(len(x)), x)
+    y = y * (1 + 0.25 * np.sin(2 * np.pi * 31 * t))   # ぶるぶる震える
+    y = np.tanh(2.6 * y / max(1e-9, np.abs(y).max())) / np.tanh(2.6)
     fade = np.ones(len(y))
     m = int(0.03 * sr_out)
     fade[-m:] = np.linspace(1, 0, m)
