@@ -107,3 +107,9 @@
   - 前の版は高さ 184Hz(参考の女性は 250〜310Hz)
 - 調整:3.0 秒に合わせ、300Hz を削り 3.2kHz・6.5kHz・9.5kHz を持ち上げる
 - 聞き比べ:`assets/output/kiminona/audio/opening/opening_{hana,luna,skye}.wav`
+- ユーザー選択:③ Skye。冒頭以外のヒロインの行は Hana のまま
+- ユーザー変更:「ただひたすらに、美味しそうな眺めだった」を慶太とヒロインのハモリに
+  - ヒロインの同じセリフを Skye で作成(ElevenLabs v4、約 0.46 クレジット):`b4ef487f-9c30-41d0-878c-b9e35dffef1e`
+  - 慶太の行(3.6 秒)に長さを合わせ(3.18→3.6 秒)、言い出しのずれを 30ms 補正して重ねた。慶太を左 35%、ヒロインを右 35%、帯域も分けた(左右の大きさ 0.079 / 0.080)
+  - 文字起こし:「まるで、夢の食卓のように、ただひたすらに美味しそうな眺めだった」と聞き取れる
+- 全体:`assets/output/kiminona/audio/dialogue_v4.wav`(冒頭だけ:`audio/opening/opening_v4.wav`)
