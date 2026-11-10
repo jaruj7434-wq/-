@@ -98,5 +98,6 @@
   - 背景は V05 (先頭で内へよれる場面) を 0.5倍速・彩度を落として暗く・ゆっくり寄る。低い衝撃音 (ffmpeg aevalsrc、クレジット不要)
   - タイトルは 1フレーム目から表示 (フィードで最初に見える画面を強く)。ナレーション以降はすべて 2.4秒うしろへ
 - render_orf.py: 環境変数 PRE (既定 2.4、0 でタイトル無し)
-- v5 書き出し: `TANIUE='{"3":"T03c","8":"I08","8k":"k","9":"I09","10":"T10c","12":"T12c","16":"I16","16k":"k","tail":"V19c"}' python3 render_orf.py orfevre_arc_v5.mp4` → 1080x1920, 107.4秒 → assets/output/orfevre-arc/orfevre_arc_v5.mp4
+- v5 書き出し: `TANIUE='{"3":"T03c","8":"I08","8k":"k","9":"I09","10":"T10c","12":"T12c","16":"I16","16k":"k","tail":"V19c"}' python3 render_orf.py orfevre_arc_v5.mp4` → 1080x1920, 107.4秒 → Higgs media 3df34886 → assets/output/orfevre-arc/orfevre_arc_v5.mp4
   - 新しい生成なし (0クレジット)
+  - 1フレーム目を強くするため、全体の黒からのフェードインと白フラッシュは PRE がある時は使わない
