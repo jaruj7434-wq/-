@@ -225,10 +225,13 @@ for j, (p, x, y, t0, t1) in enumerate(EL):
 # 下の金の進行バー
 args += ['-f', 'lavfi', '-t', f'{TOTAL:.2f}', '-i', f'color=c=0xFFC42E:s={W}x10:r=30']
 fc += f";[{cur}][{k}:v]overlay=x='-w+w*t/{TOTAL:.2f}':y=H-10,{'' if PRE > 0 else 'fade=t=in:st=0:d=0.5,'}fade=t=out:st={TOTAL - 1.0:.2f}:d=1.0[vout]"; k += 1
-args += ['-i', 'vo/narr.wav', '-i', 'clips/bgm.m4a', '-f', 'lavfi', '-t', '2.5', '-i',
+# DUCK=1: ナレーションの間だけ BGM を下げる (セリフのない所は BGM が前に出る)
+DUCKF = ('[bg0];[bg0][nk]sidechaincompress=threshold=0.012:ratio=5:attack=25:release=500' if os.environ.get('DUCK') == '1'
+         else '[bg0];[nk]anullsink;[bg0]anull')
+args += ['-i', 'vo/narr.wav', '-i', os.environ.get('BGM', 'clips/bgm.m4a'), '-f', 'lavfi', '-t', '2.5', '-i',
          "aevalsrc='0.9*sin(2*PI*(70-35*t)*t)*exp(-2.2*t)':s=48000"]  # タイトルの低い衝撃音
-fc += (f';[{k}:a]aresample=48000,adelay={int(PRE * 1000)}:all=1,apad,atrim=0:{TOTAL:.2f}[na];[{k+1}:a]aresample=48000,apad,atrim=0:{TOTAL:.2f},volume=0.20,'
-       f'afade=t=in:st=0:d=1.0,afade=t=out:st={TOTAL - 3:.2f}:d=3[bg];[na][bg]amix=inputs=2:duration=first:normalize=0[mx];'
+fc += (f';[{k}:a]aresample=48000,adelay={int(PRE * 1000)}:all=1,apad,atrim=0:{TOTAL:.2f},asplit=2[na][nk];[{k+1}:a]aresample=48000,apad,atrim=0:{TOTAL:.2f},volume={os.environ.get("BGM_VOL", "0.20")},'
+       f'afade=t=in:st=0:d={0.05 if PRE > 0 else 1.0},afade=t=out:st={TOTAL - 3:.2f}:d=3{DUCKF}[bg];[na][bg]amix=inputs=2:duration=first:normalize=0[mx];'
        f'[{k+2}:a]aresample=48000,volume={0.8 if PRE > 0 else 0},apad,atrim=0:{TOTAL:.2f}[hit];[mx][hit]amix=inputs=2:duration=first:normalize=0[aout]')
 run('ffmpeg', '-y', '-loglevel', 'error', *args, '-filter_complex', fc, '-map', '[vout]', '-map', '[aout]',
     '-c:v', 'libx264', '-crf', '20', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-t', f'{TOTAL:.2f}', OUT)

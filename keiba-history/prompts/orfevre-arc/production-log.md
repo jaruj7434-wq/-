@@ -110,3 +110,16 @@
 - render_orf.py: 環境変数 SPLIT (例 {"3": [3.45, "H03"]}) で行の途中から別のクリップに切り替え、字幕も改行の位置で2枚に分ける
 - 動画 (kling4_0 720p 5秒、スローモーションで低いカメラへ駆けてくる) job 99774b57 → clips/H03.mp4 (確認: 文字なし、騎手はゴーグルで顔が分からない)
 - v6 書き出し: `TANIUE='{"3":"T03c","8":"I08","8k":"k","9":"I09","10":"T10c","12":"T12c","16":"I16","16k":"k","tail":"V19c"}' SPLIT='{"3":[3.45,"H03"]}' python3 render_orf.py orfevre_arc_v6.mp4` → 1080x1920, 107.4秒 → Higgs media 9d74b255 → assets/output/orfevre-arc/orfevre_arc_v6.mp4
+
+## v7 (ユーザー指定 2026-11-10): 動画のテーマに合ったBGM
+- 1曲で通しの案 (sonilo_music 108秒): 948b6391 / 646bd3a3 / 926de701 → どれも展開が映像より約15秒遅れ、涙の場面で盛り上がってしまうため不採用
+- 場面ごとの4曲 (同じ調・テンポで指定) を映像に合わせてつなぐ (edit/orfevre-arc/bgm_mix.sh):
+  | 曲 | 長さ | 内容 | job | 置く位置 |
+  |---|---|---|---|---|
+  | A | 30秒 | 衝撃 → 緊張 → 気高いホルン → 直線の攻防で最高潮 → 急に止まる (D minor 120bpm) | 6e12c153 | 3秒〜 |
+  | B | 33秒 | 涙: ピアノとチェロ、最後に静かな決意 (-4dB) | dde7e38a | 31秒〜 |
+  | C | 20秒 | 有馬記念の勝利: フルオーケストラ (D major) | 8ccdf3ba | 61.5秒〜 |
+  | D | 27秒 | 悔恨のピアノ → 名前の所で黄金の盛り上がり → 静かに終わる | f00872df | 83秒〜 |
+- render_orf.py: BGM (ファイル)・BGM_VOL・DUCK=1 (ナレーションの間だけ BGM を下げる sidechaincompress) を追加
+- v7 書き出し: `TANIUE=... SPLIT='{"3":[3.45,"H03"]}' BGM=clips/bgm_mix.m4a BGM_VOL=0.32 DUCK=1 python3 render_orf.py orfevre_arc_v7.mp4` → 107.4秒、平均 -17.0dB・最大 -1.4dB (v6 と同じ音量感) → Higgs media 0e0f7b66 → assets/output/orfevre-arc/orfevre_arc_v7.mp4
+  - BGM の使用: 通し3曲 + 場面ごと4曲 ≒ 約27クレジット
