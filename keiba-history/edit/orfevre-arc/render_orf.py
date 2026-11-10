@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""オルフェーヴル凱旋門賞 — テロップ・字幕入りの書き出し (1080x1920)。
+これまでの動画と同じ見た目: 見出し Dela Gothic One + 縁取り、強調は金、字幕は黒い角丸の帯、下に金の進行バー。
+
+実行場所: Higgs のサンドボックス (~/orfed)。フォント (~/.fonts の DelaGothicOne / NotoSansJP-VF) がそこにあるため。
+  clips/ … 再現 V01..V19・谷上 T*・bgm.m4a・title.png (Higgs の job の結果 URL から取得。job は prompts/orfevre-arc/production-log.md)
+  vo/line_01..18.mp3 … 谷上のナレーション
+使い方: TANIUE='{"3":"T03c",...,"tail":"V19c"}' python3 render_orf.py 出力.mp4
+"""
+import subprocess, json, os, sys
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+W, H = 1080, 1920
+HERE = os.path.dirname(os.path.abspath(__file__)); os.chdir(HERE)
+F_HEAD = os.path.expanduser('~/.fonts/DelaGothicOne-Regular.ttf')
+F_BODY = os.path.expanduser('~/.fonts/NotoSansJP-VF.ttf')
+GOLD = (255, 196, 46); WHITE = (255, 255, 255); INK = (12, 12, 16)
+GAPS = [0.4, 1.0, 0.6, 0.5, 0.5, 0.9, 0.5, 0.8, 0.9, 0.6, 0.8, 0.6, 0.6, 0.8, 0.6, 0.8, 1.4, 1.0]
+TRIM = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,"
+        "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse")
+TANIUE = json.loads(os.environ.get('TANIUE', '{"3":"T03","8":"T08","10":"T10","12":"T12","16":"T16","tail":"V19"}'))
+OUT = sys.argv[1] if len(sys.argv) > 1 else 'orfevre_arc_v2.mp4'
+SUBS = {1: '世界一まで、あと一歩のところで。', 2: '{ソラ}を使って、負けた。',
+        3: '2012年、フランス・凱旋門賞。\n日本の夢を背負った、金色の馬がいました。',
+        4: '直線、外から一気に先頭へ。\n誰もが「勝った」と思いました。',
+        5: 'ところが先頭に立った途端、\n気を抜いて、内へよれてしまう。',
+        6: '迫ってきた地元の牝馬に、ゴール寸前で\nかわされて、{クビ差}の2着。',
+        7: '鞍上のスミヨンは、悔し涙を流しました。',
+        8: '「彼はすべてをやってくれた。……\n僕は、自分を見つめ直さなければならない」',
+        9: '何年たっても、彼はこう語っています。\n「なぜ勝てなかったのか、今でも理解できない」',
+        10: 'でも、本当の相棒は日本にいました。\n{池添謙一}。',
+        11: '三冠をともに勝ちながら、\n世界の舞台では手綱を降ろされた男です。',
+        12: '2013年、引退レースの有馬記念。\n最後の手綱は、池添に戻ってきました。',
+        13: '2着に{8馬身差}。\n誰も寄せつけない、圧勝でした。',
+        14: '池添はスタンドに手を上げました。\n「この馬が1番なんだ」と伝えるために。',
+        15: '世界最強を証明したからこそ、\n悔しさが残りました。',
+        16: '池添は言います。\n「僕にとって、かけがえのない存在。財産です」',
+        17: 'この馬で、世界一になりたかった。'}
+
+def run(*a): subprocess.run(a, check=True)
+def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).decode())
+# --- ナレーション: 前後の無音を削って行間を足す
+os.makedirs('vo/t', exist_ok=True); D = {}
+for i in range(1, 19):
+    run('ffmpeg', '-y', '-loglevel', 'error', '-i', f'vo/line_{i:02d}.mp3', '-af', TRIM + f',apad=pad_dur={GAPS[i-1]}', '-ar', '48000', '-ac', '1', f'vo/t/{i:02d}.wav')
+    D[i] = dur(f'vo/t/{i:02d}.wav') - GAPS[i - 1]
+with open('vo/t/list.txt', 'w') as f:
+    for i in range(1, 19): f.write(f"file '{i:02d}.wav'\n")
+run('ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 'vo/t/list.txt', '-af', 'loudnorm=I=-16:TP=-1.5', '-ar', '48000', 'vo/narr.wav')
+S, t = {}, 0.0
+for i in range(1, 19): S[i] = t; t += D[i] + GAPS[i - 1]
+NARR = t; TAIL = 3.0; TOTAL = NARR + TAIL
+
+# --- 文字の部品
+_fc = {}
+def font(kind, sz):
+    k = (kind, sz)
+    if k not in _fc:
+        if kind == 'head': _fc[k] = ImageFont.truetype(F_HEAD, sz)
+        else:
+            f = ImageFont.truetype(F_BODY, sz); f.set_variation_by_name('Black' if kind == 'black' else 'Bold'); _fc[k] = f
+    return _fc[k]
+def segs(t, base, hl):
+    out, cur, on = [], '', False
+    for ch in t:
+        if ch == '{': out.append((cur, base)); cur = ''; on = True
+        elif ch == '}': out.append((cur, hl)); cur = ''; on = False
+        else: cur += ch
+    out.append((cur, hl if on else base)); return [s for s in out if s[0]]
+def text(t, sz, color=WHITE, kind='head', hl=GOLD, stroke=10, sc=INK, glow=False):
+    lines = t.split('\n'); f = font(kind, sz)
+    rows = []
+    for ln in lines:
+        sg = segs(ln, color, hl); ws = [f.getbbox(p, stroke_width=stroke)[2] for p, _ in sg]; rows.append((sg, ws))
+    w = max(sum(ws) for _, ws in rows) + 40; lh = int(sz * 1.25); h = lh * len(rows) + 40
+    im = Image.new('RGBA', (w, h), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    for r, (sg, ws) in enumerate(rows):
+        x = (w - sum(ws)) // 2; y = 20 + r * lh
+        for (p, c), wd in zip(sg, ws):
+            d.text((x + 4, y + 6), p, font=f, fill=(0, 0, 0, 150), stroke_width=stroke, stroke_fill=(0, 0, 0, 150)); x += wd
+        x = (w - sum(ws)) // 2
+        for (p, c), wd in zip(sg, ws):
+            d.text((x, y), p, font=f, fill=c, stroke_width=stroke, stroke_fill=sc); x += wd
+    if glow:
+        g = im.filter(ImageFilter.GaussianBlur(18)); base = Image.new('RGBA', im.size, (0, 0, 0, 0)); base.alpha_composite(g); base.alpha_composite(im); im = base
+    return im
+def subband(t):
+    s = text(t, 46, WHITE, kind='bold', stroke=0)
+    s = s if s.width <= 980 else s.resize((980, int(s.height * 980 / s.width)), Image.LANCZOS)
+    im = Image.new('RGBA', (s.width + 40, s.height + 16), (0, 0, 0, 0))
+    ImageDraw.Draw(im).rounded_rectangle((0, 0, im.width - 1, im.height - 1), 18, fill=(0, 0, 0, 170)); im.alpha_composite(s, (20, 8)); return im
+def chip(t, sz=46, bg=GOLD, fg=INK):
+    s = text(t, sz, fg, kind='black', stroke=0)
+    im = Image.new('RGBA', (s.width + 30, s.height + 4), (0, 0, 0, 0))
+    ImageDraw.Draw(im).rounded_rectangle((0, 8, im.width - 1, im.height - 9), (im.height - 16) // 2, fill=bg); im.alpha_composite(s, (15, 2)); return im
+def stack(*sp, gap=0):
+    w = max(s.width for s in sp); h = sum(s.height for s in sp) + gap * (len(sp) - 1)
+    im = Image.new('RGBA', (w, h), (0, 0, 0, 0)); y = 0
+    for s in sp: im.alpha_composite(s, ((w - s.width) // 2, y)); y += s.height + gap
+    return im
+
+EL = []  # (png, x, y, t0, t1)
+os.makedirs('spr', exist_ok=True)
+def add(im, x, y, t0, t1, anchor='c'):
+    p = f'spr/{len(EL):02d}.png'; im.save(p)
+    if anchor == 'c': x -= im.width // 2
+    EL.append((p, int(x), int(y), max(0.0, t0), t1))
+E = lambda i: S[i] + D[i] + GAPS[i - 1]  # 行の終わり (次の行の始まり)
+# 字幕 (セリフの間だけ。18 は名前の文字があるので出さない)
+for i, s in SUBS.items():
+    sb = subband(s); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + D[i] + 0.25)
+# 見出し・テロップ
+add(stack(text('世界一まで', 100), text('あと一歩', 150, GOLD, glow=True)), W // 2, 560, S[1] + 0.1, E(1))
+add(stack(text('{ソラ}を使って', 110), text('負けた', 170, stroke=12)), W // 2, 560, S[2], E(2))
+add(stack(chip('2012.10.7'), text('凱旋門賞', 120), text('フランス・ロンシャン競馬場', 46, kind='bold', stroke=6)), W // 2, 170, S[3] + 0.2, E(3))
+add(stack(text('ソラを使う', 50, GOLD, kind='black', stroke=6), text('＝ 先頭に立って気を抜くこと', 42, kind='bold', stroke=6)), W // 2, 1180, S[5] + 0.3, E(5))
+add(stack(text('{クビ差}', 220, stroke=14, glow=True), text('2着', 130)), W // 2, 520, S[6] + D[6] * 0.55, E(6))
+add(chip('鞍上 C.スミヨン'), 60, 220, S[7] + 0.2, E(7), anchor='l')
+add(text('C.スミヨン（2012年 レース後）', 40, kind='bold', stroke=6), W // 2, 1700, S[8], E(8))
+add(text('C.スミヨン（後年のインタビュー）', 40, kind='bold', stroke=6), W // 2, 1700, S[9] + D[9] * 0.4, E(9))
+add(chip('主戦 池添謙一'), W // 2, 200, S[10] + D[10] * 0.55, E(10))
+add(stack(chip('2013.12.22'), text('有馬記念', 130), text('ラストラン', 90, GOLD)), W // 2, 170, S[12] + 0.2, E(12))
+add(stack(text('{8馬身差}', 200, stroke=14, glow=True), text('の圧勝', 100)), W // 2, 520, S[13] + 0.3, E(13))
+add(text('池添謙一（インタビュー）', 40, kind='bold', stroke=6), W // 2, 1700, S[16] + 0.8, E(16))
+json.dump(dict(S=S, D=D, NARR=NARR, TOTAL=TOTAL), open('timing.json', 'w'))
+
+# --- 映像
+SH = {1: ('V01', 'k'), 2: ('V02', 'white'), 3: (TANIUE['3'], 'wan'), 4: ('V04', 'k'), 5: ('V05', 'k'), 6: ('V06', 'k'),
+      7: ('V07', 'k'), 8: (TANIUE['8'], 'wan'), 9: ('V09', 'k'), 10: (TANIUE['10'], 'wan'), 11: ('V11', 'k'),
+      12: (TANIUE['12'], 'wan'), 13: ('V13', 'k'), 14: ('V14', 'k'), 15: ('V15', 'k'), 16: (TANIUE['16'], 'wan'),
+      17: ('V01', 'memory'), 18: ('V18', 'k')}
+args, ch, n = [], [], 0
+def clip(name, kind, L):
+    global n
+    args.extend(['-ss', '0.1' if kind == 'wan' else '0', '-i', f'clips/{name}.mp4'])
+    f = f'[{n}:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,fps=30,format=yuv420p'
+    if kind == 'memory': f += ',setpts=1.6*PTS,eq=saturation=0.55:brightness=0.03,vignette=angle=PI/4,gblur=sigma=0.8'
+    f += f',tpad=stop_mode=clone:stop_duration={L},trim=duration={L:.3f},setpts=PTS-STARTPTS'
+    if kind == 'white': f += f',fade=t=out:st={max(0, L - 0.6):.2f}:d=0.6:color=white'
+    if kind == 'memory': f += f',fade=t=in:st=0:d=0.3:color=white,fade=t=out:st={L - 0.3:.2f}:d=0.3:color=white'
+    ch.append(f + f'[v{n}]'); n += 1
+for i in range(1, 19): clip(*SH[i], D[i] + GAPS[i - 1])
+clip(TANIUE['tail'], 'k', TAIL)
+vin = ''.join(f'[v{k}]' for k in range(n))
+fc = ';'.join(ch) + f';{vin}concat=n={n}:v=1:a=0[b0]'
+base = n
+args += ['-loop', '1', '-framerate', '30', '-t', f'{TOTAL:.2f}', '-i', 'clips/title.png']
+fc += f';[{base}:v]scale={W}:{H},format=rgba,fade=t=in:st={S[18] + 0.3:.2f}:d=0.8:alpha=1[ttl];[b0][ttl]overlay=0:0:enable=\'gte(t,{S[18] + 0.3:.2f})\'[b1]'
+cur = 'b1'; k = base + 1
+for j, (p, x, y, t0, t1) in enumerate(EL):
+    args += ['-loop', '1', '-framerate', '30', '-t', f'{TOTAL:.2f}', '-i', p]
+    fc += (f';[{k}:v]format=rgba,fade=t=in:st={t0:.2f}:d=0.25:alpha=1,fade=t=out:st={max(t0, t1 - 0.2):.2f}:d=0.2:alpha=1[s{j}]'
+           f';[{cur}][s{j}]overlay={x}:{y}:enable=\'between(t,{t0:.2f},{t1:.2f})\'[c{j}]')
+    cur = f'c{j}'; k += 1
+# 下の金の進行バー
+args += ['-f', 'lavfi', '-t', f'{TOTAL:.2f}', '-i', f'color=c=0xFFC42E:s={W}x10:r=30']
+fc += f";[{cur}][{k}:v]overlay=x='-w+w*t/{TOTAL:.2f}':y=H-10,fade=t=in:st=0:d=0.5,fade=t=out:st={TOTAL - 1.0:.2f}:d=1.0[vout]"; k += 1
+args += ['-i', 'vo/narr.wav', '-i', 'clips/bgm.m4a']
+fc += (f';[{k}:a]aresample=48000,apad,atrim=0:{TOTAL:.2f}[na];[{k+1}:a]aresample=48000,apad,atrim=0:{TOTAL:.2f},volume=0.20,'
+       f'afade=t=in:st=0:d=1.0,afade=t=out:st={TOTAL - 3:.2f}:d=3[bg];[na][bg]amix=inputs=2:duration=first:normalize=0[aout]')
+run('ffmpeg', '-y', '-loglevel', 'error', *args, '-filter_complex', fc, '-map', '[vout]', '-map', '[aout]',
+    '-c:v', 'libx264', '-crf', '20', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-t', f'{TOTAL:.2f}', OUT)
+print(json.dumps(dict(out=OUT, total=round(TOTAL, 2), reveal=round(S[18], 2), sprites=len(EL))))
