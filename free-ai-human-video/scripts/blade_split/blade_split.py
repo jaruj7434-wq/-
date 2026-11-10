@@ -50,6 +50,9 @@ R = 470.0                                               # 円の半径
 HUB = 46.0                                              # まん中の軸の半径
 W_A = float(os.environ.get("W_A", 2.2))                 # 刃A の回る速さ(ラジアン/秒・時計回り)
 W_B = float(os.environ.get("W_B", -1.3))                # 刃B の回る速さ(反時計回り)
+# 増殖するたびに変わるフルーツの順番(OJ.NAMES の番号): りんご → もも → オレンジ → いちご → レモン → スイカ → …
+ROUND_KINDS = [0, 4, 1, 3, 2, 5]
+START_KIND = 5   # 最初の1人(スイカのおじさん)
 SPAWN_DELAY = 0.22                                      # 刃が重なってから、増えたおじさんが出てくるまで
 MAX_OBJ = TARGET + 40
 CAP_W = float(os.environ.get("CAP_W", 5.0))              # すきまの幅がおじさんの半径の何倍より狭くなったら「はさまれた」とするか
@@ -100,8 +103,9 @@ class Game:
         a = self.rng.uniform(0, 2 * math.pi)
         rr = self.rng.uniform(150, 350)
         d = self.rng.uniform(0, 2 * math.pi)
-        self.add_obj((CX + rr * math.cos(a), CY + rr * math.sin(a)), (SPEED * math.cos(d), SPEED * math.sin(d)),
-                     int(self.rng.integers(0, len(OJ.NAMES))))
+        self.rng.integers(0, len(OJ.NAMES))   # (乱数の順番をそろえるために1回引く)
+        self.round = 0   # 何回目の増殖か(増殖するたびにフルーツが変わる)
+        self.add_obj((CX + rr * math.cos(a), CY + rr * math.sin(a)), (SPEED * math.cos(d), SPEED * math.sin(d)), START_KIND)
 
     def add_obj(self, pos, vel, kind):
         m = 1.0
@@ -179,11 +183,13 @@ class Game:
                     rr = min(R - OBJ_R - 4, max(HUB + OBJ_R + 4, rho + sgn * OBJ_R * 0.6))
                     px, py = CX + rr * math.cos(mid), CY + rr * math.sin(mid)
                     d = mid + (0 if sgn > 0 else math.pi) + self.rng.uniform(-0.4, 0.4)
-                    nk = kind if sgn > 0 else int(self.rng.integers(0, len(OJ.NAMES)))
+                    self.rng.integers(0, len(OJ.NAMES)) if sgn < 0 else None   # (乱数の順番をそろえる)
+                    nk = ROUND_KINDS[self.round % len(ROUND_KINDS)]   # この回に増えた分は、この回のフルーツになる
                     self.add_obj((px, py), (SPEED * math.cos(d), SPEED * math.sin(d)), nk)
                 k += 1
             self.trapped = []
-            self.events.append(("split", self.t, (k, len(self.objs))))
+            self.events.append(("split", self.t, (k, len(self.objs), ROUND_KINDS[self.round % len(ROUND_KINDS)])))
+            self.round += 1
         for b in list(self.objs):   # 円の外へ抜けたもの(めったにない)は消す
             if math.hypot(b.position.x - CX, b.position.y - CY) > R + 30:
                 info = self.objs.pop(b)
@@ -445,7 +451,7 @@ def synth_audio(res, duration, path):
         elif kind == "squash":
             add(hiss(int(t * 100))[: int(0.12 * SR)], t, 0.12)
         elif kind == "split":
-            k, total = data
+            k, total, rk = data
             base = int(2.0 * math.log2(max(2, total)))
             for j in range(min(8, k)):   # 「ボヨボヨボヨン」と駆け上がる
                 add(boing(note_hz(base + j) * 0.75, j), t + j * 0.04, 0.3)
