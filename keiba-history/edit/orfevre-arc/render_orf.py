@@ -14,6 +14,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); os.chdir(HERE)
 F_HEAD = os.path.expanduser('~/.fonts/DelaGothicOne-Regular.ttf')
 F_BODY = os.path.expanduser('~/.fonts/NotoSansJP-VF.ttf')
 GOLD = (255, 196, 46); WHITE = (255, 255, 255); INK = (12, 12, 16)
+F_MIN = os.path.expanduser('~/.fonts/ShipporiMinchoB1-ExtraBold.ttf')
+CHAMP = (226, 190, 120)  # 見出しの強調: 落ち着いたシャンパンゴールド
 GAPS = [0.4, 1.0, 0.6, 0.5, 0.5, 0.9, 0.5, 0.8, 0.9, 0.6, 0.8, 0.6, 0.6, 0.8, 0.6, 0.8, 1.4, 1.0]
 TRIM = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,"
         "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse")
@@ -98,6 +100,41 @@ def stack(*sp, gap=0):
     for s in sp: im.alpha_composite(s, ((w - s.width) // 2, y)); y += s.height + gap
     return im
 
+def mtext(t, sz, color=WHITE, hl=CHAMP, track=0.08):
+    # 明朝の見出し: 縁取りなし、文字間を少し空け、ぼかした影で浮かせる
+    f = ImageFont.truetype(F_MIN, sz); rows = [segs(ln, color, hl) for ln in t.split('\n')]
+    def row_w(sg): return sum(f.getbbox(ch)[2] + sz * track for p, _ in sg for ch in p) - sz * track
+    w = int(max(row_w(sg) for sg in rows)) + 80; lh = int(sz * 1.35); h = lh * len(rows) + 60
+    lay = Image.new('RGBA', (w, h), (0, 0, 0, 0)); sh = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(lay); ds = ImageDraw.Draw(sh)
+    for r, sg in enumerate(rows):
+        x = (w - row_w(sg)) / 2; y = 30 + r * lh
+        for p, c in sg:
+            for ch in p:
+                ds.text((x + 3, y + 5), ch, font=f, fill=(0, 0, 0, 200)); d.text((x, y), ch, font=f, fill=c)
+                x += f.getbbox(ch)[2] + sz * track
+    sh = sh.filter(ImageFilter.GaussianBlur(max(4, sz // 10))); out = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    out.alpha_composite(sh); out.alpha_composite(sh); out.alpha_composite(lay); return out
+def label(t, sz=34):
+    # 日付・名前の札: 金の文字の左右に細い金の線
+    s_ = mtext(t, sz, CHAMP, track=0.18); ln = 70
+    im = Image.new('RGBA', (s_.width + ln * 2, s_.height), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    y = s_.height // 2 + 2
+    d.line((0, y, ln - 6, y), fill=CHAMP + (230,), width=2); d.line((im.width - ln + 6, y, im.width, y), fill=CHAMP + (230,), width=2)
+    im.alpha_composite(s_, (ln, 0)); return im
+def veil(sp, pad=60, a=120):
+    # 見出しの後ろの柔らかい暗がり (読みやすさのため。輪郭は見せない)
+    W_, H_ = sp.width + pad * 2, sp.height + pad * 2
+    v = Image.new('RGBA', (W_, H_), (0, 0, 0, 0))
+    ImageDraw.Draw(v).rounded_rectangle((pad // 2, pad // 2, W_ - pad // 2, H_ - pad // 2), 60, fill=(0, 0, 0, a))
+    v = v.filter(ImageFilter.GaussianBlur(pad * 0.9)); v.alpha_composite(sp, (pad, pad)); return v
+def rule(w=360):
+    im = Image.new('RGBA', (w, 12), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    for x in range(w):
+        a = int(230 * (1 - abs(x - w / 2) / (w / 2)))
+        d.point((x, 6), fill=CHAMP + (a,)); d.point((x, 5), fill=CHAMP + (a // 2,))
+    return im
+
 EL = []  # (png, x, y, t0, t1)
 os.makedirs('spr', exist_ok=True)
 def add(im, x, y, t0, t1, anchor='c'):
@@ -108,25 +145,25 @@ E = lambda i: S[i] + D[i] + GAPS[i - 1]  # 行の終わり (次の行の始ま�
 # 字幕 (セリフの間だけ。18 は名前の文字があるので出さない)
 for i, s in SUBS.items():
     sb = subband(s); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + D[i] + 0.25)
-# 見出し・テロップ
-add(stack(text('世界一まで', 100), text('あと一歩', 150, GOLD, glow=True)), W // 2, 560, S[1] + 0.1, E(1))
-add(stack(text('{ソラ}を使って', 110), text('負けた', 170, stroke=12)), W // 2, 560, S[2], E(2))
-add(stack(chip('2012.10.7'), text('凱旋門賞', 120), text('フランス・ロンシャン競馬場', 46, kind='bold', stroke=6)), W // 2, 170, S[3] + 0.2, E(3))
-add(stack(text('ソラを使う', 50, GOLD, kind='black', stroke=6), text('＝ 先頭に立って気を抜くこと', 42, kind='bold', stroke=6)), W // 2, 1180, S[5] + 0.3, E(5))
-add(stack(text('{クビ差}', 220, stroke=14, glow=True), text('2着', 130)), W // 2, 520, S[6] + D[6] * 0.55, E(6))
-add(chip('鞍上 C.スミヨン'), 60, 220, S[7] + 0.2, E(7), anchor='l')
-add(text('C.スミヨン（2012年 レース後）', 40, kind='bold', stroke=6), W // 2, 1700, S[8], E(8))
-add(text('C.スミヨン（後年のインタビュー）', 40, kind='bold', stroke=6), W // 2, 1700, S[9] + D[9] * 0.4, E(9))
-add(chip('主戦 池添謙一'), W // 2, 200, S[10] + D[10] * 0.55, E(10))
-add(stack(chip('2013.12.22'), text('有馬記念', 130), text('ラストラン', 90, GOLD)), W // 2, 170, S[12] + 0.2, E(12))
-add(stack(text('{8馬身差}', 200, stroke=14, glow=True), text('の圧勝', 100)), W // 2, 520, S[13] + 0.3, E(13))
-add(text('池添謙一（インタビュー）', 40, kind='bold', stroke=6), W // 2, 1700, S[16] + 0.8, E(16))
+# 見出し・テロップ (明朝・シャンパンゴールド・細い罫線。レースの場面は画面上部、谷上の場面は頭にかからない大きさ)
+add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP))), W // 2, 140, S[1] + 0.1, E(1))
+add(veil(stack(mtext('{ソラ}を使って', 66), rule(), mtext('負けた', 124))), W // 2, 140, S[2], E(2))
+add(stack(label('2012.10.7　ロンシャン競馬場', 30), mtext('凱旋門賞', 86)), W // 2, 40, S[3] + 0.2, E(3))
+add(veil(stack(mtext('ソラを使う', 42, CHAMP), mtext('先頭に立って、気を抜くこと', 32)), pad=40, a=110), W // 2, 1160, S[5] + 0.3, E(5))
+add(veil(stack(mtext('{クビ差}', 150), rule(300), mtext('2着', 76))), W // 2, 140, S[6] + D[6] * 0.55, E(6))
+add(label('鞍上　C.スミヨン'), 40, 200, S[7] + 0.2, E(7), anchor='l')
+add(mtext('── C.スミヨン（2012年 レース後）', 32), W // 2, 1690, S[8], E(8))
+add(mtext('── C.スミヨン（後年のインタビュー）', 32), W // 2, 1690, S[9] + D[9] * 0.4, E(9))
+add(label('主戦　池添謙一'), W // 2, 60, S[10] + D[10] * 0.55, E(10))
+add(stack(label('2013.12.22　中山競馬場', 30), mtext('有馬記念　{ラストラン}', 72)), W // 2, 40, S[12] + 0.2, E(12))
+add(veil(stack(mtext('{8馬身差}', 136), rule(300), mtext('の圧勝', 60))), W // 2, 140, S[13] + 0.3, E(13))
+add(mtext('── 池添謙一（インタビュー）', 32), W // 2, 1690, S[16] + 0.8, E(16))
 json.dump(dict(S=S, D=D, NARR=NARR, TOTAL=TOTAL), open('timing.json', 'w'))
 
 # --- 映像
 SH = {1: ('V01', 'k'), 2: ('V02', 'white'), 3: (TANIUE['3'], 'wan'), 4: ('V04', 'k'), 5: ('V05', 'k'), 6: ('V06', 'k'),
-      7: ('V07', 'k'), 8: (TANIUE['8'], 'wan'), 9: ('V09', 'k'), 10: (TANIUE['10'], 'wan'), 11: ('V11', 'k'),
-      12: (TANIUE['12'], 'wan'), 13: ('V13', 'k'), 14: ('V14', 'k'), 15: ('V15', 'k'), 16: (TANIUE['16'], 'wan'),
+      7: ('V07', 'k'), 8: (TANIUE['8'], TANIUE.get('8k', 'wan')), 9: (TANIUE.get('9', 'V09'), 'k'), 10: (TANIUE['10'], 'wan'), 11: ('V11', 'k'),
+      12: (TANIUE['12'], 'wan'), 13: ('V13', 'k'), 14: ('V14', 'k'), 15: ('V15', 'k'), 16: (TANIUE['16'], TANIUE.get('16k', 'wan')),
       17: ('V01', 'memory'), 18: ('V18', 'k')}
 args, ch, n = [], [], 0
 def clip(name, kind, L):
