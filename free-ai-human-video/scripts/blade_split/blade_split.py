@@ -1,4 +1,4 @@
-"""「おじさんフルーツを240人に増やせる?」円形の場所で2枚の刃が逆向き・別の速さで回り、刃と刃にはさまれると増殖する物理ショート。
+"""「おじさんフルーツを300人に増やせる?」円形の場所で2枚の刃が逆向き・別の速さで回り、刃と刃にはさまれると増殖する物理ショート。
 
 - 円の中を、顔のついたおじさんフルーツ(Higgs Field で生成した写真6種類)が、かべや刃に当たりながら跳ね返り続ける
   (重力なし・止まらずに同じ速さで飛び回る)。
@@ -42,8 +42,8 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
-TARGET = int(os.environ.get("TARGET", 240))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 28.3))
+TARGET = int(os.environ.get("TARGET", 300))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 30.1))
 OBJ_R = float(os.environ.get("OBJ_R", 20.0))            # おじさんの大きさ(半径)
 SPEED = float(os.environ.get("SPEED", 300.0))           # 飛び回る速さ(ずっと同じ)
 CX, CY = W / 2, 1150.0                                  # 円の中心
@@ -56,9 +56,10 @@ ROUND_KINDS = [0, 4, 1, 3, 2, 5]
 START_KIND = 5   # 最初の1人(スイカのおじさん)
 SPAWN_DELAY = 0.22
 BLADE_CAT, FRUIT_CAT = 0b10, 0b01
-PASS_MASK = pymunk.ShapeFilter.ALL_MASKS() ^ BLADE_CAT   # はさまれたおじさんは少しのあいだ刃をすり抜ける(刃にくっつかない)                                      # 刃が重なってから、増えたおじさんが出てくるまで
+PASS_MASK = pymunk.ShapeFilter.ALL_MASKS() ^ BLADE_CAT
+HELD_MASK = pymunk.ShapeFilter.ALL_MASKS() ^ BLADE_CAT ^ FRUIT_CAT   # はさまれ中は、刃ともほかのおじさんともぶつからない
+HOLD_GAP = float(os.environ.get("HOLD_GAP", 0.35))      # すきまがこの角度(ラジアン)よりせまくなったら、中のおじさんは閉じこめられる   # はさまれたおじさんは少しのあいだ刃をすり抜ける(刃にくっつかない)                                      # 刃が重なってから、増えたおじさんが出てくるまで
 MAX_OBJ = TARGET + 40
-CAP_W = float(os.environ.get("CAP_W", 5.0))              # すきまの幅がおじさんの半径の何倍より狭くなったら「はさまれた」とするか
 OUTRO = 2.5
 
 
@@ -161,19 +162,37 @@ class Game:
                 info["shape"].filter = pymunk.ShapeFilter(categories=FRUIT_CAT)
         # せまくなっていくすきまにいるおじさんは、はさまれる(消えずにそのまま。重なり終わると新しいフルーツが1人ずつ追加される)
         caught = []
-        for b, info in self.objs.items():
-            if info.get("pass_until") is not None:
-                continue
-            dx, dy = b.position.x - CX, b.position.y - CY
-            rho = math.hypot(dx, dy)
-            al = (math.atan2(dy, dx) - aA) % (2 * math.pi)   # 刃A から見た角度
-            if al < g1 and rho * g1 < OBJ_R * CAP_W and rho > HUB:
-                caught.append((b, rho))
-        for b, rho in caught:
+        if g1 < HOLD_GAP and g1 < g0:   # すきまが十分せまくなったら、中にいるおじさんはもう外へ出られない
+            for b, info in self.objs.items():
+                if info.get("pass_until") is not None:
+                    continue
+                dx, dy = b.position.x - CX, b.position.y - CY
+                rho = math.hypot(dx, dy)
+                al = (math.atan2(dy, dx) - aA) % (2 * math.pi)   # 刃A から見た角度
+                if al < g1 and rho > HUB:
+                    caught.append((b, rho, al / g1))
+        for b, rho, f in caught:
             info = self.objs[b]
-            info["pass_until"] = self.t + 10.0   # 増えるまで刃をすり抜ける
-            info["shape"].filter = pymunk.ShapeFilter(categories=FRUIT_CAT, mask=PASS_MASK)
+            info["pass_until"] = self.t + 10.0   # 増えるまで刃の中に収まったまま(刃・ほかのおじさんとはぶつからない)
+            info["shape"].filter = pymunk.ShapeFilter(categories=FRUIT_CAT, mask=HELD_MASK)
+            info["hold"] = (rho, f)
             self.trapped.append((b, rho, info["kind"]))
+        # はさまれているおじさんは、2枚の刃のあいだに収まったまま、すきまといっしょに細くなっていく
+        if self.trapped:
+            aB = self.blades[1].angle
+            for ob, _, _ in self.trapped:
+                info = self.objs.get(ob)
+                if info is None or "hold" not in info:
+                    continue
+                rho, f = info["hold"]
+                if self.spawn_at is None:
+                    a = aA + f * g1
+                else:   # 重なり終わってから増えるまでの一瞬は、2枚の刃のまんなかにとどまる
+                    d = (aB - aA + math.pi) % (2 * math.pi) - math.pi
+                    a = aA + d / 2
+                ob.position = (CX + rho * math.cos(a), CY + rho * math.sin(a))
+                w = W_A + (W_B - W_A) * f
+                ob.velocity = (-w * rho * math.sin(a), w * rho * math.cos(a))
         if caught:
             self.events.append(("squash", self.t, len(caught)))
         # 刃が重なった(すきまがゼロをこえて大きくなった)
@@ -187,8 +206,8 @@ class Game:
             k = 0
             # 重なった場所(2枚の刃のまんなかの向き)から、内側と外側へはじき出す
             # 2枚の刃は重なった所から離れていく。そのあいだ(今ひらいたすきま)のまんなかから出す(刃にくっつかないように)
-            mid = (self.blades[0].angle + self.blades[1].angle) / 2 if abs(self.blades[0].angle - self.blades[1].angle) < math.pi \
-                else (self.blades[0].angle + self.blades[1].angle) / 2 + math.pi
+            d_ab = (self.blades[1].angle - self.blades[0].angle + math.pi) % (2 * math.pi) - math.pi
+            mid = self.blades[0].angle + d_ab / 2
             nk = ROUND_KINDS[self.round % len(ROUND_KINDS)]   # この回に追加されるフルーツ
             for ob, rho, kind in self.trapped:
                 if ob not in self.objs:
@@ -203,6 +222,8 @@ class Game:
                         ob.position = (px, py)
                         ob.velocity = vel
                         self.objs[ob]["pass_until"] = self.t + 0.3
+                        self.objs[ob].pop("hold", None)
+                        self.objs[ob]["shape"].filter = pymunk.ShapeFilter(categories=FRUIT_CAT, mask=PASS_MASK)
                     elif len(self.objs) < MAX_OBJ:
                         self.add_obj((px, py), vel, nk)
                         nb = list(self.objs)[-1]
@@ -463,12 +484,13 @@ def synth_audio(res, duration, path):
         if i < n_out:
             b[i:j] += g * sig[: j - i]
 
-    voices = []
-    for k in range(6):   # 超短く(早回しで約0.3秒以内に)して、効果音のように使う
+    voices, shorts = [], []
+    for k in range(6):
         v = OV.voice(k, SR)
-        sp = max(1.0, len(v) / SR / 0.3)
-        v = np.interp(np.arange(0, len(v) - 1, sp), np.arange(len(v)), v)
-        voices.append(v / np.sqrt(np.mean(v ** 2)) * 0.2)
+        v = v / np.sqrt(np.mean(v ** 2)) * 0.22
+        voices.append(v)   # 1回目:はっきり聞こえる声
+        sp = max(1.0, len(v) / SR / 0.45)   # 2回目からは短く(約0.45秒以内)
+        shorts.append(np.interp(np.arange(0, len(v) - 1, sp), np.arange(len(v)), v))
     last_b = -1.0
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.01:
@@ -483,10 +505,12 @@ def synth_audio(res, duration, path):
             add(hiss(int(t * 100))[: int(0.12 * SR)], t, 0.12)
         elif kind == "split":
             k, total, rk = data
-            # 増えた数だけ、おじさんの声を一瞬ずつ連続で鳴らす(数が多いときは間隔をつめて、全部で1秒以内に)
-            gap = min(0.09, 0.9 / max(1, k))
-            for j in range(k):
-                add(voices[rk], t + 0.02 + j * gap, VOICE_GAIN / (1 + 0.15 * min(k, 30) ** 0.5))
+            # 1回目ははっきり大きく。増えた数だけ、そのあとに短い声が少し小さめに続く(全部で1.2秒以内)
+            add(voices[rk], t + 0.02, VOICE_GAIN)
+            if k > 1:
+                gap = min(0.16, 1.0 / (k - 1))
+                for j in range(1, k):
+                    add(shorts[rk], t + 0.25 + (j - 1) * gap, VOICE_GAIN * 0.45 / (1 + 0.12 * min(k, 40) ** 0.5))
     if fail:
         sig = scream(SR)
         i0 = int(end_t * SR)
