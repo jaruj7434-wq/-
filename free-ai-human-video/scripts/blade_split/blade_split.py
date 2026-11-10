@@ -447,7 +447,7 @@ def boing(f0, seed):
     return (np.sin(ph) + 0.3 * np.sin(2 * ph)) * np.minimum(1, t / 0.003) * np.exp(-t * 9)
 
 
-VOICE_GAIN = 1.6   # おじさんの声の大きさ(効果音より少し前に出る)
+VOICE_GAIN = 1.0   # おじさんの声の大きさ(効果音より少し前に出る)
 
 
 def synth_audio(res, duration, path):
@@ -463,8 +463,12 @@ def synth_audio(res, duration, path):
         if i < n_out:
             b[i:j] += g * sig[: j - i]
 
-    voices = [OV.voice(k, SR) for k in range(6)]
-    voices = [v / np.sqrt(np.mean(v ** 2)) * 0.13 for v in voices]   # どの声も同じくらいの大きさに
+    voices = []
+    for k in range(6):   # 超短く(早回しで約0.3秒以内に)して、効果音のように使う
+        v = OV.voice(k, SR)
+        sp = max(1.0, len(v) / SR / 0.3)
+        v = np.interp(np.arange(0, len(v) - 1, sp), np.arange(len(v)), v)
+        voices.append(v / np.sqrt(np.mean(v ** 2)) * 0.2)
     last_b = -1.0
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.01:
@@ -479,10 +483,10 @@ def synth_audio(res, duration, path):
             add(hiss(int(t * 100))[: int(0.12 * SR)], t, 0.12)
         elif kind == "split":
             k, total, rk = data
-            add(voices[rk], t + 0.02, VOICE_GAIN, extra)   # 「Appleeee~!」(ビブラートつきのおじさんの声)
-            base = int(2.0 * math.log2(max(2, total)))
-            for j in range(min(8, k)):   # 「ボヨボヨボヨン」と駆け上がる
-                add(boing(note_hz(base + j) * 0.75, j), t + j * 0.04, 0.3)
+            # 増えた数だけ、おじさんの声を一瞬ずつ連続で鳴らす(数が多いときは間隔をつめて、全部で1秒以内に)
+            gap = min(0.09, 0.9 / max(1, k))
+            for j in range(k):
+                add(voices[rk], t + 0.02 + j * gap, VOICE_GAIN / (1 + 0.15 * min(k, 30) ** 0.5))
     if fail:
         sig = scream(SR)
         i0 = int(end_t * SR)
@@ -499,8 +503,8 @@ def synth_audio(res, duration, path):
     wet = np.tanh(1.5 * wet / max(1e-9, ref)) / np.tanh(1.5) * 0.7
     body = wet[: int((end_t or duration) * SR)]
     rms = np.sqrt(np.mean(body ** 2))
-    if rms > 0:   # 通常部分の平均音量を約 -18dB にそろえる
-        wet *= min(4.0, 10 ** (-18.0 / 20) / rms)
+    if rms > 0:
+        wet *= min(6.0, 10 ** (-14.0 / 20) / rms)   # 小さすぎないよう、通常部分を約 -14dB に
     wet = wet + (0.95 if fail else 1.0) * extra[: len(wet)]
     mag = np.abs(wet)
     wet = np.where(mag < 0.7, wet, np.sign(wet) * (0.7 + 0.1 * np.tanh((mag - 0.7) / 0.1)))
