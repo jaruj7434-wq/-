@@ -520,7 +520,7 @@ def synth_audio(res, duration, path):
         elif kind == "split":
             k, total, rk = data
             # 1回目ははっきり大きく(聞き取れるように1人だけ)。増えた数だけ、うしろで小さく「わいわい」重なる
-            add(voices[rk], t + 0.02, VOICE_GAIN)
+            add(voices[rk], t, VOICE_GAIN)
             if k > 1:
                 crowd = min(k - 1, 40)
                 for j in range(crowd):

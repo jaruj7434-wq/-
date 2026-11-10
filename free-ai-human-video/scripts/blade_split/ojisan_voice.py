@@ -19,7 +19,23 @@ def _load(k):
     e = np.sqrt(np.convolve(x ** 2, np.ones(240) / 240, "same"))
     on = np.where(e > 0.15 * e.max())[0]
     x = x[max(0, on[0] - int(0.02 * sr)): on[-1] + int(0.06 * sr)]
-    return x, sr
+    # 言葉の途中にある長い無音(「ア……ッポー」のようなすき間)を短くつめる
+    e = np.sqrt(np.convolve(x ** 2, np.ones(240) / 240, "same"))
+    quiet = e < 0.04 * e.max()
+    keep = np.ones(len(x), bool)
+    i = 0
+    max_gap = int(0.06 * sr)
+    while i < len(x):
+        if quiet[i]:
+            j = i
+            while j < len(x) and quiet[j]:
+                j += 1
+            if j - i > max_gap:
+                keep[i + max_gap // 2: j - max_gap // 2] = False
+            i = j
+        else:
+            i += 1
+    return x[keep], sr
 
 
 def voice(k, sr_out, pitch=1.0, vib_hz=6.5, vib_depth=0.06):
