@@ -54,6 +54,9 @@ run('ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 'v
 S, t = {}, 0.0
 for i in range(1, N + 1): S[i] = t; t += D[i] + GAPS[i - 1]
 NARR = t; TAIL = 3.0 if N == 18 else 1.6; TOTAL = NARR + TAIL
+# 冒頭のタイトル「残り100メートルの悲劇」(掴み)。PRE 秒ぶん全体を後ろにずらす。PRE=0 で無し
+PRE = float(os.environ.get('PRE', '2.4'))
+S = {i: v + PRE for i, v in S.items()}; NARR += PRE; TOTAL += PRE
 
 # --- 文字の部品
 _fc = {}
@@ -172,6 +175,9 @@ def bubble(w=86, h=66):
 if N == 19:
     add(veil(stack(bubble(), mtext('あなたは、どう見ましたか', 54), rule(320), mtext('{コメント}で聞かせてください', 44), gap=6), pad=50, a=110),
         W // 2, 90, S[19] + 0.3, TOTAL)
+if PRE > 0:
+    add(veil(stack(label('2012.10.7　凱旋門賞', 32), mtext('残り{100}メートルの', 84), rule(520), mtext('悲劇', 250), gap=4), pad=70, a=140),
+        W // 2, 520, 0.0, PRE - 0.05)  # 1フレーム目からタイトルを出す (フィードで止まってもらうため)
 json.dump(dict(S=S, D=D, NARR=NARR, TOTAL=TOTAL), open('timing.json', 'w'))
 
 # --- 映像
@@ -184,11 +190,14 @@ def clip(name, kind, L):
     global n
     args.extend(['-ss', '0.1' if kind == 'wan' else '0', '-i', f'clips/{name}.mp4'])
     f = f'[{n}:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,fps=30,format=yuv420p'
+    if kind == 'pre': f += (',setpts=2.0*PTS,eq=saturation=0.35:contrast=1.15:brightness=-0.12,vignette=angle=PI/3,'
+                            "scale=w='trunc(1080*(1+0.03*t)/2)*2':h=-2:eval=frame,crop=1080:1920")
     if kind == 'memory': f += ',setpts=1.6*PTS,eq=saturation=0.55:brightness=0.03,vignette=angle=PI/4,gblur=sigma=0.8'
     f += f',tpad=stop_mode=clone:stop_duration={L},trim=duration={L:.3f},setpts=PTS-STARTPTS'
     if kind == 'white': f += f',fade=t=out:st={max(0, L - 0.6):.2f}:d=0.6:color=white'
     if kind == 'memory': f += f',fade=t=in:st=0:d=0.3:color=white,fade=t=out:st={L - 0.3:.2f}:d=0.3:color=white'
     ch.append(f + f'[v{n}]'); n += 1
+if PRE > 0: clip('V05', 'pre', PRE)
 for i in range(1, N + 1): clip(*SH[i], D[i] + GAPS[i - 1] + (TAIL if i == 19 else 0))
 if N == 18: clip(TANIUE['tail'], 'k', TAIL)
 vin = ''.join(f'[v{k}]' for k in range(n))
@@ -199,15 +208,17 @@ fc += f';[{base}:v]scale={W}:{H},format=rgba,fade=t=in:st={S[18] + 0.3:.2f}:d=0.
 cur = 'b1'; k = base + 1
 for j, (p, x, y, t0, t1) in enumerate(EL):
     args += ['-loop', '1', '-framerate', '30', '-t', f'{TOTAL:.2f}', '-i', p]
-    fc += (f';[{k}:v]format=rgba,fade=t=in:st={t0:.2f}:d=0.25:alpha=1,fade=t=out:st={max(t0, t1 - 0.2):.2f}:d=0.2:alpha=1[s{j}]'
+    fc += (f';[{k}:v]format=rgba,{f"fade=t=in:st={t0:.2f}:d=0.25:alpha=1," if t0 > 0 else ""}fade=t=out:st={max(t0, t1 - 0.2):.2f}:d=0.2:alpha=1[s{j}]'
            f';[{cur}][s{j}]overlay={x}:{y}:enable=\'between(t,{t0:.2f},{t1:.2f})\'[c{j}]')
     cur = f'c{j}'; k += 1
 # 下の金の進行バー
 args += ['-f', 'lavfi', '-t', f'{TOTAL:.2f}', '-i', f'color=c=0xFFC42E:s={W}x10:r=30']
-fc += f";[{cur}][{k}:v]overlay=x='-w+w*t/{TOTAL:.2f}':y=H-10,fade=t=in:st=0:d=0.5,fade=t=out:st={TOTAL - 1.0:.2f}:d=1.0[vout]"; k += 1
-args += ['-i', 'vo/narr.wav', '-i', 'clips/bgm.m4a']
-fc += (f';[{k}:a]aresample=48000,apad,atrim=0:{TOTAL:.2f}[na];[{k+1}:a]aresample=48000,apad,atrim=0:{TOTAL:.2f},volume=0.20,'
-       f'afade=t=in:st=0:d=1.0,afade=t=out:st={TOTAL - 3:.2f}:d=3[bg];[na][bg]amix=inputs=2:duration=first:normalize=0[aout]')
+fc += f";[{cur}][{k}:v]overlay=x='-w+w*t/{TOTAL:.2f}':y=H-10,{'' if PRE > 0 else 'fade=t=in:st=0:d=0.5,'}fade=t=out:st={TOTAL - 1.0:.2f}:d=1.0[vout]"; k += 1
+args += ['-i', 'vo/narr.wav', '-i', 'clips/bgm.m4a', '-f', 'lavfi', '-t', '2.5', '-i',
+         "aevalsrc='0.9*sin(2*PI*(70-35*t)*t)*exp(-2.2*t)':s=48000"]  # タイトルの低い衝撃音
+fc += (f';[{k}:a]aresample=48000,adelay={int(PRE * 1000)}:all=1,apad,atrim=0:{TOTAL:.2f}[na];[{k+1}:a]aresample=48000,apad,atrim=0:{TOTAL:.2f},volume=0.20,'
+       f'afade=t=in:st=0:d=1.0,afade=t=out:st={TOTAL - 3:.2f}:d=3[bg];[na][bg]amix=inputs=2:duration=first:normalize=0[mx];'
+       f'[{k+2}:a]aresample=48000,volume={0.8 if PRE > 0 else 0},apad,atrim=0:{TOTAL:.2f}[hit];[mx][hit]amix=inputs=2:duration=first:normalize=0[aout]')
 run('ffmpeg', '-y', '-loglevel', 'error', *args, '-filter_complex', fc, '-map', '[vout]', '-map', '[aout]',
     '-c:v', 'libx264', '-crf', '20', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-t', f'{TOTAL:.2f}', OUT)
 print(json.dumps(dict(out=OUT, total=round(TOTAL, 2), reveal=round(S[18], 2), sprites=len(EL))))
