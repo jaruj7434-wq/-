@@ -42,7 +42,7 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
-TARGET = int(os.environ.get("TARGET", 350))
+TARGET = int(os.environ.get("TARGET", 3000))
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 29.9))
 OBJ_R = float(os.environ.get("OBJ_R", 20.0))            # おじさんの大きさ(半径)
 SPEED = float(os.environ.get("SPEED", 300.0))           # 飛び回る速さ(ずっと同じ)
@@ -60,6 +60,13 @@ PASS_MASK = pymunk.ShapeFilter.ALL_MASKS() ^ BLADE_CAT
 HELD_MASK = pymunk.ShapeFilter.ALL_MASKS() ^ BLADE_CAT ^ FRUIT_CAT   # はさまれ中は、刃ともほかのおじさんともぶつからない
 HOLD_GAP = float(os.environ.get("HOLD_GAP", 0.35))      # すきまがこの角度(ラジアン)よりせまくなったら、中のおじさんは閉じこめられる   # はさまれたおじさんは少しのあいだ刃をすり抜ける(刃にくっつかない)                                      # 刃が重なってから、増えたおじさんが出てくるまで
 MAX_OBJ = TARGET + 40
+# 人数が増えると円に入りきらないので、全員がいっしょに少しずつ小さくなる(N_FULL 人までは元の大きさ)
+N_FULL = float(os.environ.get("N_FULL", 220))
+MIN_R = float(os.environ.get("MIN_R", 6.5))
+
+
+def size_for(n):
+    return max(MIN_R, min(OBJ_R, OBJ_R * math.sqrt(N_FULL / max(1, n))))
 OUTRO = 2.5
 
 
@@ -109,16 +116,17 @@ class Game:
         rr = self.rng.uniform(150, 350)
         d = self.rng.uniform(0, 2 * math.pi)
         self.rng.integers(0, len(OJ.NAMES))   # (乱数の順番をそろえるために1回引く)
+        self.r = OBJ_R   # 今のおじさんの大きさ(全員同じ)
         self.round = 0   # 何回目の増殖か(増殖するたびにフルーツが変わる)
         self.add_obj((CX + rr * math.cos(a), CY + rr * math.sin(a)), (SPEED * math.cos(d), SPEED * math.sin(d)), START_KIND)
 
     def add_obj(self, pos, vel, kind):
         m = 1.0
-        b = pymunk.Body(m, pymunk.moment_for_circle(m, 0, OBJ_R))
+        b = pymunk.Body(m, pymunk.moment_for_circle(m, 0, self.r))
         b.position = pos
         b.velocity = vel
         b.angular_velocity = self.rng.uniform(-2.5, 2.5)
-        s = pymunk.Circle(b, OBJ_R)
+        s = pymunk.Circle(b, self.r)
         s.elasticity, s.friction = 1.0, 0.0
         s.collision_type = 1
         s.filter = pymunk.ShapeFilter(categories=FRUIT_CAT)
@@ -148,6 +156,11 @@ class Game:
         self.t += dt
         self.space.step(dt)
         g1 = self.gap()
+        want = size_for(len(self.objs))
+        if want < self.r - 0.01:   # なめらかに小さくなる(大きくなることはない)
+            self.r = max(want, self.r - 20.0 * dt)
+            for info in self.objs.values():
+                info["shape"].unsafe_set_radius(self.r)
         k = 1 - math.exp(-dt / 1.2)
         for b in self.objs:   # 摩擦も重力もない世界。回る刃に弾かれて速くなっても、ゆっくりいつもの速さに戻る
             v = b.velocity
@@ -214,7 +227,7 @@ class Game:
                     continue
                 # はさまれていたおじさんはそのまま残って内側へ、新しいフルーツのおじさんが1人追加されて外側へ
                 for sgn in (-1, 1):
-                    rr = min(R - OBJ_R - 4, max(HUB + OBJ_R + 4, rho + sgn * OBJ_R * 0.6))
+                    rr = min(R - self.r - 4, max(HUB + self.r + 4, rho + sgn * self.r * 0.6))
                     px, py = CX + rr * math.cos(mid), CY + rr * math.sin(mid)
                     d = mid + (0 if sgn > 0 else math.pi) + self.rng.uniform(-0.4, 0.4)
                     vel = (SPEED * math.cos(d), SPEED * math.sin(d))
@@ -246,13 +259,13 @@ class Game:
                 self.events.append(("fail", self.t, None))
 
 
-def squeeze(info, gap):
+def squeeze(info, gap, r=OBJ_R):
     """刃のあいだに閉じこめられたおじさんの、すきまの向きのつぶれ具合(1 = つぶれていない)。"""
     if "hold" not in info:
         return 1.0
     rho, _ = info["hold"]
     w = rho * min(gap, 2 * math.pi - gap) - 10   # すきまの幅(刃の太さぶんを引く)
-    return max(0.12, min(1.0, w / (2 * OBJ_R * 1.25)))
+    return max(0.12, min(1.0, w / (2 * r * 1.25)))
 
 
 def simulate(seed, record=False):
@@ -265,8 +278,8 @@ def simulate(seed, record=False):
         if record:
             frames.append({"t": g.t, "aA": g.blades[0].angle, "aB": g.blades[1].angle, "n": len(g.objs),
                            "objs": [(b.position.x, b.position.y, b.angle, info["kind"], info["id"], info.get("hit"),
-                                     squeeze(info, g.gap()))
-                                    for b, info in g.objs.items()]})
+                                     squeeze(info, g.gap(), g.r))
+                                    for b, info in g.objs.items()], "r": g.r})
         if g.result is not None:
             extra = OUTRO + SCARE_DUR if g.result == "fail" else FV.DURATION
             if not record or g.t > g.result_t + extra:
@@ -415,7 +428,7 @@ def render(seed):
                 ctx.scale(sq, 1 + 0.25 * (1 - sq))
                 ctx.rotate(-tg)
                 ctx.translate(-x, -y)
-            OJ.draw_fruit(ctx, kind, x, y, OBJ_R * 1.25 * k, ang * 0.3)
+            OJ.draw_fruit(ctx, kind, x, y, fr["r"] * 1.25 * k, ang * 0.3)
             ctx.restore()
         draw_blade(ctx, fr["aA"], (1.0, 0.5, 0.4))
         draw_blade(ctx, fr["aB"], (0.4, 0.75, 1.0))
@@ -442,8 +455,8 @@ def render(seed):
         n = fr["n"]
         pop_ = 1.0 + (0.25 if n > prev_n else 0.0)
         prev_n = n
-        text(ctx, f"{min(n, TARGET)}", W / 2 - 50, 500, 100 * pop_, rgb=(1, 1, 1), sw=12)
-        text(ctx, f"/ {TARGET} 人", W / 2 + 180, 500, 46, rgb=(0.8, 0.85, 0.9), sw=6)
+        text(ctx, f"{min(n, TARGET)}", W / 2 - 90, 500, 100 * pop_, rgb=(1, 1, 1), sw=12)
+        text(ctx, f"/ {TARGET} 人", W / 2 + 190, 500, 46, rgb=(0.8, 0.85, 0.9), sw=6)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, 1780, 60, rgb=(1, 0.4, 0.4) if left < 8 else (0.9, 0.9, 0.92), sw=8)
         if over and fail:
@@ -505,6 +518,15 @@ def synth_audio(res, duration, path):
     for k in range(6):   # 早回しはせず、言葉を最後まで言い切らせる
         v = OV.voice(k, SR)
         voices.append(v / np.sqrt(np.mean(v ** 2)) * 0.22)
+    # 増えた数だけ重ねる分は、少しずつ高さのちがう声にする(同じ声がそろって聞こえないように)
+    crowd_v = []
+    for k in range(6):
+        vs = []
+        for p in (0.88, 0.94, 1.0, 1.07, 1.15):
+            v = OV.voice(k, SR, pitch=p)
+            vs.append(v / np.sqrt(np.mean(v ** 2)) * 0.22)
+        crowd_v.append(vs)
+    vrng = np.random.default_rng(1234)
     last_b = -1.0
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.01:
@@ -519,12 +541,15 @@ def synth_audio(res, duration, path):
             add(hiss(int(t * 100))[: int(0.12 * SR)], t, 0.12)
         elif kind == "split":
             k, total, rk = data
-            # 1回目ははっきり大きく(聞き取れるように1人だけ)。増えた数だけ、うしろで小さく「わいわい」重なる
+            # 増えた数(k人)だけ「アッポー!」と言う。1人目ははっきり大きく、残りは次々に重なっていく
+            # (数が多いと、最後はわーっというノイズのようになる)
             add(voices[rk], t, VOICE_GAIN)
             if k > 1:
-                crowd = min(k - 1, 40)
-                for j in range(crowd):
-                    add(voices[rk], t + 0.25 + 0.9 * j / max(1, crowd), VOICE_GAIN * 0.5 / (1 + crowd ** 0.6))
+                win = min(1.7, 0.22 * (k - 1))   # 少ないときは1人ずつ聞こえるように順番に、多いときは一気に
+                g = VOICE_GAIN * 0.75 / (k - 1) ** 0.35
+                for j in range(1, k):
+                    off = win * j / k + vrng.uniform(-0.03, 0.03) * min(1.0, k / 10)
+                    add(crowd_v[rk][int(vrng.integers(0, 5))], t + max(0.08, off), g)
     if fail:
         sig = scream(SR)
         i0 = int(end_t * SR)

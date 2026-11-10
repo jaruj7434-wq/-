@@ -26,7 +26,39 @@ def _load(k):
     return _IMG[k]
 
 
+_SMALL = {}
+
+
+def _small(kind, r):
+    """小さく描くとき用に、あらかじめ縮小しておいた絵(何千人も描くときに速くするため)。"""
+    key = (kind, round(r * 2) / 2)
+    if key not in _SMALL:
+        img, cx, cy, rad = _load(kind)
+        rr = key[1]
+        n = int(math.ceil(rr * 2.3)) + 4
+        surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, n, n)
+        c = cairo.Context(surf)
+        c.translate(n / 2, n / 2)
+        c.scale(rr / rad, rr / rad)
+        c.translate(-cx, -cy)
+        c.set_source_surface(img, 0, 0)
+        c.get_source().set_filter(cairo.FILTER_BEST)
+        c.paint()
+        _SMALL[key] = (surf, n / 2)
+    return _SMALL[key]
+
+
 def draw_fruit(ctx, kind, x, y, r, rot=0.0, alpha=1.0):
+    if r < 16:   # 小さいときは縮小ずみの絵を使う
+        surf, h = _small(kind, r)
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(rot)
+        ctx.set_source_surface(surf, -h, -h)
+        ctx.get_source().set_filter(cairo.FILTER_BILINEAR)
+        ctx.paint_with_alpha(alpha) if alpha < 1 else ctx.paint()
+        ctx.restore()
+        return
     img, cx, cy, rad = _load(kind)
     s = r / rad
     ctx.save()
