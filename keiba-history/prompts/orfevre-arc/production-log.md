@@ -108,3 +108,5 @@
 - 画像 (nano_banana_pro): 014fff4a (ガイド + 参照 6bbc3f37・7aaab2f7)。ゼッケンと看板に実在のスポンサー名が出たため、文字を消す編集 c6bca461 を採用
   - b6f1637e (顔のアップ) は騎手の横顔が見えたため不採用
 - render_orf.py: 環境変数 SPLIT (例 {"3": [3.45, "H03"]}) で行の途中から別のクリップに切り替え、字幕も改行の位置で2枚に分ける
+- 動画 (kling4_0 720p 5秒、スローモーションで低いカメラへ駆けてくる) job 99774b57 → clips/H03.mp4 (確認: 文字なし、騎手はゴーグルで顔が分からない)
+- v6 書き出し: `TANIUE='{"3":"T03c","8":"I08","8k":"k","9":"I09","10":"T10c","12":"T12c","16":"I16","16k":"k","tail":"V19c"}' SPLIT='{"3":[3.45,"H03"]}' python3 render_orf.py orfevre_arc_v6.mp4` → 1080x1920, 107.4秒 → Higgs media 9d74b255 → assets/output/orfevre-arc/orfevre_arc_v6.mp4
