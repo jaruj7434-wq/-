@@ -27,6 +27,8 @@ SPLIT = json.loads(os.environ.get('SPLIT', '{}'))
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'orfevre_arc_v2.mp4'
 # WHATIF=1 (v9〜): 02 に「もしも池添だったら」を足し、03 で名前を出す (vo/line_02・03 は2つの音声をつないだもの)
 WHATIF = os.environ.get('WHATIF') == '1'
+# NOSORA=1 (v10〜): 「ソラを使って、負けた。」を入れない。02 は「もしも〜」だけ (vo/line_02.mp3 = 02b のみ)、映像は幻のゴール P02 だけ
+NOSORA = os.environ.get('NOSORA') == '1'
 SUBS = {1: '世界一まで、あと一歩のところで。', 2: '{ソラ}を使って、負けた。',
         3: '2012年、フランス・凱旋門賞。\n日本の夢を背負った、金色の馬がいました。',
         4: '直線、外から一気に先頭へ。\n誰もが「勝った」と思いました。',
@@ -48,6 +50,8 @@ SUBS = {1: '世界一まで、あと一歩のところで。', 2: '{ソラ}を�
 if WHATIF:
     SUBS[2] = '{ソラ}を使って、負けた。\nもしも、あの日の鞍上が、池添謙一だったら――。\n結果は、変わっていたのかもしれない。'
     SUBS[3] = '2012年、フランス・凱旋門賞。\n日本の夢を背負った、三冠馬・{オルフェーヴル}。'
+if NOSORA:
+    SUBS[2] = 'もしも、あの日の鞍上が、池添謙一だったら――。\n結果は、変わっていたのかもしれない。'
 def run(*a): subprocess.run(a, check=True)
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).decode())
 # --- ナレーション: 前後の無音を削って行間を足す
@@ -166,10 +170,11 @@ for i, s in SUBS.items():
     sb = subband(s); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + D[i] + 0.25)
 # 見出し・テロップ (明朝・シャンパンゴールド・細い罫線。レースの場面は画面上部、谷上の場面は頭にかからない大きさ)
 add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP))), W // 2, 140, S[1] + 0.1, E(1))
-add(veil(stack(mtext('{ソラ}を使って', 66), rule(), mtext('負けた', 124))), W // 2, 140, S[2], S[2] + SPLIT['2'][0] if '2' in SPLIT else E(2))
+if not NOSORA:
+    add(veil(stack(mtext('{ソラ}を使って', 66), rule(), mtext('負けた', 124))), W // 2, 140, S[2], S[2] + SPLIT['2'][0] if '2' in SPLIT else E(2))
 if WHATIF:
     # 02 後半「もしも、あの日の鞍上が池添謙一だったら」: 幻のゴールに明朝の「もしも――」
-    t2 = S[2] + SPLIT['2'][0]
+    t2 = S[2] + SPLIT['2'][0] if '2' in SPLIT else S[2]
     add(veil(stack(mtext('もしも――', 120), rule(300), mtext('鞍上が　{池添謙一}だったら', 52)), pad=50, a=100), W // 2, 140, t2 + 0.3, E(2))
     # 03 後半で名前をはっきり出す
     t3 = S[3] + SPLIT['3'][0]
@@ -204,6 +209,7 @@ SH = {1: ('V01', 'k'), 2: ('V02', 'white'), 3: (TANIUE['3'], 'wan'), 4: ('V04', 
       7: ('V07', 'k'), 8: (TANIUE['8'], TANIUE.get('8k', 'wan')), 9: (TANIUE.get('9', 'V09'), 'k'), 10: (TANIUE['10'], 'wan'), 11: ('V11', 'k'),
       12: (TANIUE['12'], 'wan'), 13: ('V13', 'k'), 14: ('V14', 'k'), 15: ('V15', 'k'), 16: (TANIUE['16'], TANIUE.get('16k', 'wan')),
       17: ('V01', 'memory'), 18: ('V18', 'k'), 19: ('T19', 'wan')}
+if NOSORA: SH[2] = ('P02', 'dream')
 args, ch, n = [], [], 0
 def clip(name, kind, L):
     global n

@@ -142,3 +142,11 @@
 - v9 書き出し: `TANIUE=... SPLIT='{"2":[2.5,"P02","dream"],"3":[3.45,"H03"]}' WHATIF=1 BGM=clips/bgm_mix3.m4a BGM_VOL=0.32 DUCK=1 python3 render_orf.py orfevre_arc_v9.mp4` → 115.3秒、平均 -16.9dB・最大 -1.4dB → Higgs media 649269d7 → assets/output/orfevre-arc/orfevre_arc_v9.mp4
   - 名前「オルフェーヴル」は約20秒で声とテロップの両方に出る
   - 今回の使用: 声2本・BGM1曲・画像3枚・Kling 5秒 ≒ 約19クレジット
+
+## v10 (ユーザー指定 2026-11-10): 「ソラを使って、負けた。」は入れない
+- 01「世界一まで、あと一歩のところで。」の次は、すぐ幻のゴール「もしも、あの日の鞍上が、池添謙一だったら――。結果は、変わっていたのかもしれない。」
+- 声: vo/line_02.mp3 = 02b だけ。映像: 02 は P02 (dream) だけ。「ソラを使って/負けた」の見出しも出さない (render_orf.py の NOSORA=1)
+  - 05 の「ソラを使う＝先頭に立って、気を抜くこと」の説明テロップはそのまま (05 のセリフ「気を抜いて」の説明として)
+- BGM: edit/orfevre-arc/bgm_mix_v10.sh → clips/bgm_mix4.m4a (02 が約2.8秒短くなった分、E 以降を前へ)
+- 新しい生成なし (0クレジット)
+- v10 書き出し: `TANIUE=... SPLIT='{"3":[3.45,"H03"]}' WHATIF=1 NOSORA=1 BGM=clips/bgm_mix4.m4a BGM_VOL=0.32 DUCK=1 python3 render_orf.py orfevre_arc_v10.mp4` → 112.4秒、平均 -16.9dB・最大 -1.3dB → Higgs media 65830409 → assets/output/orfevre-arc/orfevre_arc_v10.mp4
