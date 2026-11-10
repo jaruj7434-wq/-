@@ -366,13 +366,16 @@ def render(seed):
     s0 = {nd: frames[0]["doms"][ix[0]][0] for nd, ix in nodes.items()}
     course = Course(s0)
     # 止まった枝(枝分かれの直後で止まった)と、止まった時刻
-    dead = {}
+    dead = {}       # 止まった枝 → 止まったと分かる時刻
+    dead_at = {}    # 止まった枝 → 倒れなかった最初のドミノ
     for nd, ix in nodes.items():
-        if nd == 0:
-            continue
-        par = nodes[(nd - 1) // 2][-1]
-        if par in hit and ix[0] not in hit:
-            dead[nd] = hit[par] + 0.9
+        prev = nodes[(nd - 1) // 2][-1] if nd > 0 else None
+        for i in ix:
+            if i not in hit and (prev is None or prev in hit):
+                dead[nd] = hit[prev] + 0.9 if prev is not None else 0.0
+                dead_at[nd] = i
+                break
+            prev = i
     os.makedirs(OUT_DIR, exist_ok=True)
     silent = os.path.join(OUT_DIR, f"branch_domino_{seed}_video.mp4")
     wav = os.path.join(OUT_DIR, f"branch_domino_{seed}.wav")
@@ -500,7 +503,7 @@ def render(seed):
         # 止まった枝に ✕
         for nd, td in dead.items():
             if t >= td:
-                i0 = nodes[nd][0]
+                i0 = dead_at[nd]
                 u0 = frames[0]["doms"][i0][0]
                 x, y = cam.p(course.x_of(nd, u0), u0, DOM_H * 0.6)
                 k2 = min(1.0, (t - td) / 0.15)
