@@ -407,6 +407,7 @@ def render(seed):
     angels = AngelShow(W, H, seed) if result == "success" else None
     cam = Cam()
     cam.y = s0[0] - 200
+    cam.x, cam.sc = s0[0] + 140, SIDE_SC[0]
     paths = {nd: [(course.x_of(nd, s), s) for s in np.arange(s0[nd] - 10, frames[0]["doms"][ix[-1]][0] + 30, 12)]
              for nd, ix in nodes.items()}
     gx0 = frames[0]["giant"][0]
@@ -426,95 +427,112 @@ def render(seed):
             ff.stdin.write(surf.get_data())
             continue
         after = (t - end_t - (SCARE_DUR if fail else 0)) if over else 0
-        # カメラ:いちばん先まで倒れたドミノを追いかける
+        # カメラ:いちばん先まで倒れたドミノを横から追いかける。段(列)が増えるほど引いていく
         hits_now = [i for i, ht in hit.items() if isinstance(i, int) and ht <= t]
         front = max((frames[0]["doms"][i][0] for i in hits_now), default=s0[0])
         lvl = max((info[i][0] for i in hits_now), default=0)
-        tgt_y = min(front - 60, gx0 - 40)
-        if giant_hit_t is not None and t > giant_hit_t - 1.0:
-            tgt_y = gx0 - 120
-        cam.y += (tgt_y - cam.y) * 0.08
-        tgt_sc = [2.6, 2.25, 1.95, 1.7][lvl]
-        if giant_hit_t is not None and t > giant_hit_t - 1.0:
-            tgt_sc = 1.45
-        cam.sc += (tgt_sc - cam.sc) * 0.04
+        nxt = lvl + 1 if lvl + 1 < LEVELS and front > s0[2 ** (lvl + 1) - 1] - 260 else lvl
+        tgt_x = min(front + 60, gx0 + 40)
+        tgt_sc = SIDE_SC[nxt]
+        if giant_hit_t is not None and t > giant_hit_t - 0.8:
+            tgt_x = gx0 + 10
+        cam.x += (tgt_x - cam.x) * 0.1
+        cam.sc += (tgt_sc - cam.sc) * 0.05
         if land_t is not None and abs(t - land_t) < 1 / FPS:
             shake = 30
         shake *= 0.88
-        ctx.set_source_rgb(*BG)
+        g = cairo.LinearGradient(0, 0, 0, H)
+        g.add_color_stop_rgb(0, 0.04, 0.035, 0.08)
+        g.add_color_stop_rgb(1, 0.1, 0.07, 0.15)
+        ctx.set_source(g)
         ctx.paint()
         ctx.save()
         if shake > 0.5:
             ctx.translate(math.sin(t * 57) * shake, math.cos(t * 49) * shake)
-        # 床(うっすら光る道すじ)
-        g = cairo.LinearGradient(0, 0, 0, H)
-        g.add_color_stop_rgb(0, 0.05, 0.05, 0.1)
-        g.add_color_stop_rgb(1, 0.1, 0.08, 0.16)
-        ctx.set_source(g)
-        ctx.paint()
-        for nd, pts in paths.items():
-            if nd in dead and t >= dead[nd]:
-                col = (1, 0.3, 0.3, 0.12)
-            else:
-                col = (0.6, 0.75, 1.0, 0.13)
-            ctx.new_path()
-            for x, y in pts:
-                ctx.line_to(*cam.p(x, y, 0))
-            ctx.set_source_rgba(*col)
-            ctx.set_line_width(DOM_W * cam.sc * 1.25)
-            ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-            ctx.stroke()
-        # ドミノ(遠いものから順に)
-        lo_y = cam.y - (cam.sy0 + 200) / (cam.sc * CT)
-        hi_y = cam.y + (H - cam.sy0 + 300) / (cam.sc * CT)
-        items = []
+        sc = cam.sc
+
+        def SX(x):
+            return W / 2 + (x - cam.x) * sc
+
+        def SY(nd, y=0.0):
+            return SIDE_YC + (row_y(nd) + y) * sc
+
+        lo_x = cam.x - W / 2 / sc - 60
+        hi_x = cam.x + W / 2 / sc + 60
+        # 床(段)と、枝分かれのつなぎ
+        for nd, ix in nodes.items():
+            a_ = frames[0]["doms"][ix[0]][0] - 30
+            b_ = frames[0]["doms"][ix[-1]][0] + 30
+            if nd >= 2 ** (LEVELS - 1) - 1:
+                b_ = gx0 + GIANT_H * 1.3
+            is_dead = any(x_ in dead and t >= dead[x_] for x_ in _anc(nd))
+            col = (1, 0.35, 0.35) if is_dead else (0.55, 0.7, 1.0)
+            y_ = SY(nd)
+            ctx.rectangle(SX(a_), y_, SX(b_) - SX(a_), 7 * sc / 2)
+            ctx.set_source_rgba(*col, 0.55)
+            ctx.fill()
+            ctx.rectangle(SX(a_), y_ + 7 * sc / 2, SX(b_) - SX(a_), 22 * sc / 2)
+            gg = cairo.LinearGradient(0, y_, 0, y_ + 14 * sc)
+            gg.add_color_stop_rgba(0, *col, 0.18)
+            gg.add_color_stop_rgba(1, *col, 0.0)
+            ctx.set_source(gg)
+            ctx.fill()
+            if 0 < nd:   # 親の段からこの段へ分かれる「分岐レール」
+                par = (nd - 1) // 2
+                xf = frames[0]["doms"][nodes[par][-1]][0] + DOM_T
+                if lo_x - 100 < xf < hi_x + 100:
+                    on = nodes[par][-1] in hit and hit[nodes[par][-1]] <= t
+                    ctx.set_source_rgba(*((1, 0.9, 0.4) if on else (0.55, 0.7, 1.0)), 0.8 if on else 0.4)
+                    ctx.set_line_width(5)
+                    ctx.move_to(SX(xf), SY(par))
+                    ctx.line_to(SX(xf), SY(nd))
+                    ctx.line_to(SX(xf + 18), SY(nd))
+                    ctx.stroke()
+        # 巨大ドミノ(8段ぶんがつながった1枚)
+        gx, gy, ga = fr["giant"]
+        gcol = (1.0, 0.8, 0.25)
+        glit = 0.25 if giant_hit_t is not None and t > giant_hit_t else 0.0
+        leaves_ = range(2 ** (LEVELS - 1) - 1, 2 ** LEVELS - 1)
+        ys = [SY(nd, gy) for nd in leaves_]
+        ctx.set_source_rgba(0.85, 0.65, 0.2, 0.9)
+        ctx.set_line_width(GIANT_T * sc * 0.45)
+        ctx.move_to(SX(gx), ys[0])
+        ctx.line_to(SX(gx), ys[-1])
+        ctx.stroke()
+        for nd in leaves_:
+            side_rect(ctx, SX(gx), SY(nd, gy), ga, GIANT_T * sc, GIANT_H * sc, gcol, glit)
+        # ドミノ(横から)
         for i, (sx, sy, ang) in enumerate(fr["doms"]):
+            if sx < lo_x or sx > hi_x:
+                continue
             d, j, k = info[i]
             nd = 2 ** d - 1 + j
-            u0 = frames[0]["doms"][i][0]
-            if u0 < lo_y - 100 or u0 > hi_y:
-                continue
-            items.append((u0 + sx * 0.0, i, sx, sy, ang, nd, k))
-        items.sort()
-        for _, i, sx, sy, ang, nd, k in items:
-            u0 = frames[0]["doms"][i][0]
-            cx, cy, tx, ty = course.frame(nd, u0)
-            last = k == sum(SEG_N[:info[i][0] + 1]) - 1 and info[i][0] < LEVELS - 1
-            ww = DOM_W + 2 * FORK_OFF if last else DOM_W
-            # 道すじの上で、ドミノの中心がずれた分だけ進める
-            cx2, cy2 = cx + tx * (sx - u0), cy + ty * (sx - u0)
-            faces = box_faces(cx2, cy2, tx, ty, sx, -sy, ang, DOM_T, DOM_H, ww)
             m = SONG[k]
-            # 立っているあいだは白。倒れると、その音の色に変わる(音の出ないドミノは白いまま)
-            base = (0.9, 0.9, 0.88)
-            if m is not None:
+            base = (0.92, 0.92, 0.9)
+            if m is not None:   # 立っているあいだは白。倒れると、その音の色に変わる
                 pc_ = pitch_col(m)
                 f_ = min(1.0, abs(ang) / 0.5)
-                col = tuple(base[q] + (pc_[q] - base[q]) * (0.25 + 0.75 * f_) for q in range(3))
+                col = tuple(base[q] + (pc_[q] - base[q]) * (0.3 + 0.7 * f_) for q in range(3))
             else:
-                col = (0.62, 0.62, 0.64) if abs(ang) > 0.3 else base
+                col = (0.7, 0.7, 0.72) if abs(ang) > 0.3 else base
             ht = hit.get(i)
             glow = max(0.0, 1 - (t - ht) / 0.2) if ht is not None and t >= ht and m is not None else 0.0
-            draw_box(ctx, cam, faces, col, glow)
-        # 巨大ドミノ
-        gx, gy, ga = fr["giant"]
-        faces = box_faces(0.0, gx0, 0.0, 1.0, gx, -gy, ga, GIANT_T, GIANT_H, GIANT_W)
-        draw_box(ctx, cam, faces, (1.0, 0.78, 0.25), 0.15 + (0.3 if giant_hit_t is not None and t > giant_hit_t else 0))
+            side_rect(ctx, SX(sx), SY(nd, sy), ang, DOM_T * sc, DOM_H * sc, col, glow)
         # 止まった枝に ✕
         for nd, td in dead.items():
             if t >= td:
                 i0 = dead_at[nd]
                 u0 = frames[0]["doms"][i0][0]
-                x, y = cam.p(course.x_of(nd, u0), u0, DOM_H * 0.6)
+                x, y = SX(u0), SY(nd, -DOM_H * 0.5)
                 k2 = min(1.0, (t - td) / 0.15)
                 ctx.set_source_rgba(1, 0.2, 0.2, 0.95)
-                ctx.set_line_width(9 * k2)
-                r_ = 26 * (1.4 - 0.4 * k2)
+                ctx.set_line_width(10 * k2)
+                r_ = 30 * (1.4 - 0.4 * k2)
                 ctx.move_to(x - r_, y - r_); ctx.line_to(x + r_, y + r_)
                 ctx.move_to(x + r_, y - r_); ctx.line_to(x - r_, y + r_)
                 ctx.stroke()
                 if t - td < 1.2:
-                    text(ctx, "ストップ…", x, y - 60, 44, rgb=(1, 0.45, 0.45), sw=8)
+                    text(ctx, "ストップ…", x, y - 70, 46, rgb=(1, 0.45, 0.45), sw=8)
         ctx.restore()
         if angels is not None and over:
             angels.draw(ctx, t - end_t)
@@ -541,9 +559,9 @@ def render(seed):
             tf = hit.get(par)
             if tf is not None and 0 <= t - tf < 1.3:
                 k2 = min(1.0, (t - tf) / 0.15)
-                text(ctx, f"{2 ** d}列に分かれた!", W / 2, 520, 84 * (1.25 - 0.25 * k2), rgb=(0.6, 1.0, 0.8), sw=14)
+                text(ctx, f"{2 ** d}列に分かれた!", W / 2, 1700, 84 * (1.25 - 0.25 * k2), rgb=(0.6, 1.0, 0.8), sw=14)
         if giant_hit_t is not None and not over and t >= giant_hit_t:
-            text(ctx, "巨大ドミノ!!", W / 2, 520, 92, rgb=GOLD, sw=16)
+            text(ctx, "巨大ドミノ!!", W / 2, 1700, 92, rgb=GOLD, sw=16)
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "倒れない…", W / 2, 900, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
@@ -571,6 +589,36 @@ def render(seed):
     os.remove(silent)
     os.remove(wav)
     print(f"完成: {os.path.abspath(final)}  ({'失敗' if fail else '成功'} 最後の列 {res['leaves']}/8 / 長さ {duration:.1f}秒)")
+
+
+ROW = 90.0                       # 最後の8段の間かく(物理の長さの単位)
+SIDE_YC = 1085.0                 # 画面上の段のまん中
+SIDE_SC = [3.0, 2.5, 2.1, 1.72]  # 段が増えるほど引く
+
+
+def row_y(nd):
+    """枝(node)の段の高さ:最後の8段のうち、自分が受け持つ段のまん中。"""
+    d = int(math.log2(nd + 1))
+    j = nd - (2 ** d - 1)
+    span = 2 ** (LEVELS - 1 - d)
+    return ((j + 0.5) * span - 2 ** (LEVELS - 1) / 2) * ROW
+
+
+def side_rect(ctx, x, y, ang, w, h, col, glow=0.0):
+    """横から見たドミノ(物理の中心 x, y と角度)。"""
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(ang)
+    ctx.rectangle(-w / 2, -h / 2, w, h)
+    g = cairo.LinearGradient(-w / 2, 0, w / 2, 0)
+    g.add_color_stop_rgb(0, *(min(1, c * 1.1 + glow * 0.6) for c in col))
+    g.add_color_stop_rgb(1, *(min(1, c * 0.7 + glow * 0.6) for c in col))
+    ctx.set_source(g)
+    ctx.fill_preserve()
+    ctx.set_source_rgba(0, 0, 0, 0.55)
+    ctx.set_line_width(1.5)
+    ctx.stroke()
+    ctx.restore()
 
 
 def _anc(nd):
