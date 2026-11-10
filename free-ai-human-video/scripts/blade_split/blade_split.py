@@ -42,17 +42,17 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 # ---------------------------------------------------------------- 物理の設定
 TARGET = int(os.environ.get("TARGET", 240))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 25.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 28.3))
 OBJ_R = float(os.environ.get("OBJ_R", 20.0))            # おじさんの大きさ(半径)
 SPEED = float(os.environ.get("SPEED", 300.0))           # 飛び回る速さ(ずっと同じ)
 CX, CY = W / 2, 1150.0                                  # 円の中心
 R = 470.0                                               # 円の半径
 HUB = 46.0                                              # まん中の軸の半径
-W_A = float(os.environ.get("W_A", 1.7))                 # 刃A の回る速さ(ラジアン/秒・時計回り)
-W_B = float(os.environ.get("W_B", -1.0))                # 刃B の回る速さ(反時計回り)
-SPAWN_DELAY = 0.12                                      # 刃が重なってから、増えたおじさんが出てくるまで
+W_A = float(os.environ.get("W_A", 2.2))                 # 刃A の回る速さ(ラジアン/秒・時計回り)
+W_B = float(os.environ.get("W_B", -1.3))                # 刃B の回る速さ(反時計回り)
+SPAWN_DELAY = 0.22                                      # 刃が重なってから、増えたおじさんが出てくるまで
 MAX_OBJ = TARGET + 40
-CARRY = int(os.environ.get("CARRY", 1))                 # 刃に当たったら運ばれる
+CAP_W = float(os.environ.get("CAP_W", 5.0))              # すきまの幅がおじさんの半径の何倍より狭くなったら「はさまれた」とするか
 OUTRO = 2.5
 
 
@@ -87,8 +87,9 @@ class Game:
             s.collision_type = 3
             sp.add(b, s)
             self.blades.append(b)
-        sp.on_collision(1, 2, begin=self._bump)
-        sp.on_collision(1, 3, begin=self._blade_hit, pre_solve=self._blade_hit)
+        sp.on_collision(1, 2, post_solve=self._bump)
+        sp.on_collision(1, 1, post_solve=self._bump)
+        sp.on_collision(1, 3, post_solve=self._bump)
         self.objs = {}
         self.next_id = 0
         self.t = 0.0
@@ -116,18 +117,16 @@ class Game:
         self.next_id += 1
 
     def _bump(self, arb, space, data):
+        """当たった瞬間を記録する(音と、ぷよっとつぶれる見た目のため)。"""
+        if not arb.is_first_contact:
+            return
+        n = arb.normal
+        for sh in arb.shapes:
+            info = self.objs.get(sh.body)
+            if info is not None:
+                info["hit"] = (self.t, math.atan2(n.y, n.x))
         if len(self.events) < 300000:
             self.events.append(("bump", self.t, None))
-
-    def _blade_hit(self, arb, space, data):
-        """刃に当たったおじさんは、刃に押されていっしょに回る(はさまれるまで運ばれる)。"""
-        b = arb.shapes[0].body
-        info = self.objs.get(b)
-        if info is None:
-            return
-        if "ride" not in info:
-            self._bump(arb, space, data)
-        info["ride"] = 0 if arb.shapes[1].body is self.blades[0] else 1
 
     def gap(self):
         """刃A から進む向きに見た、刃B までの角度(これがせまくなってゼロになると重なる)。"""
@@ -139,21 +138,12 @@ class Game:
         self.t += dt
         self.space.step(dt)
         g1 = self.gap()
-        for b, info in self.objs.items():   # 速さはいつも同じ(刃に運ばれているものは刃といっしょに回る)
-            ride = info.get("ride")
-            if ride is not None and CARRY:
-                bl = self.blades[ride]
-                dx, dy = b.position.x - CX, b.position.y - CY
-                rho = math.hypot(dx, dy)
-                a = bl.angle + (OBJ_R + 8) / max(rho, 1) * (1 if bl.angular_velocity > 0 else -1)
-                b.position = (CX + rho * math.cos(a), CY + rho * math.sin(a))
-                w = bl.angular_velocity
-                b.velocity = (-w * rho * math.sin(a), w * rho * math.cos(a))
-                continue
+        k = 1 - math.exp(-dt / 1.2)
+        for b in self.objs:   # 摩擦も重力もない世界。回る刃に弾かれて速くなっても、ゆっくりいつもの速さに戻る
             v = b.velocity
             n = v.length
             if n > 1e-6:
-                b.velocity = v * (SPEED / n)
+                b.velocity = v * ((n + (SPEED - n) * k) / n)
         aA = self.blades[0].angle
         # せまくなっていくすきまにいるおじさんは、はさまれて見えなくなる
         caught = []
@@ -161,7 +151,7 @@ class Game:
             dx, dy = b.position.x - CX, b.position.y - CY
             rho = math.hypot(dx, dy)
             al = (math.atan2(dy, dx) - aA) % (2 * math.pi)   # 刃A から見た角度
-            if al < g1 and rho * g1 < OBJ_R * 2.4 and rho > HUB:
+            if al < g1 and rho * g1 < OBJ_R * CAP_W and rho > HUB:
                 caught.append((b, rho))
         for b, rho in caught:
             info = self.objs.pop(b)
@@ -179,7 +169,9 @@ class Game:
             self.spawn_at = None
             k = 0
             # 重なった場所(2枚の刃のまんなかの向き)から、内側と外側へはじき出す
-            mid = a_cross + (W_A + W_B) / 2 * SPAWN_DELAY   # 重なった場所は2枚の刃の動きの平均の向きへ少し進む
+            # 2枚の刃は重なった所から離れていく。そのあいだ(今ひらいたすきま)のまんなかから出す(刃にくっつかないように)
+            mid = (self.blades[0].angle + self.blades[1].angle) / 2 if abs(self.blades[0].angle - self.blades[1].angle) < math.pi \
+                else (self.blades[0].angle + self.blades[1].angle) / 2 + math.pi
             for rho, kind in self.trapped:
                 for sgn in (-1, 1):
                     if len(self.objs) >= MAX_OBJ:
@@ -214,7 +206,8 @@ def simulate(seed, record=False):
             g.step(dt)
         if record:
             frames.append({"t": g.t, "aA": g.blades[0].angle, "aB": g.blades[1].angle, "n": len(g.objs) + len(g.trapped),
-                           "objs": [(b.position.x, b.position.y, b.angle, info["kind"], info["id"]) for b, info in g.objs.items()]})
+                           "objs": [(b.position.x, b.position.y, b.angle, info["kind"], info["id"], info.get("hit"))
+                                    for b, info in g.objs.items()]})
         if g.result is not None:
             extra = OUTRO + SCARE_DUR if g.result == "fail" else FV.DURATION
             if not record or g.t > g.result_t + extra:
@@ -343,12 +336,21 @@ def render(seed):
         ctx.arc(CX, CY, R, 0, 2 * math.pi)
         ctx.fill()
         draw_ring(ctx)
-        for x, y, ang, kind, oid in fr["objs"]:
+        for x, y, ang, kind, oid, hit in fr["objs"]:
             if oid not in born:
                 born[oid] = t
             a = t - born[oid]
             k = 1.0 if a > 0.15 else 0.7 + 0.3 * a / 0.15 + 0.25 * math.sin(math.pi * a / 0.15)
+            ctx.save()
+            if hit is not None and t - hit[0] < 0.25:   # 当たった瞬間、ぷよっとつぶれて戻る
+                e = math.exp(-(t - hit[0]) * 14) * math.cos((t - hit[0]) * 40)
+                ctx.translate(x, y)
+                ctx.rotate(hit[1])
+                ctx.scale(1 - 0.28 * e, 1 + 0.18 * e)
+                ctx.rotate(-hit[1])
+                ctx.translate(-x, -y)
             OJ.draw_fruit(ctx, kind, x, y, OBJ_R * 1.25 * k, ang * 0.3)
+            ctx.restore()
         draw_blade(ctx, fr["aA"], (1.0, 0.5, 0.4))
         draw_blade(ctx, fr["aB"], (0.4, 0.75, 1.0))
         draw_hub(ctx, t)
