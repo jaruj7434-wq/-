@@ -25,6 +25,8 @@ TANIUE = json.loads(os.environ.get('TANIUE', '{"3":"T03","8":"T08","10":"T10","1
 # 行の途中で映像を切り替える: {"3": [行頭からの秒, "H03"]} → 前半は元の映像 (谷上)、後半は H03 (字幕も改行の位置で2枚に分ける)
 SPLIT = json.loads(os.environ.get('SPLIT', '{}'))
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'orfevre_arc_v2.mp4'
+# WHATIF=1 (v9〜): 02 に「もしも池添だったら」を足し、03 で名前を出す (vo/line_02・03 は2つの音声をつないだもの)
+WHATIF = os.environ.get('WHATIF') == '1'
 SUBS = {1: '世界一まで、あと一歩のところで。', 2: '{ソラ}を使って、負けた。',
         3: '2012年、フランス・凱旋門賞。\n日本の夢を背負った、金色の馬がいました。',
         4: '直線、外から一気に先頭へ。\n誰もが「勝った」と思いました。',
@@ -43,6 +45,9 @@ SUBS = {1: '世界一まで、あと一歩のところで。', 2: '{ソラ}を�
         17: 'この馬で、世界一になりたかった。',
         19: 'あなたは、あの日の凱旋門賞、どう見ましたか。\nぜひ、{コメント}で聞かせてください。'}
 
+if WHATIF:
+    SUBS[2] = '{ソラ}を使って、負けた。\nもしも、あの日の鞍上が、池添謙一だったら――。\n結果は、変わっていたのかもしれない。'
+    SUBS[3] = '2012年、フランス・凱旋門賞。\n日本の夢を背負った、三冠馬・{オルフェーヴル}。'
 def run(*a): subprocess.run(a, check=True)
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).decode())
 # --- ナレーション: 前後の無音を削って行間を足す
@@ -161,7 +166,14 @@ for i, s in SUBS.items():
     sb = subband(s); add(sb, W // 2, 1560 - sb.height // 2, S[i], S[i] + D[i] + 0.25)
 # 見出し・テロップ (明朝・シャンパンゴールド・細い罫線。レースの場面は画面上部、谷上の場面は頭にかからない大きさ)
 add(veil(stack(mtext('世界一まで、', 60), rule(), mtext('あと一歩', 120, CHAMP))), W // 2, 140, S[1] + 0.1, E(1))
-add(veil(stack(mtext('{ソラ}を使って', 66), rule(), mtext('負けた', 124))), W // 2, 140, S[2], E(2))
+add(veil(stack(mtext('{ソラ}を使って', 66), rule(), mtext('負けた', 124))), W // 2, 140, S[2], S[2] + SPLIT['2'][0] if '2' in SPLIT else E(2))
+if WHATIF:
+    # 02 後半「もしも、あの日の鞍上が池添謙一だったら」: 幻のゴールに明朝の「もしも――」
+    t2 = S[2] + SPLIT['2'][0]
+    add(veil(stack(mtext('もしも――', 120), rule(300), mtext('鞍上が　{池添謙一}だったら', 52)), pad=50, a=100), W // 2, 140, t2 + 0.3, E(2))
+    # 03 後半で名前をはっきり出す
+    t3 = S[3] + SPLIT['3'][0]
+    add(veil(stack(label('2011年　三冠馬', 32), mtext('オルフェーヴル', 112, CHAMP)), pad=50, a=110), W // 2, 140, t3 + 0.9, E(3))
 add(stack(label('2012.10.7　ロンシャン競馬場', 30), mtext('凱旋門賞', 86)), W // 2, 40, S[3] + 0.2, S[3] + SPLIT['3'][0] if '3' in SPLIT else E(3))
 add(veil(stack(mtext('ソラを使う', 42, CHAMP), mtext('先頭に立って、気を抜くこと', 32)), pad=40, a=110), W // 2, 1160, S[5] + 0.3, E(5))
 add(veil(stack(mtext('{クビ差}', 150), rule(300), mtext('2着', 76))), W // 2, 140, S[6] + D[6] * 0.55, E(6))
