@@ -211,8 +211,11 @@ def clip(name, kind, L):
     f = f'[{n}:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,fps=30,format=yuv420p'
     if kind == 'pre': f += (',setpts=2.0*PTS,eq=saturation=0.35:contrast=1.15:brightness=-0.12,vignette=angle=PI/3,'
                             "scale=w='trunc(1080*(1+0.03*t)/2)*2':h=-2:eval=frame,crop=1080:1920")
+    # dream: 幻のゴール (ゆっくり・淡い金色・柔らかい光・白から入る)
+    if kind == 'dream': f += ',setpts=1.65*PTS,eq=saturation=0.75:brightness=0.04:gamma=1.05,colorbalance=rm=0.06:bm=-0.05,gblur=sigma=0.7,vignette=angle=PI/4'
     if kind == 'memory': f += ',setpts=1.6*PTS,eq=saturation=0.55:brightness=0.03,vignette=angle=PI/4,gblur=sigma=0.8'
     f += f',tpad=stop_mode=clone:stop_duration={L},trim=duration={L:.3f},setpts=PTS-STARTPTS'
+    if kind == 'dream': f += ',fade=t=in:st=0:d=0.5:color=white'
     if kind == 'white': f += f',fade=t=out:st={max(0, L - 0.6):.2f}:d=0.6:color=white'
     if kind == 'memory': f += f',fade=t=in:st=0:d=0.3:color=white,fade=t=out:st={L - 0.3:.2f}:d=0.3:color=white'
     ch.append(f + f'[v{n}]'); n += 1
@@ -220,7 +223,8 @@ if PRE > 0: clip('V05', 'pre', PRE)
 for i in range(1, N + 1):
     L = D[i] + GAPS[i - 1] + (TAIL if i == 19 else 0)
     if str(i) in SPLIT:
-        ts, nm = SPLIT[str(i)]; clip(*SH[i], ts); clip(nm, 'k', L - ts)
+        ts, nm = SPLIT[str(i)][:2]; kd = SPLIT[str(i)][2] if len(SPLIT[str(i)]) > 2 else 'k'
+        clip(*SH[i], ts); clip(nm, kd, L - ts)
     else: clip(*SH[i], L)
 if N == 18: clip(TANIUE['tail'], 'k', TAIL)
 vin = ''.join(f'[v{k}]' for k in range(n))

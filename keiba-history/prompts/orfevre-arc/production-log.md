@@ -137,3 +137,8 @@
   - 画像 467a4434 (騎手の横顔が見えた) → 顔を隠す編集 77a187e4 (帽子が黒くなり不自然で不採用) → 低い前傾で顔を馬の首の陰に入れる編集 15e0a9a2 を採用
 - BGM: 夢の場面用の短い曲 cueE (sonilo_music 9秒、セレスタと弦の倍音) 309d4980
 - render_orf.py: WHATIF=1 で 02・03 の字幕を差し替え、「もしも―― 鞍上が池添謙一だったら」と「2011年 三冠馬 オルフェーヴル」の明朝テロップを出す
+- 動画 (kling4_0 720p 5秒) job d91d421d → clips/P02.mp4。render_orf.py の SPLIT に3つ目の値 "dream" (1.65倍ゆっくり・淡い金色・柔らかい光・白から入る) を追加
+- BGM: edit/orfevre-arc/bgm_mix_v9.sh → clips/bgm_mix3.m4a (cueE は約5秒で消えるため atempo 0.68 でのばす)
+- v9 書き出し: `TANIUE=... SPLIT='{"2":[2.5,"P02","dream"],"3":[3.45,"H03"]}' WHATIF=1 BGM=clips/bgm_mix3.m4a BGM_VOL=0.32 DUCK=1 python3 render_orf.py orfevre_arc_v9.mp4` → 115.3秒、平均 -16.9dB・最大 -1.4dB → Higgs media 649269d7 → assets/output/orfevre-arc/orfevre_arc_v9.mp4
+  - 名前「オルフェーヴル」は約20秒で声とテロップの両方に出る
+  - 今回の使用: 声2本・BGM1曲・画像3枚・Kling 5秒 ≒ 約19クレジット
