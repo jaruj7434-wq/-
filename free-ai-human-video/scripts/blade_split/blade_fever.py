@@ -21,8 +21,9 @@ DURATION = 8.5
 
 
 class FruitFever(Jackpot):
-    def __init__(self, W, H, seed, cx, cy, main="全部切った!!", count="160 / 160"):
+    def __init__(self, W, H, seed, cx, cy, main="全部切った!!", count="160 / 160", sub="ALL CLEAR"):
         super().__init__(W, H, seed, cx, cy, None, main=main, count=count)
+        self.sub = sub
         rng = np.random.default_rng(seed + 4321)
         # 噴き出す星: 出る時刻, 横の速さ, 上向きの速さ, 種類, 大きさ, 回転の速さ, 半分か(切れ目の角度)
         self.spray = []
@@ -106,14 +107,14 @@ class FruitFever(Jackpot):
         ctx.save()
         ctx.translate(W / 2 + shake, H * 0.30)
         ctx.scale(sc, sc)
-        self._text(ctx, self.main, 0, 55, 140, age)
+        self._text(ctx, self.main, 0, 55, 140 if len(self.main) <= 7 else int(140 * 7 / len(self.main)), age)
         ctx.restore()
         if age > 0.4:
             k = min(1.0, (age - 0.4) / 0.15)
             ctx.save()
             ctx.translate(W / 2, H * 0.40)
             ctx.scale(k * (1 + 0.05 * math.sin(age * 10)), k)
-            self._text(ctx, "ALL CLEAR", 0, 35, 100, age + 0.5, gold=True)
+            self._text(ctx, self.sub, 0, 35, 100, age + 0.5, gold=True)
             ctx.restore()
         if age > 0.65:
             k = min(1.0, (age - 0.65) / 0.15)
