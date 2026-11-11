@@ -23,3 +23,18 @@
 - 口パク方式の比較(最初の約10秒)
   - A: intone 480p(character_images=バブ君+OL、audio_references=バブ加工音声+OL音声)→ 30cr。2ショット+OL寄りの2カットを自動構成
   - B: seedance_2_0_mini 720p(start_image+audio_references、generate_audio false)4s+5s → 9cr。音声は後から ffmpeg で合成
+
+## 本番(v1 完成 2026-11-11)— 27.6秒 / 720x1280
+| カット | 内容 | 方式 | job_id |
+|---|---|---|---|
+| S1 | 2ショット→OL寄り(L1 バブ質問 / L2 OL悩み) | intone 480p(試作Aを流用) | 9573f419-01ba-4320-8011-5a8cee5a6160 |
+| S2 | バブ寄り L3「ほうほう。それで、ちみは…」 | seedance_2_0_mini 4s | 09d46f44-409d-4b71-ae16-6c7af4c217a5 |
+| S3 | OL寄り L4「…忙しいだけだと思うんです。きっと」 | seedance_2_0_mini 4s(start=intoneのフレーム) | 3aac909e-b592-4eb7-bfa1-5bd742703e50 |
+| S4 | バブ真顔 L5「おねえちゃん。…返事がないのも、返事でちゅよ」 | seedance_2_0_mini 5s(start=真顔画像 706a9874) | ba6c957a-a6af-4b9b-aa36-854c76b3cfcd |
+| S5 | OL固まる(無音、1.0〜4.0s使用) | seedance_2_0_mini 4s | 45f1c5e2-f4e8-4c63-8f7a-c271b516cdd4 |
+| S6 | バブ カメラ目線 L7「…ばぶ。」(1.0〜4.0s使用) | seedance_2_0_mini 4s(0.6秒の音声参照は失敗→音声参照なしで再生成) | f38de7de-ed91-419d-a25c-d92b3f74985d |
+
+- 音声: L3 47509177 / L4 4aa787a2 / L5 f9124e30(1回目は演技指示の「でも」が読まれたため撮り直し)/ L7 cd83445e
+- 注意: elevenlabs の [演技指示] に「でも」等の普通の語を入れると読み上げられることがある
+- 編集: サンドボックス /home/user/babu-interview/ep01/edit/build.sh(ffmpeg で連結・音声ミックス・Noto Sans JP 字幕、loudnorm -14 LUFS)
+- 完成 media_id: 9233eb54-47c2-4906-8de7-e25a0fc54647
