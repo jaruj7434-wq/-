@@ -1,19 +1,19 @@
-# ばぶばぶ愛ランド — キャラクター設定
+# ばぶばぶ愛ランド — キャラクター設定(v5:ふつうの赤ちゃん)
 
-画風: 3D Pixar風アニメ(MCバブと同じタッチ)。全員「服を着た」家族向け表現(おむつ姿はNG/NSFWで止まる)。
-生成モデル: gpt_image_2_6、MCバブ参照画像 `aa9c4381-cad2-478e-a5b8-9cce163ca3bf` を image_references に指定、16:9 スプリット(全身+アップ)。
+王子・姫などの設定はなし(2026-11-11 ユーザー指示)。髪型など小さな違いだけの、日常のふつうの赤ちゃんで、かわいさを最大限に出す。
+画風:3Dアニメ映画風(やわらかい肌、やさしい光)。全員服を着た家族向け表現。
 
-| キャラ | キャラシート job_id | 見た目の要点 |
-|---|---|---|
-| ミルク姫(1歳) | 77745eec-5a2f-40d2-85dd-cd9a382ea8c0 | 明るい茶色の巻き毛、ピンクのリボン+銀のティアラ、ピンクのチュールドレス+白レース襟、白タイツ、ピンクの靴、ピンクのおしゃぶり(チェーンで留める) |
-| ハイハイ王子(1歳半) | 1751856d-2bd2-48f0-83ea-4fd63b0af4e6 | 金髪の流し前髪、傾いた金の王冠、青いベルベットのカーディガン(金ボタン)+白襟シャツ、紺パンツ、赤いラインの膝当て、白スニーカー、青い目 |
-| よだれ先輩(2歳) | 06d8c89a-1cbc-46b8-b35c-056c7d0caef1 | 黒いポンパドール、太眉、垂れ目、口元によだれ、紺白ボーダー+茶色のベスト、水色の星のスタイ、デニム、茶色ブーツ、腕組み |
-| ねんねちゃん(1歳) | c37d97c1-a360-40b7-b3b4-c25a58137e8b | 黒髪ぱっつんボブ、額にラベンダーのアイマスク、紫がかった灰色の半目、紺の月と星柄パジャマ、ラベンダーのもこもこ靴下、羊のぬいぐるみ |
-| MCバブ | aa9c4381-cad2-478e-a5b8-9cce163ca3bf | 赤い後ろ向きキャップ、黒パーカー、「?」ペンダント+おしゃぶり付き金チェーン、マイク |
+| キャラ | キャラシート job_id | 見た目の要点 | 性格(行動で見せる) |
+|---|---|---|---|
+| くるん(1歳・男の子) | 17baefc3-2225-4511-8d59-84d4593941c6 | 明るい茶色のくるくる巻き毛、まんまるの茶色い目、前歯2本の笑顔、水色の長袖トップス(白い襟)と長ズボン、白い靴下 | 元気でドジ。よく泣くが、お礼は全力 |
+| ちょん(1歳・女の子) | 43562481-57e0-48a2-a107-3e44fcbd2a87 | 頭のてっぺんにちょんと結んだ小さな髪、前髪、ほっぺがまんまる、クリーム色のカーディガン+ピーチ色のトップスとレギンス | やさしいけど少し意地っ張り。迷ってから正しいことを選ぶ |
+| ぴよ(10ヶ月) | 106161c9-b247-4707-b90e-cae59d053553 | ほぼ髪なし、頭のてっぺんに金色の毛が1本くるん、まんまる顔、黄色の長袖トップスと長ズボン | いつもねむそう。にこっと笑うだけでみんなが和む |
+| 先生 | — | 手と黄色いエプロンの袖だけ映る | いつも見守っている |
 
 ## 共通プロンプト断片(英語)
+- Kurun: `1-year-old baby boy, soft light-brown curly hair in small loose ringlets, big round dark-brown eyes, chubby rosy cheeks, two tiny front teeth, pale-blue long-sleeve top with tiny white collar and pale-blue long pants, white socks`
+- Chon: `1-year-old baby girl, fine dark-brown hair in one tiny sprout ponytail on top of her head, wispy bangs, big round eyes, very chubby rosy cheeks, cream knit cardigan over a pale peach top, peach leggings, cream socks`
+- Piyo: `10-month-old baby, almost bald with one soft blond wisp curling up on top, huge round eyes, very round chubby face, butter-yellow long-sleeve top and long pants, white socks`
 
-- Milk: `1-year-old baby girl, light-brown curly hair with pink ribbon and tiny silver tiara clip, pink pacifier on a pastel pink chain, fluffy pastel-pink tulle princess dress with white lace collar, white tights, pink Mary-Jane shoes`
-- Prince: `18-month-old baby boy, slick blond swoop hair, tilted small gold crown, royal-blue velvet cardigan with gold buttons over white collared shirt, navy pants, red racing-stripe knee pads, white sneakers, blue eyes`
-- Yodare: `2-year-old chubby toddler boy, black pompadour, thick eyebrows, droopy teary dark eyes, a little drool, navy-white striped shirt, brown faux-leather vest, light-blue bib with star, denim pants, brown boots`
-- Nenne: `1-year-old baby girl, jet-black blunt bob with bangs, lavender sleep mask pushed up on forehead, heavy-lidded violet-gray eyes, navy pajamas with yellow moons and stars, lavender fluffy socks, plush sheep`
+## 旧キャラ(使わない)
+ミルク姫 77745eec / ハイハイ王子 1751856d / よだれ先輩 06d8c89a / ねんねちゃん c37d97c1
