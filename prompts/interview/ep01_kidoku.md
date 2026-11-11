@@ -38,3 +38,18 @@
 - 注意: elevenlabs の [演技指示] に「でも」等の普通の語を入れると読み上げられることがある
 - 編集: サンドボックス /home/user/babu-interview/ep01/edit/build.sh(ffmpeg で連結・音声ミックス・Noto Sans JP 字幕、loudnorm -14 LUFS)
 - 完成 media_id: 9233eb54-47c2-4906-8de7-e25a0fc54647
+
+## v2(立ち姿・音声は動画生成時にネイティブ生成)2026-11-11 — 27.4秒
+すべて seedance_2_0_mini 720p / generate_audio:true。声質はプロンプトで固定文言を使う:
+- バブ君: "in a very high-pitched, cute, babyish little-boy voice with baby talk"
+- OL: "in a soft, sad, young adult female voice"
+| カット | 使用範囲 | job_id |
+|---|---|---|
+| S1 2ショット L1+L2(8s) | 0–8.0 | 6b8c33a7-804a-404b-8f22-45f1b38ca363 |
+| S2 バブ立ち寄り L3(4s) | 0–4.0 | 081dc237-fd46-4ea6-94d1-2b31f7f81403 |
+| S3 OL寄り L4(4s) | 0–4.0 | 723dff0e-5ce3-4fc0-bcc8-baba7aa95acd |
+| S4 バブ真顔 L5(5s) | 0–5.0 | 129d763b-89f7-4587-afa3-04bc257755dd |
+| S5 OL固まる(無言・風音)(4s) | 0.8–4.0 | 7872be3e-a1ca-4c85-abc1-00ad3b5efa1d |
+| S6 バブ「…ばぶ。」(4s) | 0.8–4.0 | ee12ef7a-2188-433b-a245-26d9f2beafc2 |
+- 編集: サンドボックス /home/user/babu-interview/ep01/native/build2.py + cfg.json(各カットの音声をそのまま連結、字幕、loudnorm)
+- 完成 media_id: 1023d962-80e6-4b46-9f31-c71b5bd11f2e
