@@ -30,6 +30,7 @@ from ball_escape import midi_hz, text  # noqa: E402
 sys.path.insert(0, os.path.join(HERE, "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 from angels import DURATION as ANGEL_DUR, AngelShow, holy_music  # noqa: E402
+from fail_bgm import fail_music  # noqa: E402
 
 W, H = 1080, 1920
 FPS = 60
@@ -49,23 +50,30 @@ GAP = float(os.environ.get("GAP", 0.42))   # すきま(ドミノの高さに対�
 JIT = float(os.environ.get("JIT", 0.08))
 GROW3 = 1.07                         # 最後の列のドミノが1枚ごとに大きくなる倍率
 # 地形
-SHELF_Y = [-2120.0, -1710.0, -1300.0, -890.0, -480.0]   # 棚の高さ(最後の棚の先がジャンプ台)
-NPRE = len(SHELF_Y)
+NPRE = 5                                    # ジャンプまでの棚の数
+STEP_DY = [0.0, 9.0, -6.0, 0.0, 9.0]        # 棚ごとのドミノの並べ方:0=平ら、+=下り階段、-=上り階段(1枚ごとの段差)
+TRANS = ["zigzag", "spring", "valley", "seesaw"]   # 棚と棚のつなぎ:ジグザグのレール・バネの板・谷・シーソー橋
+TRANS_DROP = {"zigzag": 600.0, "spring": 410.0, "pegs": 640.0, "valley": 110.0, "seesaw": 160.0}
+P2_Y = -480.0                               # 最後の棚(この先がジャンプ台)の高さ
+
+
+def shelf_heights():
+    """最後の棚が P2_Y になるように、上から順に棚の高さを決める。"""
+    ys = [0.0]
+    for r in range(NPRE - 1):
+        y_end = ys[-1] + STEP_DY[r] * (len(RUNS[r]) - 1)
+        ys.append(y_end + TRANS_DROP[TRANS[r]])
+    y_last_end = ys[-1] + STEP_DY[NPRE - 1] * (len(RUNS[NPRE - 1]) - 1)
+    off = P2_Y - y_last_end
+    return [y + off for y in ys]
+
+
+SHELF_Y = shelf_heights()
 P0_Y = SHELF_Y[0]
-P2_Y = SHELF_Y[-1]
 BALL_KINDS = ["rubber", "marble", "soccer", "basket", "bowling"]   # 段ごとのボール
-BALL_R = [26.0, 22.0, 28.0, 28.0, 30.0]
-BALL_DENS = [0.006, 0.012, 0.004, 0.004, None]
-FRICTION = [0.8, 0.7, 0.9, 0.7, 0.8]      # 棚の摩擦(ドミノがすべらないように。すべるのは氷のすべり台だけ)
-TRANS = ["ramp", "wave", "stairs", "spring"]   # 段と段のつなぎ
-THEMES = ["wood", "ice", "grass", "metal", "candy"]
-SPRING_DROP = float(os.environ.get("SPRING_DROP", 230.0))   # 棚からバネ板までの高さ
-SPRING_ANG = float(os.environ.get("SPRING_ANG", 0.5))       # バネ板の傾き(右下がり)
-SPRING_EL = float(os.environ.get("SPRING_EL", 2.6))         # バネの強さ(反発)
-SPRING_GAP = float(os.environ.get("SPRING_GAP", 300.0))     # 棚のはしから次の棚まで
-RAMP_W = 200.0                              # 棚から次の棚への坂の横の長さ(短く急に)
+BALL_R = [24.0, 22.0, 28.0, 28.0, 30.0]
+BALL_DENS = [0.006, 0.012, 0.004, 0.006, None]
 LEAD = 150.0                                # 棚のはじめから1枚目のドミノまで
-LEAD_SPRING = 520.0                         # バネで跳んできたボールが着地する所(ドミノの手前)
 JUMP_RUN, JUMP_DROP = 420.0, 330.0          # ジャンプ台の下り坂(横の長さ・高さ)
 KICK_R, KICK_ANG = 220.0, float(os.environ.get("KICK_ANG", 0.62))   # けり上げ台(半径・角度)
 PIT_W = float(os.environ.get("PIT_W", 268.0))   # 穴の幅
@@ -73,8 +81,8 @@ P3_Y = float(os.environ.get("P3_Y", -230.0))    # 着地する台の高さ
 LAND_RUN = 200.0                             # 着地する台の、穴のふちから1枚目のドミノまで
 HB_R, HB_DENS = 30.0, float(os.environ.get("HB_DENS", 0.02))   # 鉄球(ジャンプする)
 STOP_WAIT = 3.0
-OUTRO = 2.5
-CT_DOM, CT_BELL, CT_SPRING = 3, 4, 5
+OUTRO = 4.2                                  # 失敗のあと(幽霊のあと)の長さ。しょんぼりBGMが流れる
+CT_DOM, CT_BELL, CT_PEG = 3, 4, 5
 
 
 class Game:
@@ -101,17 +109,31 @@ class Game:
         ys = SHELF_Y
         x0 = -80.0
         ends = []
-        self.stage_x = []      # 段ごとの [はじまりの x, おわりの x](背景やテーマの切りかえに使う)
         self.parts = []        # 見た目のための部品 (種類, 段, データ)
+        self.seesaw = None
+        self.end_y = []        # 棚ごとの、最後のドミノの足もとの高さ(ボールを置く高さ)
         for r in range(NPRE):   # 棚 → つなぎ → 棚 → …(どの棚も、最後のドミノのすぐ先、棚のはしにボールが1つ)
-            self.place_run(r, x0 + (LEAD_SPRING if r > 0 and TRANS[r - 1] == "spring" else LEAD), ys[r], 1.0, rng)
+            foot = self.place_run(r, x0 + (520.0 if r > 0 and TRANS[r - 1] == "spring" else LEAD), ys[r], 1.0, rng, STEP_DY[r])
             br = BALL_R[r]
             x1 = self.run_end(r) + 6 + br + 6   # ボールの中心のすぐ先が棚のはし(少し押されるだけで落ちる)
-            seg((x0, ys[r] + 6), (x1, ys[r] + 6), 6, FRICTION[r])
-            self.parts.append(("shelf", r, ((x0, ys[r] + 6), (x1, ys[r] + 6))))
+            # 棚の面:平らなら1本、階段なら1枚ごとに段をつける
+            pts = [(x0, foot[0][2] + 6)]
+            for k in range(len(foot)):
+                xl, xr, y = foot[k]
+                if k + 1 < len(foot):
+                    xm = (xr + foot[k + 1][0]) / 2
+                    pts.append((xm, y + 6))
+                    pts.append((xm, foot[k + 1][2] + 6))
+                else:
+                    pts.append((x1, y + 6))
+            pts = [p_ for i_, p_ in enumerate(pts) if i_ == 0 or p_ != pts[i_ - 1]]
+            for a_, b_ in zip(pts, pts[1:]):
+                seg(a_, b_, 6, 0.8)
+            self.parts.append(("shelf", r, pts))
             ends.append(x1)
+            self.end_y.append(foot[-1][2])
             if r < NPRE - 1:
-                x0 = self.connect(TRANS[r], r, x1, ys[r] + 6, ys[r + 1] + 6, seg)
+                x0 = self.connect(TRANS[r], r, x1, foot[-1][2] + 6, ys[r + 1] + 6, seg)
         p2x1 = ends[-1]
         # ジャンプ台:2段目の棚のはしから、なめらかに下ってから、けり上げ台で上へ
         pts = []
@@ -137,9 +159,10 @@ class Game:
         self.balls = []
         for r in range(NPRE):
             last = r == NPRE - 1
-            self.balls.append(self.add_ball(self.run_end(r) + 6 + rng.uniform(-2, 2), ys[r], BALL_R[r],
+            self.balls.append(self.add_ball(self.run_end(r) + 6 + rng.uniform(-2, 2), self.end_y[r], BALL_R[r],
                                             HB_DENS if last else BALL_DENS[r], BALL_KINDS[r]))
         self.hb = self.balls[-1]
+        self.first_idx = [next(i for i, d in enumerate(self.doms) if d[2] == r) for r in range(NPRE + 1)]
         # 鐘(3列目の最後のドミノの先)
         hl = self.doms[-1][1]
         bx = self.run_end(NPRE) + 0.75 * hl + 40
@@ -190,52 +213,90 @@ class Game:
         self.fell_pit = False
 
     def connect(self, kind, r, x1, y_top, y_bot, seg):
-        """段と段のつなぎ。次の棚がはじまる x を返す。"""
-        dh = y_bot - y_top
-        if kind == "ramp":      # まっすぐな坂
-            seg((x1, y_top), (x1 + 200, y_bot), 6, 0.6)
-            self.parts.append(("ramp", r, [(x1, y_top), (x1 + 200, y_bot)]))
-            return x1 + 200
-        if kind == "wave":      # 波うつ氷のすべり台
-            L = 520.0
-            pts = []
-            for k in range(41):
-                u = k / 40
-                y = y_top + dh * (u ** 1.3) + 34 * math.sin(u * math.pi * 3) * math.sin(u * math.pi) * (1 - u)
-                pts.append((x1 + L * u, y))
-            for a_, b_ in zip(pts, pts[1:]):
-                seg(a_, b_, 6, 0.05)
-            self.parts.append(("wave", r, pts))
-            return x1 + L
-        if kind == "stairs":    # 石の階段(1段ずつ跳ねて降りる)
-            n = 5
-            tilt = 14.0                    # 段の板は少しだけ前に傾いている(ボールが止まらないように)
-            sw, sh = 72.0, (dh - n * tilt) / n
-            pts = [(x1, y_top)]
-            x, y = x1, y_top
-            for k in range(n):
-                pts.append((x, y + sh))
-                x += sw
-                y += sh + tilt
-                pts.append((x, y))
-            for a_, b_ in zip(pts, pts[1:]):
-                seg(a_, b_, 5, 0.7, 0.35)
-            self.parts.append(("stairs", r, pts))
-            return x
+        """棚と棚のつなぎ。次の棚がはじまる x を返す。"""
+        st = self.space.static_body
+        if kind == "zigzag":    # ジグザグのレール(右へ → 左へ → 右へ、かべで折り返す)
+            rails = [((x1 - 30, y_top + 70), (x1 + 285, y_top + 185)),
+                     ((x1 + 355, y_top + 270), (x1 + 48, y_top + 385)),
+                     ((x1 - 30, y_top + 470), (x1 + 360, y_bot))]
+            walls = [((x1 + 362, y_top + 40), (x1 + 362, y_top + 330)), ((x1 - 38, y_top + 250), (x1 - 38, y_top + 510))]
+            for a_, b_ in rails:
+                seg(a_, b_, 6, 0.6, 0.2)
+            for a_, b_ in walls:
+                seg(a_, b_, 6, 0.4, 0.3)
+            self.parts.append(("rails", r, rails))
+            self.parts.append(("walls", r, walls))
+            return x1 + 360
+        if kind == "pegs":      # ピンの森 → じょうご → すべり台
+            L, R_ = x1 - 40, x1 + 300
+            walls = [((L, y_top - 10), (L, y_top + 390)), ((R_, y_top - 10), (R_, y_top + 390))]
+            for a_, b_ in walls:
+                seg(a_, b_, 6, 0.4, 0.5)
+            pegs = []
+            for row in range(5):
+                yy = y_top + 100 + row * 58
+                off = 0 if row % 2 == 0 else 35
+                for xx in np.arange(L + 30 + off, R_ - 15, 70):
+                    c = pymunk.Circle(st, 6, (xx, yy))
+                    c.friction, c.elasticity = 0.3, 1.6
+                    c.collision_type = CT_PEG
+                    self.space.add(c)
+                    pegs.append((xx, yy))
+            fun = [((L, y_top + 390), (x1 + 98, y_top + 470)), ((R_, y_top + 390), (x1 + 172, y_top + 470))]
+            for a_, b_ in fun:
+                seg(a_, b_, 6, 0.3, 0.2)
+            chute = ((x1 + 70, y_top + 555), (x1 + 420, y_bot))
+            seg(*chute, 6, 0.6)
+            self.parts.append(("pegbox", r, (walls, pegs, fun, chute)))
+            return x1 + 420
         if kind == "spring":    # バネの板で跳ねて、次の棚へ
-            px, py = x1 + 70, y_top + SPRING_DROP
-            ang = SPRING_ANG
+            px, py = x1 + 70, y_top + 230
+            ang = 0.5
             L = 120.0
             a_ = (px - L / 2 * math.cos(ang), py - L / 2 * math.sin(ang))
             b_ = (px + L / 2 * math.cos(ang), py + L / 2 * math.sin(ang))
-            sp_ = pymunk.Segment(self.space.static_body, a_, b_, 7)
-            sp_.friction, sp_.elasticity = 0.5, SPRING_EL
-            sp_.collision_type = CT_SPRING
+            sp_ = pymunk.Segment(st, a_, b_, 7)
+            sp_.friction, sp_.elasticity = 0.5, 2.6
+            sp_.collision_type = CT_PEG
             self.space.add(sp_)
             self.statics.append((a_, b_, 7))
             self.parts.append(("spring", r, (a_, b_)))
-            nx = x1 + SPRING_GAP
-            seg((nx, y_bot), (nx, y_bot + 300), 6)                 # 次の棚の、手前のかべ
+            nx = x1 + 300
+            seg((nx, y_bot), (nx, y_bot + 300), 6)
+            return nx
+        if kind == "valley":    # 深い谷(下って、勢いで向こう側へのぼる)
+            L = 520.0
+            x1 += 45                     # ボールが乗っている所は平らのまま、少し先から谷になる
+            pts = [(x1 - 45, y_top)]
+            for k in range(41):
+                u = k / 40
+                pts.append((x1 + L * u, y_top + (y_bot - y_top) * u + 420 * (1 - u) * math.sin(math.pi * u)))   # 入りは急、出口はなだらか
+            for a_, b_ in zip(pts, pts[1:]):
+                seg(a_, b_, 6, 0.8, 0.05)
+            self.parts.append(("valley", r, pts))
+            return x1 + L
+        if kind == "seesaw":    # 急な坂 → シーソー橋(ボールが支点をこえると、かたむいて次の棚へ)
+            ramp = ((x1, y_top), (x1 + 120, y_top + 140))
+            seg(*ramp, 6, 0.6)
+            P = (x1 + 290, y_top + 110)
+            L = 340.0
+            a0 = -0.2
+            m = 3.0
+            pb = pymunk.Body(m + 2.0, pymunk.moment_for_box(m, (L, 12)) + 2.0 * (L / 2 - 20) ** 2)
+            pb.position = P
+            pb.angle = a0
+            ps = pymunk.Poly.create_box(pb, (L, 12), 1)
+            ps.friction, ps.elasticity = 0.8, 0.05
+            cw = pymunk.Circle(pb, 8, (-L / 2 + 20, 12))   # 左はしの下のおもり(はじめは左が下がっている)
+            cw.mass = 2.0
+            self.space.add(pb, ps, cw)
+            self.space.add(pymunk.PivotJoint(st, pb, P))
+            lim = pymunk.RotaryLimitJoint(st, pb, -0.2, 0.27)
+            self.space.add(lim)
+            self.seesaw = (pb, L)
+            post = ((P[0], P[1] + 8), (P[0], y_bot + 300))
+            self.parts.append(("seesaw", r, (ramp, P, post)))
+            nx = P[0] + L / 2 * math.cos(0.27) - 6
             return nx
         raise ValueError(kind)
 
@@ -243,21 +304,27 @@ class Game:
         b, h, _, _ = [d for d in self.doms if d[2] == r][-1]
         return b.position.x + DOM_T * h / DOM_H / 2
 
-    def place_run(self, r, x, y0, grow, rng):
+    def place_run(self, r, x, y0, grow, rng, dy=0.0):
+        """ドミノを1列ならべる。dy が 0 でなければ、1枚ごとに段差のある階段の上に置く。足もとの (左, 右, 高さ) を返す。"""
         h = DOM_H
+        foot = []
+        y = y0
         for k in range(len(RUNS[r])):
             t = DOM_T * h / DOM_H
             m = t * h / 100
             b = pymunk.Body(m, pymunk.moment_for_box(m, (t, h)))
-            b.position = (x + t / 2, y0 - h / 2)
+            b.position = (x + t / 2, y - h / 2)
             s = pymunk.Poly.create_box(b, (t, h))
             s.friction, s.elasticity = 0.6, 0.05
             s.collision_type = CT_DOM
             self.space.add(b, s)
             self.idx[s] = len(self.doms)
             self.doms.append((b, h, r, k))
+            foot.append((x, x + t, y))
             x += t + h * GAP * (1 + rng.uniform(-JIT, JIT))
             h *= grow
+            y += dy
+        return foot
 
     def add_ball(self, x, y, r, dens, kind, raw=False):
         m = dens * math.pi * r * r
@@ -273,6 +340,11 @@ class Game:
     def step(self, dt):
         self.t += dt
         self.space.step(dt)
+        # 役目を終えたボール(次の列のドミノがもう倒れはじめた)は、転がり抵抗でだんだん止まる(ずっと動き続けないように)
+        for r, b in enumerate(self.balls[:-1]):
+            if self.first_idx[r + 1] in self.hit:
+                b.velocity = b.velocity * (1 - 1.5 * dt)
+                b.angular_velocity *= (1 - 1.5 * dt)
         moving = any(abs(b.angular_velocity) > 0.2 for b, *_ in self.doms) or \
             any(b.velocity.length > 15 for b in self.balls)
         if moving:
@@ -308,7 +380,8 @@ def simulate(seed, record=False):
             g.step(dt)
         if record:
             frames.append({"t": g.t, "doms": [(b.position.x, b.position.y, b.angle) for b, *_ in g.doms],
-                           "balls": [(b.position.x, b.position.y, b.angle) for b in g.balls]})
+                           "balls": [(b.position.x, b.position.y, b.angle) for b in g.balls],
+                           "seesaw": (g.seesaw[0].position.x, g.seesaw[0].position.y, g.seesaw[0].angle) if g.seesaw else None})
         if g.result is not None:
             extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR
             if not record or g.t > g.result_t + extra:
@@ -614,49 +687,60 @@ def draw_ball(ctx, x, y, ang, r, kind):
     ctx.restore()
 
 
-def draw_parts(ctx, parts, t):
-    """棚と、段と段のつなぎ(坂・氷のすべり台・石の階段・バネ板)。"""
+def draw_rail(ctx, a, b, w=10):
+    """鉄のレール(銀色・2本線)。"""
+    ctx.save()
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.move_to(*a)
+    ctx.line_to(*b)
+    ctx.set_source_rgb(0.35, 0.37, 0.42)
+    ctx.set_line_width(w + 4)
+    ctx.stroke()
+    ctx.move_to(*a)
+    ctx.line_to(*b)
+    ctx.set_source_rgb(0.82, 0.84, 0.88)
+    ctx.set_line_width(w - 3)
+    ctx.stroke()
+    ctx.restore()
+
+
+def draw_parts(ctx, parts, t, seesaw):
+    """棚(平ら・階段)と、棚と棚のつなぎ(ジグザグのレール・バネ板・谷・シーソー橋)。"""
     for kind, r, d in parts:
         if kind == "shelf":
-            draw_mat(ctx, d[0], d[1], r)
-        elif kind == "ramp":
-            draw_mat(ctx, d[0], d[1], r)
-        elif kind == "wave":
+            if len(d) > 2:   # 階段の棚:下を木でうめる
+                ctx.new_path()
+                for p_ in d:
+                    ctx.line_to(*p_)
+                ctx.line_to(d[-1][0], max(p_[1] for p_ in d) + 30)
+                ctx.line_to(d[0][0], max(p_[1] for p_ in d) + 30)
+                ctx.close_path()
+                ctx.set_source_rgb(0.62, 0.43, 0.25)
+                ctx.fill()
+            for a_, b_ in zip(d, d[1:]):
+                if a_[0] != b_[0]:
+                    draw_mat(ctx, a_, b_, 0)
+        elif kind == "rails":
+            for a_, b_ in d:
+                draw_rail(ctx, a_, b_)
+        elif kind == "walls":
+            for a_, b_ in d:
+                draw_rail(ctx, a_, b_, 12)
+        elif kind == "valley":
             ctx.new_path()
             for p_ in d:
                 ctx.line_to(*p_)
-            for p_ in reversed(d):
-                ctx.line_to(p_[0], p_[1] + 22)
+            bottom = max(p_[1] for p_ in d) + 40
+            ctx.line_to(d[-1][0], bottom)
+            ctx.line_to(d[0][0], bottom)
             ctx.close_path()
-            ctx.set_source_rgba(0.75, 0.92, 1.0, 0.95)
-            ctx.fill()
-            ctx.new_path()
-            for p_ in d:
-                ctx.line_to(p_[0], p_[1] - 4)
-            ctx.set_source_rgba(1, 1, 1, 0.9)
-            ctx.set_line_width(4)
-            ctx.stroke()
-        elif kind == "stairs":
-            ctx.new_path()
-            for p_ in d:
-                ctx.line_to(*p_)
-            ctx.line_to(d[-1][0], d[-1][1] + 40)
-            ctx.line_to(d[0][0], d[-1][1] + 40)
-            ctx.close_path()
-            g = cairo.LinearGradient(0, d[0][1], 0, d[-1][1])
-            g.add_color_stop_rgb(0, 0.7, 0.7, 0.66)
-            g.add_color_stop_rgb(1, 0.5, 0.5, 0.47)
+            g = cairo.LinearGradient(0, d[0][1], 0, bottom)
+            g.add_color_stop_rgb(0, 0.7, 0.5, 0.3)
+            g.add_color_stop_rgb(1, 0.5, 0.34, 0.2)
             ctx.set_source(g)
-            ctx.fill_preserve()
-            ctx.set_source_rgba(0.25, 0.25, 0.22, 0.8)
-            ctx.set_line_width(2)
-            ctx.stroke()
-            for a_, b_ in zip(d[1::2], d[2::2]):   # 段の上の草
-                ctx.move_to(*a_)
-                ctx.line_to(*b_)
-            ctx.set_source_rgb(0.3, 0.75, 0.25)
-            ctx.set_line_width(6)
-            ctx.stroke()
+            ctx.fill()
+            for a_, b_ in zip(d, d[1:]):
+                draw_mat(ctx, a_, b_, 0)
         elif kind == "spring":
             (x0, y0), (x1, y1) = d
             mx, my = (x0 + x1) / 2, (y0 + y1) / 2
@@ -674,6 +758,24 @@ def draw_parts(ctx, parts, t):
             ctx.set_source_rgb(1.0, 0.55, 0.1)
             ctx.set_line_width(5)
             ctx.stroke()
+        elif kind == "seesaw":
+            ramp, P, post = d
+            draw_mat(ctx, ramp[0], ramp[1], 0)
+            ctx.move_to(P[0] - 34, post[1][1])   # 支点の台(三角)
+            ctx.line_to(P[0] + 34, post[1][1])
+            ctx.line_to(P[0], P[1] + 6)
+            ctx.close_path()
+            ctx.set_source_rgb(0.45, 0.3, 0.18)
+            ctx.fill()
+            if seesaw is not None:
+                sx, sy, sa = seesaw
+                L = 340.0
+                a_ = (sx - L / 2 * math.cos(sa), sy - L / 2 * math.sin(sa))
+                b_ = (sx + L / 2 * math.cos(sa), sy + L / 2 * math.sin(sa))
+                draw_mat(ctx, a_, b_, 4)
+                ctx.arc(sx, sy, 9, 0, 2 * math.pi)
+                ctx.set_source_rgb(0.3, 0.3, 0.32)
+                ctx.fill()
 
 
 def draw_bell(ctx, x, y_base, s, swing):
@@ -766,6 +868,8 @@ def render(seed):
         last = max(hit_now, default=0)
         tx, ty = fr["doms"][last][0] + 120, fr["doms"][last][1] - 40
         for bi, (bx, by, ba) in enumerate(fr["balls"]):
+            if hit.get(run_start[bi + 1], 1e9) <= t:   # 役目を終えたボールは追わない
+                continue
             prev = frames[fi - 1]["balls"][bi] if fi else (bx, by, ba)
             v = math.hypot(bx - prev[0], by - prev[1]) * FPS
             if v > 60 and by < 800:
@@ -781,7 +885,7 @@ def render(seed):
         cam_x += (tx - cam_x) * 0.07
         cam_y += (ty - cam_y) * 0.07
         cam_s += (tgt_s - cam_s) * 0.04
-        tw = theme_weights(cam_x, bounds)
+        tw = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]   # 背景はずっと同じ部屋(変えるのはコースの形)
         draw_room(ctx, cam_x, t, tw)
         st_now = max(range(len(tw)), key=lambda k: tw[k])
         if st_now > cur_stage:   # 新しい段に入ったときだけ名前を出す(もどったときは出さない)
@@ -820,20 +924,20 @@ def render(seed):
             ctx.line_to(jp[-1][0], 6)
             ctx.close_path()
             g = cairo.LinearGradient(0, P2_Y, 0, 6)
-            g.add_color_stop_rgb(0, 1.0, 0.7, 0.82)
-            g.add_color_stop_rgb(1, 0.85, 0.45, 0.62)
+            g.add_color_stop_rgb(0, 0.7, 0.5, 0.3)
+            g.add_color_stop_rgb(1, 0.5, 0.34, 0.2)
             ctx.set_source(g)
             ctx.fill()
-        draw_parts(ctx, parts, t)
+        draw_parts(ctx, parts, t, fr.get("seesaw"))
         for a, b, r in statics:   # ジャンプ台(お菓子)
             if a[0] == b[0] or a[1] > 100 or not (jump_x0 - 1 <= min(a[0], b[0]) <= pit0 + 1):
                 continue
-            draw_mat(ctx, a, b, 4)
+            draw_mat(ctx, a, b, 0)
         # 棚の脚(棚と同じ材質の色)
         for r in range(NPRE):
-            (sx0, sy), (sx1, _) = [p_[2] for p_ in parts if p_[0] == "shelf" and p_[1] == r][0]
-            ctx.set_source_rgb(*(c * 0.75 for c in THEME_MAT[r]))
-            for x_ in (sx0 + 40, sx1 - 40):
+            pts_ = [p_[2] for p_ in parts if p_[0] == "shelf" and p_[1] == r][0]
+            ctx.set_source_rgb(0.45, 0.3, 0.18)
+            for x_, sy in ((pts_[0][0] + 40, pts_[0][1]), (pts_[-1][0] - 40, pts_[-1][1])):
                 ctx.rectangle(x_ - 7, sy + 10, 14, -sy - 4)
                 ctx.fill()
         # 鐘
@@ -882,7 +986,8 @@ def render(seed):
             text(ctx, "あっ…!", W / 2, 520, 110, rgb=(1, 0.4, 0.4), sw=18)
         if over and fail:
             k = min(1.0, after / 0.25)
-            text(ctx, "落ちた…", W / 2, 900, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, "落ちた…" if res["fail_kind"] == "pit" else "止まった…", W / 2, 900, 130 * (1.3 - 0.3 * k),
+                 rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"あと{len(info) - n}音だったのに…", W / 2, 1030, 72, sw=12)
         elif over:
             age = t - end_t
@@ -978,6 +1083,10 @@ def synth_audio(res, duration, path):
         i0 = int(end_t * SR)
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += sig[:m]
+        sig = fail_music(SR, OUTRO)   # 幽霊のあとの、しょんぼりBGM
+        i0 = int((end_t + SCARE_DUR) * SR)
+        m = min(len(sig), n_out - i0)
+        extra[i0:i0 + m] += 0.6 * sig[:m]
     elif end_t is not None:
         sig = holy_music(SR, ANGEL_DUR)
         i0 = int(end_t * SR) + int(1.8 * SR)
