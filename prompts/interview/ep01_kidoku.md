@@ -17,3 +17,9 @@
 - バブ: ElevenLabs v4 / Pixie(preset, stability 0.4)、「[幼い子どものように、かわいく]」+ピッチ1.3倍処理。
   核心ツッコミ(#5)のみ「[静かに、落ち着いて]」にして、かわいさの中に重みを出す
 - OL: ElevenLabs の20代女性ボイス(自然・少し弱々しい)。候補は試聴して選定
+
+## 試作メモ(2026-11-11)
+- OL声候補: Hana `c25f78a0-714e-42af-8da3-a399cef94968`(推奨) / Naomi / Luna。elevenlabs_v4、冒頭に「[ため息まじりに、弱々しく]」
+- 口パク方式の比較(最初の約10秒)
+  - A: intone 480p(character_images=バブ君+OL、audio_references=バブ加工音声+OL音声)→ 30cr。2ショット+OL寄りの2カットを自動構成
+  - B: seedance_2_0_mini 720p(start_image+audio_references、generate_audio false)4s+5s → 9cr。音声は後から ffmpeg で合成
