@@ -56,7 +56,7 @@ GROW3 = 1.07                         # 最後の列のドミノが1枚ごとに�
 NPRE = 5                                    # ジャンプまでの棚の数
 STEP_DY = [0.0, 9.0, -6.0, 0.0, 9.0]        # 棚ごとのドミノの並べ方:0=平ら、+=下り階段、-=上り階段(1枚ごとの段差)
 TRANS = ["zigzag", "spring", "valley", "seesaw"]   # 棚と棚のつなぎ:ジグザグのレール・バネの板・谷・シーソー橋
-TRANS_DROP = {"zigzag": 760.0, "spring": 410.0, "pegs": 640.0, "valley": 110.0, "seesaw": 160.0}
+TRANS_DROP = {"zigzag": 420.0, "spring": 330.0, "pegs": 640.0, "valley": 200.0, "seesaw": 125.0}
 P2_Y = -480.0                               # 最後の棚(この先がジャンプ台)の高さ
 
 
@@ -76,12 +76,14 @@ P0_Y = SHELF_Y[0]
 BALL_KINDS = ["rubber", "marble", "soccer", "basket", "bowling"]   # 段ごとのボール
 BALL_R = [24.0, 22.0, 28.0, 28.0, 30.0]
 BALL_DENS = [0.006, 0.012, 0.004, 0.006, None]
-LEAD = 150.0                                # 棚のはじめから1枚目のドミノまで
+LEAD = 60.0                                 # 棚のはじめから1枚目のドミノまで(短いほど、すぐ次のドミノに当たる)
+LEAD_SPRING = float(os.environ.get("LEAD_SPRING", 240.0))   # バネで跳んできたボールが着地する所(ドミノの手前)
+SEESAW_L = 260.0
 JUMP_RUN, JUMP_DROP = 420.0, 330.0          # ジャンプ台の下り坂(横の長さ・高さ)
 KICK_R, KICK_ANG = 220.0, float(os.environ.get("KICK_ANG", 0.62))   # けり上げ台(半径・角度)
 PIT_W = float(os.environ.get("PIT_W", 270.0))   # 穴の幅
 P3_Y = float(os.environ.get("P3_Y", -230.0))    # 着地する台の高さ
-LAND_RUN = 200.0                             # 着地する台の、穴のふちから1枚目のドミノまで
+LAND_RUN = 110.0                             # 着地する台の、穴のふちから1枚目のドミノまで
 HB_R, HB_DENS = 30.0, float(os.environ.get("HB_DENS", 0.02))   # 鉄球(ジャンプする)
 STOP_WAIT = 3.0
 OUTRO = 4.2                                  # 失敗のあと(幽霊のあと)の長さ。しょんぼりBGMが流れる
@@ -116,9 +118,9 @@ class Game:
         self.seesaw = None
         self.end_y = []        # 棚ごとの、最後のドミノの足もとの高さ(ボールを置く高さ)
         for r in range(NPRE):   # 棚 → つなぎ → 棚 → …(どの棚も、最後のドミノのすぐ先、棚のはしにボールが1つ)
-            foot = self.place_run(r, x0 + (440.0 if r > 0 and TRANS[r - 1] == "spring" else LEAD), ys[r], 1.0, rng, STEP_DY[r])
+            foot = self.place_run(r, x0 + (LEAD_SPRING if r > 0 and TRANS[r - 1] == "spring" else LEAD), ys[r], 1.0, rng, STEP_DY[r])
             br = BALL_R[r]
-            x1 = self.run_end(r) + 6 + br + 6   # ボールの中心のすぐ先が棚のはし(少し押されるだけで落ちる)
+            x1 = self.run_end(r) + 6 + br + 4   # ボールの中心のすぐ先が棚のはし(押されたらすぐ落ちる)
             # 棚の面:平らなら1本、階段なら1枚ごとに段をつける
             pts = [(x0, foot[0][2] + 6)]
             for k in range(len(foot)):
@@ -219,17 +221,17 @@ class Game:
         """棚と棚のつなぎ。次の棚がはじまる x を返す。"""
         st = self.space.static_body
         if kind == "zigzag":    # ジグザグのレール(右へ → 左へ → 右へ、かべで折り返す)
-            rails = [((x1 - 30, y_top + 70), (x1 + 285, y_top + 250)),
-                     ((x1 + 355, y_top + 330), (x1 + 48, y_top + 500)),
-                     ((x1 - 30, y_top + 590), (x1 + 360, y_bot))]
-            walls = [((x1 + 362, y_top + 40), (x1 + 362, y_top + 390)), ((x1 - 38, y_top + 360), (x1 - 38, y_top + 630))]
+            # 棚から落ちたボールは、棚の下へもぐる左向きのレールを転がり、かべではね返って右向きのレールで次の棚へ(Z字)
+            rails = [((x1 + 40, y_top + 90), (x1 - 120, y_top + 190)),
+                     ((x1 - 180, y_top + 280), (x1 + 200, y_bot))]
+            walls = [((x1 - 192, y_top + 110), (x1 - 192, y_top + 320))]
             for a_, b_ in rails:
                 seg(a_, b_, 6, 0.6, 0.2)
             for a_, b_ in walls:
                 seg(a_, b_, 6, 0.4, 0.3)
             self.parts.append(("rails", r, rails))
             self.parts.append(("walls", r, walls))
-            return x1 + 360
+            return x1 + 200
         if kind == "pegs":      # ピンの森 → じょうご → すべり台
             L, R_ = x1 - 40, x1 + 300
             walls = [((L, y_top - 10), (L, y_top + 390)), ((R_, y_top - 10), (R_, y_top + 390))]
@@ -253,7 +255,7 @@ class Game:
             self.parts.append(("pegbox", r, (walls, pegs, fun, chute)))
             return x1 + 420
         if kind == "spring":    # バネの板で跳ねて、次の棚へ
-            px, py = x1 + 70, y_top + 230
+            px, py = x1 + 70, y_top + 170
             ang = 0.5
             L = 120.0
             a_ = (px - L / 2 * math.cos(ang), py - L / 2 * math.sin(ang))
@@ -264,25 +266,25 @@ class Game:
             self.space.add(sp_)
             self.statics.append((a_, b_, 7))
             self.parts.append(("spring", r, (a_, b_)))
-            nx = x1 + 300
+            nx = x1 + 260
             seg((nx, y_bot), (nx, y_bot + 300), 6)
             return nx
         if kind == "valley":    # 深い谷(下って、勢いで向こう側へのぼる)
-            L = 430.0
-            x1 += 45                     # ボールが乗っている所は平らのまま、少し先から谷になる
-            pts = [(x1 - 45, y_top)]
+            L = 300.0
+            x1 += 12                     # ボールが乗っている所は平らのまま、すぐ先から谷になる
+            pts = [(x1 - 12, y_top)]
             for k in range(41):
                 u = k / 40
-                pts.append((x1 + L * u, y_top + (y_bot - y_top) * u + 360 * (1 - u) * math.sin(math.pi * u)))   # 入りは急、出口はなだらか
+                pts.append((x1 + L * u, y_top + (y_bot - y_top) * u + 300 * (1 - u) * math.sin(math.pi * u)))   # 入りは急、出口はなだらか
             for a_, b_ in zip(pts, pts[1:]):
                 seg(a_, b_, 6, 0.8, 0.05)
             self.parts.append(("valley", r, pts))
             return x1 + L
         if kind == "seesaw":    # 急な坂 → シーソー橋(ボールが支点をこえると、かたむいて次の棚へ)
-            ramp = ((x1, y_top), (x1 + 120, y_top + 140))
+            ramp = ((x1, y_top), (x1 + 80, y_top + 100))
             seg(*ramp, 6, 0.6)
-            P = (x1 + 290, y_top + 110)
-            L = 340.0
+            P = (x1 + 220, y_top + 80)
+            L = SEESAW_L
             a0 = -0.2
             m = 3.0
             pb = pymunk.Body(m + 2.0, pymunk.moment_for_box(m, (L, 12)) + 2.0 * (L / 2 - 20) ** 2)
@@ -772,7 +774,7 @@ def draw_parts(ctx, parts, t, seesaw):
             ctx.fill()
             if seesaw is not None:
                 sx, sy, sa = seesaw
-                L = 340.0
+                L = SEESAW_L
                 a_ = (sx - L / 2 * math.cos(sa), sy - L / 2 * math.sin(sa))
                 b_ = (sx + L / 2 * math.cos(sa), sy + L / 2 * math.sin(sa))
                 draw_mat(ctx, a_, b_, 4)
