@@ -32,3 +32,10 @@
 ## アカウントアイコン(1024x1024)
 - A 黄色背景・余裕の表情(推奨): job e3c68f3b-fc2c-4b18-b1f9-7862305e6f4b
 - B 水色背景・笑顔でマイクを向ける: job 935de9d4-f3f0-4429-bf98-392f2a98d9f5
+
+## YouTubeヘッダー(2560x1440、スマホ安全領域 1546x423 内に主要素)
+- 背景: job a869b6c3-eec0-4069-9fef-d6b5a86ce14d(2k)→ 左側の空き部分を拡大・ぼかし。バブ君は切り抜き e2f35c10-882b-46d8-b468-4ae82a519586
+- タイトル「人生2周目」は筆文字を AI 生成(透過PNG)して合成。Dela Gothic One の「周」は字形が潰れるので不採用
+  - 金(推奨): 文字 job c540f7db-1542-4f6e-9712-2bf460d1f199 → 完成 media d780b7bf-4183-46c8-82f0-7af4d0bf5b1c
+  - 白: 文字 job f1ac3d4b-08eb-46a7-8f90-59e0652e488c → 完成 media d114adb7-5ac0-4d74-ae30-aac6077ca511
+- 合成スクリプト: サンドボックス /home/user/babu-interview/account/banner2.py
