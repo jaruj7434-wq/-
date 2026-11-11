@@ -39,19 +39,31 @@ SR = 48000
 GRAVITY = 1500.0
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
-# 「歓喜の歌」(ハ長調)
-_A = [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 64, 62, 62]
-_BR = [62, 62, 64, 60, 62, 64, 65, 64, 60, 62, 64, 65, 64, 62, 60, 62, 55]
-_A2 = [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 62, 60, 60]
-_FULL = _A + _A2 + _BR + _A2          # 歓喜の歌 1回分(62音)
-_PRE = _FULL + _FULL                  # ジャンプまでに2回くり返す(124音)
-_CUT = [0, 25, 50, 75, 100, 124]
-RUNS = [_PRE[a:b] for a, b in zip(_CUT, _CUT[1:])] + [_A2]   # 棚ごとの音(5つの棚+ジャンプの先の最後の列・全139音)
+# 「歓喜の歌」(ハ長調)。(音, 長さ[8分音符いくつ分])。ドミノ1枚 = 8分音符1つ。長い音は、音の出るドミノのあとに音の出ないドミノが続く
+_A = [(64, 2), (64, 2), (65, 2), (67, 2), (67, 2), (65, 2), (64, 2), (62, 2), (60, 2), (60, 2), (62, 2), (64, 2),
+      (64, 3), (62, 1), (62, 4)]
+_A2 = [(64, 2), (64, 2), (65, 2), (67, 2), (67, 2), (65, 2), (64, 2), (62, 2), (60, 2), (60, 2), (62, 2), (64, 2),
+       (62, 3), (60, 1), (60, 4)]
+_BR = [(62, 2), (62, 2), (64, 2), (60, 2), (62, 2), (64, 1), (65, 1), (64, 2), (60, 2),
+       (62, 2), (64, 1), (65, 1), (64, 2), (62, 2), (60, 2), (62, 2), (55, 4)]
+
+
+def _expand(ph):
+    out = []
+    for m, du in ph:
+        out += [m] + [None] * (du - 1)
+    return out
+
+
+_PRE = _expand(_A) + _expand(_A2) + _expand(_BR)    # ジャンプまで(96枚)
+_CUT = [0, 20, 39, 58, 77, 96]
+RUNS = [_PRE[a:b] for a, b in zip(_CUT, _CUT[1:])] + [_expand(_A2)]   # 棚ごと(5つ)+ジャンプの先の最後の列(32枚)
+N_NOTES = sum(1 for r in RUNS for m in r if m is not None)
 
 DOM_H, DOM_T = 60.0, 11.0
-GAP = float(os.environ.get("GAP", 0.28))   # すきま(ドミノの高さに対する割合)。せまいほどテンポが速い
+GAP = float(os.environ.get("GAP", 0.75))   # すきま(ドミノの高さに対する割合)。せまいほどテンポが速い
 JIT = float(os.environ.get("JIT", 0.08))
-GROW3 = 1.07                         # 最後の列のドミノが1枚ごとに大きくなる倍率
+GROW3 = 1.03                         # 最後の列のドミノが1枚ごとに大きくなる倍率
 # 地形
 NPRE = 5                                    # ジャンプまでの棚の数
 STEP_DY = [0.0, 9.0, -6.0, 0.0, 9.0]        # 棚ごとのドミノの並べ方:0=平ら、+=下り階段、-=上り階段(1枚ごとの段差)
@@ -81,7 +93,7 @@ LEAD_SPRING = float(os.environ.get("LEAD_SPRING", 240.0))   # バネで跳んで
 SEESAW_L = 260.0
 JUMP_RUN, JUMP_DROP = 420.0, 330.0          # ジャンプ台の下り坂(横の長さ・高さ)
 KICK_R, KICK_ANG = 220.0, float(os.environ.get("KICK_ANG", 0.62))   # けり上げ台(半径・角度)
-PIT_W = float(os.environ.get("PIT_W", 270.0))   # 穴の幅
+PIT_W = float(os.environ.get("PIT_W", 268.0))   # 穴の幅
 P3_Y = float(os.environ.get("P3_Y", -230.0))    # 着地する台の高さ
 LAND_RUN = 110.0                             # 着地する台の、穴のふちから1枚目のドミノまで
 HB_R, HB_DENS = 30.0, float(os.environ.get("HB_DENS", 0.02))   # 鉄球(ジャンプする)
@@ -158,7 +170,8 @@ class Game:
         self.pit1 = kx + PIT_W
         seg((self.pit0, 900), (self.pit1 + 200, 900))              # 穴の底
         seg((self.pit1, P3_Y + 6), (self.pit1, 900))               # 穴の向こうのかべ
-        seg((self.pit1, P3_Y + 6), (self.pit1 + 2500, P3_Y + 6))   # 3段目の台
+        seg((self.pit1, P3_Y + 6), (self.pit1 + 6000, P3_Y + 6))   # 着地する台(最後の列が全部のる長さ)
+        seg((-3000, 1500), (self.pit1 + 8000, 1500), 20)           # いちばん下の床(何かが落ちても、ここで止まる)
         seg((-500, 6), (self.pit0, 6))                              # 床
         self.place_run(NPRE, self.pit1 + LAND_RUN, P3_Y, GROW3, rng)
         self.balls = []
@@ -368,7 +381,7 @@ class Game:
             if self.bell_hit is not None:
                 self.result, self.result_t = "success", self.t
                 self.events.append(("success", self.t, None))
-            elif self.fell_pit and self.t > 0:
+            elif self.fell_pit and self.first_idx[NPRE] not in self.hit:   # 最後の列が倒れはじめる前に穴に落ちた
                 self.result, self.result_t = "fail", self.t + 0.6
                 self.events.append(("fail", self.t + 0.6, "pit"))
             elif self.t - self.last_move > STOP_WAIT:
@@ -391,7 +404,7 @@ def simulate(seed, record=False):
             extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR
             if not record or g.t > g.result_t + extra:
                 break
-        if g.t > 90:
+        if g.t > 75:
             break
     stage = 3 if g.landed else (2 if g.launched else 1)
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "stage": stage,
@@ -423,6 +436,8 @@ NOTE_COLS = {0: (1.0, 0.35, 0.35), 2: (1.0, 0.6, 0.2), 4: (1.0, 0.88, 0.25), 5: 
 
 
 def note_col(m):
+    if m is None:   # 音の出ない(のばす)ドミノは白
+        return (0.93, 0.92, 0.88)
     return NOTE_COLS.get(m % 12, (0.9, 0.9, 0.9))
 
 
@@ -976,7 +991,8 @@ def render(seed):
         text(ctx, "「歓喜の歌」を", W / 2, 230, 96, rgb=GOLD, sw=16)
         text(ctx, "最後まで演奏できる？", W / 2, 335, 80, rgb=GOLD, sw=14)
         n = len(hit_now)
-        text(ctx, f"♪ {n} / {len(info)}", W / 2, 1800, 70, sw=12)
+        n = sum(1 for i in hit_now if RUNS[info[i][0]][info[i][1]] is not None)
+        text(ctx, f"♪ {n} / {N_NOTES}", W / 2, 1800, 70, sw=12)
         if cur_stage > 0 and 0 <= t - stage_t < 1.5 and not over and not (pit_t is not None and t >= pit_t - 0.3):
             k2 = min(1.0, (t - stage_t) / 0.15)
             text(ctx, THEME_NAMES[cur_stage], W / 2, 780, 96 * (1.25 - 0.25 * k2),
@@ -993,7 +1009,7 @@ def render(seed):
             k = min(1.0, after / 0.25)
             text(ctx, "落ちた…" if res["fail_kind"] == "pit" else "止まった…", W / 2, 900, 130 * (1.3 - 0.3 * k),
                  rgb=(1, 0.3, 0.3), sw=20)
-            text(ctx, f"あと{len(info) - n}音だったのに…", W / 2, 1030, 72, sw=12)
+            text(ctx, f"あと{N_NOTES - n}音だったのに…", W / 2, 1030, 72, sw=12)
         elif over:
             age = t - end_t
             if age < 0.3:
@@ -1078,7 +1094,8 @@ def synth_audio(res, duration, path):
         if kind == "hit":
             r, k = info[data]
             add(GD.click(30 * res["hs"][data] / DOM_H, data), t, 0.25)
-            add(note_sound(r, k, RUNS[r][k]), t)
+            if RUNS[r][k] is not None:   # 音の出ないドミノは「カチッ」だけ
+                add(note_sound(r, k, RUNS[r][k]), t)
         elif kind == "launch":
             add(GD.whoosh(0.5), t, 1.0)
         elif kind == "land":
@@ -1098,7 +1115,8 @@ def synth_audio(res, duration, path):
         if gap < 0.35:
             continue
         r, k = info[k0]
-        root = bass_root(RUNS[r][k])
+        prev_notes = [m_ for m_ in RUNS[r][:k + 1] if m_ is not None] or [60]
+        root = bass_root(prev_notes[-1])
         for m_ in ((root + 12, root + 16, root + 19) if root == 36 else (root + 12, root + 16, root + 19, root + 22)):
             sig = GD.strings(midi_hz(m_ + 12), 0.6, gap + 0.25) * np.minimum(1, np.arange(int((gap + 0.25) * SR)) / (0.6 * SR) + 0.5)
             add(sig * np.minimum(1, (len(sig) - np.arange(len(sig))) / (0.25 * SR)), ta + 0.08)
