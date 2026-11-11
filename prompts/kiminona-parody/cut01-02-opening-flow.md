@@ -63,3 +63,8 @@ Cinematic live-action opening of a romantic fantasy film trailer, 16:9, 9 second
 Audio: quiet, mysterious solo piano and high-altitude wind; a soft whoosh as the camera passes through the clouds; calm night ambience. No dialogue.
 ```
 - リテイク生成(Cinema Studio Video 2 / pro / 9秒 / 18 クレジット): `f3b4e918-2cdb-4e9e-a601-ea0320bb0145`
+
+## 冒頭の差し替え: 寄りの唐揚げ急降下(ユーザー指定、参考とは少し異なる)
+- 目的: 今の冒頭動画 `f3b4e918` の雲海パート(約0〜3.5秒)を、寄りの実写風ショットに差し替える。本物そっくりの唐揚げが湯気を立てて猛スピードで降り、最後は雲に突っ込んで白くかすむ。その後は `f3b4e918` の夜のパート(4.2秒〜)につなぐ。
+- 開始画像: gpt_image_2 / medium / 2k / 16:9 / 2クレジット、job `f86b37c9-bfa5-4e4f-9986-940a3164a165`(`assets/output/kiminona/cut01/karaage-closeup-start.png`)
+  - プロンプト: Photorealistic cinematic film still, 16:9, live-action, shot on a high-speed camera. A single large, real Japanese karaage (deep-fried chicken) plummeting from the sky at tremendous speed, close-up: it fills about a quarter of the frame, slightly right of center, falling diagonally downward toward the lower left. Craggy, crunchy golden-brown batter with deep crevices, glistening with hot oil, a few darker crispy edges, extremely detailed realistic food texture. Thick white steam streams off it and trails far behind (upward) in long wispy ribbons, plus tiny flying crumbs of batter and droplets of oil streaking behind it. Background: a vast sea of clouds far below at dusk, cloud tops lit gold and rose-pink with blue-violet shadows, the sky above a cobalt-blue gradient, the low sun near the horizon producing a soft warm lens flare. Strong motion blur on the background and the steam trail conveys extreme speed, while the karaage itself is tack sharp. Natural, realistic colors, no text, no logo.
