@@ -43,17 +43,20 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 _A = [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 64, 62, 62]
 _BR = [62, 62, 64, 60, 62, 64, 65, 64, 60, 62, 64, 65, 64, 62, 60, 62, 55]
 _A2 = [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 62, 60, 60]
-RUNS = [_A, _A2, _BR, _A2, _BR, _A2]   # ドミノの列ごとの音(歓喜の歌・94音)。最後の列だけジャンプの先
+_FULL = _A + _A2 + _BR + _A2          # 歓喜の歌 1回分(62音)
+_PRE = _FULL + _FULL                  # ジャンプまでに2回くり返す(124音)
+_CUT = [0, 25, 50, 75, 100, 124]
+RUNS = [_PRE[a:b] for a, b in zip(_CUT, _CUT[1:])] + [_A2]   # 棚ごとの音(5つの棚+ジャンプの先の最後の列・全139音)
 
 DOM_H, DOM_T = 60.0, 11.0
-GAP = float(os.environ.get("GAP", 0.42))   # すきま(ドミノの高さに対する割合)。せまいほどテンポが速い
+GAP = float(os.environ.get("GAP", 0.28))   # すきま(ドミノの高さに対する割合)。せまいほどテンポが速い
 JIT = float(os.environ.get("JIT", 0.08))
 GROW3 = 1.07                         # 最後の列のドミノが1枚ごとに大きくなる倍率
 # 地形
 NPRE = 5                                    # ジャンプまでの棚の数
 STEP_DY = [0.0, 9.0, -6.0, 0.0, 9.0]        # 棚ごとのドミノの並べ方:0=平ら、+=下り階段、-=上り階段(1枚ごとの段差)
 TRANS = ["zigzag", "spring", "valley", "seesaw"]   # 棚と棚のつなぎ:ジグザグのレール・バネの板・谷・シーソー橋
-TRANS_DROP = {"zigzag": 600.0, "spring": 410.0, "pegs": 640.0, "valley": 110.0, "seesaw": 160.0}
+TRANS_DROP = {"zigzag": 760.0, "spring": 410.0, "pegs": 640.0, "valley": 110.0, "seesaw": 160.0}
 P2_Y = -480.0                               # 最後の棚(この先がジャンプ台)の高さ
 
 
@@ -76,7 +79,7 @@ BALL_DENS = [0.006, 0.012, 0.004, 0.006, None]
 LEAD = 150.0                                # 棚のはじめから1枚目のドミノまで
 JUMP_RUN, JUMP_DROP = 420.0, 330.0          # ジャンプ台の下り坂(横の長さ・高さ)
 KICK_R, KICK_ANG = 220.0, float(os.environ.get("KICK_ANG", 0.62))   # けり上げ台(半径・角度)
-PIT_W = float(os.environ.get("PIT_W", 268.0))   # 穴の幅
+PIT_W = float(os.environ.get("PIT_W", 270.0))   # 穴の幅
 P3_Y = float(os.environ.get("P3_Y", -230.0))    # 着地する台の高さ
 LAND_RUN = 200.0                             # 着地する台の、穴のふちから1枚目のドミノまで
 HB_R, HB_DENS = 30.0, float(os.environ.get("HB_DENS", 0.02))   # 鉄球(ジャンプする)
@@ -113,7 +116,7 @@ class Game:
         self.seesaw = None
         self.end_y = []        # 棚ごとの、最後のドミノの足もとの高さ(ボールを置く高さ)
         for r in range(NPRE):   # 棚 → つなぎ → 棚 → …(どの棚も、最後のドミノのすぐ先、棚のはしにボールが1つ)
-            foot = self.place_run(r, x0 + (520.0 if r > 0 and TRANS[r - 1] == "spring" else LEAD), ys[r], 1.0, rng, STEP_DY[r])
+            foot = self.place_run(r, x0 + (440.0 if r > 0 and TRANS[r - 1] == "spring" else LEAD), ys[r], 1.0, rng, STEP_DY[r])
             br = BALL_R[r]
             x1 = self.run_end(r) + 6 + br + 6   # ボールの中心のすぐ先が棚のはし(少し押されるだけで落ちる)
             # 棚の面:平らなら1本、階段なら1枚ごとに段をつける
@@ -216,10 +219,10 @@ class Game:
         """棚と棚のつなぎ。次の棚がはじまる x を返す。"""
         st = self.space.static_body
         if kind == "zigzag":    # ジグザグのレール(右へ → 左へ → 右へ、かべで折り返す)
-            rails = [((x1 - 30, y_top + 70), (x1 + 285, y_top + 185)),
-                     ((x1 + 355, y_top + 270), (x1 + 48, y_top + 385)),
-                     ((x1 - 30, y_top + 470), (x1 + 360, y_bot))]
-            walls = [((x1 + 362, y_top + 40), (x1 + 362, y_top + 330)), ((x1 - 38, y_top + 250), (x1 - 38, y_top + 510))]
+            rails = [((x1 - 30, y_top + 70), (x1 + 285, y_top + 250)),
+                     ((x1 + 355, y_top + 330), (x1 + 48, y_top + 500)),
+                     ((x1 - 30, y_top + 590), (x1 + 360, y_bot))]
+            walls = [((x1 + 362, y_top + 40), (x1 + 362, y_top + 390)), ((x1 - 38, y_top + 360), (x1 - 38, y_top + 630))]
             for a_, b_ in rails:
                 seg(a_, b_, 6, 0.6, 0.2)
             for a_, b_ in walls:
@@ -265,12 +268,12 @@ class Game:
             seg((nx, y_bot), (nx, y_bot + 300), 6)
             return nx
         if kind == "valley":    # 深い谷(下って、勢いで向こう側へのぼる)
-            L = 520.0
+            L = 430.0
             x1 += 45                     # ボールが乗っている所は平らのまま、少し先から谷になる
             pts = [(x1 - 45, y_top)]
             for k in range(41):
                 u = k / 40
-                pts.append((x1 + L * u, y_top + (y_bot - y_top) * u + 420 * (1 - u) * math.sin(math.pi * u)))   # 入りは急、出口はなだらか
+                pts.append((x1 + L * u, y_top + (y_bot - y_top) * u + 360 * (1 - u) * math.sin(math.pi * u)))   # 入りは急、出口はなだらか
             for a_, b_ in zip(pts, pts[1:]):
                 seg(a_, b_, 6, 0.8, 0.05)
             self.parts.append(("valley", r, pts))
@@ -1034,10 +1037,17 @@ def note_sound(r, k, m):
     if r == 2:
         return GD.mix(GD.piano(f, 0.6), GD.piano(midi_hz(bass_root(m) + 12), 0.25), GD.strings(f, 0.15, 0.4))
     if r < NPRE:
-        return GD.mix(GD.piano(f, 0.55), GD.strings(f, 0.25, 0.5), GD.brass(f, 0.18, 0.4), GD.piano(midi_hz(bass_root(m)), 0.3))
+        return GD.mix(GD.piano(f, 0.55), GD.strings(f, 0.25, 0.5), GD.brass(f, 0.12 + 0.08 * (r - 3), 0.4),
+                      GD.piano(midi_hz(bass_root(m)), 0.3))
     big = k / max(1, len(RUNS[NPRE]) - 1)
     return GD.mix(GD.piano(f, 0.5), GD.strings(f, 0.3 + 0.2 * big, 0.6), GD.brass(f, 0.2 + 0.35 * big, 0.5),
                   GD.brass(midi_hz(bass_root(m)), 0.3 + 0.2 * big, 0.5))
+
+
+def snare_tap(seed):
+    t = GD._t(0.08)
+    n = np.random.default_rng(seed).normal(0, 1, len(t))
+    return n * np.exp(-t * 45) * 0.8
 
 
 def thud(seed, amp, f=90):
@@ -1078,6 +1088,23 @@ def synth_audio(res, duration, path):
             for m_, a in ((48, 0.6), (55, 0.45), (60, 0.55), (64, 0.45), (67, 0.4), (72, 0.35)):
                 add(GD.mix(GD.brass(midi_hz(m_), a, 2.0), GD.strings(midi_hz(m_), a * 0.6, 2.5)), t + 0.04)
             add(GD.timpani(1.0, 2.2), t)
+    # ボールが次の棚へ移るあいだ(ドミノの音がとぎれるあいだ)は、ストリングスの和音とだんだん大きくなる小太鼓でつなぐ
+    hts = sorted(t for k, t in res["hit"].items() if end_t is None or t <= end_t)
+    order = sorted(res["hit"], key=lambda k: res["hit"][k])
+    for k0, (ta, tb) in zip(order, zip(hts, hts[1:])):
+        gap = tb - ta
+        if gap < 0.35:
+            continue
+        r, k = info[k0]
+        root = bass_root(RUNS[r][k])
+        for m_ in ((root + 12, root + 16, root + 19) if root == 36 else (root + 12, root + 16, root + 19, root + 22)):
+            sig = GD.strings(midi_hz(m_ + 12), 0.6, gap + 0.25) * np.minimum(1, np.arange(int((gap + 0.25) * SR)) / (0.6 * SR) + 0.5)
+            add(sig * np.minimum(1, (len(sig) - np.arange(len(sig))) / (0.25 * SR)), ta + 0.08)
+        n_roll = int(gap / 0.06)
+        for j in range(n_roll):   # 小太鼓のロール(だんだん大きく)
+            tt = ta + 0.1 + j * 0.06
+            if tt < tb - 0.03:
+                add(snare_tap(j), tt, 0.15 + 0.65 * (j / max(1, n_roll)) ** 1.5)
     if fail:
         sig = scream(SR)
         i0 = int(end_t * SR)
