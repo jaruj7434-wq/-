@@ -42,20 +42,25 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 _A = [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 64, 62, 62]
 _BR = [62, 62, 64, 60, 62, 64, 65, 64, 60, 62, 64, 65, 64, 62, 60, 62, 55]
 _A2 = [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 62, 60, 60]
-RUNS = [_A, _BR, _A2]                # ドミノの列ごとの音
+RUNS = [_A, _A2, _BR, _A2, _BR, _A2]   # ドミノの列ごとの音(歓喜の歌・94音)。最後の列だけジャンプの先
 
 DOM_H, DOM_T = 60.0, 11.0
-GAP = 0.55                           # すきま(ドミノの高さに対する割合)
+GAP = float(os.environ.get("GAP", 0.42))   # すきま(ドミノの高さに対する割合)。せまいほどテンポが速い
 JIT = float(os.environ.get("JIT", 0.08))
-GROW3 = 1.07                         # 3列目のドミノが1枚ごとに大きくなる倍率
+GROW3 = 1.07                         # 最後の列のドミノが1枚ごとに大きくなる倍率
 # 地形
-P1_Y, P1_X0 = -900.0, -80.0
-P2_Y, P2_X0 = -480.0, 1150.0
+SHELF_Y = [-2120.0, -1710.0, -1300.0, -890.0, -480.0]   # 棚の高さ(最後の棚の先がジャンプ台)
+NPRE = len(SHELF_Y)
+P0_Y = SHELF_Y[0]
+P2_Y = SHELF_Y[-1]
+BALL_KINDS = ["red", "blue", "green", "yellow", "iron"]
+RAMP_W = 200.0                              # 棚から次の棚への坂の横の長さ(短く急に)
+LEAD = 150.0                                # 棚のはじめから1枚目のドミノまで
 JUMP_RUN, JUMP_DROP = 420.0, 330.0          # ジャンプ台の下り坂(横の長さ・高さ)
 KICK_R, KICK_ANG = 220.0, float(os.environ.get("KICK_ANG", 0.62))   # けり上げ台(半径・角度)
 PIT_W = float(os.environ.get("PIT_W", 270.0))   # 穴の幅
 P3_Y = float(os.environ.get("P3_Y", -230.0))    # 着地する台の高さ
-LAND_RUN = 330.0                             # 着地する台の、穴のふちから1枚目のドミノまで
+LAND_RUN = 200.0                             # 着地する台の、穴のふちから1枚目のドミノまで
 HB_R, HB_DENS = 30.0, float(os.environ.get("HB_DENS", 0.02))   # 鉄球(ジャンプする)
 STOP_WAIT = 3.0
 OUTRO = 2.5
@@ -83,13 +88,19 @@ class Game:
         self.idx = {}
         self.hit = {}
         self.events = []
-        self.place_run(0, 40.0, P1_Y, 1.0, rng)
-        self.place_run(1, P2_X0 + 260.0, P2_Y, 1.0, rng)
-        p1x1 = self.run_end(0) + 90
-        p2x1 = self.run_end(1) + 80
-        seg((P1_X0, P1_Y + 6), (p1x1, P1_Y + 6))                    # 1段目の棚
-        seg((p1x1, P1_Y + 6), (P2_X0, P2_Y + 6), 6, 0.6)            # 坂
-        seg((P2_X0, P2_Y + 6), (p2x1, P2_Y + 6))                    # 2段目の棚
+        ys = SHELF_Y
+        x0 = -80.0
+        ends = []
+        for r in range(NPRE):   # 棚 → 坂 → 棚 → …(どの棚も、最後のドミノのすぐ先、棚のはしにボールが1つ)
+            self.place_run(r, x0 + LEAD, ys[r], 1.0, rng)
+            br = HB_R if r == NPRE - 1 else 26.0
+            x1 = self.run_end(r) + 6 + br + 6   # ボールの中心のすぐ先が棚のはし(少し押されるだけで落ちる)
+            seg((x0, ys[r] + 6), (x1, ys[r] + 6))
+            if r < NPRE - 1:
+                seg((x1, ys[r] + 6), (x1 + RAMP_W, ys[r + 1] + 6), 6, 0.6)
+            ends.append(x1)
+            x0 = x1 + RAMP_W
+        p2x1 = ends[-1]
         # ジャンプ台:2段目の棚のはしから、なめらかに下ってから、けり上げ台で上へ
         pts = []
         for k in range(13):
@@ -110,13 +121,16 @@ class Game:
         seg((self.pit1, P3_Y + 6), (self.pit1, 900))               # 穴の向こうのかべ
         seg((self.pit1, P3_Y + 6), (self.pit1 + 2500, P3_Y + 6))   # 3段目の台
         seg((-500, 6), (self.pit0, 6))                              # 床
-        self.place_run(2, self.pit1 + LAND_RUN, P3_Y, GROW3, rng)
-        d_last = self.run_end(0)
-        self.b1 = self.add_ball(d_last + 34 + rng.uniform(-3, 3), P1_Y, 26.0, 0.006, "red")
-        self.hb = self.add_ball(self.run_end(1) + 30 + rng.uniform(-3, 3), P2_Y, HB_R, HB_DENS, "iron")
+        self.place_run(NPRE, self.pit1 + LAND_RUN, P3_Y, GROW3, rng)
+        self.balls = []
+        for r in range(NPRE):
+            last = r == NPRE - 1
+            self.balls.append(self.add_ball(self.run_end(r) + 6 + rng.uniform(-2, 2), ys[r], HB_R if last else 26.0,
+                                            HB_DENS if last else 0.006, BALL_KINDS[r]))
+        self.hb = self.balls[-1]
         # 鐘(3列目の最後のドミノの先)
         hl = self.doms[-1][1]
-        bx = self.run_end(2) + 0.75 * hl + 40
+        bx = self.run_end(NPRE) + 0.75 * hl + 40
         self.bell_x, self.bell_size = bx, 0.5 * hl
         bs = self.bell_size
         bell = pymunk.Poly(st, [(bx - 0.22 * bs, P3_Y - 1.25 * bs), (bx + 0.22 * bs, P3_Y - 1.25 * bs),
@@ -198,7 +212,7 @@ class Game:
         self.t += dt
         self.space.step(dt)
         moving = any(abs(b.angular_velocity) > 0.2 for b, *_ in self.doms) or \
-            any(b.velocity.length > 15 for b in (self.b1, self.hb))
+            any(b.velocity.length > 15 for b in self.balls)
         if moving:
             self.last_move = self.t
         g = self.hb
@@ -232,14 +246,14 @@ def simulate(seed, record=False):
             g.step(dt)
         if record:
             frames.append({"t": g.t, "doms": [(b.position.x, b.position.y, b.angle) for b, *_ in g.doms],
-                           "balls": [(b.position.x, b.position.y, b.angle) for b in (g.b1, g.hb)]})
+                           "balls": [(b.position.x, b.position.y, b.angle) for b in g.balls]})
         if g.result is not None:
             extra = OUTRO + SCARE_DUR if g.result == "fail" else ANGEL_DUR
             if not record or g.t > g.result_t + extra:
                 break
         if g.t > 90:
             break
-    stage = 3 if g.landed else (2 if g.launched else (1 if any(i for i in g.hit if g.doms[i][2] == 1) else 0))
+    stage = 3 if g.landed else (2 if g.launched else 1)
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "stage": stage,
             "fell": len(g.hit), "n": len(g.doms), "hs": [h for _, h, _, _ in g.doms],
             "info": [(r, k) for _, _, r, k in g.doms], "bell_x": g.bell_x, "bell_size": g.bell_size,
@@ -337,7 +351,8 @@ def draw_domino(ctx, x, y, ang, h, col, glow, giant=False):
 
 
 def draw_ball(ctx, x, y, ang, r, kind):
-    base = {"red": (0.9, 0.15, 0.15), "iron": (0.45, 0.47, 0.52)}[kind]
+    base = {"red": (0.9, 0.15, 0.15), "blue": (0.15, 0.45, 0.95), "green": (0.2, 0.75, 0.3),
+            "yellow": (0.95, 0.8, 0.15), "iron": (0.45, 0.47, 0.52)}[kind]
     g = cairo.RadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r)
     g.add_color_stop_rgb(0, *(min(1, c + 0.5) for c in base))
     g.add_color_stop_rgb(0.5, *base)
@@ -423,10 +438,10 @@ def render(seed):
     land_t = next((e[1] for e in events if e[0] == "land"), None)
     pit_t = next((e[1] for e in events if e[0] == "pit"), None)
     bell_t = next((e[1] for e in events if e[0] == "bell"), None)
-    cam_x, cam_y, cam_s = frames[0]["doms"][0][0] + 250, P1_Y - 60, 1.85
-    ball_r = [26.0, HB_R]
-    kinds = ["red", "iron"]
-    run_start = [next(i for i, (r, k) in enumerate(info) if r == rr) for rr in range(3)]
+    cam_x, cam_y, cam_s = frames[0]["doms"][0][0] + 250, P0_Y - 60, 1.85
+    ball_r = [26.0] * (NPRE - 1) + [HB_R]
+    kinds = BALL_KINDS
+    run_start = [next(i for i, (r, k) in enumerate(info) if r == rr) for rr in range(NPRE + 1)]
     jump_x0 = max(max(a[0], b[0]) for a, b, r in statics if abs(a[1] - (P2_Y + 6)) < 1 and abs(b[1] - (P2_Y + 6)) < 1)
     for fi, fr in enumerate(frames):
         t = fr["t"]
@@ -448,10 +463,10 @@ def render(seed):
         if bell_t is not None and t > bell_t - 0.5:
             tx, ty = res["bell_x"] - 100, P3_Y - res["bell_size"] * 1.2
         tgt_s = 1.85
-        hbx = fr["balls"][1][0]
+        hbx = fr["balls"][-1][0]
         if pit0 - 650 < hbx < pit1 + 250 and (land_t is None or t < land_t + 0.6):   # ジャンプのあたりは穴が見えるように引く
             tgt_s = 1.2
-        elif info[last][0] == 2 and hit.get(run_start[2], 1e9) <= t:
+        elif info[last][0] == NPRE and hit.get(run_start[NPRE], 1e9) <= t:
             tgt_s = 1.85 * (DOM_H / hs[last]) ** 0.6
         cam_x += (tx - cam_x) * 0.07
         cam_y += (ty - cam_y) * 0.07
@@ -497,8 +512,8 @@ def render(seed):
             draw_wood(ctx, a, b)
         # 棚の脚
         ctx.set_source_rgb(0.45, 0.3, 0.18)
-        for x_, y_ in ((60, P1_Y), (fr["doms"][run_start[1] - 1][0] + 40, P1_Y), (P2_X0 + 60, P2_Y),
-                       (fr["doms"][run_start[2] - 1][0] if False else frames[0]["doms"][run_start[2] - 1][0] + 60, P2_Y)):
+        for x_, y_ in [(frames[0]["doms"][run_start[r]][0] - 60, SHELF_Y[r]) for r in range(NPRE)] + \
+                [(frames[0]["doms"][run_start[r + 1] - 1][0] + 20, SHELF_Y[r]) for r in range(NPRE - 1)]:
             ctx.rectangle(x_ - 7, y_ + 10, 14, -y_ - 4)
             ctx.fill()
         # 鐘
@@ -585,8 +600,12 @@ def note_sound(r, k, m):
     if r == 0:
         return GD.music_box(f * 2, 0.6)
     if r == 1:
-        return GD.mix(GD.piano(f, 0.6), GD.piano(midi_hz(bass_root(m) + 12), 0.25))
-    big = k / max(1, len(RUNS[2]) - 1)
+        return GD.mix(GD.music_box(f * 2, 0.45), GD.piano(f, 0.35), GD.piano(midi_hz(bass_root(m) + 12), 0.2))
+    if r == 2:
+        return GD.mix(GD.piano(f, 0.6), GD.piano(midi_hz(bass_root(m) + 12), 0.25), GD.strings(f, 0.15, 0.4))
+    if r < NPRE:
+        return GD.mix(GD.piano(f, 0.55), GD.strings(f, 0.25, 0.5), GD.brass(f, 0.18, 0.4), GD.piano(midi_hz(bass_root(m)), 0.3))
+    big = k / max(1, len(RUNS[NPRE]) - 1)
     return GD.mix(GD.piano(f, 0.5), GD.strings(f, 0.3 + 0.2 * big, 0.6), GD.brass(f, 0.2 + 0.35 * big, 0.5),
                   GD.brass(midi_hz(bass_root(m)), 0.3 + 0.2 * big, 0.5))
 
