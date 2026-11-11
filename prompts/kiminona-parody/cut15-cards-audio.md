@@ -162,3 +162,7 @@
 - ユーザー指摘:こもった声はやめて、もっと若々しく元気な声に → ヒロインの Hana は高さ 170Hz と低く、こもって聞こえる原因だった
   - 新しい声の候補で 16 を作成(各 約 0.46 クレジット):Chloe `8da4ad01-8718-427d-b415-b2e78f449c3b` 343Hz / Zoe `0472b1e0-4187-45f0-860f-28c37b686674` 291Hz / Pixie `f5cb9b60-7f3e-4858-b5fb-b6942ff304dd` 277Hz(参考のヒロインは 346〜400Hz)
   - 聞き比べ:`assets/output/kiminona/audio/voice_test/16_{chloe,zoe,pixie}.wav`
+- ユーザー指示:声は変えず、言い方もそのまま、こもりだけ取る → Hana の 16 に手元で補正(クレジット不要)
+  - 200〜600Hz のこもり帯を削り(250Hz -5dB、450Hz -4dB)、2.5kHz・4.5kHz を +3dB、8kHz 以上 +2dB、倍音付加(aexciter)、歯擦音を抑える(deesser)
+  - こもり帯の割合 0.64 → 下げた。ファイル:`audio/v3/T16_tashikana_clear.wav`、全体:`dialogue_v17.wav`
+  - 声の候補(Chloe/Zoe/Pixie)は使わない
