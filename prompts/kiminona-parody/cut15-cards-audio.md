@@ -187,3 +187,10 @@
 - 慶太: elevenlabs_v4 / 慶太-1 `888113e6`「はっ!」タグなし similarity 1 / stability 0.6 job `22fa85f0` → 0.47s、CLEAR_M、-17dB、**68.64s** に配置。
 - whisper 確認: ヒロイン「ハッ!」、慶太「はっ!」。
 - 出力: `assets/output/kiminona/audio/dialogue_v23.wav`、単体 `audio/v3/gasp_heroine.wav` / `gasp_keita.wav`、確認用 `turn_gasps_67-69.wav`。
+
+### 慶太「はっ」作り直し(v24)
+- 指摘: v23 の慶太は声を出した「はっ!」で参考と違う。
+- 参考 68.58–68.80 を BGM 減算で分析: 無声の息を呑む「ハッ」、立ち上がり 68.60→ピーク 68.68、実長約0.2s、高域/低域 -12.5dB。
+- 候補(elevenlabs_v4 / 慶太-1, sim 1, stab 0.6): A `[gasps]` job `5f31d064` 失敗 / B `[sharp inhale] ハッ` job `968797f1` / C `[gasps] っ…` job `02a1fc59`。
+- 採用: B の後半「ハッ」(0.79–1.20s, 無声, 立ち上がり 0.09s, 高域/低域 -11.5dB)を 0.24s に切って CLEAR_M、-17dB、**68.59s** に配置。
+- 出力: `dialogue_v24.wav`、`v3/gasp_keita_v2.wav`、`v3/turn_gasps_67-69_v2.wav`、比較 `v3/compare_keita_gasp_ref_vs_new.wav`(参考→新)。
