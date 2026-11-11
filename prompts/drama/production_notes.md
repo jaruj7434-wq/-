@@ -1,0 +1,29 @@
+# ばぶばぶ愛ランド — 制作メモ(試作で分かったこと)
+
+## セリフと口の動き(採用方式)
+1. ElevenLabs(elevenlabs_v4、stability 0.4)で、キャラ固定の声でセリフを生成する
+2. seedance_2_0_mini に `image_references`(キャラシート)と `audio_references`(1のセリフ音声の job_id)を渡し、`generate_audio: true` で生成する
+   → 声質は参照音声と同じ(F0 約80Hz。参照音声は約83Hz)になり、口の動きもセリフに合う
+- 動画モデルの音声生成だけに任せた場合(参照音声なし)は、口の動きは合うが声質が毎回変わる(F0 約124Hz)。シリーズでは使わない
+- 注意:冒頭に「あの」などの余計な声が混ざることがある → 編集で頭を切る、またはプロンプトに "no extra words" を入れる
+
+## 声の割り当て(決定・候補)
+| キャラ | voice_id | 備考 |
+|---|---|---|
+| ハイハイ王子 | Sterling `dc382508-c8bd-443c-8cb2-46e57b8d2e6f` | 決定候補。低く渋い(約83Hz) |
+| よだれ先輩 | Barrett / Gideon | 未テスト |
+| ミルク姫 | Vesper / Elena | 未テスト |
+| ねんねちゃん | Onyx / Sloane | 未テスト |
+| MCバブ | Pixie `0178ef57-ada4-43d9-992b-8d9221045bb4` | 前シリーズと同じ。ffmpeg で赤ちゃん声に加工 |
+- Caspian は「席」が「責任」に聞こえたので不採用
+
+## 映像
+- アクションカットは無音(generate_audio:false)で作り、効果音は編集で足す
+- 「布団」と書いても木のベッドになりやすい → "Japanese futon mattresses laid directly on tatami floor, no beds" と明記する
+- 残像やドリフトなどの技は出にくい → 技だけを独立したカットにし、テロップ・効果音・速度変化で補う
+
+## 試作のジョブID
+- 空中まくら衝突(5秒・無音):7e6279ed-4943-432e-a489-784dcf355052
+- 王子のセリフ(モデル任せの音声):df68554c-96ef-46b2-8e0e-bfe17c8c3835
+- 王子の声 Sterling:236be539-5c04-4129-b4ca-a97b84e44e1d / Caspian:8140d9e0-8af2-495f-ae72-b16a1f3390a7
+- 王子のセリフ(音声参照あり・採用方式):f6bbaa8b-a7c2-4b6b-a94b-a937b52bf489
