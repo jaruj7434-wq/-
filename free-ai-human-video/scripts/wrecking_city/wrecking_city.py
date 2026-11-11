@@ -434,7 +434,7 @@ def render(seed):
             elif kind == "boost":
                 labels.append(("加速!!", (0.5, 1, 1), vt))
             elif kind == "grow":
-                labels.append((f"{data + 1}棟目クリア! 鉄球パワーアップ", GOLD, vt))
+                labels.append(("鉄球パワーアップ!", GOLD, vt))
             ev_i += 1
         over = end_t is not None and tau >= end_t
         if ghost is not None and over and vt - v_end < SCARE_DUR:
@@ -446,7 +446,7 @@ def render(seed):
         # カメラ:鉄球を追いかけ、次のビルが入るように引く
         nxt = next((b for b in BUILDINGS if b[0] + b[1] * BW > bx - br), BUILDINGS[-1])
         bh = nxt[2] * BH
-        tgt_sc = min(1.45, 1050.0 / (bh + 300))
+        tgt_sc = min(2.2, 1150.0 / (bh + 220))
         if over and not fail:
             tgt_sc = min(tgt_sc, 0.9)
         cam_sc += (tgt_sc - cam_sc) * 0.05
