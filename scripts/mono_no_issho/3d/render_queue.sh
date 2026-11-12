@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # 使い方: scripts/mono_no_issho/3d/render_queue.sh h13_worn_coin h14_melt ...
+#        EP=ep02 scripts/mono_no_issho/3d/render_queue.sh k02_store_stand ...   (第2話。既定 EP=ep01)
 # 30フレームずつ別プロセスで書き出し(EEVEE/ソフトウェアGLのクラッシュ対策)。
 # 既存フレームは残して続きから再開。完成したら clips/<name>.mp4 に書き出す。
 set -u
 cd "$(dirname "$0")/../../.."
-OUT=assets/output/mono_no_issho/ep01
+EP=${EP:-ep01}
+export EP   # common.py もこの話数の出力先に書く
+OUT=assets/output/mono_no_issho/$EP
 CHUNK=${CHUNK:-30}
 STEP=${STEP:-1}   # STEP=2 で1フレームおき(12fps)に描いて24fpsへ複製
 mkdir -p "$OUT/clips" "$OUT/3d"

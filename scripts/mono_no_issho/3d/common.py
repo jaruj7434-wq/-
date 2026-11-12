@@ -3,7 +3,7 @@
 単位: 1 Blender単位 = 1cm(1円玉=直径2cm=半径1.0)。
 各ショットは build(sc) でシーンを組み、run_shot(name, build, frames) で書き出す。
 """
-import argparse, math, random, sys
+import argparse, math, os, random, sys
 from pathlib import Path
 
 import bpy
@@ -11,6 +11,12 @@ from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[3]
 OUT_ROOT = ROOT / "assets/output/mono_no_issho/ep01/3d"
+# 話数の切替: ショット側で C.EPISODE = "ep02" を run_shot 前に設定(または環境変数 EP)。既定 ep01。
+EPISODE = os.environ.get("EP", "ep01")
+
+
+def out_root():
+    return ROOT / f"assets/output/mono_no_issho/{EPISODE}/3d"
 TEX = ROOT / "assets/output/mono_no_issho/ep01/tex"
 FPS = 24
 
@@ -312,7 +318,7 @@ def run_shot(name, build, frames, default_res="960x540", default_samples=8):
     build(sc)
     w, h = map(int, a.res.split("x"))
     setup_render(sc, (w, h), a.samples, a.engine, exposure=sc.view_settings.exposure)
-    out = OUT_ROOT / name
+    out = out_root() / name
     out.mkdir(parents=True, exist_ok=True)
     if sc.rigidbody_world is not None:
         bake_rigid(sc)
