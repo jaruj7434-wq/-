@@ -17,23 +17,22 @@ from ep01_explainer import END_CHIPS, END_T, timeline  # noqa: E402
 SRC = Path("assets/source/science_0001")
 OUT = Path("assets/output/science_0001")
 VIDEO = OUT / "ep01_v4_video.mp4"
-FINAL = OUT / "ep01_v6.mp4"
+FINAL = OUT / "ep01_v7.mp4"
 SFX_VOL, BGM_VOL, NA_VOL = 0.55, 0.13, 1.6
 
 # (ナレーション番号, タイムラインのタグ, タグからの秒) — 文言は plan.md
 NARRATION = [
     (0, "hook_pause", 0.3),     # この一瞬、粒の中で何が起きてる？
-    (10, "hook_play2", 0.2),    # 4つのステップで、分解してみよう。
-    (11, "step1", 0.2),         # ステップ1。粒の中の水分が、熱で水蒸気に変わります。
-    (12, "step1_pause", 0.8),   # 水分は、粒の重さの約14%。これが、膨らむ力のもとです。
-    (13, "step2", 0.2),         # ステップ2。かたい殻がフタになって、蒸気を外に逃がしません。
+    ("11t", "step1", 0.2),         # ステップ1。粒の中の水分が、熱で水蒸気に変わります。
+    (12, "step1_pause", 0.3),   # 水分は、粒の重さの約14%。これが、膨らむ力のもとです。
+    ("13t", "step2", 0.2),         # ステップ2。かたい殻がフタになって、蒸気を外に逃がしません。
     (14, "step2_pause", 0.7),   # 温度が上がるほど…約180度で、ふだんの空気の約10倍。ここで殻が限界を…
-    (15, "step3", 0.3),         # ステップ3。ついに殻が裂けて、水蒸気が噴き出し、でんぷんが一気に白い泡に…
+    ("15t", "step3", 0.3),         # ステップ3。ついに殻が裂けて、水蒸気が噴き出し、でんぷんが一気に白い泡に…
     (16, "step3_play", 0.2),    # ここまで、実際には0.09秒もかかりません。
-    (17, "step4", 0.1),         # ステップ4。ポップコーンは、どうやって跳ぶのでしょう？
-    (18, "step4_pause", 2.1),   # 答えは、この白い脚。…加速度は、なんと約20G。
+    ("17t", "step4", 0.1),         # ステップ4。ポップコーンは、どうやって跳ぶのでしょう？
+    (18, "step4_pause", 0.9),   # 答えは、この白い脚。…加速度は、なんと約20G。
     (19, "step4_end", 0.1),     # そして空中で、花が開きます。
-    (5, "ending", 0.3),         # ポップコーンは、自分の脚で跳んでいたんです。
+    (5, "ending", 0.5),         # ポップコーンは、自分の脚で跳んでいたんです。
 ]
 
 
@@ -116,7 +115,6 @@ def build_sfx(tl):
     put(swell, tl["rewind"])
     put(sweep(160, 60, 1.2, 0.35), tl["slow"])
     put(tick(), tl["hook_pause"])
-    put(sweep(300, 900, 0.5, 0.15), tl["hook_play2"])
     # --- STEP1: 章 + ラベル + ぶくぶく(沸騰)
     s1 = tl["step1"]
     put(chapter(), s1)
@@ -128,7 +126,7 @@ def build_sfx(tl):
     put(tick(), p1)
     for i in range(14):  # ドーナツが1%ずつ増える音
         put(tone(600 + 40 * i, 0.06, 0.02, 0.15), p1 + 0.2 + i * 0.07)
-    put(swish(), p1 + 4.0)
+    put(swish(), p1 + 3.5)
     # --- STEP2: 章 + ジュー音(強まる) + 圧力のドクンドクン
     s2 = tl["step2"]
     put(chapter(), s2)
@@ -151,9 +149,9 @@ def build_sfx(tl):
     put(hiss(), s3 + 0.25)
     p3 = tl["step3_pause"]
     put(tick(), p3 + 0.05)
-    put(mx(tone(2500, 0.15, 0.01, 0.5), noise(0.15, 0.7) * env(int(0.15 * SR), 0.01) * 0.6), p3 + 2.2)  # 亀裂「パキッ」
-    put(hiss(1.2, 0.3), p3 + 3.8)  # 蒸気「シュー」
-    put(mx(tone(300, 0.3, 0.1, 0.3), noise(0.3, 0.2) * env(int(0.3 * SR), 0.08) * 0.3), p3 + 5.4)  # 泡「ポフッ」
+    put(mx(tone(2500, 0.15, 0.01, 0.5), noise(0.15, 0.7) * env(int(0.15 * SR), 0.01) * 0.6), p3 + 1.0)  # 亀裂「パキッ」
+    put(hiss(1.2, 0.3), p3 + 2.4)  # 蒸気「シュー」
+    put(mx(tone(300, 0.3, 0.1, 0.3), noise(0.3, 0.2) * env(int(0.3 * SR), 0.08) * 0.3), p3 + 3.9)  # 泡「ポフッ」
     pp = tl["step3_play"]
     for k in np.arange(0.0, 4.4, 0.15):
         put(tone(3000, 0.03, 0.005, 0.2), pp + k)
@@ -164,9 +162,9 @@ def build_sfx(tl):
     put(sweep(400, 700, 0.3, 0.15), s4 + 2.6)  # 「でしょう？」の問いかけ
     p4 = tl["step4_pause"]
     put(tick(), p4)
-    put(thud(), p4 + 4.0)
-    put(boing(), p4 + 5.8)
-    put(impact(), p4 + 9.0)
+    put(thud(), p4 + 2.8)
+    put(boing(), p4 + 4.6)
+    put(impact(), p4 + 7.8)
     put(swish(), p4 + 1.0)
     e4 = tl["step4_end"]
     put(sweep(300, 1200, 0.6, 0.2), e4 + 0.1)

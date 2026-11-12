@@ -122,12 +122,13 @@ def pill(d, xy, text, bg, fg=INK, size=40, fnt=F_BODY, alpha=1.0, anchor="lt"):
 
 
 def chapter(d, t, num, title, color=YEL):
-    a = appear(t, 0.0)
-    off = (1 - a) * -40
-    pill(d, (48 + off, 120), f"STEP {num}", color, size=40, fnt=F_HEAD, alpha=a)
-    f = font(F_BODY, 54)
-    d.text((300 + off, 118), title, font=f, fill=WHITE + (int(255 * a),), stroke_width=8,
-           stroke_fill=(0, 0, 0, int(220 * a)))
+    """場面の見出し(番号なし・控えめ)。色の小さな丸 + 一言。"""
+    a = appear(t, 0.0, 0.5)
+    off = (1 - a) * -30
+    f = font(F_BODY, 50)
+    d.ellipse((60 + off, 140, 84 + off, 164), fill=color + (int(255 * a),))
+    d.text((104 + off, 120), title, font=f, fill=WHITE + (int(255 * a),), stroke_width=7,
+           stroke_fill=(0, 0, 0, int(200 * a)))
 
 
 def series_badge(d, a=1.0):
@@ -356,14 +357,8 @@ def ov_hook_freeze(d, t, g):
     rich(d, ["この一瞬、", "中で**何が起きてる？**"], 300, 86, F_HEAD, appear(t, 0.15))
 
 
-def ov_hook_play2(d, t, g):
-    series_badge(d)
-    a = appear(t, 0.2)
-    rich(d, ["**4つのステップ**で", "分解してみよう"], 300, 80, F_HEAD, a)
-
-
 def ov_s1(d, t, g):
-    chapter(d, t, 1, "水分が蒸気に")
+    chapter(d, t, 1, "粒の中で、水がグツグツ")
     label_arrow(d, t, 0.8, (540, 400), (510, 820), "水分 → 水蒸気", BLUE)
     label_arrow(d, t, 1.6, (250, 1290), (250, 1010), "でんぷん", YEL)
     label_arrow(d, t, 2.4, (820, 1290), (1000, 1120), "かたい殻", HOT)
@@ -371,7 +366,7 @@ def ov_s1(d, t, g):
 
 
 def ov_s1_freeze(d, t, g):
-    chapter(d, 9, 1, "水分が蒸気に")
+    chapter(d, 9, 1, "粒の中で、水がグツグツ")
     pause_badge(d, t)
     a = appear(t, 0)
     card(d, (60, 1000, W - 60, 1800), a, BLUE)
@@ -382,7 +377,7 @@ def ov_s1_freeze(d, t, g):
 
 
 def ov_s2(d, t, g):
-    chapter(d, t, 2, "殻が圧力鍋になる", HOT)
+    chapter(d, t, 2, "殻は、まるで圧力鍋", HOT)
     pressure_arrows(d, t, (545, 930), 300, 360)
     thermometer(d, t, g.dur)
     a = appear(t, 1.2)
@@ -392,47 +387,47 @@ def ov_s2(d, t, g):
 
 
 def ov_s2_freeze(d, t, g):
-    chapter(d, 9, 2, "殻が圧力鍋になる", HOT)
+    chapter(d, 9, 2, "殻は、まるで圧力鍋", HOT)
     pause_badge(d, t)
     pressure_graph(d, t, (60, 260, W - 60, 1180))
     bottom_caption(d, t, ["ふだんの空気の **約10倍** の圧力", "殻が耐えられなくなる"], start=8.0, y=1500)
 
 
 def ov_s3_freeze(d, t, g):
-    chapter(d, 9, 3, "殻が裂ける", BLUE)
+    chapter(d, 9, 3, "ついに、裂ける！", BLUE)
     pause_badge(d, t)
-    label_arrow(d, t, 2.2, (250, 1120), (590, 820), "亀裂", HOT, size=48)
-    label_arrow(d, t, 3.8, (820, 560), (580, 360), "水蒸気が噴き出す", BLUE)
-    label_arrow(d, t, 5.4, (830, 1280), (700, 1000), "でんぷんが泡に", YEL)
-    bottom_caption(d, t, ["圧力が一気に抜けて", "でんぷんが**白い泡**にふくらむ"], start=6.4)
+    label_arrow(d, t, 1.0, (250, 1120), (590, 820), "亀裂", HOT, size=48)
+    label_arrow(d, t, 2.4, (820, 560), (580, 360), "水蒸気が噴き出す", BLUE)
+    label_arrow(d, t, 3.9, (830, 1280), (700, 1000), "でんぷんが泡に", YEL)
+    bottom_caption(d, t, ["圧力が一気に抜けて", "でんぷんが**白い泡**にふくらむ"], start=5.0)
 
 
 def ov_s3_chapter(d, t, g):
-    chapter(d, t, 3, "殻が裂ける", BLUE)
+    chapter(d, t, 3, "ついに、裂ける！", BLUE)
 
 
 def ov_s3_play(d, t, g):
-    chapter(d, 9, 3, "殻が裂ける", BLUE)
+    chapter(d, 9, 3, "ついに、裂ける！", BLUE)
     ms_timer(d, t, g.dur)
 
 
 def ov_s4_play(d, t, g):
-    chapter(d, t, 4, "脚でジャンプ")
+    chapter(d, t, 4, "跳ぶ秘密は「脚」")
 
 
 def ov_s4_freeze(d, t, g):
-    chapter(d, 9, 4, "脚でジャンプ")
+    chapter(d, 9, 4, "跳ぶ秘密は「脚」")
     pause_badge(d, t)
-    a = appear(t, 4.0)
+    a = appear(t, 2.8)
     # 脚が床を押す(下向き)
-    arrow(d, (360, 960), (470, 1260), HOT, prog=appear(t, 4.0, 0.5), width=16, head=48, alpha=a)
+    arrow(d, (360, 960), (470, 1260), HOT, prog=appear(t, 2.8, 0.5), width=16, head=48, alpha=a)
     if a > 0:
         pill(d, (300, 830), "脚が床を押す", HOT, INK, size=46, alpha=a, anchor="mt")
-    b = appear(t, 5.8)
-    arrow(d, (800, 1000), (800, 640), YEL, prog=appear(t, 5.8, 0.5), width=16, head=48, alpha=b)
+    b = appear(t, 4.6)
+    arrow(d, (800, 1000), (800, 640), YEL, prog=appear(t, 4.6, 0.5), width=16, head=48, alpha=b)
     if b > 0:
         pill(d, (800, 1040), "反動で跳ぶ", YEL, INK, size=46, alpha=b, anchor="mt")
-    c = appear(t, 9.0)
+    c = appear(t, 7.8)
     if c > 0:
         card(d, (60, 300, W - 60, 560), c, YEL)
         d.text((110, 330), "跳び出す瞬間の加速度", font=font(F_BODY, 44), fill=WHITE + (int(255 * c),))
@@ -442,7 +437,7 @@ def ov_s4_freeze(d, t, g):
 
 
 def ov_s4_end(d, t, g):
-    chapter(d, 9, 4, "脚でジャンプ")
+    chapter(d, 9, 4, "跳ぶ秘密は「脚」")
     rich(d, ["空中で", "**花が開く！**"], 1450, 84, F_HEAD, appear(t, 0.3))
 
 
@@ -494,16 +489,15 @@ SHOTS = [
          vf_extra="tmix=frames=5"),
     Shot("ep01_hook_kling.mp4", 0.25, 2.25, overlay=ov_slow, speed=0.4, interp=True, tag="slow"),
     Shot("ep01_hook_kling.mp4", 1.15, 3.8, freeze=True, overlay=ov_hook_freeze, dim=0.25, tag="hook_pause"),
-    Shot("ep01_hook_kling.mp4", 1.15, 3.3, overlay=ov_hook_play2, tag="hook_play2"),
     Shot("ep01_s1_cutaway.mp4", 0.0, 5.0, overlay=ov_s1, tag="step1"),
-    Shot("ep01_s1_cutaway.mp4", 4.9, 7.6, freeze=True, overlay=ov_s1_freeze, dim=0.35, tag="step1_pause"),
+    Shot("ep01_s1_cutaway.mp4", 4.9, 7.1, freeze=True, overlay=ov_s1_freeze, dim=0.35, tag="step1_pause"),
     Shot("ep01_s2_pressure.mp4", 0.0, 5.0, overlay=ov_s2, tag="step2"),
     Shot("ep01_s2_pressure.mp4", 4.9, 12.6, freeze=True, overlay=ov_s2_freeze, dim=0.55, tag="step2_pause"),
     Shot("ep01_s3_rupture.mp4", 0.0, 0.4, overlay=ov_s3_chapter, tag="step3"),
-    Shot("ep01_s3_rupture.mp4", 0.4, 7.9, freeze=True, overlay=ov_s3_freeze, dim=0.3, tag="step3_pause"),
+    Shot("ep01_s3_rupture.mp4", 0.4, 6.8, freeze=True, overlay=ov_s3_freeze, dim=0.3, tag="step3_pause"),
     Shot("ep01_s3_rupture.mp4", 0.4, 4.6, overlay=ov_s3_play, tag="step3_play"),
     Shot("ep01_s4_leg.mp4", 0.0, 2.3, overlay=ov_s4_play, tag="step4"),
-    Shot("ep01_s4_leg.mp4", 2.3, 12.4, freeze=True, overlay=ov_s4_freeze, dim=0.3, tag="step4_pause"),
+    Shot("ep01_s4_leg.mp4", 2.3, 11.2, freeze=True, overlay=ov_s4_freeze, dim=0.3, tag="step4_pause"),
     Shot("ep01_s4_leg.mp4", 2.3, 2.7, overlay=ov_s4_end, tag="step4_end"),
     Shot("ep01_s4_leg.mp4", 4.95, 11.0, freeze=True, overlay=ov_ending, dim=0.6, blur=16, tag="ending"),
 ]
