@@ -1,9 +1,9 @@
-"""「0.001秒の世界」アカウント用の丸アイコンを作る(PILで描画、生成AI不使用)。
+"""「一瞬の世界」アカウント用の丸アイコンを作る(PILで描画、生成AI不使用)。
 
   python3 scripts/science_0001/make_icon.py
 出力: assets/output/science_0001/icon_*.png (1024x1024, 丸く切り抜かれても収まるデザイン)
-  icon_a.png        ストップウォッチの目盛り + 「0.001」+「秒の世界」
-  icon_b.png        目盛り + 「0.001秒」を1行で大きく(小さく表示されても読める版)
+  icon_a.png        ストップウォッチの目盛り + 「一瞬」+「の世界」
+  icon_b.png        目盛り + 「一瞬」だけを大きく(小さく表示されても読める版)
   *_circle.png      丸く切り抜いたプレビュー
 """
 import math
@@ -83,22 +83,18 @@ def circle_preview(img, path):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    # A: 0.001 + 秒の世界
+    # A: 一瞬 + の世界
     a = dial(background())
     d = ImageDraw.Draw(a)
-    center_text(d, "0.001", 375, 172, HEAD, (255, 255, 255))
-    center_text(d, "秒の世界", 600, 86, BODY, YEL, track=14)
+    center_text(d, "一瞬", 330, 230, HEAD, (255, 255, 255), track=10)
+    center_text(d, "の世界", 610, 84, BODY, YEL, track=18)
     a = a.convert("RGB")
     a.save(OUT / "icon_a.png")
     circle_preview(a, OUT / "icon_a_circle.png")
-    # B: 小さく表示されても読めるよう「0.001秒」を1行で大きく
+    # B: 「一瞬」だけを最大に(小さいアイコン表示向け)
     b = dial(background())
     d = ImageDraw.Draw(b)
-    fh, fb = ImageFont.truetype(HEAD, 150), ImageFont.truetype(BODY, 108)
-    w1, w2 = d.textlength("0.001", font=fh), d.textlength("秒", font=fb)
-    x = S / 2 - (w1 + 10 + w2) / 2
-    d.text((x, 410), "0.001", font=fh, fill=(255, 255, 255))
-    d.text((x + w1 + 10, 446), "秒", font=fb, fill=YEL)
+    center_text(d, "一瞬", 365, 280, HEAD, (255, 255, 255), track=10)
     b = b.convert("RGB")
     b.save(OUT / "icon_b.png")
     circle_preview(b, OUT / "icon_b_circle.png")
