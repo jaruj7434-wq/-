@@ -310,6 +310,39 @@ class Shot:
     blur: float = 0.0
     tag: str = ""
     extra: dict = field(default_factory=dict)
+    speed: float = 1.0  # 再生速度(0.4=スロー, 1.3=速め)
+    reverse: bool = False  # 巻き戻し再生
+    interp: bool = False  # スロー時にフレーム補間してなめらかにする
+
+
+def ov_open(d, t, g):
+    """0秒: いきなりパーン。"""
+    series_badge(d)
+    hit = 0.15
+    if t >= hit:
+        k = t - hit
+        fl = max(0.0, 1 - k / 0.25)
+        if fl > 0:
+            d.rectangle((0, 0, W, H), fill=(255, 255, 255, int(170 * fl)))
+        size = int(150 + 60 * max(0.0, 1 - k / 0.2))
+        f = font(F_HEAD, size)
+        txt = "パーン！"
+        w = d.textlength(txt, font=f)
+        d.text((W / 2 - w / 2, 330 - (size - 150) / 2), txt, font=f, fill=YEL + (255,), stroke_width=12,
+               stroke_fill=(0, 0, 0, 255))
+
+
+def ov_rewind(d, t, g):
+    d.rectangle((0, 0, W, H), fill=(10, 12, 20, 90))
+    for y in range(0, H, 8):  # 走査線
+        d.line((0, y, W, y), fill=(0, 0, 0, 50), width=2)
+    pill(d, (W / 2, 880), "◀◀ もう一度", (255, 255, 255), INK, size=64, fnt=F_BODY, anchor="mt")
+
+
+def ov_slow(d, t, g):
+    series_badge(d)
+    pill(d, (W - 300, 118), "SLOW", HOT, WHITE, size=40, fnt=F_HEAD, alpha=appear(t, 0, 0.2))
+    rich(d, ["**スローモーション**で", "見てみると…"], 300, 80, F_HEAD, appear(t, 0.1))
 
 
 def ov_hook_play(d, t, g):
@@ -446,7 +479,9 @@ def ov_summary(d, t, g):
 
 
 SHOTS = [
-    Shot("ep01_hook_kling.mp4", 0.0, 1.15, overlay=ov_hook_play),
+    Shot("ep01_hook_kling.mp4", 1.05, 1.5, overlay=ov_open, speed=1.3, tag="open"),
+    Shot("ep01_hook_kling.mp4", 0.4, 0.55, overlay=ov_rewind, speed=4.7, reverse=True, tag="rewind"),
+    Shot("ep01_hook_kling.mp4", 0.25, 2.25, overlay=ov_slow, speed=0.4, interp=True, tag="slow"),
     Shot("ep01_hook_kling.mp4", 1.15, 3.8, freeze=True, overlay=ov_hook_freeze, dim=0.25, tag="hook_pause"),
     Shot("ep01_hook_kling.mp4", 1.15, 3.3, overlay=ov_hook_play2, tag="hook_play2"),
     Shot("ep01_s1_cutaway.mp4", 0.0, 5.0, overlay=ov_s1, tag="step1"),
@@ -484,9 +519,17 @@ def frames_of(shot: Shot):
         for _ in range(n):
             yield base
         return
-    p = subprocess.Popen(["ffmpeg", "-loglevel", "error", "-ss", str(shot.start), "-i", str(SRC / shot.src),
-                          "-vf", vf, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE,
-                         stderr=subprocess.DEVNULL)
+    pre = ""
+    if shot.reverse:
+        pre += "reverse,"
+    if shot.speed != 1.0:
+        pre += f"setpts=PTS/{shot.speed},"
+    if shot.interp:
+        pre += f"minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:vsbmc=1,"
+    srclen = shot.dur * shot.speed + 0.2
+    p = subprocess.Popen(["ffmpeg", "-loglevel", "error", "-ss", str(shot.start), "-t", f"{srclen:.3f}",
+                          "-i", str(SRC / shot.src), "-vf", pre + vf, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     last, k = None, 0
     while k < n:
         raw = p.stdout.read(W * H * 3)
@@ -531,7 +574,9 @@ def main():
             i = int(np.searchsorted(starts, ts, side="right") - 1)
             s = SHOTS[i]
             lt = ts - starts[i]
-            sub = Shot(**{**s.__dict__, "start": s.start if s.freeze else s.start + lt, "dur": 1 / FPS})
+            src_t = s.start if s.freeze else (s.start + s.dur * s.speed - lt * s.speed if s.reverse else s.start + lt * s.speed)
+            sub = Shot(**{**s.__dict__, "start": src_t, "dur": 1 / FPS, "speed": 1.0, "reverse": False,
+                          "interp": False})
             base = next(frames_of(sub))
             render_frame(s, base, lt).save(OUT / f"still_{ts:05.1f}.png")
         return

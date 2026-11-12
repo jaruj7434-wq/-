@@ -108,7 +108,12 @@ def build_sfx(tl):
         return mx(tone(1568, 1.0, 0.3, 0.3), tone(2093, 1.0, 0.25, 0.15))
 
     # --- フック
-    put(popsnd(), 1.1)
+    # 0秒: パーン(大きめ) → 巻き戻し「キュルキュル」 → スローの「ブォン」 → スロー中の弾け(低く伸ばす)
+    put(popsnd(1.0), tl["open"] + 0.15)
+    put(mx(_noise(int(0.3 * SR), rng) * env(int(0.3 * SR), 0.004) * 0.6, tone(90, 0.6, 0.15, 0.8)), tl["open"] + 0.15)
+    rw = tl["slow"] - tl["rewind"]
+    put(mx(sweep(1400, 300, rw, 0.22), sweep(1700, 400, rw, 0.12)), tl["rewind"])
+    put(sweep(160, 60, 1.2, 0.35), tl["slow"])
     put(tick(), tl["hook_pause"])
     put(sweep(300, 900, 0.5, 0.15), tl["hook_play2"])
     # --- STEP1: 章 + ラベル + ぶくぶく(沸騰)
