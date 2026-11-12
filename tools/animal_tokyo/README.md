@@ -15,8 +15,8 @@ npm install
 # 静止画で確認（秒数をカンマ区切り）
 node ep01/render.js --stills 2,7,12,17,22,27,33 --out /tmp/stills
 
-# 映像（音なし）：1080x1920・30fps。1コマ約1.7秒、全体で1時間ほど
-node ep01/render.js --from 0 --to 68 --out ../../assets/output/animal_tokyo/ep01_video_noaudio.mp4
+# 映像（音なし）：1080x1920・30fps。1コマ約1.7秒、全体で1〜2時間
+node ep01/render.js --from 0 --to 89 --out ../../assets/output/animal_tokyo/ep01_video_noaudio.mp4
 
 # 音
 python3 ep01/audio.py ../../assets/output/animal_tokyo/ep01_audio.wav
@@ -32,6 +32,8 @@ ffmpeg -i ../../assets/output/animal_tokyo/ep01_video_noaudio.mp4 -i ../../asset
 | `ep01/timeline.json` | カットの秒数、時刻テロップ、字幕 |
 | `ep01/lib.js` | 乱数・ノイズ、ビル・森・葉・ゴミ袋・カラスなどの生成 |
 | `ep01/shots.js` | カットごとのシーンとカメラの動き（C1〜C6） |
+| `ep01/crow.js` | リアル寄りのカラスのモデル（止まり姿・飛び姿） |
+| `ep01/shots_open.js` | 外から撮るカット（O1〜O3）と人の顔を見分けるカット（X1） |
 | `ep01/shots_day.js` | 日中のカット（D1 貯食・D2 水浴び・D3 昼の休息・D4 屋上・D5 集合） |
 | `ep01/main.js` | 描画、色調整（ビネット・粒子）、テロップ・字幕、地図カード（C7） |
 | `ep01/render.js` | 静止画・動画の書き出し |

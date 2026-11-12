@@ -1,5 +1,6 @@
 // 日中のカット：貯食・水浴び・昼の休息・屋上・ねぐら入り前の集合
 import * as THREE from 'three';
+import { perchedCrow } from './crow.js';
 import {
   rng, clamp, lerp, smooth, easeOut, easeInOut, noise1, noise3, snapHead, canvasTex,
   buildCity, buildCanopy, buildLeafCloud, skyDome, beakMesh, wingPair, crowModel, featherTex, wire, asphaltTex, barkTex,
@@ -75,7 +76,7 @@ function ginkgoLeaves(seed, count, area, y) {
   return { mesh, tex };
 }
 
-function people(N, seed, spec) {
+export function people(N, seed, spec) {
   const r = rng(seed);
   const bodyG = new THREE.CapsuleGeometry(0.21, 1.0, 4, 10); bodyG.translate(0, 0.72, 0);
   const headG = new THREE.SphereGeometry(0.115, 12, 10); headG.translate(0, 1.55, 0);
@@ -124,7 +125,7 @@ function cars(N, seed, lanes) {
 const lane = (a, dir, len) => ({ a: new THREE.Vector3(...a), dir: new THREE.Vector3(...dir).normalize(), len });
 
 // 止まっているカラス（翼をたたんだ姿）
-export function perchedCrow(mat) {
+function perchedCrowOld(mat) {
   const g = new THREE.Group();
   const body = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), mat); body.scale.set(0.085, 0.1, 0.2); body.rotation.x = -0.55; body.position.y = 0.13; g.add(body);
   const hd = new THREE.Group(); hd.position.set(0, 0.25, -0.1); g.add(hd);
@@ -457,17 +458,17 @@ export function shotD5() {
   const sitters = [];
   for (let i = 0; i < 48; i++) {
     const [x, y, sg] = lines[i % 3]; const z = 8 - i * 1.6 - r() * 1.2;
-    const b = perchedCrow(crowMat); b.scale.setScalar(1.3); b.position.set(x, wireY(y, sg, z) + 0.02, z); b.rotation.y = r() < 0.5 ? 0.3 : Math.PI - 0.3 + (r() - 0.5);
+    const b = perchedCrow(crowMat); b.position.set(x, wireY(y, sg, z) + 0.02, z); b.rotation.y = r() < 0.5 ? 0.3 : Math.PI - 0.3 + (r() - 0.5);
     b.userData.ph = r() * 10; scene.add(b); sitters.push(b);
   }
   // 次々に飛んでくる仲間
   const flyers = [];
   for (let i = 0; i < 9; i++) {
-    const f = crowModel(crowMat); f.scale.setScalar(1.3); scene.add(f);
+    const f = crowModel(crowMat); scene.add(f);
     const [x, y, sg] = lines[i % 3]; const z = -3 - i * 4.5;
     const end = new THREE.Vector3(x + 0.2, wireY(y, sg, z) + 0.12, z);
     const start = end.clone().add(new THREE.Vector3(18 + r() * 10, 9 + r() * 6, -10 - r() * 20));
-    const sit = perchedCrow(crowMat); sit.scale.setScalar(1.3); sit.position.copy(end).add(new THREE.Vector3(-0.2, -0.1, 0)); sit.rotation.y = 0.3; sit.visible = false; scene.add(sit);
+    const sit = perchedCrow(crowMat); sit.position.copy(end).add(new THREE.Vector3(-0.2, -0.1, 0)); sit.rotation.y = 0.3; sit.visible = false; scene.add(sit);
     flyers.push({ f, sit, path: new THREE.CatmullRomCurve3([start, start.clone().lerp(end, 0.6).add(new THREE.Vector3(0, 2, 0)), end]), t0: 0.2 + i * 0.6 + r() * 0.3 });
   }
   const c = cam(70); scene.add(c);

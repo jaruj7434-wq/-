@@ -1,6 +1,7 @@
 // 共通ユーティリティ：乱数・ノイズ・手続き的テクスチャ・街／森／カラスの生成
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+export { crowModel } from './crow.js';
 
 export function rng(seed) {
   let a = seed >>> 0;
@@ -429,7 +430,7 @@ export function wingPair() {
 }
 
 // 群れ用のカラス
-export function crowModel(mat) {
+function crowModelOld(mat) {
   const g = new THREE.Group();
   const body = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), mat); body.scale.set(0.09, 0.085, 0.24); g.add(body);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), mat); head.position.set(0, 0.03, -0.24); g.add(head);

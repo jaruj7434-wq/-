@@ -139,7 +139,7 @@ export function shotC2() {
 }
 
 // ---------------------------------------------------------------- 渋谷の路地
-function streetWorld(opt) {
+export function streetWorld(opt) {
   const r = rng(opt.seed || 31);
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(opt.fog, opt.fogDensity);
@@ -455,7 +455,7 @@ export function shotC5() {
   const wb = wingPair(); cb.add(wb);
   const SWITCH = 2.22;
   const shot = {
-    scene: A.scene, camera: ca,
+    scene: A.scene, camera: ca, scenes: [A.scene, B.scene],
     bloom: { strength: 0.5, radius: 0.5, threshold: 0.88 },
     grade: { sat: 1.0, contrast: 1.06, gain: [1.02, 1.0, 0.98], lift: [0.01, 0.01, 0.015], vignette: 0.36, grain: 0.04, blur: 0 },
     exposure: 0.9,
