@@ -112,3 +112,23 @@
 編集: `PYTHONPATH=scripts/science_0001 python3 scripts/science_0001/ep01_edit_v2.py` → `assets/output/science_0001/ep01_v2.mp4`（27.5秒）
 
 注意: AI生成の映像なので、断面の見た目は科学的に正確な再現ではなく「イメージ」。必要なら概要欄に「映像はAI生成のイメージです」と入れる。
+
+## 仕上げ: ナレーション + BGM（2026-11-12）
+
+- 声: ElevenLabs v4 Turbo / Julian（男性・落ち着き）`95429266-c0ac-4137-a209-63b8812b0f23`、各行 0.15クレジット
+- BGM: ElevenLabs Music v2.5 / 30秒 / インスト、4.36クレジット
+  - プロンプト: `Upbeat, optimistic, playful science-show background music, bright plucky synths, light ukulele and marimba, bouncy groove, 120 BPM, curious and cheerful, instrumental, no vocals`
+- 合計 約5.3クレジット（許可済み）
+
+| # | 開始 | ナレーション | job |
+|---|---|---|---|
+| 0 | 0.15s | この一瞬、粒の中で何が起きてる？ | 681ac3b2-14c2-448f-99fd-5f7c6960bebc |
+| 1 | 4.15s | 中には、約十四パーセントの水分。熱で蒸気に変わります。 | 7b9c9b73-b238-4d14-8059-8c4ad75212c1 |
+| 2 | 9.15s | 殻がフタになって、約百八十度、約十気圧。 | f9786c1b-e778-4400-810a-fe6aa443e6b1 |
+| 3 | 14.15s | 限界を超えると殻が裂けて、でんぷんが泡に。 | 689b3621-9912-46e0-8aeb-c1ed862d4e3a |
+| 4 | 19.15s | この白い脚で床を蹴って、ジャンプ！ | 425ca687-2378-42e4-a498-5617d3b04ff3 |
+| 5 | 24.15s | ポップコーンは、自分の脚で跳んでいたんです。 | fd759442-2832-43c1-b98f-86a770aad9cd |
+| BGM | 0s | — | 8f0b8aaf-5b00-44e7-99b7-4751d88a8e30 |
+
+カットより長い行は atempo で必要な分だけ速める（#1 は約1.17倍）。音量: ナレーション 1.6 / 効果音 0.55 / BGM 0.16。
+仕上げ: `ep01_edit_v2.py` → `ep01_mix.py` → `assets/output/science_0001/ep01_final.mp4`（28秒）
