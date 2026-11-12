@@ -147,17 +147,17 @@ def chirp_bird(t0, gain, pan):
 
 # ---------------------------------------------------------------- ベッド（環境音の土台）
 hum = lp(brown(N), 180) * 0.6 + bp(rs.standard_normal(N), 200, 900) * 0.05
-hum_env = env([(0, 0.0), (0.4, 0.13), (5, 0.12), (10, 0.1), (15, 0.09), (20, 0.1), (22.2, 0.14), (22.3, 0.26), (25, 0.24), (25.05, 0.12), (30, 0.1), (30.3, 0.03), (38, 0.0)])
+hum_env = env([(0, 0.0), (0.4, 0.13), (5, 0.12), (10, 0.1), (15, 0.09), (20, 0.1), (22.2, 0.14), (22.3, 0.26), (25, 0.24), (25.05, 0.2), (31, 0.2), (31.05, 0.07), (37, 0.07), (37.05, 0.06), (43, 0.06), (43.05, 0.2), (49, 0.2), (49.05, 0.17), (55, 0.17), (55.05, 0.12), (60, 0.1), (60.3, 0.03), (68, 0.0)])
 add(hum * hum_env, 0, 1.0)
 
 wind_src = bp(rs.standard_normal(N), 250, 1600) * (0.6 + 0.4 * np.sin(2 * np.pi * 0.23 * T) * np.sin(2 * np.pi * 0.071 * T + 1))
-wind_env = env([(0, 0.02), (5.6, 0.03), (6.2, 0.16), (8, 0.24), (10, 0.22), (10.05, 0.02), (21.5, 0.02), (22.0, 0.2), (22.3, 0.14), (25, 0.14), (25.05, 0.2), (30, 0.2), (30.4, 0.0), (38, 0)])
+wind_env = env([(0, 0.02), (5.6, 0.03), (6.2, 0.16), (8, 0.24), (10, 0.22), (10.05, 0.02), (21.5, 0.02), (22.0, 0.2), (22.3, 0.14), (25, 0.14), (25.05, 0.02), (37, 0.02), (37.05, 0.05), (43, 0.05), (43.05, 0.1), (49, 0.1), (49.05, 0.04), (55, 0.04), (55.05, 0.2), (60, 0.2), (60.4, 0.0), (68, 0)])
 add(wind_src * wind_env, 0, 1.0, -0.1)
 add(np.roll(wind_src, 9000) * wind_env, 0, 1.0, 0.1)
 
 # 森の葉ずれ（C1）と飛び立ち（C2）
 leaf = bp(rs.standard_normal(N), 1500, 6500) * (0.3 + 0.7 * np.abs(lp(rs.standard_normal(N), 4) * 25).clip(0, 1))
-add(leaf * env([(0, 0), (0.5, 0.006), (4.8, 0.008), (5.5, 0.008), (5.7, 0.09), (6.6, 0.06), (7.2, 0.0), (38, 0)]), 0, 1.0)
+add(leaf * env([(0, 0), (0.5, 0.006), (4.8, 0.008), (5.5, 0.008), (5.7, 0.09), (6.6, 0.06), (7.2, 0.0), (37, 0), (37.05, 0.012), (43, 0.012), (43.05, 0), (68, 0)]), 0, 1.0)
 
 # ---------------------------------------------------------------- C1・C2：夜明け前の森
 caw_series(0.9, 2, 470, 0.55, 0.10, -0.6, dist=0.9)
@@ -216,12 +216,90 @@ for tt in np.arange(22.5, 24.9, 0.75):
         y = np.sin(2 * np.pi * np.cumsum(np.linspace(fa, fb, n)) / SR) * np.sin(np.pi * tq / 0.09)
         add(wet(y, 0.4), tt + j * 0.14, 0.035, 0.3)
 
+
+# ---------------------------------------------------------------- 日中（D1〜D5）
+def traffic(t0, dur, gain, density=1.0):
+    n = int(dur * SR)
+    tt = np.arange(n) / SR
+    y = lp(rs.standard_normal(n), 500) * 0.5
+    for k in range(int(dur * density)):  # 通りすぎる車
+        c = rs.uniform(0, dur)
+        y += bp(rs.standard_normal(n), 200, 1800) * np.exp(-((tt - c) / 0.7) ** 2) * rs.uniform(0.5, 1.2)
+    add(y / (np.abs(y).max() + 1e-9), t0, gain, rs.uniform(-0.3, 0.3))
+
+
+def chatter(t0, dur, gain):
+    """遠くの人の話し声（言葉にならない程度）"""
+    n = int(dur * SR)
+    tt = np.arange(n) / SR
+    y = np.zeros(n)
+    for k in range(int(dur * 3)):
+        c = rs.uniform(0, dur); L = rs.uniform(0.3, 1.2); f = rs.uniform(110, 240)
+        m = (np.abs(tt - c - L / 2) < L / 2) * (0.6 + 0.4 * np.sin(2 * np.pi * rs.uniform(3, 6) * tt))
+        ph = 2 * np.pi * np.cumsum(f * (1 + 0.1 * np.sin(2 * np.pi * 1.5 * tt))) / SR
+        v = sum(np.sin(h * ph) / h for h in range(1, 8))
+        y += bp(v, 300, 2500) * m
+    add(wet(lp(y, 1500), 0.6)[:n] / (np.abs(y).max() + 1e-9), t0, gain, rs.uniform(-0.4, 0.4))
+
+
+def splash(t0, gain):
+    n = int(0.45 * SR)
+    tt = np.arange(n) / SR
+    y = bp(rs.standard_normal(n), 400, 7000) * np.exp(-tt * 9)
+    for k in range(25):  # 水滴
+        i = rs.integers(0, n - 800)
+        f = rs.uniform(900, 2500)
+        y[i:i + 800] += np.sin(2 * np.pi * f * np.arange(800) / SR * (1 + np.arange(800) / 800)) * np.exp(-np.arange(800) / 150) * 0.4
+    add(y / (np.abs(y).max() + 1e-9), t0, gain, rs.uniform(-0.2, 0.2))
+
+
+# D1 貯食（25〜31）：歩道・車・土をつつく音
+traffic(25, 6, 0.22, 1.2)
+for h in [0.3, 0.8]:
+    add(thud(0.05, 160), 25 + h + 0.22, 0.18)
+for k in np.arange(27.9, 28.6, 0.12):  # 土に押し込む
+    add(lp(bp(rs.standard_normal(2400), 200, 3000) * np.exp(-np.arange(2400) / 500), 2500), k, 0.12)
+add(crinkle(0.25, 400, 1.0), 28.85, 0.08)  # 落ち葉
+add(crinkle(0.2, 400, 1.0), 29.4, 0.07)
+for t0, pan in [(25.6, 0.5), (27.0, -0.4), (30.2, 0.3)]:
+    chirp_bird(t0, 0.06, pan)
+# D2 水浴び（31〜37）
+water = bp(rs.standard_normal(int(6 * SR)), 300, 4000) * 0.15 + lp(rs.standard_normal(int(6 * SR)), 300) * 0.3
+add(water / np.abs(water).max(), 31, 0.07)
+for d in [1.7, 2.35, 3.0, 3.6, 4.15]:
+    splash(31 + d, 0.45)
+    flaps(31 + d, 31 + d + 0.35, 9, 0.12)
+for k in np.arange(35.7, 36.5, 0.05):  # ブルブルッ
+    add(whoosh(0.05, 300, 2500), k, 0.12)
+chatter(31, 6, 0.05)
+for t0, pan in [(31.4, -0.5), (34.6, 0.6)]:
+    chirp_bird(t0, 0.05, pan)
+# D3 昼の休息（37〜43）
+chatter(37, 6, 0.1)
+for t0, pan in [(37.8, 0.4), (39.6, -0.5), (41.5, 0.2)]:
+    chirp_bird(t0, 0.05, pan)
+caw_series(40.8, 1, 500, 0.5, 0.05, 0.6, dist=0.8)
+for k in np.arange(39.5, 41.1, 0.09):  # 羽づくろい
+    add(whoosh(0.04, 2000, 7000), k, 0.04)
+# D4 屋上（43〜49）
+traffic(43, 6, 0.3, 2.5)
+chatter(43, 6, 0.04)
+flaps(45.3, 46.6, 5, 0.3, 0.4)
+caw_series(46.0, 2, 520, 0.45, 0.28, 0.4)
+caw_series(47.3, 1, 560, 0.4, 0.2, 0.2)
+# D5 集合（49〜55）
+traffic(49, 6, 0.18, 1.5)
+for k in range(22):
+    caw_series(49.1 + rs.uniform(0, 5.6), rs.integers(1, 3), rs.uniform(460, 600), 0.45, rs.uniform(0.06, 0.24), rs.uniform(-0.8, 0.8), dist=rs.uniform(0.1, 0.8))
+for k in range(9):
+    flaps(49.2 + k * 0.6 + 0.9, 49.2 + k * 0.6 + 1.7, 6, 0.08, rs.uniform(-0.6, 0.6))
+
 # ---------------------------------------------------------------- C6：夕方の群れ
 for k in range(26):
-    tt = 25.1 + rs.uniform(0, 4.6)
+    tt = 55.1 + rs.uniform(0, 4.6)
     caw_series(tt, rs.integers(1, 4), rs.uniform(450, 600), 0.45, rs.uniform(0.05, 0.2), rs.uniform(-0.8, 0.8), dist=rs.uniform(0.2, 0.9))
 for k in range(2):
-    flaps(25 + k * 2.4, 25 + k * 2.4 + 1.0, 4.2, 0.22)
+    flaps(55 + k * 2.4, 55 + k * 2.4 + 1.0, 4.2, 0.22)
 
 # ---------------------------------------------------------------- BGM（静かなパッド）
 def pad(freqs, dur, gain):
@@ -246,7 +324,7 @@ for i, start in enumerate(np.arange(0, DUR, 4.75)):
     i0 = int(start * SR)
     bgm[i0 : i0 + len(seg)] += seg[: N - i0]
 # 地図カードでは柔らかいアルペジオ
-for k, tt in enumerate(np.arange(30.2, 37.6, 0.3)):
+for k, tt in enumerate(np.arange(60.2, 67.6, 0.3)):
     m = [62, 65, 69, 72, 74, 72, 69, 65][k % 8]
     n = int(0.6 * SR)
     t = np.arange(n) / SR
@@ -254,7 +332,7 @@ for k, tt in enumerate(np.arange(30.2, 37.6, 0.3)):
     i0 = int(tt * SR)
     bgm[i0 : i0 + n] += y[: N - i0] * 0.25
 bgm = wet(bgm, 0.4)[:N]
-add(bgm * env([(0, 0), (1, 0.05), (29.5, 0.05), (30.3, 0.16), (37, 0.16), (38, 0)]), 0, 1.0)
+add(bgm * env([(0, 0), (1, 0.05), (59.5, 0.05), (60.3, 0.16), (67, 0.16), (68, 0)]), 0, 1.0)
 
 # ---------------------------------------------------------------- 書き出し
 mix = np.stack([L, R], axis=1)

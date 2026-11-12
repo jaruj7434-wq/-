@@ -6,6 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { shotC1, shotC2, shotC3, shotC4, shotC5, shotC6 } from './shots.js';
+import { shotD1, shotD2, shotD3, shotD4, shotD5 } from './shots_day.js';
 import { clamp, smooth, easeOut, easeInOut, rng } from './lib.js';
 
 const TL = await (await fetch('./timeline.json')).json();
@@ -49,12 +50,12 @@ const outputPass = new OutputPass();
 const grade = new ShaderPass(GradeShader);
 composer.addPass(renderPass); composer.addPass(bloom); composer.addPass(outputPass); composer.addPass(grade);
 
-const builders = { c1: shotC1, c2: shotC2, c3: shotC3, c4: shotC4, c5: shotC5, c6: shotC6 };
+const builders = { c1: shotC1, c2: shotC2, c3: shotC3, c4: shotC4, c5: shotC5, d1: shotD1, d2: shotD2, d3: shotD3, d4: shotD4, d5: shotD5, c6: shotC6 };
 let current = null, currentId = null;
 function getShot(id) {
   if (currentId === id) return current;
   if (current) current.scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
-  currentId = id; current = builders[id]();
+  currentId = id; current = builders[id](renderer);
   return current;
 }
 
