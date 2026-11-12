@@ -44,25 +44,29 @@ def key_travel(obj, axis_vals, base):
 def press_unit(name, x, y, body_m, steel_m, beacon_on, cycle_start, period, phase):
     P.box(name + "Base", (170, 150, 40), (x, y, 20), mat=body_m, bevel=2)
     for s in (-1, 1):
-        P.box(name + f"Col{s}", (130, 34, 230), (x, y + s * 62, 155), mat=body_m, bevel=2)
-    P.box(name + "Crown", (180, 140, 70), (x, y, 300), mat=body_m, bevel=3)
-    ram = P.box(name + "Ram", (88, 100, 60), (x, y, 200), mat=steel_m, bevel=1.5)
+        P.box(name + f"Col{s}", (110, 30, 160), (x, y + s * 58, 120), mat=body_m, bevel=2)
+    P.box(name + "Crown", (150, 150, 55), (x, y, 225), mat=body_m, bevel=3)
+    ram = P.box(name + "Ram", (80, 80, 40), (x, y, 178), mat=steel_m, bevel=1.5)
     # ラムの周期運動
-    C.key(ram, "location", 1, (x, y, 200)); C.key(ram, "location", cycle_start, (x, y, 200))
+    C.key(ram, "location", 1, (x, y, 178)); C.key(ram, "location", cycle_start, (x, y, 178))
     f = cycle_start + phase
     while f < FRAMES + period:
-        C.key(ram, "location", f, (x, y, 200))
-        C.key(ram, "location", f + period * 0.45, (x, y, 135))
-        C.key(ram, "location", f + period * 0.6, (x, y, 135))
+        C.key(ram, "location", f, (x, y, 178))
+        C.key(ram, "location", f + period * 0.45, (x, y, 115))
+        C.key(ram, "location", f + period * 0.6, (x, y, 115))
         f += period
     # 制御盤と表示灯(文字・ロゴなし)
+    glass = bpy.data.materials.get("GuardGlass") or C.principled("GuardGlass", (0.02, 0.025, 0.03), rough=0.05, coat=1.0)
+    P.box(name + "Guard", (90, 3, 70), (x, y - 76, 125), mat=glass, bevel=0.5)
+    P.box(name + "GuardFrame", (98, 2, 78), (x, y - 75, 125), mat=steel_m, bevel=0.5)
+    P.box(name + "Stripe", (152, 152, 6), (x, y, 200), mat=bpy.data.materials.get("Yellow"))
     P.box(name + "Panel", (50, 20, 70), (x + 110, y - 70, 120), mat=body_m, bevel=1)
     lamp_m = C.emissive(name + "BeaconM", color=(1.0, 0.55, 0.1), strength=0.0)
     em = lamp_m.node_tree.nodes["Emission"].inputs["Strength"]
     F.key_socket(em, 1, 0.0); F.key_socket(em, beacon_on, 0.0); F.key_socket(em, beacon_on + 1, 40.0)
     F.set_interp(lamp_m.node_tree, "CONSTANT")
-    P.cyl(name + "Beacon", 7, 14, (x + 70, y - 40, 342), mat=lamp_m, verts=24)
-    P.cyl(name + "BeaconBase", 8, 4, (x + 70, y - 40, 333), mat=steel_m, verts=24)
+    P.cyl(name + "Beacon", 7, 14, (x + 55, y - 40, 262), mat=lamp_m, verts=24)
+    P.cyl(name + "BeaconBase", 8, 4, (x + 55, y - 40, 253), mat=steel_m, verts=24)
     g = C.emissive(name + "GreenM", color=(0.2, 1.0, 0.35), strength=0.0)
     gs = g.node_tree.nodes["Emission"].inputs["Strength"]
     F.key_socket(gs, 1, 0.0); F.key_socket(gs, beacon_on + 6, 0.0); F.key_socket(gs, beacon_on + 7, 25.0)
@@ -74,14 +78,20 @@ def press_unit(name, x, y, body_m, steel_m, beacon_on, cycle_start, period, phas
 def build(sc):
     rnd = random.Random(4)
     C.world((0.02, 0.018, 0.016))
-    body_m = F.mat_painted("MachineGreen", (0.17, 0.27, 0.25), rough=0.45, wear=0.2, scale=0.01)
-    grey_m = F.mat_painted("MachineGrey", (0.32, 0.33, 0.34), rough=0.45, wear=0.2, scale=0.01)
+    body_m = F.mat_painted("MachineGreen", (0.28, 0.42, 0.36), rough=0.35, wear=0.08, scale=0.05)
+    grey_m = F.mat_painted("MachineGrey", (0.62, 0.62, 0.58), rough=0.35, wear=0.08, scale=0.05)
     steel_m, _ = F.mat_steel("Steel", (0.6, 0.6, 0.62), rough=0.2, streak_axis="Z")
     frame_m = F.mat_painted("ConvFrame", (0.08, 0.08, 0.085), rough=0.5, wear=0.4, scale=0.02)
     yel = F.mat_painted("Yellow", (0.62, 0.43, 0.04), rough=0.5, wear=0.3, scale=0.02)
     coin_m = C.mat_coin("CoinShared")
     # 粗さ控えめ・映り込みを足して遠目でもキラッと光る硬貨
-    coin_far = C.principled("CoinFar", (0.86, 0.87, 0.88), metallic=1.0, rough=0.22)
+    coin_far = C.principled("CoinFar", (0.86, 0.87, 0.88), metallic=1.0, rough=0.25)
+    nt = coin_far.node_tree; outn = [n for n in nt.nodes if n.type == "OUTPUT_MATERIAL"][0]
+    bsdf = [n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"][0]
+    env = F.fake_env(nt, strength=0.6, rows=0.6, duty=0.25, sky=(0.35, 0.33, 0.3), lamp=(3.0, 2.6, 2.0), along_x=0.5)
+    addn = nt.nodes.new("ShaderNodeAddShader")
+    C.link(nt, bsdf.outputs["BSDF"], addn.inputs[0]); C.link(nt, env.outputs["Emission"], addn.inputs[1])
+    C.link(nt, addn.outputs["Shader"], outn.inputs["Surface"])
 
     # --- 建屋(床・壁・柱・天井トラス)
     floor_m = F.mat_concrete("Floor", (0.28, 0.27, 0.25), rough=0.6, scale=0.005)
@@ -108,12 +118,13 @@ def build(sc):
             F.key_socket(s, on + 1, 30.0); F.key_socket(s, on + 2, 6.0); F.key_socket(s, on + 3, 40.0)
             F.key_socket(s, on + 8, 60.0)
             F.set_interp(m.node_tree, "LINEAR")
-            P.cyl(f"Lamp{row}{i}", 28, 10, (x, y, 960), mat=m, verts=32)
-            P.cyl(f"LampHood{row}{i}", 32, 18, (x, y, 975), mat=grey_m, verts=32)
-            l = C.point_light((x, y, 930), 0.0, (1.0, 0.78, 0.52), radius=25, name=f"LampL{row}{i}")
+            P.cyl(f"Lamp{row}{i}", 28, 10, (x, y, 700), mat=m, verts=32)
+            P.cyl(f"LampHood{row}{i}", 32, 18, (x, y, 715), mat=grey_m, verts=32)
+            l = C.point_light((x, y, 670), 0.0, (1.0, 0.78, 0.52), radius=25, name=f"LampL{row}{i}")
             l.data.energy = 0; l.data.keyframe_insert("energy", frame=on)
             l.data.energy = 2.5e6; l.data.keyframe_insert("energy", frame=on + 3)
             l.data.energy = 4.0e6; l.data.keyframe_insert("energy", frame=on + 8)
+            l.data.use_shadow = (row == 0 and i % 2 == 0)   # 影は一部の灯だけ(全灯の影は描画が重い)
             lamps.append(l)
 
     # --- コンベア+硬貨
@@ -130,25 +141,26 @@ def build(sc):
             x = X0 + k * 150
             for s in (-1, 1):
                 P.box(f"Leg{li}{k}{s}", (5, 5, BELT_Z - 18), (x, y + s * (BELT_W / 2 - 2), (BELT_Z - 18) / 2), mat=frame_m)
-        # 硬貨(メッシュ共有の複製)。手前の区間は実物の1円玉、奥は軽量版。
-        src_near = C.make_coin(f"CoinSrcN{li}", coin_m, (0, 0, -500), verts=32)
-        src_far = C.make_coin(f"CoinSrcF{li}", coin_far, (0, 0, -500), verts=16)
+        # 硬貨: ベルトと一緒に動く放出板からヘアパーティクルで敷き詰める(数千枚を軽量にインスタンス)
+        bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=1.0, depth=0.15, location=(0, 0, -500))
+        src = bpy.context.object; src.name = f"CoinSrc{li}"     # 遠景用の軽い硬貨(ベベルなし)
+        src.data.materials.append(coin_far)
         travel = belt_travel(FRAMES)
-        n = 0
-        x = X0 - travel - 50
-        while x < X1:
-            for _ in range(rnd.randint(2, 4)):
-                cx = x + rnd.uniform(-2, 2)
-                cy = rnd.uniform(-BELT_W / 2 + 3, BELT_W / 2 - 3)
-                src = src_near if cx < -100 else src_far
-                c = F.dup(src, f"BC{li}_{n}", (cx, cy, BELT_Z + 0.08 + rnd.uniform(0, 0.15)),
-                          (rnd.uniform(-0.12, 0.12), rnd.uniform(-0.12, 0.12), rnd.uniform(0, 6.3)))
-                c.parent = flow
-                c.location = (cx, cy, BELT_Z + 0.08 + rnd.uniform(0, 0.15))
-                c.location.y -= 0  # flow の y は既にライン位置
-                n += 1
-            x += rnd.uniform(3.0, 5.5)
-        # flow は y=ライン位置 にあるので子の y はローカル
+        L = (X1 - X0) + travel + 100
+        em = P.plane(f"CoinCarpet{li}", (L, BELT_W - 6), (X0 - travel - 100 + L / 2, 0, BELT_Z + 0.08))
+        em.parent = flow
+        em.location.y = 0
+        em.visible_camera = False; em.visible_shadow = False
+        em.data.materials.append(C.principled("Inv", (0, 0, 0), alpha=0.0))
+        ps = em.modifiers.new("coins", "PARTICLE_SYSTEM").particle_system
+        st = ps.settings
+        st.type = "HAIR"; st.count = 8000; st.hair_length = 1.0; st.emit_from = "FACE"
+        st.use_emit_random = True; st.render_type = "OBJECT"; st.instance_object = src
+        st.particle_size = 1.0; st.size_random = 0.0
+        st.use_rotations = True; st.rotation_mode = "NOR"; st.phase_factor_random = 2.0
+        st.rotation_factor_random = 0.04
+        ps.seed = 7 + li
+        em.show_instancer_for_render = False
 
     # --- プレス機(各ライン4台)。ライン上に跨がる
     for li, y in enumerate(LINES_Y):
@@ -169,11 +181,11 @@ def build(sc):
     C.area_light((-1800, -900, 600), (60, 0, -60), 600, 4e6, (0.55, 0.65, 0.9), "WindowFill")
 
     # --- カメラ: 斜め上からのワイド、ゆっくりドリー
-    cam, tgt = C.camera((-1250, -150, 270), (300, 140, 60), lens=26, fstop=5.6)
-    C.key(cam, "location", 1, (-1290, -170, 280)); C.key(cam, "location", FRAMES, (-1110, -120, 255))
-    C.key(tgt, "location", 1, (300, 150, 70)); C.key(tgt, "location", FRAMES, (360, 130, 60))
+    cam, tgt = C.camera((-760, -620, 400), (60, 130, 90), lens=30, fstop=5.6)
+    C.key(cam, "location", 1, (-800, -640, 410)); C.key(cam, "location", FRAMES, (-600, -600, 380))
+    C.key(tgt, "location", 1, (40, 130, 90)); C.key(tgt, "location", FRAMES, (140, 130, 90))
     foc = bpy.data.objects.new("Focus", None); bpy.context.collection.objects.link(foc)
-    foc.location = (-500, 0, BELT_Z); cam.data.dof.focus_object = foc
+    foc.location = (-300, 60, BELT_Z); cam.data.dof.focus_object = foc
     F.set_interp(cam, "BEZIER")
     sc.view_settings.exposure = 0.0
 

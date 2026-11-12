@@ -134,7 +134,7 @@ def mat_ingot(name):
     hv = n.new("ShaderNodeValue"); hv.name = "Heat"; hv.outputs[0].default_value = 0.0
     bb = n.new("ShaderNodeBlackbody"); bb.inputs["Temperature"].default_value = 980
     em = n.new("ShaderNodeEmission"); C.link(nt, bb.outputs["Color"], em.inputs["Color"])
-    st = n.new("ShaderNodeMath"); st.operation = "MULTIPLY"; st.inputs[1].default_value = 0.035
+    st = n.new("ShaderNodeMath"); st.operation = "MULTIPLY"; st.inputs[1].default_value = 0.012
     C.link(nt, hv.outputs[0], st.inputs[0])
     st2 = n.new("ShaderNodeMath"); st2.operation = "MULTIPLY"
     C.link(nt, st.outputs[0], st2.inputs[0]); C.link(nt, nz.outputs["Fac"], st2.inputs[1])

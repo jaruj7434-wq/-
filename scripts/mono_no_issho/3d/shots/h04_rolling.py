@@ -72,11 +72,11 @@ def mat_alu_sheet(name, coord_obj, rough=0.18, dull=0.0):
     cr.color_ramp.elements[0].color = (0.55 - dull, 0.55 - dull, 0.54 - dull, 1)
     cr.color_ramp.elements[1].color = (0.9 - dull, 0.9 - dull, 0.89 - dull, 1)
     C.link(nt, st.outputs["Fac"], cr.inputs["Fac"]); C.link(nt, cr.outputs["Color"], p.inputs["Base Color"])
-    rr = n.new("ShaderNodeMapRange"); rr.inputs["To Min"].default_value = rough * 0.5; rr.inputs["To Max"].default_value = rough * 1.6
+    rr = n.new("ShaderNodeMapRange"); rr.inputs["To Min"].default_value = rough * 0.85; rr.inputs["To Max"].default_value = rough * 1.25
     C.link(nt, hl.outputs["Fac"], rr.inputs["Value"]); C.link(nt, rr.outputs["Result"], p.inputs["Roughness"])
     b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.01
     C.link(nt, hl.outputs["Fac"], b.inputs["Height"]); C.link(nt, b.outputs["Normal"], p.inputs["Normal"])
-    env = F.fake_env(nt, strength=0.7 * (1 - dull * 2), rows=0.9, duty=0.22, sky=(0.42, 0.42, 0.44), lamp=(1.3, 1.25, 1.15),
+    env = F.fake_env(nt, strength=0.7 * (1 - dull * 2), rows=0.9, duty=0.22, sky=(0.42, 0.42, 0.44), lamp=(0.5, 0.5, 0.5),
                      along_x=0.4, lamp_len=0.9, structure=0.7)
     # 粗いほど映り込みは弱く: 研磨目の粗さでマスク
     add = n.new("ShaderNodeAddShader")
@@ -207,7 +207,8 @@ def build(sc):
     # --- 照明
     C.area_light((250, -350, 500), (45, 0, 35), 300, 3.5e6, (1.0, 0.9, 0.78), "Key")
     C.area_light((-500, 250, 300), (65, 0, -120), 200, 1.2e6, (0.6, 0.72, 1.0), "Rim")
-    C.area_light((0, 0, 900), (0, 0, 0), 800, 2.5e6, (1.0, 0.95, 0.9), "Top")
+    top = C.area_light((0, 0, 900), (0, 0, 0), 800, 2.5e6, (1.0, 0.95, 0.9), "Top")
+    top.data.specular_factor = 0.15   # 板に四角いハイライトが出ないように
     F.spot((500, -200, 80), (0, 0, 0), 3e5, (1.0, 0.85, 0.65), size_deg=30, name="Bite")
 
     # --- カメラ: 出側斜め3/4、ゆっくり回り込む
