@@ -294,6 +294,27 @@ for k in range(22):
 for k in range(9):
     flaps(49.2 + k * 0.6 + 0.9, 49.2 + k * 0.6 + 1.7, 6, 0.08, rs.uniform(-0.6, 0.6))
 
+# ---------------------------------------------------------------- 時刻が切り替わる合図（タイマーの「ピピピー」）
+def timer_beep():
+    """デジタルタイマーの電子音：ピ・ピ・ピー"""
+    parts = []
+    for dur, gap in [(0.07, 0.06), (0.07, 0.06), (0.32, 0.0)]:
+        n = int(dur * SR)
+        t = np.arange(n) / SR
+        ph = 2 * np.pi * 2900 * t
+        y = np.sign(np.sin(ph)) * 0.35 + np.sin(ph) * 0.65  # 角ばった電子音
+        y = lp(y, 7000)
+        y *= np.minimum(1, t / 0.004) * np.minimum(1, (dur - t) / 0.01)
+        parts += [y, np.zeros(int(gap * SR))]
+    return np.concatenate(parts)
+
+
+BEEP = timer_beep()
+for sh in TL["shots"]:
+    if sh.get("time"):
+        add(BEEP, sh["start"] + 0.12, 0.2, 0.0)
+
+
 # ---------------------------------------------------------------- C6：夕方の群れ
 for k in range(26):
     tt = 55.1 + rs.uniform(0, 4.6)

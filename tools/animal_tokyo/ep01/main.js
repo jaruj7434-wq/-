@@ -94,8 +94,10 @@ function drawSubs(t) {
 function drawTitle(t) {
   const T = TL.title; if (t > T.end + 0.3) return;
   const a = smooth(T.start, T.start + 0.4, t) * (1 - smooth(T.end - 0.3, T.end, t));
-  strokeText(T.series, W / 2, 330, 30, { alpha: a, sw: 6, bold: false });
-  strokeText(T.name, W / 2, 410, 76, { alpha: a, sw: 10 });
+  const pop = 1 + (1 - easeOut((t - T.start) / 0.35)) * 0.15;
+  g2.save(); g2.translate(W / 2, 400); g2.scale(pop, pop); g2.translate(-W / 2, -400);
+  T.lines.forEach((ln, i) => strokeText(ln.text, W / 2, 360 + i * 90, ln.size, { alpha: a, sw: 11, fill: ln.color || '#fff' }));
+  g2.restore();
 }
 
 // ---------------------------------------------------------------- 第7カット：地図と豆知識（模式図）

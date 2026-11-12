@@ -4,8 +4,17 @@
   "height": 1280,
   "duration": 68,
   "title": {
-    "series": "動物目線の東京 #1",
-    "name": "渋谷のカラス",
+    "lines": [
+      {
+        "text": "東京のカラス",
+        "size": 84
+      },
+      {
+        "text": "1日vlog POV",
+        "size": 70,
+        "color": "#ffd24a"
+      }
+    ],
     "start": 0.2,
     "end": 2.6
   },
