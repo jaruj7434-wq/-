@@ -1,15 +1,31 @@
 #!/usr/bin/env bash
 # 使い方: scripts/mono_no_issho/3d/render_queue.sh h13_worn_coin h14_melt ...
-# 各ショットを全フレーム書き出し → assets/output/mono_no_issho/ep01/clips/<name>.mp4
+# 30フレームずつ別プロセスで書き出し(EEVEE/ソフトウェアGLのクラッシュ対策)。
+# 既存フレームは残して続きから再開。完成したら clips/<name>.mp4 に書き出す。
 set -u
 cd "$(dirname "$0")/../../.."
 OUT=assets/output/mono_no_issho/ep01
-mkdir -p "$OUT/clips"
+CHUNK=${CHUNK:-30}
+mkdir -p "$OUT/clips" "$OUT/3d"
 for s in "$@"; do
   if [ -f "$OUT/clips/$s.mp4" ]; then echo "skip $s"; continue; fi
-  echo "[$(date +%T)] render $s"
-  rm -f "$OUT/3d/$s"/f_*.png
-  python3 "scripts/mono_no_issho/3d/shots/$s.py" > "$OUT/3d/$s.log" 2>&1 || { echo "FAIL $s"; continue; }
+  py="scripts/mono_no_issho/3d/shots/$s.py"
+  F=$(grep -oE '^(S\.)?FRAMES = [0-9]+' "$py" | grep -oE '[0-9]+$' | tail -1); F=${F:-120}
+  echo "[$(date +%T)] render $s ($F frames)"
+  mkdir -p "$OUT/3d/$s"
+  fails=0
+  while :; do
+    first=""
+    for ((i=1; i<=F; i++)); do
+      [ -f "$OUT/3d/$s/f_$(printf %04d $i).png" ] || { first=$i; break; }
+    done
+    [ -z "$first" ] && break
+    end=$(( first + CHUNK - 1 )); [ $end -gt $F ] && end=$F
+    if ! python3 "$py" --start "$first" --end "$end" >> "$OUT/3d/$s.log" 2>&1; then
+      fails=$((fails+1)); echo "  crash at ~$first (retry $fails)"
+      [ $fails -ge 8 ] && { echo "FAIL $s"; continue 2; }
+    fi
+  done
   ffmpeg -y -loglevel error -framerate 24 -i "$OUT/3d/$s/f_%04d.png" -c:v libx264 -pix_fmt yuv420p -crf 18 "$OUT/clips/$s.mp4" \
     && echo "[$(date +%T)] done $s"
 done
