@@ -1,6 +1,6 @@
 """第1話 解説強化版: 実写風カットに 矢印・グラフ・色文字テロップ・一時停止 を重ねる。
 
-  python3 scripts/science_0001/ep01_explainer.py            # 映像(無音) assets/output/science_0001/ep01_v3_video.mp4
+  python3 scripts/science_0001/ep01_explainer.py            # 映像(無音) assets/output/science_0001/ep01_v4_video.mp4
   python3 scripts/science_0001/ep01_explainer.py --still 20 # 20秒目の1枚だけ確認用に書き出す
 
 フォント(~/.fonts): Dela Gothic One / M PLUS Rounded 1c ExtraBold (Fontsource の分割ファイルを結合したもの)
@@ -221,13 +221,13 @@ def pressure_graph(d, t, box):
     d.line((px0, Y(1), px1, Y(1)), fill=BLUE + (int(160 * a),), width=3)
     d.text((X(150), Y(1) - 46), "ふだんの空気 1気圧", font=font(F_BODY, 30), fill=BLUE + (fa,))
     # 曲線を描いていく
-    prog = ease((t - 0.3) / 1.6)
+    prog = ease((t - 1.0) / 4.5)
     Tend = Tmin + (180 - Tmin) * prog
     pts = [(X(T), Y(p_sat(T))) for T in np.linspace(Tmin, max(Tmin + 0.1, Tend), 80)]
     if len(pts) > 1 and prog > 0:
         d.line(pts, fill=HOT + (fa,), width=10, joint="curve")
-    if prog >= 1:
-        k = appear(t, 2.0)
+    if t >= 6.0:
+        k = appear(t, 6.0)
         cx, cy = X(180), Y(p_sat(180))
         # 点線
         for yy in np.arange(cy, py1, 22):
@@ -345,7 +345,7 @@ def ov_s1_freeze(d, t, g):
     card(d, (60, 1000, W - 60, 1800), a, BLUE)
     donut(d, t, (300, 1400), 190, 0.14, BLUE)
     rich(d, ["粒の重さの", "{b}約14%{/}が水", ""], 1230, 56, F_BODY, appear(t, 0.6), cx=770, stroke=0)
-    rich(d, ["これが", "**膨らむ力の源**"], 1450, 48, F_BODY, appear(t, 1.2), cx=770, stroke=0)
+    rich(d, ["これが", "**膨らむ力の源**"], 1450, 48, F_BODY, appear(t, 4.0), cx=770, stroke=0)
     d.text((110, 1680), "※弾けやすい水分量は約13.5〜14%", font=font(F_BODY, 30), fill=(190, 190, 200, int(255 * appear(t, 1.6))))
 
 
@@ -363,16 +363,16 @@ def ov_s2_freeze(d, t, g):
     chapter(d, 9, 2, "殻が圧力鍋になる", HOT)
     pause_badge(d, t)
     pressure_graph(d, t, (60, 260, W - 60, 1180))
-    bottom_caption(d, t, ["ふだんの空気の **約10倍** の圧力", "殻が耐えられなくなる"], start=3.0, y=1500)
+    bottom_caption(d, t, ["ふだんの空気の **約10倍** の圧力", "殻が耐えられなくなる"], start=8.0, y=1500)
 
 
 def ov_s3_freeze(d, t, g):
     chapter(d, 9, 3, "殻が裂ける", BLUE)
     pause_badge(d, t)
-    label_arrow(d, t, 0.2, (250, 1120), (590, 820), "亀裂", HOT, size=48)
-    label_arrow(d, t, 0.8, (820, 560), (580, 360), "水蒸気が噴き出す", BLUE)
-    label_arrow(d, t, 1.4, (830, 1280), (700, 1000), "でんぷんが泡に", YEL)
-    bottom_caption(d, t, ["圧力が一気に抜けて", "でんぷんが**白い泡**にふくらむ"], start=1.9)
+    label_arrow(d, t, 2.2, (250, 1120), (590, 820), "亀裂", HOT, size=48)
+    label_arrow(d, t, 3.8, (820, 560), (580, 360), "水蒸気が噴き出す", BLUE)
+    label_arrow(d, t, 5.4, (830, 1280), (700, 1000), "でんぷんが泡に", YEL)
+    bottom_caption(d, t, ["圧力が一気に抜けて", "でんぷんが**白い泡**にふくらむ"], start=6.4)
 
 
 def ov_s3_chapter(d, t, g):
@@ -391,27 +391,30 @@ def ov_s4_play(d, t, g):
 def ov_s4_freeze(d, t, g):
     chapter(d, 9, 4, "脚でジャンプ")
     pause_badge(d, t)
-    a = appear(t, 0.2)
+    a = appear(t, 4.0)
     # 脚が床を押す(下向き)
-    arrow(d, (360, 960), (470, 1260), HOT, prog=appear(t, 0.2, 0.5), width=16, head=48, alpha=a)
+    arrow(d, (360, 960), (470, 1260), HOT, prog=appear(t, 4.0, 0.5), width=16, head=48, alpha=a)
     if a > 0:
         pill(d, (300, 830), "脚が床を押す", HOT, INK, size=46, alpha=a, anchor="mt")
-    b = appear(t, 1.0)
-    arrow(d, (800, 1000), (800, 640), YEL, prog=appear(t, 1.0, 0.5), width=16, head=48, alpha=b)
+    b = appear(t, 5.8)
+    arrow(d, (800, 1000), (800, 640), YEL, prog=appear(t, 5.8, 0.5), width=16, head=48, alpha=b)
     if b > 0:
         pill(d, (800, 1040), "反動で跳ぶ", YEL, INK, size=46, alpha=b, anchor="mt")
-    c = appear(t, 1.8)
+    c = appear(t, 9.0)
     if c > 0:
         card(d, (60, 300, W - 60, 560), c, YEL)
         d.text((110, 330), "跳び出す瞬間の加速度", font=font(F_BODY, 44), fill=WHITE + (int(255 * c),))
         d.text((110, 395), "約20G", font=font(F_HEAD, 120), fill=YEL + (int(255 * c),))
         d.text((560, 450), "（重力の約20倍）", font=font(F_BODY, 40), fill=WHITE + (int(255 * c),))
-    bottom_caption(d, t, ["跳ぶ力は{r}蒸気のジェット{/}ではなく", "でんぷんの**「脚」**"], start=2.4)
+    bottom_caption(d, t, ["跳ぶ力は{r}蒸気のジェット{/}ではなく", "でんぷんの**「脚」**"], start=1.0)
 
 
 def ov_s4_end(d, t, g):
     chapter(d, 9, 4, "脚でジャンプ")
     rich(d, ["空中で", "**花が開く！**"], 1450, 84, F_HEAD, appear(t, 0.3))
+
+
+ROW_T = [1.2, 2.6, 3.6, 5.0]  # まとめの各項目を出す秒(ナレーションに合わせる)
 
 
 def ov_summary(d, t, g):
@@ -425,7 +428,7 @@ def ov_summary(d, t, g):
         ("4", YEL, "でんぷんの **「脚」** でジャンプ"),
     ]
     for i, (n, col, txt) in enumerate(rows):
-        k = appear(t, 0.5 + i * 0.6)
+        k = appear(t, ROW_T[i])
         if k <= 0:
             continue
         y = 430 + i * 190 + (1 - k) * 30
@@ -438,25 +441,25 @@ def ov_summary(d, t, g):
             ff = font(F_BODY, 46)
             d.text((x, y + 48), s, font=ff, fill=c + (int(255 * k),))
             x += d.textlength(s, font=ff)
-    k = appear(t, 3.4, 0.5)
+    k = appear(t, 7.2, 0.5)
     rich(d, ["ポップコーンは", "**自分の「脚」で跳んでいた！**"], 1300, 70, F_HEAD, k)
 
 
 SHOTS = [
     Shot("ep01_hook_kling.mp4", 0.0, 1.15, overlay=ov_hook_play),
-    Shot("ep01_hook_kling.mp4", 1.15, 2.2, freeze=True, overlay=ov_hook_freeze, dim=0.25, tag="hook_pause"),
-    Shot("ep01_hook_kling.mp4", 1.15, 2.35, overlay=ov_hook_play2),
+    Shot("ep01_hook_kling.mp4", 1.15, 3.8, freeze=True, overlay=ov_hook_freeze, dim=0.25, tag="hook_pause"),
+    Shot("ep01_hook_kling.mp4", 1.15, 3.3, overlay=ov_hook_play2, tag="hook_play2"),
     Shot("ep01_s1_cutaway.mp4", 0.0, 5.0, overlay=ov_s1, tag="step1"),
-    Shot("ep01_s1_cutaway.mp4", 4.9, 4.0, freeze=True, overlay=ov_s1_freeze, dim=0.35, tag="step1_pause"),
+    Shot("ep01_s1_cutaway.mp4", 4.9, 7.6, freeze=True, overlay=ov_s1_freeze, dim=0.35, tag="step1_pause"),
     Shot("ep01_s2_pressure.mp4", 0.0, 5.0, overlay=ov_s2, tag="step2"),
-    Shot("ep01_s2_pressure.mp4", 4.9, 5.5, freeze=True, overlay=ov_s2_freeze, dim=0.55, tag="step2_pause"),
+    Shot("ep01_s2_pressure.mp4", 4.9, 12.6, freeze=True, overlay=ov_s2_freeze, dim=0.55, tag="step2_pause"),
     Shot("ep01_s3_rupture.mp4", 0.0, 0.4, overlay=ov_s3_chapter, tag="step3"),
-    Shot("ep01_s3_rupture.mp4", 0.4, 3.6, freeze=True, overlay=ov_s3_freeze, dim=0.3, tag="step3_pause"),
-    Shot("ep01_s3_rupture.mp4", 0.4, 4.6, overlay=ov_s3_play),
+    Shot("ep01_s3_rupture.mp4", 0.4, 7.9, freeze=True, overlay=ov_s3_freeze, dim=0.3, tag="step3_pause"),
+    Shot("ep01_s3_rupture.mp4", 0.4, 4.6, overlay=ov_s3_play, tag="step3_play"),
     Shot("ep01_s4_leg.mp4", 0.0, 2.3, overlay=ov_s4_play, tag="step4"),
-    Shot("ep01_s4_leg.mp4", 2.3, 5.0, freeze=True, overlay=ov_s4_freeze, dim=0.3, tag="step4_pause"),
-    Shot("ep01_s4_leg.mp4", 2.3, 2.7, overlay=ov_s4_end),
-    Shot("ep01_s4_leg.mp4", 4.95, 6.5, freeze=True, overlay=ov_summary, dim=0.6, blur=14, tag="summary"),
+    Shot("ep01_s4_leg.mp4", 2.3, 12.4, freeze=True, overlay=ov_s4_freeze, dim=0.3, tag="step4_pause"),
+    Shot("ep01_s4_leg.mp4", 2.3, 2.7, overlay=ov_s4_end, tag="step4_end"),
+    Shot("ep01_s4_leg.mp4", 4.95, 11.2, freeze=True, overlay=ov_summary, dim=0.6, blur=14, tag="summary"),
 ]
 
 
@@ -532,7 +535,7 @@ def main():
             base = next(frames_of(sub))
             render_frame(s, base, lt).save(OUT / f"still_{ts:05.1f}.png")
         return
-    out = OUT / "ep01_v3_video.mp4"
+    out = OUT / "ep01_v4_video.mp4"
     enc = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                             "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-crf", "18",
                             "-preset", "medium", "-pix_fmt", "yuv420p", str(out)], stdin=subprocess.PIPE)
