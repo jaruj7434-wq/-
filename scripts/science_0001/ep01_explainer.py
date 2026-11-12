@@ -131,8 +131,11 @@ def chapter(d, t, num, title, color=YEL):
            stroke_fill=(0, 0, 0, int(200 * a)))
 
 
+SERIES = "0.001秒の世界"  # 第2話以降は ep02_explainer 側で「一瞬の世界」に差し替える
+
+
 def series_badge(d, a=1.0):
-    pill(d, (W / 2, 48), "0.001秒の世界", (255, 255, 255), INK, size=34, fnt=F_HEAD, alpha=0.9 * a, anchor="mt")
+    pill(d, (W / 2, 48), SERIES, (255, 255, 255), INK, size=34, fnt=F_HEAD, alpha=0.9 * a, anchor="mt")
 
 
 def arrow(d, p0, p1, color, prog=1.0, width=12, head=38, alpha=1.0):
