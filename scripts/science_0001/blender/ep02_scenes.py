@@ -241,7 +241,7 @@ def scene_squishy(frames):
     fing = tip
     # アニメーション: 0.4秒で押す → 0.8秒キープ → ゆっくり戻る(〜4.8秒)
     f = lambda s: int(1 + s * FPS)
-    for fr, val, z in ((f(0.0), 0.0, 2.9), (f(0.2), 0.0, 2.0), (f(0.6), 1.0, 1.25), (f(1.4), 1.0, 1.25),
+    for fr, val, z in ((f(0.0), 0.0, 2.9), (f(0.2), 0.0, 2.0), (f(0.6), 1.0, 1.05), (f(1.4), 1.0, 1.05),
                        (f(1.9), 0.8, 1.9), (f(4.6), 0.0, 3.4)):
         sk.value = val
         sk.keyframe_insert("value", frame=fr)
@@ -252,7 +252,7 @@ def scene_squishy(frames):
     area_light((3, -3, 5), 900, size=4, color=(1.0, 0.95, 0.92), target=(0, 0, 0.8))
     area_light((-4, 2, 3), 400, size=5, color=(0.6, 0.75, 1.0), target=(0, 0, 0.8))
     area_light((0, 4, 2), 600, size=3, color=(1.0, 0.7, 0.85), target=(0, 0, 0.8))
-    camera((0, -6.0, 1.7), (0, 0, 1.0), lens=55)
+    camera((0, -9.0, 2.2), (0, 0, 1.25), lens=55)
     glare(sc, size=6, threshold=0.9)
     return sc
 

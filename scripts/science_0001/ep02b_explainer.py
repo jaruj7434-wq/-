@@ -35,10 +35,11 @@ def build_clips():
     CLIPS.mkdir(parents=True, exist_ok=True)
     for name in ("squishy", "nerve", "reward", "dopamine"):
         src = RENDER / name
+        # 光のにじみは RGB で計算する(YUV のまま screen 合成すると色が紫にずれる)
         fc = ("[0:v]minterpolate=fps=30:mi_mode=mci:mc_mode=aobmc:vsbmc=1,"
-              "scale=1080:1920:flags=lanczos,format=yuv444p,split[a][b];"
-              "[b]lutyuv=y='if(gt(val,170),val,16)':u=128:v=128,gblur=sigma=22[g];"
-              "[a][g]blend=all_mode=screen:all_opacity=0.55,format=yuv420p[v]")
+              "scale=1080:1920:flags=lanczos,format=gbrp,split[a][b];"
+              "[b]colorlevels=rimin=0.62:gimin=0.62:bimin=0.62,gblur=sigma=24[g];"
+              "[a][g]blend=all_mode=screen:all_opacity=0.5,format=yuv420p[v]")
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", "15", "-i", str(src / "%04d.png"),
                         "-filter_complex", fc, "-map", "[v]", "-c:v", "libx264", "-crf", "16",
                         str(CLIPS / f"{name}.mp4")], check=True)
@@ -199,11 +200,11 @@ SHOTS = [
     Shot("squishy.mp4", 0.0, 2.3, overlay=E.ov_slow, speed=0.35, interp=True, tag="slow"),
     Shot("squishy.mp4", 0.8, 4.0, freeze=True, overlay=ov_hook_pause, dim=0.25, tag="hook_pause"),
     Shot("nerve.mp4", 0.0, 5.0, overlay=ov_signal, tag="signal"),
-    Shot("nerve.mp4", 4.95, 0.6, freeze=True, overlay=ov_signal_hold, tag="signal_hold"),
+    Shot("nerve.mp4", 4.85, 0.6, freeze=True, overlay=ov_signal_hold, tag="signal_hold"),
     Shot("reward.mp4", 0.0, 4.0, overlay=ov_reward, tag="reward"),
-    Shot("reward.mp4", 3.95, 1.6, freeze=True, overlay=ov_reward_hold, tag="reward_hold"),
+    Shot("reward.mp4", 3.85, 1.6, freeze=True, overlay=ov_reward_hold, tag="reward_hold"),
     Shot("dopamine.mp4", 0.0, 5.0, overlay=ov_dopa, tag="dopa"),
-    Shot("dopamine.mp4", 4.95, 0.6, freeze=True, overlay=ov_dopa_hold, tag="dopa_hold"),
+    Shot("dopamine.mp4", 4.85, 0.6, freeze=True, overlay=ov_dopa_hold, tag="dopa_hold"),
     Shot("dopamine.mp4", 3.0, 5.0, freeze=True, overlay=ov_question, dim=0.65, blur=10, tag="question"),
     Shot("dopamine.mp4", 3.0, 8.6, freeze=True, overlay=ov_punch, dim=0.72, blur=16, tag="punch"),
     Shot("squishy.mp4", 4.5, 9.0, freeze=True, overlay=ov_ending, dim=0.6, blur=16, tag="ending"),
