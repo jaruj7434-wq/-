@@ -42,6 +42,14 @@ def env(n, tau):
     return np.exp(-np.arange(n) / SR / tau)
 
 
+def mx(*arrs):
+    """長さの違う波形を足し合わせる(短い方は0で埋める)。"""
+    out = np.zeros(max(len(a) for a in arrs))
+    for a in arrs:
+        out[: len(a)] += a
+    return out
+
+
 def tone(f, d, tau, amp=0.5):
     n = int(d * SR)
     t = np.arange(n) / SR
@@ -68,16 +76,16 @@ def build_sfx(tl):
         return _lowpass(_noise(int(d * SR), rng), a)
 
     def tick():  # 一時停止「カチッ」
-        return tone(1800, 0.2, 0.012, 0.6) + noise(0.3, 0.5) * env(int(0.3 * SR), 0.06) * 0.2
+        return mx(tone(1800, 0.2, 0.012, 0.6), noise(0.3, 0.5) * env(int(0.3 * SR), 0.06) * 0.2)
 
     def swish():  # 矢印・ラベルが出る「シュッ」
         n = int(0.25 * SR)
-        return noise(0.25, 0.6) * np.sin(np.pi * np.arange(n) / n) * 0.25 + tone(1200, 0.12, 0.03, 0.15)
+        return mx(noise(0.25, 0.6) * np.sin(np.pi * np.arange(n) / n) * 0.25, tone(1200, 0.12, 0.03, 0.15))
 
     def popsnd(a=0.8):
         n = int(0.5 * SR)
-        s = tone(180, 0.5, 0.06, 0.9) + tone(520, 0.5, 0.06, 0.4)
-        return (s + _noise(n, rng) * env(n, 0.01) * 0.8) * a
+        s = mx(tone(180, 0.5, 0.06, 0.9), tone(520, 0.5, 0.06, 0.4))
+        return mx(s, _noise(n, rng) * env(n, 0.01) * 0.8) * a
 
     def hiss(d=1.5, a=0.35):
         return noise(d, 0.35) * env(int(d * SR), d / 3.5) * a
@@ -86,7 +94,7 @@ def build_sfx(tl):
         return np.r_[tone(784, 0.12, 0.08, 0.35), tone(1175, 0.35, 0.12, 0.35)]
 
     def thud():
-        return tone(70, 0.5, 0.12, 0.9) + noise(0.15, 0.3) * env(int(0.15 * SR), 0.03) * 0.5
+        return mx(tone(70, 0.5, 0.12, 0.9), noise(0.15, 0.3) * env(int(0.15 * SR), 0.03) * 0.5)
 
     def boing():
         n = int(0.6 * SR)
@@ -94,10 +102,10 @@ def build_sfx(tl):
         return np.sin(2 * np.pi * (220 + 500 * t + 60 * np.sin(2 * np.pi * 12 * t)) * t) * env(n, 0.2) * 0.4
 
     def impact():
-        return thud() * 0.8 + tone(880, 0.6, 0.15, 0.25) + tone(1320, 0.6, 0.15, 0.2)
+        return mx(thud() * 0.8, tone(880, 0.6, 0.15, 0.25), tone(1320, 0.6, 0.15, 0.2))
 
     def ding():
-        return tone(1568, 1.0, 0.3, 0.3) + tone(2093, 1.0, 0.25, 0.15)
+        return mx(tone(1568, 1.0, 0.3, 0.3), tone(2093, 1.0, 0.25, 0.15))
 
     # --- フック
     put(popsnd(), 1.1)
@@ -137,9 +145,9 @@ def build_sfx(tl):
     put(hiss(), s3 + 0.25)
     p3 = tl["step3_pause"]
     put(tick(), p3 + 0.05)
-    put(tone(2500, 0.15, 0.01, 0.5) + noise(0.15, 0.7) * env(int(0.15 * SR), 0.01) * 0.6, p3 + 2.2)  # 亀裂「パキッ」
+    put(mx(tone(2500, 0.15, 0.01, 0.5), noise(0.15, 0.7) * env(int(0.15 * SR), 0.01) * 0.6), p3 + 2.2)  # 亀裂「パキッ」
     put(hiss(1.2, 0.3), p3 + 3.8)  # 蒸気「シュー」
-    put(tone(300, 0.3, 0.1, 0.3) + noise(0.3, 0.2) * env(int(0.3 * SR), 0.08) * 0.3, p3 + 5.4)  # 泡「ポフッ」
+    put(mx(tone(300, 0.3, 0.1, 0.3), noise(0.3, 0.2) * env(int(0.3 * SR), 0.08) * 0.3), p3 + 5.4)  # 泡「ポフッ」
     pp = tl["step3_play"]
     for k in np.arange(0.0, 4.4, 0.15):
         put(tone(3000, 0.03, 0.005, 0.2), pp + k)
