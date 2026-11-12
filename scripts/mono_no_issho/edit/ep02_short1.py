@@ -16,16 +16,22 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import ep02_build  # noqa: F401  (B のグローバルを第2話用に差し替える)
-from ep02_build import B
+import ep01_build as B   # 第2話の設定は __main__ で ep02_build を読み込んで差し替える
 
 SR, FPS = B.SR, B.FPS
 VW, VH = 1080, 1920
 TEMPO = 1.15
 GAP = 0.08
-WORK = B.WORK / "short1"
-OUTF = B.OUT / "shorts" / "ep02_short1_kasa.mp4"
-NAR = B.WORK / "el_tts"
+# 出力先などは configure() で決める(他の話数のショートは configure を呼んでから main())
+WORK = OUTF = NAR = None
+
+
+def configure(name):
+    global WORK, OUTF, NAR
+    WORK = B.WORK / name
+    OUTF = B.OUT / "shorts" / f"{B.OUT.name}_{name}.mp4"
+    NAR = B.WORK / "el_tts"
+
 TITLE = ["なくした傘、", "どこへ行く？"]
 
 # (映像, ナレーション行番号, 音声の切り出し範囲(秒,原速), 2D図解の頭飛ばし(秒), 強調語)
@@ -42,6 +48,7 @@ SEGS = [
 CTA_DUR = 3.6
 CTA = ["2週間後、傘が向かう", "{\\c&H00D7FF&}“最後の場所”{\\c&HFFFFFF&}とは…？"]
 CTA2 = ["フルはコメント欄から！", "▼ 本編で答え合わせ"]
+CAPS = {22: ["持ち主が現れなかった傘は…"]}   # 字幕を差し替える行(音声を途中で切る行など)
 
 
 def run(cmd):
@@ -81,6 +88,8 @@ def phrases(text):
 
 def wrap(s, n=11):
     """1行 n 文字までに折る。真ん中に近い助詞・読点の後ろで切る。"""
+    if "\\N" in s:          # 手で改行を指定した字幕はそのまま
+        return s.split("\\N")
     if len(s) <= n:
         return [s]
     k = -(-len(s) // n)
@@ -238,8 +247,8 @@ def main():
     ass += ev("Title", 0, end_nar, f"{TITLE[0]}\\N{{\\c&H1E8CF0&}}{TITLE[1]}")
     for s in segs:
         ph = phrases(line_text(s["i"]))
-        if s["i"] == 22:
-            ph = ["持ち主が現れなかった傘は…"]
+        if s["i"] in CAPS:
+            ph = CAPS[s["i"]]
         n = sum(len(q) for q in ph)
         a = s["start"]
         span = s["dur"] - GAP
@@ -282,4 +291,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import ep02_build  # noqa: F401  (B のグローバルを第2話用に差し替える)
+    configure("short1_kasa")
     main()
