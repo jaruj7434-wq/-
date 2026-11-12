@@ -5,7 +5,6 @@
     ピコピコハンマー … 持ち主のまわりをぐるぐる回り、当たると1ダメージ+ふっとばす
     巨大フォーク     … 持ち主の進む向きに突き出していて、先が当たると1ダメージ
     種マシンガン     … 持ち主のまわりをゆっくり回りながら、スイカの種を連射(当たると1ダメージ)
-    ブーメラン       … 進む向きに投げて、もどってくる(行きか帰りに当たると1ダメージ)
   どの武器も1回1ダメージ。当たったあと1秒は無敵(一気にハートが減らない)。当たると、おじさんが低い声で「おぅっ!」「ゔぅっ!」
 - ハートは10個ずつ。先に0になったほうの負け。りんごおじさんが勝てば成功(おじさんフィーバー)、負ければ失敗(幽霊)。
 
@@ -52,7 +51,7 @@ HP0 = 10
 KINDS = (0, 5)                  # りんご, スイカ(OJ.NAMES の番号)
 NAMES = ("りんごおじさん", "スイカおじさん")
 COLS = ((0.95, 0.2, 0.2), (0.25, 0.8, 0.3))
-WEAPONS = ["hammer", "fork", "seeds", "boomerang"]
+WEAPONS = ["hammer", "fork", "seeds"]   # (ブーメランは使わない)
 W_NAMES = {"hammer": "ピコピコハンマー", "fork": "巨大フォーク", "seeds": "種マシンガン", "boomerang": "ブーメラン"}
 W_DUR = {"hammer": 9.0, "fork": 9.0, "seeds": 7.0, "boomerang": 4.0}
 SPAWN_WAIT = float(os.environ.get("SPAWN_WAIT", 0.2))   # 武器が拾われてから、次の武器が出てくるまで
@@ -268,7 +267,7 @@ def snapshot(g):
             "f": [(f.p[0], f.p[1], f.rot, f.hp, f.hit_t,
                    None if f.w is None else (f.w["type"], f.w["ang"], tuple(f.w.get("bp", (0, 0))), tuple(f.v / max(1e-6, np.linalg.norm(f.v)))))
                   for f in g.f],
-            "item": g.item, "seeds": [(s[0], s[1], s[4]) for s in g.seeds]}
+            "item": g.item, "seeds": [(s[0], s[1], s[4], s[2], s[3]) for s in g.seeds]}
 
 
 def simulate(seed, record=False):
@@ -394,14 +393,29 @@ def draw_seedgun(ctx, x, y, ang):
     ctx.restore()
 
 
-def draw_seed(ctx, x, y, ang):
+def draw_seed(ctx, x, y, ang, vx=0.0, vy=0.0, col=(1, 1, 1)):
+    """スイカの種の弾(暗い背景でも見えるように、白いふち・光・うしろに残像)。"""
+    sp = math.hypot(vx, vy) or 1.0
+    ux, uy = vx / sp, vy / sp
     ctx.save()
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.move_to(x - ux * 46, y - uy * 46)   # 残像の線
+    ctx.line_to(x, y)
+    ctx.set_source_rgba(*col, 0.45)
+    ctx.set_line_width(9)
+    ctx.stroke()
     ctx.translate(x, y)
-    ctx.rotate(ang)
-    ctx.scale(1.0, 0.6)
-    ctx.arc(0, 0, 8, 0, 2 * math.pi)
+    ctx.rotate(math.atan2(uy, ux))
+    ctx.scale(1.0, 0.62)
+    ctx.arc(0, 0, 15, 0, 2 * math.pi)
     ctx.restore()
-    ctx.set_source_rgb(0.08, 0.06, 0.05)
+    ctx.set_source_rgb(0.1, 0.07, 0.05)
+    ctx.fill_preserve()
+    ctx.set_source_rgba(1, 1, 1, 0.95)
+    ctx.set_line_width(2.5)
+    ctx.stroke()
+    ctx.arc(x - ux * 4 - 3, y - uy * 4 - 3, 3.5, 0, 2 * math.pi)
+    ctx.set_source_rgba(1, 1, 1, 0.8)
     ctx.fill()
 
 
@@ -555,8 +569,8 @@ def render(seed):
             ctx.set_line_width(6)
             ctx.stroke()
             draw_item_icon(ctx, typ, x, y, t)
-        for x, y, i in fr["seeds"]:
-            draw_seed(ctx, x, y, t * 20)
+        for x, y, i, vx, vy in fr["seeds"]:
+            draw_seed(ctx, x, y, t * 20, vx, vy, COLS[i])
         # おじさんと武器
         for i, (x, y, rot, hp, hit_t, w) in enumerate(fr["f"]):
             if ko_t is not None and t >= ko_t and i == ko_i:
