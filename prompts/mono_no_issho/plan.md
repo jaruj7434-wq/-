@@ -24,10 +24,10 @@
 | 台本・事実確認 | Claude Code（Web検索で数字・工程を確認し、出典をメモ） |
 | 地図・移動アニメ・数字テロップ・図解 | Claude Code（Python／ffmpeg） |
 | ナレーション | ローカルTTS（なければ相談） |
-| 工場・街中などリアルなカット | Higgsfield（**生成前に必ず許可を取る**） |
+| 工場・街中などリアルなカット | Claude Code（Blender bpy＋Cycles の3Dアニメ）※2026-11-12 に Higgsfield から変更 |
 | 編集・字幕・BGM・書き出し | Claude Code |
 
-目安：Claude Code 7割／Higgsfield 3割
+目安：すべて Claude Code（2D図解 + 3Dアニメ）
 
 ## 第1話の候補
 - 「1円玉の一生」（造幣局 → 財布 → 自販機に入らない → 回収・溶解）
