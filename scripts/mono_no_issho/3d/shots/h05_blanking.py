@@ -72,6 +72,9 @@ def holed_strip(mat, x0=SEAM, x1=60.0):
     bpy.ops.object.modifier_apply(modifier="holes")
     bpy.data.objects.remove(cut)
     o.data.materials.append(mat)
+    bpy.ops.object.select_all(action="DESELECT"); o.select_set(True)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)   # 原点=パンチ中心
     return o
 
 
@@ -88,7 +91,7 @@ def keyed(obj, path, keys, interp_at=None):
 def build(sc):
     sc.gravity = (0, 0, -981.0)
     F.world_gradient(top=(0.35, 0.34, 0.33), horizon=(0.06, 0.06, 0.065), bottom=(0.015, 0.015, 0.015),
-                     strength=0.6, strips=3.0, strip_color=(2.5, 2.4, 2.2), camera_color=(0.012, 0.012, 0.014))
+                     strength=0.6, strips=3.0, strip_color=(2.5, 2.4, 2.2), camera_color=(0.03, 0.03, 0.032))
     frame_m = F.mat_painted("PressFrame", (0.16, 0.24, 0.22), rough=0.45, wear=0.25, scale=0.3)
     tool_m, _ = F.mat_steel("ToolSteel", (0.55, 0.56, 0.58), rough=0.18, streak_axis="Z")
     dark_m = F.mat_painted("Dark", (0.05, 0.05, 0.055), rough=0.5, wear=0.5, scale=0.4)
@@ -159,7 +162,7 @@ def build(sc):
     pile = []
     for i in range(70):
         x = rnd.uniform(-3.4, 3.4); y = rnd.uniform(-5.6, 5.6)
-        h = 0.9 * max(0.0, 1 - (x / 4.5) ** 2 - (y / 7.5) ** 2)
+        h = 2.6 * max(0.0, 1 - (x / 4.5) ** 2 - (y / 7.5) ** 2)
         z = -16.7 + 0.075 + rnd.uniform(0, h)
         c = C.make_coin(f"Pile{i}", blank_m, (x, y, z),
                         (rnd.uniform(-0.35, 0.35), rnd.uniform(-0.35, 0.35), rnd.uniform(0, 6.3)), verts=40)
@@ -200,7 +203,7 @@ def build(sc):
     F.spot((20, -25, -8), (0, 0, -12), 1.2e4, (1.0, 0.85, 0.7), size_deg=35, name="TraySpot")
 
     # --- カメラ
-    cam, tgt = C.camera((26, -50, 9), (2.0, 0, -3.5), lens=34, fstop=4.0)
+    cam, tgt = C.camera((26, -50, 9), (1.5, 0, -3.0), lens=46, fstop=4.0)
     C.key(cam, "location", 1, (28, -52, 10)); C.key(cam, "location", FRAMES, (22, -45, 7))
     sc.view_settings.exposure = 0.0
 

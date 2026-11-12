@@ -49,7 +49,7 @@ def piggy(loc=(0, 0, 0)):
 
 
 def build(sc):
-    C.world((0.05, 0.045, 0.04))
+    P.world_studio((0.03, 0.026, 0.022), (0.1, 0.09, 0.08), (0.55, 0.52, 0.48), 1.0)
     rnd = random.Random(4)
     shelf = P.box("Shelf", (120, 40, 2.5), (0, 8, -1.25), mat=P.mat_wood("Wood", (0.5, 0.33, 0.18), (0.28, 0.16, 0.08), 0.6))
     C.rigid(shelf, False, "BOX", friction=0.7)

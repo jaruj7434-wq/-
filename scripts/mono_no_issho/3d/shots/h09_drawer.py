@@ -72,7 +72,7 @@ def build(sc):
             C.rigid(o, False, "CONVEX_HULL", friction=0.6)
     kinds = ["1"] * 16 + ["10", "10", "10", "5", "100", "50", "1", "1", "10", "1"]
     rnd.shuffle(kinds)
-    P.drop_pile(kinds[:16], (-9, -8, 0), 4.5, 3.0, seed=22, friction=0.6, prefix="PA")   # 手前の隅に溜まった小銭
+    P.drop_pile(kinds[:16], (-8, -4, 0), 4.5, 3.0, seed=22, friction=0.6, prefix="PA")   # 手前の隅に溜まった小銭
     P.drop_pile(kinds[16:], (2, 0, 0), 11, 3.0, seed=23, friction=0.6, prefix="PB")
     P.settle(sc, 50)
 
@@ -84,7 +84,7 @@ def build(sc):
     P.light_card("CardBack", (70, 40), (0, 45, 40), (0, -5, 0), strength=2.5, color=(1.0, 0.93, 0.85), visible_camera=True)
 
     cam, tgt = C.camera((-10, -34, 38), (-3, -3, 0), lens=40, fstop=0.04)  # 実効 F4
-    P.key_seq(cam, "location", [(1, (-16, -34, 38)), (FRAMES, (2, -28, 33))])
+    P.key_seq(cam, "location", [(1, (-16, -34, 42)), (FRAMES, (2, -27, 40))])
     P.key_seq(tgt, "location", [(1, (-6, -3, 0)), (FRAMES, (0, -4, 0))])
     P.reflection_probe((0, -2, 8), 80)
     sc.view_settings.exposure = -0.4

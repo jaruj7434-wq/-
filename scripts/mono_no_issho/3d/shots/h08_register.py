@@ -101,7 +101,7 @@ def build(sc):
     snack = C.principled("Snack", (0.65, 0.35, 0.1), rough=0.6, bump=0.3, bump_scale=2)
     for i in range(6):
         P.box(f"Snack{i}", (8, 5, 3), (-58 + (i % 3) * 10, 18 + (i // 3) * 8, 6 + (i // 3) * 12), mat=snack, bevel=1.5)
-    P.box("Display", (14, 10, 18), (30, 20, 9), mat=C.principled("DisplayM", (0.85, 0.2, 0.15), rough=0.4), bevel=0.4)
+    P.box("CardReader", (9, 12, 5), (26, 16, 2.5), (0, 0, math.radians(-15)), mat=C.principled("ReaderM", (0.12, 0.12, 0.13), rough=0.35), bevel=0.8)
     reg = P.box("Register", (34, 26, 12), (55, 18, 6), mat=C.principled("RegisterBody", (0.85, 0.86, 0.87), rough=0.4), bevel=1.0)
     P.box("RegisterScreen", (30, 2, 22), (55, 26, 22), (math.radians(-12), 0, 0),
           mat=C.principled("Scr", (0.02, 0.02, 0.03), rough=0.15, emission=(0.4, 0.6, 0.9), emission_strength=0.6), bevel=0.5)

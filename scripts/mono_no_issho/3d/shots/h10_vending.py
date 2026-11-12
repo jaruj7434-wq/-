@@ -38,7 +38,7 @@ def bottle(name, loc, color, cap):
 
 
 def build(sc):
-    P.world_studio((0.004, 0.005, 0.008), (0.03, 0.035, 0.05), (0.25, 0.28, 0.36), 1.0, camera_color=(0.003, 0.004, 0.008))
+    P.world_studio((0.004, 0.005, 0.008), (0.05, 0.055, 0.075), (0.3, 0.33, 0.4), 1.0, camera_color=(0.003, 0.004, 0.008))
     P.physics(sc, FRAMES, time_scale=1.0, substeps=60)
     rnd = random.Random(10)
 
@@ -102,7 +102,7 @@ def build(sc):
     P.cyl("ReturnLever", 1.6, 1.4, (SLOT[0] - 7, SLOT[1] - 0.2, SLOT[2]), (math.radians(90), 0, 0), steel, bevel=0.3)
     P.box("Display7segBg", (7, 0.6, 2.2), (SLOT[0], SLOT[1] - 0.3, SLOT[2] + 6.4), mat=C.principled("SegBg", (0.02, 0.0, 0.0), rough=0.1, coat=1.0))
     for d in range(3):  # 「000」風の小さな赤い表示(数字の形は作らない)
-        P.box(f"Seg{d}", (1.1, 0.3, 1.4), (SLOT[0] + 1.2 + d * 1.6, SLOT[1] - 0.65, SLOT[2] + 6.4), mat=bpy.data.materials.get("SegM") or C.emissive("SegM", (1.0, 0.2, 0.05), strength=4))
+        P.box(f"Seg{d}", (1.1, 0.3, 1.4), (SLOT[0] + 1.2 + d * 1.6, SLOT[1] - 0.65, SLOT[2] + 6.4), mat=bpy.data.materials.get("SegM") or C.emissive("SegM", (1.0, 0.08, 0.02), strength=1.5))
     # 返却口(金属のカップ。上の黒い穴から硬貨が落ちてくる)
     cup = P.open_box("ReturnCup", (10, 6, 3), (RET[0], RET[1], RET[2]), wall=0.4, mat=steel, bevel=0.15)
     P.passive_mesh(cup, friction=0.4, bounce=0.35, margin=0.02)
@@ -151,12 +151,14 @@ def build(sc):
     P.light_card("SlotCard", (40, 40), (SLOT[0] + 30, FY - 60, SLOT[2] + 20), SLOT, strength=1.2, color=(0.85, 0.92, 1.0))
 
     # ---- カメラ: ワイド → 投入口 → 返却口
-    cam, tgt = C.camera((60, -420, 120), (0, 0, 100), lens=35, fstop=0.04)
+    cam, tgt = C.camera((60, -420, 120), (0, 0, 100), lens=35, fstop=0.08)  # 実効 F8
     P.key_seq(cam, "location", [(1, (70, -430, 125)), (50, (46, -72, 106)), (70, (45, -68, 104)), (90, (41, -64, 108)), (FRAMES, (40, -60, 108))])
     P.key_seq(tgt, "location", [(1, (0, 0, 100)), (50, (SLOT[0], FY, SLOT[2])), (70, (SLOT[0], FY, SLOT[2] - 2)),
                                 (90, (RET[0], FY, RET[2] + 3)), (FRAMES, (RET[0], FY, RET[2] + 1))])
     cam.data.lens = 35; cam.data.keyframe_insert("lens", frame=1)
     cam.data.lens = 50; cam.data.keyframe_insert("lens", frame=50)
+    cam.data.lens = 50; cam.data.keyframe_insert("lens", frame=70)
+    cam.data.lens = 65; cam.data.keyframe_insert("lens", frame=92)
     sc.view_settings.exposure = 0.3
 
 

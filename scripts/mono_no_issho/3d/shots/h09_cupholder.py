@@ -68,7 +68,7 @@ def build(sc):
 
     # 照明: メーター類の淡い青、天井のマップランプ(暖色・弱め)、窓外を流れる街灯(オレンジ)
     C.area_light((0, -60, 25), (70, 0, 0), 40, 3000, (0.35, 0.55, 1.0), "Dash")
-    C.area_light((0, 10, 90), (0, 0, 0), 10, 9000, (1.0, 0.85, 0.65), "MapLamp")
+    C.area_light((0, 10, 90), (0, 0, 0), 10, 25000, (1.0, 0.85, 0.65), "MapLamp")
     sweep = C.area_light((-120, 30, 60), (0, 0, 0), 30, 50000, (1.0, 0.55, 0.2), "StreetLight")
     C.light_look_at(sweep, (0, 0, 0))
     # 2秒ごとに左前→右後ろへ流れる(車が進んでいる感)
@@ -88,7 +88,7 @@ def build(sc):
     cam, tgt = C.camera((-6, -22, 30), (0, 2, -2), lens=55, fstop=0.035)  # 実効 F3.5
     P.key_seq(cam, "location", [(1, (-10, -28, 34)), (FRAMES, (-3, -17, 26))])
     P.key_seq(tgt, "location", [(1, (0, 3, -1)), (FRAMES, (0, 0.5, -2))])
-    sc.view_settings.exposure = 0.3
+    sc.view_settings.exposure = 0.6
 
 
 if __name__ == "__main__":

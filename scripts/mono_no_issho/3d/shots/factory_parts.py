@@ -49,15 +49,20 @@ def dup(src, name, loc, rot=(0, 0, 0), scale=None):
 def shake(cam, frame, amp=0.08, decay=6, seed=0, axis_scale=(1, 1, 0.6)):
     """カメラ位置に衝撃の揺れを足す(既存キーの間に差し込む)。"""
     rnd = random.Random(seed)
-    base = cam.location.copy()
+    sc = bpy.context.scene
+    sc.frame_set(frame - 1)
     cam.keyframe_insert("location", frame=frame - 1)
+    sc.frame_set(frame + decay)
+    end = cam.location.copy()
+    sc.frame_set(frame)
+    base = cam.location.copy()
     for i in range(decay):
         a = amp * (1 - i / decay)
         off = Vector((rnd.uniform(-a, a) * axis_scale[0], rnd.uniform(-a, a) * axis_scale[1],
                       rnd.uniform(-a, a) * axis_scale[2]))
         cam.location = base + off
         cam.keyframe_insert("location", frame=frame + i)
-    cam.location = base
+    cam.location = end
     cam.keyframe_insert("location", frame=frame + decay)
 
 

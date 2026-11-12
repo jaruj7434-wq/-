@@ -6,6 +6,7 @@ set -u
 cd "$(dirname "$0")/../../.."
 OUT=assets/output/mono_no_issho/ep01
 CHUNK=${CHUNK:-30}
+STEP=${STEP:-1}   # STEP=2 で1フレームおき(12fps)に描いて24fpsへ複製
 mkdir -p "$OUT/clips" "$OUT/3d"
 for s in "$@"; do
   if [ -f "$OUT/clips/$s.mp4" ]; then echo "skip $s"; continue; fi
@@ -16,16 +17,16 @@ for s in "$@"; do
   fails=0
   while :; do
     first=""
-    for ((i=1; i<=F; i++)); do
+    for ((i=1; i<=F; i+=STEP)); do
       [ -f "$OUT/3d/$s/f_$(printf %04d $i).png" ] || { first=$i; break; }
     done
     [ -z "$first" ] && break
-    end=$(( first + CHUNK - 1 )); [ $end -gt $F ] && end=$F
-    if ! python3 "$py" --start "$first" --end "$end" >> "$OUT/3d/$s.log" 2>&1; then
+    end=$(( first + CHUNK * STEP - 1 )); [ $end -gt $F ] && end=$F
+    if ! python3 "$py" --start "$first" --end "$end" --step "$STEP" >> "$OUT/3d/$s.log" 2>&1; then
       fails=$((fails+1)); echo "  crash at ~$first (retry $fails)"
       [ $fails -ge 8 ] && { echo "FAIL $s"; continue 2; }
     fi
   done
-  ffmpeg -y -loglevel error -framerate 24 -i "$OUT/3d/$s/f_%04d.png" -c:v libx264 -pix_fmt yuv420p -crf 18 "$OUT/clips/$s.mp4" \
+  ffmpeg -y -loglevel error -framerate $((24 / STEP)) -pattern_type glob -i "$OUT/3d/$s/f_*.png" -r 24 -c:v libx264 -pix_fmt yuv420p -crf 18 "$OUT/clips/$s.mp4" \
     && echo "[$(date +%T)] done $s"
 done

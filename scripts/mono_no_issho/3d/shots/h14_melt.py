@@ -13,6 +13,7 @@ if __name__ == "__main__":
     ap.add_argument("--still", type=int); ap.add_argument("--start", type=int, default=1)
     ap.add_argument("--end", type=int, default=S.FRAMES); ap.add_argument("--res", default="960x540")
     ap.add_argument("--samples", type=int, default=8)
+    ap.add_argument("--step", type=int, default=1)
     a = ap.parse_args()
     w, h = map(int, a.res.split("x"))
     sc = S.build((w, h), 16)
@@ -24,5 +25,6 @@ if __name__ == "__main__":
         bpy.ops.render.render(write_still=True)
     else:
         sc.frame_start, sc.frame_end = a.start, a.end
+        sc.frame_step = a.step
         sc.render.filepath = str(out / "f_")
         bpy.ops.render.render(animation=True)

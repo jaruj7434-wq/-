@@ -304,6 +304,7 @@ def run_shot(name, build, frames, default_res="960x540", default_samples=8):
     ap.add_argument("--samples", type=int, default=default_samples)
     ap.add_argument("--res", default=default_res)
     ap.add_argument("--engine", default="EEVEE")
+    ap.add_argument("--step", type=int, default=1, help="2なら1フレームおきに書き出し(12fps相当の下書き)")
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
     a = ap.parse_args(argv)
     sc = reset()
@@ -321,5 +322,6 @@ def run_shot(name, build, frames, default_res="960x540", default_samples=8):
         bpy.ops.render.render(write_still=True)
     else:
         sc.frame_start, sc.frame_end = a.start, a.end
+        sc.frame_step = a.step
         sc.render.filepath = str(out / "f_")
         bpy.ops.render.render(animation=True)
