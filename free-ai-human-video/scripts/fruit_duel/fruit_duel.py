@@ -57,6 +57,7 @@ ITEM_R = 34.0
 OUTRO = 4.2
 FORK_L = 160.0
 HAM_R = 112.0
+SEED_CD = float(os.environ.get("SEED_CD", 0.05))   # 種マシンガンが種を出す間かく(秒)
 KO_SHOW = 1.6
 
 
@@ -220,7 +221,7 @@ class Game:
                 d = np.array((math.cos(w["ang"]), math.sin(w["ang"])))
                 p0 = f.p + d * (FR_R + 34)
                 self.seeds.append([p0[0], p0[1], d[0] * 900 + f.v[0] * 0.3, d[1] * 900 + f.v[1] * 0.3, f.i])
-                w["cd"] = 0.09
+                w["cd"] = SEED_CD
                 self.events.append(("shot", self.t, f.i))
         elif typ == "boomerang":
             w["ang"] += 18 * dt
