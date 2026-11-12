@@ -52,3 +52,14 @@ BGM: 第1話と同じ曲を使い回し（追加費用なし、シリーズの�
 [^bla]: https://link.springer.com/article/10.1038/2870
 [^she]: https://wolpertlab.neuroscience.columbia.edu/sites/default/files/content/papers/SheBayFri03.pdf
 [^jama]: https://medicalxpress.com/news/2018-07-hand-holding-stress-ball-dont-anxiety.pdf
+
+## 生成記録
+ユーザー指示「リアルな3Dアニメーションで」→ プロンプト冒頭に `Photorealistic 3D animation, high-end (medical) CGI render.` を付けて生成。Kling 3.0 pro / 9:16 / 5秒 / 音なし × 5本 = 43.75クレジット（許可済み）
+
+| カット | job |
+|---|---|
+| H 冒頭 | 592866b4-3f04-48ac-9b70-1aae44a154c2 |
+| S1 指先 | f009bfa0-2b39-4823-bf3b-02437ff81a2d |
+| S2 神経 | cc46a47e-d2cd-498f-accf-4f3e5364e578 |
+| S3 脳の地図 | bdeb4b7f-8311-4145-bc24-e961bcd91d77 |
+| S4 小脳 | 6b965b61-8967-4564-889c-fbb6eef0fbea |
