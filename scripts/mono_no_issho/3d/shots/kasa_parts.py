@@ -66,3 +66,29 @@ def paper_tag(name, loc, rot=(0, 0, 0), size=(4.5, 7.5), color=(0.86, 0.83, 0.74
     m = bpy.data.materials.get("TagPaper") or C.principled("TagPaper", color, rough=0.8, bump=0.05, bump_scale=40)
     o = P.box(name, (size[0], 0.06, size[1]), loc, tuple(math.radians(a) for a in rot), mat=m)
     return o
+
+
+def clone(src_root, name, loc, rot_deg=(0, 0, 0)):
+    """傘(root以下の階層)を、メッシュ共有のまま複製する(大量配置用)。"""
+    def cp(o, parent):
+        n = o.copy(); n.name = name + o.name[len(src_root.name):] if o.name.startswith(src_root.name) else name + "_" + o.name
+        bpy.context.collection.objects.link(n)
+        n.hide_render = False; n.hide_viewport = False
+        if parent is not None:
+            n.parent = parent
+        for ch in o.children:
+            cp(ch, n)
+        return n
+    r = cp(src_root, None)
+    r.location = loc
+    r.rotation_euler = tuple(math.radians(a) for a in rot_deg)
+    return r
+
+
+def hide_tree(root, hide=True):
+    for o in [root] + list(root.children_recursive):
+        o.hide_render = hide; o.hide_viewport = hide
+
+
+# 手元(J字)の内側の頂点: 石突きから見た位置(umbrella.py の寸法から)。吊るす時に使う。
+HOOK_INNER = (-3.7, 0.0, 82.4)
