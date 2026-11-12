@@ -86,3 +86,29 @@
 [^abc]: https://www.abc.net.au/science/archive/articles/2015/02/11/4177927.htm
 [^hal]: https://hal-polytechnique.archives-ouvertes.fr/hal-01178414
 [^carolina]: https://knowledge.carolina.com/discipline/physical-science/the-science-of-popcorn/
+
+---
+
+## v2: 説明パートも Higgsfield 実写風で再現（2026-11-12）
+
+ユーザー指示で、説明パートをシミュレーションから Higgsfield の実写風カットに置き換えた。
+4本とも Kling 3.0 pro / 9:16 / 5秒 / 音なし。通常クレジット 8.75 × 4 = 35（許可済み）。
+
+| # | ファイル (`assets/source/science_0001/`) | job | 内容 | テロップ |
+|---|---|---|---|---|
+| フック | ep01_hook_kling.mp4 | 6498280a-9160-4f28-8624-706ecb5e047b | フライパンの1粒が弾ける | この0.001秒に何が起きている？ |
+| ① | ep01_s1_cutaway.mp4 | 0f00c278-5d17-429a-aadd-7d16a89348ab | 断面: 中の水分が沸騰 | 水分 約14% / 熱で粒の中の水が蒸気に変わる |
+| ② | ep01_s2_pressure.mp4 | 8b1a59bb-4531-4b31-84a9-819a32cde3bc | 殻が内圧で張りつめる | 約180℃・約10気圧 / 殻が圧力鍋のふたになり蒸気を閉じこめる |
+| ③ | ep01_s3_rupture.mp4 | 785b52dc-e738-40fa-911b-aef5da1ab37b | 亀裂 → でんぷんが噴き出す・蒸気 | 0.09秒未満 / 殻が裂けて花の形になるまで |
+| ④ | ep01_s4_leg.mp4 | e65e0a54-f968-407c-8726-8bf531a653cb | でんぷんの「脚」で床を押して跳ぶ | 約20G / でんぷんの「脚」が床を蹴って跳ぶ |
+| オチ | ④の最終フレームを暗くして静止 | — | — | ポップコーンは蒸気で飛ぶんじゃない 自分の「脚」でジャンプする |
+
+プロンプト
+- ①: `Scientific cutaway macro: a single popcorn kernel sliced in half, showing translucent amber hull and dense white starch interior. Tiny water droplets inside the starch heat up and begin to boil into small steam bubbles, faint orange heat glow from below. Slow camera push-in, black background, ultra realistic, high-speed camera look, no text.`
+- ②: `Extreme macro of a single yellow popcorn kernel on a dark hot frying pan, the glossy hull swells under internal pressure and trembles, surface tension visible, faint wisps of steam, glowing heat shimmer, tense moment right before bursting. Black background, rim lighting, ultra realistic, no text.`
+- ③: `Ultra slow motion extreme macro: a crack splits open the hull of a popcorn kernel, a jet of steam escapes and white starch foam erupts out of the crack like expanding lava, turning puffy and white. High-speed phantom camera look, black background, rim lighting, ultra realistic, no text.`
+- ④: `Ultra slow motion side view at pan level: white starch foam bursts out of the bottom of a popcorn kernel, forms a leg that presses down against the dark frying pan surface and pushes the kernel up, launching it into the air as it blooms into a popcorn flake. High-speed camera look, black background, rim lighting, ultra realistic, no text.`
+
+編集: `PYTHONPATH=scripts/science_0001 python3 scripts/science_0001/ep01_edit_v2.py` → `assets/output/science_0001/ep01_v2.mp4`（27.5秒）
+
+注意: AI生成の映像なので、断面の見た目は科学的に正確な再現ではなく「イメージ」。必要なら概要欄に「映像はAI生成のイメージです」と入れる。
