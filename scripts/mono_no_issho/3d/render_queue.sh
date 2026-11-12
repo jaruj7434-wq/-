@@ -15,12 +15,15 @@ for s in "$@"; do
   echo "[$(date +%T)] render $s ($F frames)"
   mkdir -p "$OUT/3d/$s"
   fails=0
+  last=""
   while :; do
     first=""
     for ((i=1; i<=F; i+=STEP)); do
       [ -f "$OUT/3d/$s/f_$(printf %04d $i).png" ] || { first=$i; break; }
     done
     [ -z "$first" ] && break
+    # 前回より先に進んでいれば失敗回数をリセット（終了時だけ落ちるケース対策）
+    [ "$first" != "$last" ] && fails=0; last=$first
     end=$(( first + CHUNK * STEP - 1 )); [ $end -gt $F ] && end=$F
     if ! python3 "$py" --start "$first" --end "$end" --step "$STEP" >> "$OUT/3d/$s.log" 2>&1; then
       fails=$((fails+1)); echo "  crash at ~$first (retry $fails)"
