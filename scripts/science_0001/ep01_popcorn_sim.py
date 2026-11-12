@@ -143,7 +143,7 @@ def main() -> None:
         T = temp_at(t_real)
         burst_u = u if ph == "burst" else (1.0 if ph == "end" else 0.0)
         ms = BURST_MS * burst_u
-        P = p_sat_atm(T) if ph in ("heat", "limit") else max(1.0, p_sat_atm(T) * math.exp(-burst_u * 12))
+        P = max(1.0, p_sat_atm(T)) if ph in ("heat", "limit") else max(1.0, p_sat_atm(T) * math.exp(-burst_u * 12))
 
         # --- 粒の位置(脚で跳ぶ)
         jump = 0.0

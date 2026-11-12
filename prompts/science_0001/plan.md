@@ -57,15 +57,27 @@
 - 内容: 加熱（温度・内圧ゲージ）→ 殻の限界 → 破裂の超スロー（ミリ秒表示）→ 脚で跳ぶ → オチのテロップ
 - 物理: 温度は油温200℃への指数加熱（時定数45秒）、内圧は水の飽和蒸気圧。水分子の速さは温度で増える（見やすさのため誇張）。泡と跳躍は見せ方優先の演出で、定量的な流体計算ではない
 
-### Higgsfield カット案（※未生成・実行前に許可を取る）
+### Higgsfield カット
+- **生成済み**: カット1（冒頭フック）— Kling 3.0 pro / 9:16 / 5秒 / 音なし / 8.75クレジット（無制限枠はプラン上使えず、許可を得て通常クレジットで生成）
+  - job: `6498280a-9160-4f28-8624-706ecb5e047b` → `assets/source/science_0001/ep01_hook_kling.mp4`
+  - プロンプト: `Extreme macro, high-speed camera slow motion. A single yellow popcorn kernel on a dark hot frying pan bursts open, white starch foam erupts and the kernel leaps up blooming into popcorn. Black background, rim lighting, ultra realistic, no text.`
+
+案（※カット2は未生成・実行前に許可を取る）
 1. **冒頭フック**（3〜4秒, 9:16）: 黒背景、熱したフライパンの上の黄色い粒1つにマクロで寄った超スロー。殻が裂けて白いでんぷんが噴き出し、粒が跳ね上がる。高速度カメラ風
 2. **ラスト**（任意, 3秒）: 弾けたポップコーンが空中でゆっくり回転しながら落ちる
+
+### 仮編集
+- スクリプト: `scripts/science_0001/ep01_edit.py --hook assets/source/science_0001/ep01_hook_kling.mp4`
+- 出力: `assets/output/science_0001/ep01_rough_cut.mp4`（23秒 = フック5秒 + シミュ18秒）
+- 効果音は numpy で合成（加熱のジュー音 → 破裂の「ポン」→ 蒸気のシュッ → オチのチャイム）。著作権フリー
 
 ### 次にやること
 - [ ] シミュ試作の見た目を確認してもらい、修正点を反映
 - [ ] 「タイヤの何倍」等の比較テロップの数字を確認
-- [ ] Higgsfield カット1の可否・モデル・コストを確認（`get_cost: true` でプレフライト → 許可 → 生成）
-- [ ] 効果音（加熱音・「ポン」）とテロップを載せて編集
+- [x] Higgsfield カット1 生成
+- [x] 効果音入りの仮編集（23秒）
+- [ ] 台本の「数字」パート（約180℃・約10気圧・90ミリ秒未満・約20G）を大テロップで足して 30〜40秒にする
+- [ ] ナレーション（音声）を入れるか決める
 
 [^hoseney]: https://knowledgecenter.cimmyt.org/bib/68087
 [^virot]: https://pmc.ncbi.nlm.nih.gov/articles/PMC4345489
