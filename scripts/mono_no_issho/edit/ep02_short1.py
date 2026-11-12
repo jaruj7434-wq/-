@@ -34,7 +34,7 @@ def configure(name):
 
 TITLE = ["なくした傘、", "どこへ行く？"]
 
-# (映像, ナレーション行番号, 音声の切り出し範囲(秒,原速), 2D図解の頭飛ばし(秒), 強調語)
+# (映像, ナレーション行番号, 音声の切り出し範囲(秒,原速), 2D図解の頭飛ばし(秒), 強調語[, 字幕の差し替え])
 SEGS = [
     ("3d:k01_station_bench", 1, None, 0, ["傘をなくした"]),
     ("2d:counter", 2, None, 0, ["約28万本"]),
@@ -48,6 +48,7 @@ SEGS = [
 CTA_DUR = 3.6
 CTA = ["2週間後、傘が向かう", "{\\c&H00D7FF&}“最後の場所”{\\c&HFFFFFF&}とは…？"]
 CTA2 = ["フルはコメント欄から！", "▼ 本編で答え合わせ"]
+CTA_AT = None   # 締めに止める映像の位置(秒)。None なら最後のカットの最終フレーム
 CAPS = {22: ["持ち主が現れなかった傘は…"]}   # 字幕を差し替える行(音声を途中で切る行など)
 
 
@@ -202,10 +203,10 @@ def main():
 
     # 1) 音声と尺
     segs, t = [], 0.0
-    for vis, i, rng, skip, words in SEGS:
+    for vis, i, rng, skip, words, *cap in SEGS:
         x = load_line(i, rng)
         d = math.ceil((len(x) / SR + GAP) * FPS) / FPS   # フレーム単位に揃えて映像と字幕のズレを防ぐ
-        segs.append(dict(vis=vis, i=i, x=x, start=t, dur=d, skip=skip, words=words))
+        segs.append(dict(vis=vis, i=i, x=x, start=t, dur=d, skip=skip, words=words, cap=cap[0] if cap else None))
         t += d
     end_nar = t
     total = end_nar + CTA_DUR
@@ -229,7 +230,8 @@ def main():
         print("video", k, s["vis"])
     # 締め: 最後のフレームで止めて暗くする
     last = WORK / "last.png"
-    run(["ffmpeg", "-y", "-loglevel", "error", "-sseof", "-0.1", "-i", str(WORK / f"src_{len(segs) - 1:02d}.mp4"),
+    seek = ["-ss", str(CTA_AT)] if CTA_AT is not None else ["-sseof", "-0.1"]
+    run(["ffmpeg", "-y", "-loglevel", "error", *seek, "-i", str(WORK / f"src_{len(segs) - 1:02d}.mp4"),
          "-frames:v", "1", "-update", "1", str(last)])
     cta_src = WORK / "cta_src.mp4"
     run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", str(last), "-t", f"{CTA_DUR}", "-r", str(FPS),
@@ -247,7 +249,9 @@ def main():
     ass += ev("Title", 0, end_nar, f"{TITLE[0]}\\N{{\\c&H1E8CF0&}}{TITLE[1]}")
     for s in segs:
         ph = phrases(line_text(s["i"]))
-        if s["i"] in CAPS:
+        if s["cap"]:
+            ph = s["cap"]
+        elif s["i"] in CAPS:
             ph = CAPS[s["i"]]
         n = sum(len(q) for q in ph)
         a = s["start"]
