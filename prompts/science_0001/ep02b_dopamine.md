@@ -39,3 +39,28 @@
 [^rolls]: https://www.oxcns.org/papers/259_Francis+Rolls++++++99.pdf
 [^sch]: https://www.gatsby.ucl.ac.uk/~dayan/papers/sdm97.html
 [^ber]: https://sites.lsa.umich.edu/berridge-lab/research-overview/neuroscience-of-linking-and-wanting/
+
+## ナレーション（ユーザーの明示的な許可を得て生成。ElevenLabs v4 Turbo / Julian、5行 約0.75クレジット）
+
+| # | セリフ | job |
+|---|---|---|
+| na0（使い回し） | 揉んだこの一瞬、脳では何が起きてる？ | c2467ccd |
+| nb1 | 指先からの信号は、約0.02秒で脳に届きます。 | 68375f1e-be18-442a-a6b7-26f9e2dd8c53 |
+| nb2 | 気持ちいい感触は、脳の、ごほうびに関わる場所を動かします。 | 3c9e937b-2cef-42d0-bab4-f8f7f5b20bbe |
+| nb3 | そして脳の奥から出るのが、いわゆる脳汁、ドーパミンです。 | 6c92e5e2-921c-46d6-8d72-7c5e27f7365a |
+| nb4 | でも実は、ドーパミンは、気持ちいいの物質ではありません。 | dd508a2a-9e7a-4fe9-b110-64ae8fdbe361 |
+| nb5 | 正体は、もっとほしいを生む物質。だから、つい、もう一回揉みたくなる、と考えられています。 | a12b8f68-ab11-4e42-8a0c-65e324fb3299 |
+| na7（使い回し） | 次は、どんな一瞬をのぞいてみたい？コメントで教えてください。 | f0eb2386 |
+
+## 制作手順（クレジット不使用）
+1. `pip install bpy`（Blender 5.3 を Python モジュールとして使う。EEVEE は GPU がないため不可 → Cycles CPU）
+2. `python3 scripts/science_0001/blender/ep02_scenes.py {squishy|nerve|reward|dopamine}` — 540x960・15fps でレンダリング
+3. `python3 scripts/science_0001/ep02b_explainer.py --clips` — 30fps に補間・1080x1920 に拡大・光のにじみ
+4. `python3 scripts/science_0001/ep02b_explainer.py` → `python3 scripts/science_0001/ep02b_mix.py` → `assets/output/science_0001/ep02b.mp4`（約50秒）
+
+## Blender のシーン
+- squishy: ミント色のまんじゅう形スクイーズを、上から丸い指が押す。シェイプキーでつぶれ→ゆっくり戻る
+- nerve: 神経の管を光の粒が通って脳へ届き、脳の上部が光る
+- reward: 脳の前側の下（眼窩前頭皮質のあたり）が暖色に光る
+- dopamine: 脳を半透明にし、脳の奥（中脳のあたり）から金色の粒が湧き出す
+- 脳は様式化したモデル（しわは Marble テクスチャの凹凸）。位置は「あたり」の表現で、解剖学的に厳密ではない

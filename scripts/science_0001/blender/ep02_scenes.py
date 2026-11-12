@@ -5,7 +5,7 @@
   python3 scripts/science_0001/blender/ep02_scenes.py reward    # 脳の前側の下(眼窩前頭皮質)が暖色に光る
   python3 scripts/science_0001/blender/ep02_scenes.py dopamine  # 脳の奥(中脳)から金色の粒(ドーパミン)が広がる
   オプション: --preview (数フレームだけ) --frames N
-出力: assets/output/science_0001/ep02b/<scene>/####.png (540x960) → 編集時に 1080x1920 へ拡大
+出力: assets/output/science_0001/ep02_blender/<scene>/####.png (540x960) → 編集時に 1080x1920 へ拡大
 レンダラは Cycles(CPU)。EEVEE はこの環境に GPU/EGL がないため使えない。
 """
 import math
@@ -16,8 +16,8 @@ import bpy
 from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[3]
-OUT = ROOT / "assets/output/science_0001/ep02b"
-FPS = 30
+OUT = ROOT / "assets/output/science_0001/ep02_blender"
+FPS = 15  # レンダリングは15fps。編集で30fpsに補間する(時間短縮)
 
 
 # ------------------------------------------------------------------ 共通
@@ -26,10 +26,13 @@ def reset(frames):
     sc = bpy.context.scene
     sc.render.engine = "CYCLES"
     sc.cycles.device = "CPU"
-    sc.cycles.samples = 14
+    sc.cycles.samples = 8
+    sc.cycles.adaptive_threshold = 0.05
     sc.cycles.use_adaptive_sampling = True
     sc.cycles.use_denoising = True
-    sc.cycles.max_bounces = 4
+    sc.cycles.max_bounces = 3
+    sc.cycles.transmission_bounces = 3
+    sc.cycles.transparent_max_bounces = 8
     sc.render.resolution_x, sc.render.resolution_y = 540, 960
     sc.render.fps = FPS
     sc.frame_start, sc.frame_end = 1, frames
@@ -171,7 +174,7 @@ def brain(glass=False):
     fol.wood_type = "BANDS"
     fol.noise_scale = 0.05
     fol.turbulence = 2.0
-    m = mat_principled("brain", (0.86, 0.52, 0.58), rough=0.42, sss=0.3, alpha=0.3 if glass else 1.0)
+    m = mat_principled("brain", (0.86, 0.52, 0.58), rough=0.42, sss=0.0, sheen=0.3, alpha=0.3 if glass else 1.0)
     parts = []
     for side in (-1, 1):
         bpy.ops.mesh.primitive_uv_sphere_add(segments=128, ring_count=96, radius=1, location=(0, side * 0.5, 0))
@@ -213,7 +216,7 @@ def scene_squishy(frames):
     sq.scale = (1, 1, 0.82)
     bpy.ops.object.transform_apply(scale=True)
     bpy.ops.object.shade_smooth()
-    sq.data.materials.append(mat_principled("squishy", (0.45, 0.88, 0.76), rough=0.62, sss=0.35, sheen=0.4))
+    sq.data.materials.append(mat_principled("squishy", (0.45, 0.88, 0.76), rough=0.62, sss=0.0, sheen=0.5))
     # つぶれ形のシェイプキー: 上を押し下げ、横にふくらむ
     sq.shape_key_add(name="Basis")
     sk = sq.shape_key_add(name="squash")
@@ -234,7 +237,7 @@ def scene_squishy(frames):
     for o in (rod, tip):
         bpy.context.view_layer.objects.active = o
         bpy.ops.object.shade_smooth()
-        o.data.materials.append(mat_principled("finger", (0.98, 0.86, 0.80), rough=0.45, sss=0.3))
+        o.data.materials.append(mat_principled("finger", (0.98, 0.86, 0.80), rough=0.45, sss=0.0))
     fing = tip
     # アニメーション: 0.4秒で押す → 0.8秒キープ → ゆっくり戻る(〜4.8秒)
     f = lambda s: int(1 + s * FPS)
@@ -394,8 +397,8 @@ def scene_dopamine(frames):
     return sc
 
 
-SCENES = {"squishy": (scene_squishy, 150), "nerve": (scene_nerve, 150), "reward": (scene_reward, 120),
-          "dopamine": (scene_dopamine, 150)}
+SCENES = {"squishy": (scene_squishy, 5 * FPS), "nerve": (scene_nerve, 5 * FPS), "reward": (scene_reward, 4 * FPS),
+          "dopamine": (scene_dopamine, 5 * FPS)}
 
 
 def main():
@@ -413,7 +416,7 @@ def main():
             sc.render.filepath = str(out / f"preview_{fr:04d}.png")
             bpy.ops.render.render(write_still=True)
         return
-    sc.render.filepath = str(out / "")
+    sc.render.filepath = str(out) + "/"
     bpy.ops.render.render(animation=True)
 
 
