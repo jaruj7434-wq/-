@@ -54,7 +54,7 @@ def ov_none(d, t, g):
 def ov_hook_pause(d, t, g):
     series_badge(d)
     pause_badge(d, t)
-    ring(d, (540, 1200), 250, YEL, t)
+    ring(d, (540, 1180), 230, YEL, t)
     rich(d, ["揉んだこの一瞬、", "脳では**何が起きてる？**"], 300, 80, F_HEAD, appear(t, 0.15))
 
 
@@ -90,12 +90,12 @@ def ov_signal_hold(d, t, g):
 # ------------------------------------------------------------------ ごほうびエリア
 def ov_reward(d, t, g):
     chapter(d, t, 2, "“気持ちいい”をキャッチ", HOT)
-    label_arrow(d, t, 1.4, (330, 1420), g.extra.get("ofc", (700, 1080)), "ごほうびに関わるエリア", HOT)
+    label_arrow(d, t, 1.4, (330, 1420), g.extra.get("ofc", (840, 1190)), "ごほうびに関わるエリア", HOT)
 
 
 def ov_reward_hold(d, t, g):
     chapter(d, 9, 2, "“気持ちいい”をキャッチ", HOT)
-    label_arrow(d, 9, 0, (330, 1420), g.extra.get("ofc", (700, 1080)), "ごほうびに関わるエリア", HOT)
+    label_arrow(d, 9, 0, (330, 1420), g.extra.get("ofc", (840, 1190)), "ごほうびに関わるエリア", HOT)
 
 
 # ------------------------------------------------------------------ 脳汁
@@ -105,7 +105,7 @@ def ov_dopa(d, t, g):
     if a > 0:
         rich(d, ["ドーパミン"], 330 - (1 - a) * 20, 110, F_HEAD, a)
         spaced(d, "DOPAMINE", 480, 30, GOLD, a)
-    label_arrow(d, t, 1.0, (300, 1460), g.extra.get("src", (500, 1150)), "脳の奥から", GOLD)
+    label_arrow(d, t, 1.0, (300, 1460), g.extra.get("src", (505, 1060)), "脳の奥から", GOLD)
 
 
 def ov_dopa_hold(d, t, g):
