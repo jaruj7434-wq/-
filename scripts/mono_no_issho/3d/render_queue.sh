@@ -5,15 +5,18 @@
 # 既存フレームは残して続きから再開。完成したら clips/<name>.mp4 に書き出す。
 set -u
 cd "$(dirname "$0")/../../.."
-EP=${EP:-ep01}
-export EP   # common.py もこの話数の出力先に書く
-OUT=assets/output/mono_no_issho/$EP
+EP_DEFAULT=${EP:-ep01}
 CHUNK=${CHUNK:-30}
 STEP=${STEP:-1}   # STEP=2 で1フレームおき(12fps)に描いて24fpsへ複製
-mkdir -p "$OUT/clips" "$OUT/3d"
+# SAMPLES=32 でサンプル数を指定(未指定ならショットの既定)
 for s in "$@"; do
-  if [ -f "$OUT/clips/$s.mp4" ]; then echo "skip $s"; continue; fi
   py="scripts/mono_no_issho/3d/shots/$s.py"
+  # ショット側で C.EPISODE = "ep02" と書いてあればそれを優先(common.py の出力先と一致させる)
+  EP=$(grep -oE '^ *C\.EPISODE = "ep[0-9]+"' "$py" | grep -oE 'ep[0-9]+' | tail -1); EP=${EP:-$EP_DEFAULT}
+  export EP
+  OUT=assets/output/mono_no_issho/$EP
+  mkdir -p "$OUT/clips" "$OUT/3d"
+  if [ -f "$OUT/clips/$s.mp4" ]; then echo "skip $s"; continue; fi
   F=$(grep -oE '^(S\.)?FRAMES = [0-9]+' "$py" | grep -oE '[0-9]+$' | tail -1); F=${F:-120}
   echo "[$(date +%T)] render $s ($F frames)"
   mkdir -p "$OUT/3d/$s"
@@ -28,7 +31,7 @@ for s in "$@"; do
     # 前回より先に進んでいれば失敗回数をリセット（終了時だけ落ちるケース対策）
     [ "$first" != "$last" ] && fails=0; last=$first
     end=$(( first + CHUNK * STEP - 1 )); [ $end -gt $F ] && end=$F
-    if ! python3 "$py" --start "$first" --end "$end" --step "$STEP" >> "$OUT/3d/$s.log" 2>&1; then
+    if ! python3 "$py" --start "$first" --end "$end" --step "$STEP" ${SAMPLES:+--samples $SAMPLES} >> "$OUT/3d/$s.log" 2>&1; then
       fails=$((fails+1)); echo "  crash at ~$first (retry $fails)"
       [ $fails -ge 8 ] && { echo "FAIL $s"; continue 2; }
     fi

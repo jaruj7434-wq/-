@@ -50,14 +50,14 @@ def _blended(m):
             setattr(m, attr, val)
 
 
-def mat_vinyl(name="UmbVinyl", tint=(0.93, 0.96, 0.97), a_min=0.10, a_max=0.70, frost=0.14):
+def mat_vinyl(name="UmbVinyl", tint=(0.93, 0.96, 0.97), a_min=0.06, a_max=0.42, frost=0.12, diffuse=0.45, translucent=0.5):
     """透明ビニール: 正面は透けて、斜めほど白く光る(フレネルでアルファ)。粗さムラで少しくもる。"""
     def mk(nm):
         m, nt, out = C.node_mat(nm)
         n = nt.nodes
         tc = n.new("ShaderNodeTexCoord")
         p = n.new("ShaderNodeBsdfPrincipled")
-        p.inputs["Base Color"].default_value = (*tint, 1)
+        p.inputs["Base Color"].default_value = (tint[0] * diffuse, tint[1] * diffuse, tint[2] * diffuse, 1)
         p.inputs["IOR"].default_value = 1.5
         p.inputs["Coat Weight"].default_value = 0.25
         nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 0.08; nz.inputs["Detail"].default_value = 6
@@ -66,15 +66,25 @@ def mat_vinyl(name="UmbVinyl", tint=(0.93, 0.96, 0.97), a_min=0.10, a_max=0.70, 
         rr.inputs["To Max"].default_value = frost * 1.6
         C.link(nt, nz.outputs["Fac"], rr.inputs["Value"]); C.link(nt, rr.outputs["Result"], p.inputs["Roughness"])
         # 細かいしわ(バンプ)
-        wz = n.new("ShaderNodeTexNoise"); wz.inputs["Scale"].default_value = 0.6; wz.inputs["Detail"].default_value = 4
+        wz = n.new("ShaderNodeTexNoise"); wz.inputs["Scale"].default_value = 0.35; wz.inputs["Detail"].default_value = 2
         C.link(nt, tc.outputs["Object"], wz.inputs["Vector"])
-        b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.12; b.inputs["Distance"].default_value = 0.3
+        b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.035; b.inputs["Distance"].default_value = 0.3
         C.link(nt, wz.outputs["Fac"], b.inputs["Height"]); C.link(nt, b.outputs["Normal"], p.inputs["Normal"])
         lw = n.new("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.35
         C.link(nt, b.outputs["Normal"], lw.inputs["Normal"])
         am = n.new("ShaderNodeMapRange"); am.inputs["To Min"].default_value = a_min; am.inputs["To Max"].default_value = a_max
-        C.link(nt, lw.outputs["Facing"], am.inputs["Value"]); C.link(nt, am.outputs["Result"], p.inputs["Alpha"])
-        C.link(nt, p.outputs["BSDF"], out.inputs["Surface"])
+        C.link(nt, lw.outputs["Facing"], am.inputs["Value"])
+        # 逆光で白く透ける(拡散透過)+反射。アルファは透明BSDFとの混合で
+        tl = n.new("ShaderNodeBsdfTranslucent")
+        tl.inputs["Color"].default_value = (tint[0] * translucent, tint[1] * translucent, tint[2] * translucent, 1)
+        C.link(nt, b.outputs["Normal"], tl.inputs["Normal"])
+        add = n.new("ShaderNodeAddShader")
+        C.link(nt, p.outputs["BSDF"], add.inputs[0]); C.link(nt, tl.outputs["BSDF"], add.inputs[1])
+        tr = n.new("ShaderNodeBsdfTransparent")
+        mix = n.new("ShaderNodeMixShader")
+        C.link(nt, am.outputs["Result"], mix.inputs["Fac"])
+        C.link(nt, tr.outputs["BSDF"], mix.inputs[1]); C.link(nt, add.outputs["Shader"], mix.inputs[2])
+        C.link(nt, mix.outputs["Shader"], out.inputs["Surface"])
         _blended(m)
         return m
     return _get(name, mk)
@@ -119,7 +129,7 @@ def mat_plastic(name, color, rough=0.35):
 
 
 def mat_clear_plastic(name="UmbClearHandle"):
-    return mat_vinyl(name, tint=(0.9, 0.93, 0.95), a_min=0.25, a_max=0.85, frost=0.3)
+    return mat_vinyl(name, tint=(0.9, 0.93, 0.95), a_min=0.3, a_max=0.85, frost=0.3, diffuse=1.0, translucent=0.8)
 
 
 def mat_paper(name="UmbTagPaper"):
@@ -384,20 +394,8 @@ def make(name, location, rotation_deg=(0, 0, 0), state="closed", kind="vinyl", c
     bm = bmesh.new()
     if state == "open":
         _canopy_open(bm, rnd, wrinkle=0.3 if kind == "vinyl" else 0.15)
-        for k in range(8):
-            a = math.tau * k / 8
-            rho, z = _rib_curve(1.0)
-            p0 = Vector(((rho - 0.3) * math.cos(a), (rho - 0.3) * math.sin(a), z - 0.3))
-            p1 = Vector(((rho + 1.1) * math.cos(a), (rho + 1.1) * math.sin(a), z + 0.5))
-            tube(bm, [p0, p1], [0.32, 0.22], 8, 1)
     else:
         rmax, twist = _canopy_closed(bm, rnd, loose)
-        for k in range(8):
-            a = math.tau * k / 8 + twist * math.pi
-            rr = 1.25
-            z = NOTCH_Z + RIB_LEN
-            tube(bm, [(rr * math.cos(a), rr * math.sin(a), z - 0.8), (rr * 1.05 * math.cos(a), rr * 1.05 * math.sin(a), z + 1.0)],
-                 [0.3, 0.2], 8, 1)
         if strap:
             zt = NOTCH_Z + RIB_LEN * 0.62
             rs = _closed_radius(0.62, rmax, 0.62, 0.35 - 0.2 * loose) * 1.02 + 0.12
@@ -407,7 +405,7 @@ def make(name, location, rotation_deg=(0, 0, 0), state="closed", kind="vinyl", c
             rod(bm, zt - 0.4, zt + 0.4, 0.55, 12, 1, x=rs + 0.2, y=0)  # ボタン
     mats = [canopy_m, tipcap_m, handle_m if kind == "vinyl" and handle != "clear" else tipcap_m]
     if state == "closed" and kind == "vinyl":
-        mats[2] = mat_vinyl("UmbStrapVinyl", tint=(0.9, 0.93, 0.95), a_min=0.45, a_max=0.9, frost=0.35)
+        mats[2] = mat_vinyl("UmbStrapVinyl", tint=(0.9, 0.93, 0.95), a_min=0.45, a_max=0.9, frost=0.35, diffuse=1.0, translucent=0.8)
     elif state == "closed":
         mats[2] = canopy_m
     canopy = _new_obj(name + "_Canopy", bm, mats, body)
@@ -431,8 +429,20 @@ def make(name, location, rotation_deg=(0, 0, 0), state="closed", kind="vinyl", c
         for k in range(8):
             a = math.tau * k / 8
             ca, sa = math.cos(a), math.sin(a)
-            tube(bm, [(0.9 * ca, 0.9 * sa, NOTCH_Z + 1), (1.15 * ca, 1.15 * sa, NOTCH_Z + RIB_LEN)], 0.17, 6, 0)
+            a2 = a + twist * math.pi
+            tube(bm, [(0.9 * ca, 0.9 * sa, NOTCH_Z + 1), (1.15 * math.cos(a2), 1.15 * math.sin(a2), NOTCH_Z + RIB_LEN)], 0.17, 6, 0)
     rod(bm, runner_z - 1.6, runner_z + 1.6, 0.85, 16, 1)                 # 下ろくろ
+    for k in range(8):                                                   # 骨の先の樹脂キャップ(露先)
+        if state == "open":
+            a = math.tau * k / 8
+            rho, z = _rib_curve(1.0)
+            tube(bm, [((rho + 0.5) * math.cos(a), (rho + 0.5) * math.sin(a), z - 0.2),
+                      ((rho + 1.7) * math.cos(a), (rho + 1.7) * math.sin(a), z + 0.6)], [0.32, 0.22], 8, 1)
+        else:
+            a = math.tau * k / 8 + twist * math.pi
+            rr, z = 1.25, NOTCH_Z + RIB_LEN
+            tube(bm, [(rr * math.cos(a), rr * math.sin(a), z - 0.8), (rr * 1.05 * math.cos(a), rr * 1.05 * math.sin(a), z + 1.0)],
+                 [0.3, 0.2], 8, 1)
     frame_obj = _new_obj(name + "_Frame", bm, [metal, tipcap_m], body)
 
     # --- 手元
