@@ -225,7 +225,7 @@ def main():
     global VOICE
     VOICE = a.voice
     if a.out is None:
-        a.out = str(OUT / ("ep01_draft.mp4" if VOICE == "openjtalk" else f"ep01_draft_{VOICE}.mp4"))
+        a.out = str(OUT / (f"{OUT.name}_draft.mp4" if VOICE == "openjtalk" else f"{OUT.name}_draft_{VOICE}.mp4"))
     WORK.mkdir(parents=True, exist_ok=True)
 
     # 1) ナレーション → 各カットの尺
