@@ -263,7 +263,7 @@ def build(res=(1280, 720), samples=64):
     random.seed(7)
     # 1円玉の落下スケジュール: (着水x, 着水y, 着水フレーム)
     impacts = []
-    for i in range(9):
+    for i in range(max(9, (FRAMES - 60) // 9)):
         r = random.uniform(0.5, 4.5); a = random.uniform(0, math.tau)
         impacts.append((r * math.cos(a), r * math.sin(a), 14 + i * 9 + random.randint(-3, 3)))
 
