@@ -94,7 +94,26 @@ def subtitle_text(s):
 
 
 # ------------------------------------------------------------------ 音声
+VOICE = "openjtalk"   # --voice hf で Higgsfield 生成音声を使う
+HF_DIR = WORK / "hf_tts"
+HF_MANIFEST = ROOT / "prompts/mono_no_issho/ep01_narration_lines.json"
+
+
+def tts_hf(line):
+    """Higgsfield(Seed Audio)で生成済みの行音声を読み込み、前後の無音を詰める。"""
+    idx = {o["line"]: o["i"] for o in json.load(open(HF_MANIFEST, encoding="utf-8"))}
+    f = HF_DIR / f"{idx[line]:02d}.wav"
+    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(f), "-ac", "1",
+                          "-ar", str(SR), "-f", "f32le", "-"], capture_output=True, check=True).stdout
+    x = np.frombuffer(raw, np.float32)
+    nz = np.where(np.abs(x) > 0.01)[0]
+    a, b = max(0, nz[0] - int(0.03 * SR)), min(len(x), nz[-1] + int(0.08 * SR))
+    return x[a:b].copy()
+
+
 def tts(line):
+    if VOICE == "hf":
+        return tts_hf(line)
     import pyopenjtalk
     WORK.mkdir(parents=True, exist_ok=True)
     h = hashlib.md5(line.encode()).hexdigest()[:12]
@@ -199,8 +218,13 @@ def wrap_jp(s, n=30):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true")
-    ap.add_argument("--out", default=str(OUT / "ep01_draft.mp4"))
+    ap.add_argument("--out", default=None)
+    ap.add_argument("--voice", choices=["openjtalk", "hf"], default="openjtalk")
     a = ap.parse_args()
+    global VOICE
+    VOICE = a.voice
+    if a.out is None:
+        a.out = str(OUT / ("ep01_draft_hf.mp4" if VOICE == "hf" else "ep01_draft.mp4"))
     WORK.mkdir(parents=True, exist_ok=True)
 
     # 1) ナレーション → 各カットの尺
