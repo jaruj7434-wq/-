@@ -12,3 +12,6 @@ assets/source/
 
 # OS / エディタ
 .DS_Store
+
+# Python
+__pycache__/
