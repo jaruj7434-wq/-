@@ -313,36 +313,35 @@ class Shot:
     speed: float = 1.0  # 再生速度(0.4=スロー, 1.3=速め)
     reverse: bool = False  # 巻き戻し再生
     interp: bool = False  # スロー時にフレーム補間してなめらかにする
+    vf_extra: str = ""  # 追加の ffmpeg フィルタ(例: tmix でモーションブラー)
 
 
 def ov_open(d, t, g):
-    """0秒: いきなりパーン。"""
-    series_badge(d)
-    hit = 0.15
-    if t >= hit:
-        k = t - hit
-        fl = max(0.0, 1 - k / 0.25)
-        if fl > 0:
-            d.rectangle((0, 0, W, H), fill=(255, 255, 255, int(170 * fl)))
-        size = int(150 + 60 * max(0.0, 1 - k / 0.2))
-        f = font(F_HEAD, size)
-        txt = "パーン！"
-        w = d.textlength(txt, font=f)
-        d.text((W / 2 - w / 2, 330 - (size - 150) / 2), txt, font=f, fill=YEL + (255,), stroke_width=12,
-               stroke_fill=(0, 0, 0, 255))
+    """0秒: 文字なし。映像だけで弾けを見せる。"""
 
 
 def ov_rewind(d, t, g):
-    d.rectangle((0, 0, W, H), fill=(10, 12, 20, 90))
-    for y in range(0, H, 8):  # 走査線
-        d.line((0, y, W, y), fill=(0, 0, 0, 50), width=2)
-    pill(d, (W / 2, 880), "◀◀ もう一度", (255, 255, 255), INK, size=64, fnt=F_BODY, anchor="mt")
+    """巻き戻し: 文字なし(映像側でモーションブラー)。"""
+
+
+def spaced(d, text, y, size, color=WHITE, alpha=1.0, track=0.35, fnt=F_BODY):
+    """字間をあけた控えめな英字ラベル(中央ぞろえ)。"""
+    f = font(fnt, size)
+    ws = [d.textlength(c, font=f) for c in text]
+    total = sum(ws) + track * size * (len(text) - 1)
+    x = W / 2 - total / 2
+    for c, w in zip(text, ws):
+        d.text((x, y), c, font=f, fill=color + (int(255 * alpha),))
+        x += w + track * size
+    return total
 
 
 def ov_slow(d, t, g):
-    series_badge(d)
-    pill(d, (W - 300, 118), "SLOW", HOT, WHITE, size=40, fnt=F_HEAD, alpha=appear(t, 0, 0.2))
-    rich(d, ["**スローモーション**で", "見てみると…"], 300, 80, F_HEAD, appear(t, 0.1))
+    a = appear(t, 0.1, 0.6)
+    w = spaced(d, "SLOW MOTION", 300, 34, WHITE, 0.9 * a)
+    ln = 70 * a
+    d.line((W / 2 - w / 2 - 30 - ln, 320, W / 2 - w / 2 - 30, 320), fill=(255, 255, 255, int(200 * a)), width=2)
+    d.line((W / 2 + w / 2 + 30, 320, W / 2 + w / 2 + 30 + ln, 320), fill=(255, 255, 255, int(200 * a)), width=2)
 
 
 def ov_hook_play(d, t, g):
@@ -447,40 +446,52 @@ def ov_s4_end(d, t, g):
     rich(d, ["空中で", "**花が開く！**"], 1450, 84, F_HEAD, appear(t, 0.3))
 
 
-ROW_T = [1.2, 2.6, 3.6, 5.0]  # まとめの各項目を出す秒(ナレーションに合わせる)
+END_CHIPS = ["雷が落ちる瞬間", "シャボン玉が割れる瞬間", "くしゃみの飛沫", "炭酸の泡がはじける瞬間"]
+END_T = {"punch": 0.3, "ask": 4.2, "chips": 5.4, "cta": 8.0}  # エンディングの各要素を出す秒
 
 
-def ov_summary(d, t, g):
-    series_badge(d)
-    a = appear(t, 0)
-    rich(d, ["まとめ"], 230, 90, F_HEAD, a)
-    rows = [
-        ("1", BLUE, "水分が熱で **水蒸気** に"),
-        ("2", HOT, "約180℃・約10気圧で **殻が限界**"),
-        ("3", BLUE, "殻が裂けて **白い泡** に（0.09秒未満）"),
-        ("4", YEL, "でんぷんの **「脚」** でジャンプ"),
-    ]
-    for i, (n, col, txt) in enumerate(rows):
-        k = appear(t, ROW_T[i])
-        if k <= 0:
+def ov_ending(d, t, g):
+    """オチ → 次に見たい瞬間をコメントで募集。"""
+    a = appear(t, END_T["punch"], 0.6)
+    fade = 1 - appear(t, END_T["ask"] - 0.6, 0.5)
+    if a * fade > 0:
+        rich(d, ["ポップコーンは", "自分の**「脚」**で跳んでいた"], 820, 70, F_HEAD, a * fade)
+    k = appear(t, END_T["ask"], 0.6)
+    if k <= 0:
+        return
+    spaced(d, "NEXT", 330 - (1 - k) * 20, 32, YEL, k)
+    rich(d, ["次は、どの一瞬を", "のぞいてみたい？"], 400 - (1 - k) * 20, 76, F_HEAD, k)
+    for i, txt in enumerate(END_CHIPS):
+        c = appear(t, END_T["chips"] + 0.45 * i, 0.5)
+        if c <= 0:
             continue
-        y = 430 + i * 190 + (1 - k) * 30
-        card(d, (60, y, W - 60, y + 150), k, col)
-        d.ellipse((100, y + 30, 190, y + 120), fill=col + (int(255 * k),))
-        f = font(F_HEAD, 54)
-        d.text((145 - d.textlength(n, font=f) / 2, y + 36), n, font=f, fill=INK + (int(255 * k),))
-        x = 220
-        for s, c in parse(txt):
-            ff = font(F_BODY, 46)
-            d.text((x, y + 48), s, font=ff, fill=c + (int(255 * k),))
-            x += d.textlength(s, font=ff)
-    k = appear(t, 7.2, 0.5)
-    rich(d, ["ポップコーンは", "**自分の「脚」で跳んでいた！**"], 1300, 70, F_HEAD, k)
+        y = 720 + i * 150 + (1 - c) * 24
+        f = font(F_BODY, 50)
+        w = d.textlength(txt, font=f)
+        x0 = W / 2 - (w + 120) / 2
+        d.rounded_rectangle((x0, y, x0 + w + 120, y + 104), radius=52, fill=(255, 255, 255, int(28 * c)),
+                            outline=(255, 255, 255, int(150 * c)), width=2)
+        d.text((x0 + 60, y + 20), txt, font=f, fill=WHITE + (int(255 * c),))
+    e = appear(t, END_T["cta"], 0.6)
+    if e > 0:
+        # 吹き出しアイコン + 「コメントで教えてください」
+        f = font(F_BODY, 52)
+        txt = "コメントで教えてください"
+        w = d.textlength(txt, font=f)
+        x = W / 2 - (w + 90) / 2
+        y = 1400 - (1 - e) * 20
+        d.rounded_rectangle((x, y + 6, x + 64, y + 56), radius=16, fill=YEL + (int(255 * e),))
+        d.polygon([(x + 14, y + 52), (x + 30, y + 52), (x + 12, y + 72)], fill=YEL + (int(255 * e),))
+        for j in range(3):
+            d.ellipse((x + 14 + j * 14, y + 26, x + 22 + j * 14, y + 34), fill=INK + (int(255 * e),))
+        d.text((x + 90, y), txt, font=f, fill=YEL + (int(255 * e),))
+        d.line((W / 2 - 160, y + 100, W / 2 + 160, y + 100), fill=(255, 255, 255, int(90 * e)), width=2)
 
 
 SHOTS = [
     Shot("ep01_hook_kling.mp4", 1.05, 1.5, overlay=ov_open, speed=1.3, tag="open"),
-    Shot("ep01_hook_kling.mp4", 0.4, 0.55, overlay=ov_rewind, speed=4.7, reverse=True, tag="rewind"),
+    Shot("ep01_hook_kling.mp4", 0.4, 0.7, overlay=ov_rewind, speed=3.7, reverse=True, tag="rewind",
+         vf_extra="tmix=frames=5"),
     Shot("ep01_hook_kling.mp4", 0.25, 2.25, overlay=ov_slow, speed=0.4, interp=True, tag="slow"),
     Shot("ep01_hook_kling.mp4", 1.15, 3.8, freeze=True, overlay=ov_hook_freeze, dim=0.25, tag="hook_pause"),
     Shot("ep01_hook_kling.mp4", 1.15, 3.3, overlay=ov_hook_play2, tag="hook_play2"),
@@ -494,7 +505,7 @@ SHOTS = [
     Shot("ep01_s4_leg.mp4", 0.0, 2.3, overlay=ov_s4_play, tag="step4"),
     Shot("ep01_s4_leg.mp4", 2.3, 12.4, freeze=True, overlay=ov_s4_freeze, dim=0.3, tag="step4_pause"),
     Shot("ep01_s4_leg.mp4", 2.3, 2.7, overlay=ov_s4_end, tag="step4_end"),
-    Shot("ep01_s4_leg.mp4", 4.95, 11.2, freeze=True, overlay=ov_summary, dim=0.6, blur=14, tag="summary"),
+    Shot("ep01_s4_leg.mp4", 4.95, 11.0, freeze=True, overlay=ov_ending, dim=0.6, blur=16, tag="ending"),
 ]
 
 
@@ -524,6 +535,8 @@ def frames_of(shot: Shot):
         pre += "reverse,"
     if shot.speed != 1.0:
         pre += f"setpts=PTS/{shot.speed},"
+    if shot.vf_extra:
+        pre += shot.vf_extra + ","
     if shot.interp:
         pre += f"minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:vsbmc=1,"
     srclen = shot.dur * shot.speed + 0.2
@@ -576,7 +589,7 @@ def main():
             lt = ts - starts[i]
             src_t = s.start if s.freeze else (s.start + s.dur * s.speed - lt * s.speed if s.reverse else s.start + lt * s.speed)
             sub = Shot(**{**s.__dict__, "start": src_t, "dur": 1 / FPS, "speed": 1.0, "reverse": False,
-                          "interp": False})
+                          "interp": False, "vf_extra": ""})
             base = next(frames_of(sub))
             render_frame(s, base, lt).save(OUT / f"still_{ts:05.1f}.png")
         return

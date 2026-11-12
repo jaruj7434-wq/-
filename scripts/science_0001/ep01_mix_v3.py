@@ -12,12 +12,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
 from ep01_edit import SR, _lowpass, _noise, write_wav  # noqa: E402
-from ep01_explainer import ROW_T, timeline  # noqa: E402
+from ep01_explainer import END_CHIPS, END_T, timeline  # noqa: E402
 
 SRC = Path("assets/source/science_0001")
 OUT = Path("assets/output/science_0001")
 VIDEO = OUT / "ep01_v4_video.mp4"
-FINAL = OUT / "ep01_v4.mp4"
+FINAL = OUT / "ep01_v6.mp4"
 SFX_VOL, BGM_VOL, NA_VOL = 0.55, 0.13, 1.6
 
 # (ナレーション番号, タイムラインのタグ, タグからの秒) — 文言は plan.md
@@ -33,8 +33,7 @@ NARRATION = [
     (17, "step4", 0.1),         # ステップ4。ポップコーンは、どうやって跳ぶのでしょう？
     (18, "step4_pause", 2.1),   # 答えは、この白い脚。…加速度は、なんと約20G。
     (19, "step4_end", 0.1),     # そして空中で、花が開きます。
-    (20, "summary", 0.6),       # まとめると、水が蒸気になり、圧力で殻が裂け、でんぷんの脚でジャンプ。
-    (5, "summary", 7.3),        # ポップコーンは、自分の脚で跳んでいたんです。
+    (5, "ending", 0.3),         # ポップコーンは、自分の脚で跳んでいたんです。
 ]
 
 
@@ -112,7 +111,9 @@ def build_sfx(tl):
     put(popsnd(1.0), tl["open"] + 0.15)
     put(mx(_noise(int(0.3 * SR), rng) * env(int(0.3 * SR), 0.004) * 0.6, tone(90, 0.6, 0.15, 0.8)), tl["open"] + 0.15)
     rw = tl["slow"] - tl["rewind"]
-    put(mx(sweep(1400, 300, rw, 0.22), sweep(1700, 400, rw, 0.12)), tl["rewind"])
+    n = int(rw * SR)
+    swell = _lowpass(_noise(n, rng), 0.25) * (np.arange(n) / n) ** 2 * 0.45  # 逆再生っぽい「スーッ」
+    put(swell, tl["rewind"])
     put(sweep(160, 60, 1.2, 0.35), tl["slow"])
     put(tick(), tl["hook_pause"])
     put(sweep(300, 900, 0.5, 0.15), tl["hook_play2"])
@@ -171,12 +172,13 @@ def build_sfx(tl):
     put(sweep(300, 1200, 0.6, 0.2), e4 + 0.1)
     for k in range(6):  # キラキラ
         put(tone(2000 + 300 * k, 0.3, 0.1, 0.08), e4 + 0.5 + 0.08 * k)
-    # --- まとめ
-    sm = tl["summary"]
-    put(chapter(), sm)
-    for i, rt in enumerate(ROW_T):
-        put(tone(660 + 110 * i, 0.25, 0.06, 0.3), sm + rt)
-    put(sum(tone(f, 2.0, 0.5, 0.12) for f in (880, 1320, 1760)), sm + 7.2)
+    # --- エンディング: オチ → 次の瞬間を募集
+    en = tl["ending"]
+    put(mx(tone(523, 1.5, 0.5, 0.15), tone(784, 1.5, 0.5, 0.1)), en + END_T["punch"])
+    put(mx(tone(659, 1.2, 0.4, 0.15), tone(988, 1.2, 0.4, 0.1)), en + END_T["ask"])
+    for i in range(len(END_CHIPS)):
+        put(tone(1047 + 131 * i, 0.4, 0.12, 0.12), en + END_T["chips"] + 0.45 * i)
+    put(sum(tone(f, 2.0, 0.6, 0.08) for f in (1047, 1319, 1568)), en + END_T["cta"])
     return out[: int(total * SR)] / (np.abs(out).max() / 0.8)
 
 
