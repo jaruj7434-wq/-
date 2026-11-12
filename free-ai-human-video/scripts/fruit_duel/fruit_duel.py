@@ -3,9 +3,10 @@
 - 円の中を、りんごおじさんとスイカおじさん(ep24 と同じ AI 写真)が、重力なし・いつも同じ速さで跳ね回る(かべ・おたがいで弾性衝突)。
 - ときどき円の中に武器が出てくる。先にふれたほうが拾い、しばらく使える(ねらいはしない。武器は決まった速さで回るか、進む向きを向くだけ):
     ピコピコハンマー … 持ち主のまわりをぐるぐる回り、当たると1ダメージ+ふっとばす
-    巨大フォーク     … 持ち主の進む向きに突き出していて、先が当たると2ダメージ
+    巨大フォーク     … 持ち主の進む向きに突き出していて、先が当たると1ダメージ
     種マシンガン     … 持ち主のまわりをゆっくり回りながら、スイカの種を連射(当たると1ダメージ)
-    ブーメラン       … 進む向きに投げて、もどってくる(行きか帰りに当たると2ダメージ)
+    ブーメラン       … 進む向きに投げて、もどってくる(行きか帰りに当たると1ダメージ)
+  どの武器も1回1ダメージ。当たったあと1秒は無敵(一気にハートが減らない)。当たると、おじさんが低い声で「おぅっ!」「ゔぅっ!」
 - ハートは10個ずつ。先に0になったほうの負け。りんごおじさんが勝てば成功(おじさんフィーバー)、負ければ失敗(幽霊)。
 
 使い方:
@@ -35,6 +36,8 @@ import ojisan_voice as OV  # noqa: E402
 import blade_fever as FV  # noqa: E402
 sys.path.insert(0, os.path.join(HERE, "..", "giant_domino"))
 import giant_domino as GD  # noqa: E402
+sys.path.insert(0, HERE)
+import grunt as GR  # noqa: E402   ダメージのうめき声
 
 W, H = 1080, 1920
 FPS = 60
@@ -57,7 +60,8 @@ ITEM_R = 34.0
 OUTRO = 4.2
 FORK_L = 160.0
 HAM_R = 112.0
-SEED_CD = float(os.environ.get("SEED_CD", 0.05))   # 種マシンガンが種を出す間かく(秒)
+SEED_CD = float(os.environ.get("SEED_CD", 0.05))
+INVULN = float(os.environ.get("INVULN", 1.0))   # 当たったあとの無敵時間(秒)   # 種マシンガンが種を出す間かく(秒)
 KO_SHOW = 1.6
 
 
@@ -106,6 +110,9 @@ class Game:
     def damage(self, f, n, src, kb_dir, kb):
         if self.ko is not None or f.hp <= 0:
             return
+        if self.t - f.hit_t < INVULN:   # 当たった直後は少しのあいだ無敵(一気にハートが減らないように)
+            return
+        n = 1                           # どの武器も1回1ダメージ
         f.hp = max(0, f.hp - n)
         f.hit_t = self.t
         f.v = f.v + kb_dir * kb
@@ -744,11 +751,14 @@ def synth_audio(res, duration, path):
     fade = np.minimum(1, (len(bgm) - np.arange(len(bgm))) / (0.3 * SR))
     add(bgm * fade, 0.0, 0.55, extra)   # BGMは決着の瞬間に止まる
     last_shot = -1
+    n_grunt = [0, 0]
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.02:
             continue
         if kind == "hit":
             i, n, src, x, y = data
+            n_grunt[i] += 1   # 当たったおじさんが、渋くて低い声で「おぅっ!」「ゔぅっ!」
+            add(GR.grunt(n_grunt[i] * 2 + i, SR, 0.74 if i == 0 else 0.66), t + 0.02, 1.6)
             if src == "hammer":
                 add(piko(0.9), t)
             elif src == "seeds":
