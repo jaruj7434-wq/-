@@ -180,9 +180,9 @@ def shot_env(levels, ramp=0.06):
 # ---------------------------------------------------------------- ベッド（環境音の土台）
 hum = lp(brown(N), 180) * 0.6 + bp(rs.standard_normal(N), 200, 900) * 0.05
 add(hum * shot_env({"o1": 0.1, "o2": 0.06, "c1": 0.12, "c2": 0.1, "c3": 0.09, "c4": 0.09, "c5": 0.18, "d1": 0.2, "d2": 0.07, "d3": 0.06,
-                    "x1": 0.16, "d4": 0.2, "d5": 0.17, "c6": 0.12, "o3": 0.1, "c7": 0.03}), 0, 1.0)
+                    "x1": 0.16, "d4": 0.2, "d5": 0.17, "c6": 0.12, "o3": 0.1, "c7": 0.06}), 0, 1.0)
 wind_src = bp(rs.standard_normal(N), 250, 1600) * (0.6 + 0.4 * np.sin(2 * np.pi * 0.23 * T) * np.sin(2 * np.pi * 0.071 * T + 1))
-wind_env = shot_env({"o1": 0.03, "o2": 0.02, "c1": 0.02, "c2": 0.2, "c5": 0.12, "d2": 0.02, "d3": 0.05, "x1": 0.03, "d4": 0.1, "d5": 0.04, "c6": 0.2, "o3": 0.04})
+wind_env = shot_env({"o1": 0.03, "o2": 0.02, "c1": 0.02, "c2": 0.2, "c5": 0.12, "d2": 0.02, "d3": 0.05, "x1": 0.03, "d4": 0.1, "d5": 0.04, "c6": 0.2, "o3": 0.04, "c7": 0.04})
 add(wind_src * wind_env, 0, 1.0, -0.1)
 add(np.roll(wind_src, 9000) * wind_env, 0, 1.0, 0.1)
 leaf = bp(rs.standard_normal(N), 1500, 6500) * (0.3 + 0.7 * np.abs(lp(rs.standard_normal(N), 4) * 25).clip(0, 1))
@@ -354,6 +354,25 @@ caw_series(S["o3"] + 1.3, 1, 520, 0.5, 0.07, -0.5, dist=0.8)
 for k in np.arange(S["o3"] + 1.9, S["o3"] + 2.6, 0.06):   # 羽をふくらませる
     add(whoosh(0.05, 1500, 6000), k, 0.03)
 
+# ---------------------------------------------------------------- C7：エンディング（首をかしげて「次はだれ？」）
+caw_series(S["c7"] + 1.1, 1, 530, 0.5, 0.42, 0.0, dist=0.1)
+for k in range(30):
+    caw_series(S["c7"] + rs.uniform(0, 7.5), 1, rs.uniform(460, 580), 0.45, rs.uniform(0.03, 0.08), rs.uniform(-0.8, 0.8), dist=rs.uniform(0.6, 0.95))
+
+
+def pop_snd(f=880):
+    n = int(0.09 * SR); tq = np.arange(n) / SR
+    fr = f * (1 + 0.6 * np.exp(-tq * 60))
+    return np.sin(2 * np.pi * np.cumsum(fr) / SR) * np.exp(-tq * 38)
+
+
+add(pop_snd(660), S["c7"] + 0.55, 0.16)
+for i, f in enumerate([880, 988, 1109, 1319]):
+    add(pop_snd(f), S["c7"] + 1.55 + i * 0.3, 0.13, (-0.25, 0.25)[i % 2])
+n = int(0.9 * SR); tq = np.arange(n) / SR
+add(wet(sum(np.sin(2 * np.pi * f * tq) * np.exp(-tq * 5) for f in (1318, 1976)) / 2, 0.4), S["c7"] + 3.05, 0.1)
+add(leaf * shot_env({"c7": 0.006}), 0, 1.0)
+
 # ---------------------------------------------------------------- 時刻が切り替わる合図（タイマーの「ピピピー」）
 def timer_beep():
     """デジタルタイマーの電子音：ピ・ピ・ピー"""
@@ -404,7 +423,7 @@ for i, start in enumerate(np.arange(0, DUR, 4.75)):
     seg = pad([hz(m) for m in c], 5.6, 1.0)
     i0 = int(start * SR)
     bgm[i0 : i0 + len(seg)] += seg[: N - i0]
-# 地図カードでは柔らかいアルペジオ
+# エンディングでは柔らかいアルペジオ
 for k, tt in enumerate(np.arange(S['c7'] + 0.2, S['c7'] + 7.6, 0.3)):
     m = [62, 65, 69, 72, 74, 72, 69, 65][k % 8]
     n = int(0.6 * SR)

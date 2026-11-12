@@ -35,7 +35,7 @@ ffmpeg -i ../../assets/output/animal_tokyo/ep01_video_noaudio.mp4 -i ../../asset
 | `ep01/crow.js` | リアル寄りのカラスのモデル（止まり姿・飛び姿） |
 | `ep01/shots_open.js` | 外から撮るカット（O1〜O3）と人の顔を見分けるカット（X1） |
 | `ep01/shots_day.js` | 日中のカット（D1 貯食・D2 水浴び・D3 昼の休息・D4 屋上・D5 集合） |
-| `ep01/main.js` | 描画、色調整（ビネット・粒子）、テロップ・字幕、地図カード（C7） |
+| `ep01/main.js` | 描画、色調整（ビネット・粒子）、テロップ・字幕、エンディングのコメント誘導（C7） |
 | `ep01/render.js` | 静止画・動画の書き出し |
 | `ep01/audio.py` | 風・カラスの声・はばたき・ビニール・収集車・雑踏・BGM の合成 |
 

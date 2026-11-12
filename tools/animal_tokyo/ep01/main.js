@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
-import { shotO1, shotO2, shotO3, shotX1 } from './shots_open.js';
+import { shotO1, shotO2, shotO3, shotX1, shotE1 } from './shots_open.js';
 import { shotC1, shotC2, shotC3, shotC4, shotC5, shotC6 } from './shots.js';
 import { shotD1, shotD2, shotD3, shotD4, shotD5 } from './shots_day.js';
 import { clamp, smooth, easeOut, easeInOut, rng } from './lib.js';
@@ -57,7 +57,7 @@ function makePipe(logDepth, dof) {
 const PIPE = makePipe(true, false);
 let PIPE_DOF = null;
 
-const builders = { o1: shotO1, o2: shotO2, o3: shotO3, x1: shotX1, c1: shotC1, c2: shotC2, c3: shotC3, c4: shotC4, c5: shotC5, d1: shotD1, d2: shotD2, d3: shotD3, d4: shotD4, d5: shotD5, c6: shotC6 };
+const builders = { o1: shotO1, o2: shotO2, o3: shotO3, x1: shotX1, c1: shotC1, c2: shotC2, c3: shotC3, c4: shotC4, c5: shotC5, d1: shotD1, d2: shotD2, d3: shotD3, d4: shotD4, d5: shotD5, c6: shotC6, c7: shotE1 };
 let current = null, currentId = null;
 function getShot(id) {
   if (currentId === id) return current;
@@ -170,87 +170,42 @@ function drawTips(t) {
   }
 }
 
-// ---------------------------------------------------------------- 第7カット：地図と豆知識（模式図）
-const paper = (() => {
-  const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
-  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#16181d'); gr.addColorStop(1, '#0d0e11'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
-  const r = rng(3);
-  for (let i = 0; i < 30000; i++) { g.fillStyle = `rgba(255,255,255,${r() * 0.035})`; g.fillRect(r() * W, r() * H, 1, 1); }
-  // 街路の格子（模式）
-  g.strokeStyle = 'rgba(255,255,255,0.05)'; g.lineWidth = 2;
-  for (let i = 0; i < 26; i++) { g.beginPath(); g.moveTo(-50 + i * 40 + r() * 20, 0); g.lineTo(-150 + i * 40 + r() * 40, H); g.stroke(); }
-  for (let i = 0; i < 40; i++) { g.beginPath(); g.moveTo(0, i * 36 + r() * 20); g.lineTo(W, i * 36 + 60 + r() * 30); g.stroke(); }
-  return c;
-})();
+// ---------------------------------------------------------------- 第7カット：エンディング（コメントのお願い）
 
-function blob(cx, cy, rx, ry, seed) {
-  const r = rng(seed); const p = new Path2D(); const n = 28;
-  const pts = [];
-  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; const k = 0.85 + r() * 0.25; pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
-  p.moveTo((pts[0][0] + pts[n - 1][0]) / 2, (pts[0][1] + pts[n - 1][1]) / 2);
-  for (let i = 0; i < n; i++) { const a = pts[i], b = pts[(i + 1) % n]; p.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); }
-  return p;
-}
-const meiji = blob(300, 360, 150, 190, 8), yoyogi = blob(205, 600, 95, 85, 9);
-const route = [[300, 380], [360, 520], [430, 640], [500, 760], [540, 850]];
-function routePoint(u) {
-  const segs = route.length - 1; const f = clamp(u) * segs; const i = Math.min(segs - 1, Math.floor(f)); const k = f - i;
-  return [route[i][0] + (route[i + 1][0] - route[i][0]) * k, route[i][1] + (route[i + 1][1] - route[i][1]) * k];
-}
-
-function drawMap(lt) {
-  g2.drawImage(paper, 0, 0);
-  const a0 = smooth(0, 0.5, lt);
-  g2.save(); g2.globalAlpha = a0;
-  // 山手線（模式）
-  g2.strokeStyle = '#8fbf3f'; g2.lineWidth = 7; g2.setLineDash([]);
-  g2.beginPath(); g2.moveTo(500, 60); g2.bezierCurveTo(480, 300, 470, 520, 560, 880); g2.lineTo(600, 1200); g2.stroke();
-  g2.fillStyle = '#26462a'; g2.fill(meiji); g2.strokeStyle = '#4f8a52'; g2.lineWidth = 3; g2.stroke(meiji);
-  g2.fillStyle = '#22402a'; g2.fill(yoyogi); g2.strokeStyle = '#3f7044'; g2.stroke(yoyogi);
-  // 駅
-  for (const [x, y, name, dx] of [[478, 400, '原宿駅', 18], [560, 880, '渋谷駅', 18]]) {
-    g2.fillStyle = '#fff'; g2.beginPath(); g2.arc(x, y, 10, 0, 7); g2.fill();
-    g2.strokeStyle = '#8fbf3f'; g2.lineWidth = 4; g2.stroke();
-    g2.restore(); strokeText(name, x + dx, y + 9, 26, { align: 'left', sw: 5, alpha: a0, bold: false }); g2.save(); g2.globalAlpha = a0;
-  }
-  g2.restore();
-  strokeText('明治神宮', 300, 345, 34, { alpha: a0, sw: 6 });
-  strokeText('（ねぐら）', 300, 385, 24, { alpha: a0, sw: 5, bold: false, fill: '#cfe8c8' });
-  strokeText('代々木公園', 205, 610, 22, { alpha: a0 * 0.85, sw: 5, bold: false });
-  // ルート
-  const u = easeInOut((lt - 0.5) / 2.6);
-  if (u > 0) {
-    g2.save(); g2.strokeStyle = '#ffd24a'; g2.lineWidth = 6; g2.setLineDash([14, 12]); g2.lineDashOffset = -lt * 40;
-    g2.beginPath(); g2.moveTo(route[0][0], route[0][1]);
-    const N = 60; for (let i = 1; i <= N * u; i++) { const p = routePoint(i / N); g2.lineTo(p[0], p[1]); }
-    g2.stroke(); g2.restore();
-    const p = routePoint(u);
-    // カラスのアイコン（シルエット）
-    g2.save(); g2.translate(p[0], p[1]); g2.fillStyle = '#0a0a0c'; g2.strokeStyle = '#ffd24a'; g2.lineWidth = 3;
-    const fl = Math.sin(lt * 18) * 8;
-    g2.beginPath(); g2.moveTo(-34, -6 - fl); g2.quadraticCurveTo(-14, -4, 0, 6); g2.quadraticCurveTo(14, -4, 34, -6 - fl); g2.quadraticCurveTo(14, 4, 0, 14); g2.quadraticCurveTo(-14, 4, -34, -6 - fl); g2.fill(); g2.stroke();
+// エンディング：視聴者にコメントをうながす
+function drawCTA(lt) {
+  const a = smooth(0.4, 0.9, lt);
+  if (a <= 0) return;
+  const grd = g2.createLinearGradient(0, 640, 0, H);
+  grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(0.35, `rgba(0,0,0,${0.55 * a})`); grd.addColorStop(1, `rgba(0,0,0,${0.75 * a})`);
+  g2.fillStyle = grd; g2.fillRect(0, 640, W, H - 640);
+  const pop = (t0) => { const u = clamp((lt - t0) / 0.35); return u <= 0 ? 0 : 1 + 0.18 * Math.sin(Math.PI * u) * (1 - u); };
+  const q = pop(0.5);
+  if (q > 0) {
+    g2.save(); g2.translate(W / 2, 830); g2.scale(q, q);
+    strokeText('次はどの動物の', 0, 0, 56, { sw: 9, alpha: a });
+    strokeText('目線で見たい？', 0, 72, 56, { sw: 9, alpha: a, fill: '#ffd24a' });
     g2.restore();
   }
-  const a2 = smooth(2.8, 3.3, lt);
-  strokeText('エサ場（路地のごみ置き場）', 545, 805, 24, { alpha: a2, sw: 5, bold: false, fill: '#ffe08a' });
-  strokeText('※ 位置関係は模式図です', 40, 1240, 20, { align: 'left', alpha: a0 * 0.7, sw: 4, bold: false });
-
-  // 豆知識パネル
-  const b = smooth(4.0, 4.5, lt);
+  const opts = ['ネコ', 'ハト', 'タヌキ', 'スズメ'];
+  opts.forEach((txt, i) => {
+    const s = pop(1.5 + i * 0.3); if (s <= 0) return;
+    const x = 130 + (i % 2) * 230, y = 980 + Math.floor(i / 2) * 92;
+    g2.save(); g2.translate(x + 100, y + 34); g2.scale(s, s); g2.translate(-(x + 100), -(y + 34));
+    g2.globalAlpha = a * 0.92; g2.fillStyle = 'rgba(255,255,255,0.95)'; roundRect(x, y, 200, 68, 34); g2.fill();
+    g2.globalAlpha = a; g2.fillStyle = '#16181d'; g2.font = `38px ${FONT}`; g2.textAlign = 'center'; g2.fillText(txt, x + 100, y + 48);
+    g2.restore();
+  });
+  // コメント欄へうながす（吹き出し＋上下にゆれる矢印）
+  const b = smooth(3.0, 3.4, lt);
   if (b > 0) {
-    g2.save(); g2.globalAlpha = b * 0.92; g2.fillStyle = '#0b0c0f'; g2.fillRect(0, 0, W, H); g2.restore();
-    const y0 = 360 + (1 - easeOut((lt - 4.0) / 0.6)) * 40;
-    strokeText('都内のカラスの生息数', W / 2, y0, 36, { alpha: b, sw: 6 });
-    const grow = easeOut((lt - 4.5) / 1.2);
-    const maxH = 380, bw = 150, baseY = y0 + 480;
-    const bars = [{ x: 210, h: maxH, label: '2001年度', val: '3万〜3.5万羽', col: '#8a8f99' }, { x: 510, h: maxH * 0.2 * grow + maxH * (1 - grow), label: '令和6年度まで', val: '約8割減', col: '#e8463c' }];
-    for (const bar of bars) {
-      g2.save(); g2.globalAlpha = b; g2.fillStyle = bar.col; g2.fillRect(bar.x - bw / 2, baseY - bar.h, bw, bar.h); g2.restore();
-      strokeText(bar.label, bar.x, baseY + 44, 26, { alpha: b, sw: 5, bold: false });
-      strokeText(bar.val, bar.x, baseY - bar.h - 18, 32, { alpha: b * (bar.col === '#e8463c' ? smooth(5.2, 5.6, lt) : 1), sw: 6 });
-    }
-    strokeText('出典：東京都環境局（日本野鳥の会東京支部等の調査をもとにした推計）', W / 2, 1150, 18, { alpha: b * 0.8, sw: 4, bold: false });
-    strokeText('棒の高さはイメージです', W / 2, 1180, 18, { alpha: b * 0.6, sw: 4, bold: false });
+    const yy = 1215 + Math.sin(lt * 5) * 6;
+    g2.save(); g2.globalAlpha = b; g2.fillStyle = '#ffd24a';
+    const bx = 150, by = yy - 44; roundRect(bx, by, 64, 46, 12); g2.fill();
+    g2.beginPath(); g2.moveTo(bx + 14, by + 44); g2.lineTo(bx + 10, by + 60); g2.lineTo(bx + 30, by + 44); g2.fill();
+    g2.fillStyle = '#16181d'; for (let k = 0; k < 3; k++) { g2.beginPath(); g2.arc(bx + 18 + k * 14, by + 23, 4.5, 0, 7); g2.fill(); }
+    g2.restore();
+    strokeText('コメントで教えてね！', 236, yy, 44, { align: 'left', sw: 8, alpha: b });
   }
 }
 
@@ -258,9 +213,7 @@ function drawMap(lt) {
 window.renderAt = (t) => {
   const shot = TL.shots.find((s) => t >= s.start && t < s.start + s.dur) || TL.shots[TL.shots.length - 1];
   const lt = t - shot.start;
-  if (shot.id === 'c7') {
-    drawMap(lt);
-  } else {
+  {
     const S = getShot(shot.id);
     S.update(lt);
     const P = S.pipe;
@@ -284,6 +237,7 @@ window.renderAt = (t) => {
     if (shot.flashIn) { const f = 1 - smooth(0, 0.45, lt); if (f > 0) { g2.fillStyle = `rgba(255,255,255,${f})`; g2.fillRect(0, 0, W, H); } }
     if (S.flash) { const f = S.flash(lt); if (f > 0) { g2.fillStyle = `rgba(255,255,255,${f})`; g2.fillRect(0, 0, W, H); } }
     if (S.labels) drawLabels(S, lt);
+    if (shot.id === 'c7') drawCTA(lt);
   }
   drawTelop(shot, lt);
   drawTitle(t);

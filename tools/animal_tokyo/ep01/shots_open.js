@@ -205,3 +205,37 @@ export function shotX1() {
   };
   return S;
 }
+
+// ================================================================ E1 エンディング：翌朝、カメラの方を向いて首をかしげる
+export function shotE1() {
+  const morning = { ...dawn, seed: 83, lit: 0.18, emissive: 2.4,
+    sky: { zenith: '#24406e', horizon: '#8a8aa6', ground: '#1e2028', glow: '#e8a070', sunDir: new THREE.Vector3(0.6, 0.03, 1), glowSize: 5, exp: 0.55 },
+    hemi: ['#8ea0c8', '#221f1c', 1.0], key: ['#ffe2c0', 2.2], rim: ['#e0dcf0', 1.2] };
+  const W = branchWorld(morning);
+  const { scene, crow } = W;
+  crow.rotation.y = -0.5;
+  const c = camT(30); scene.add(c);
+  const S = {
+    scene, camera: c,
+    dof: { focus: 1, aperture: 0.03, maxblur: 0.014 },
+    bloom: { strength: 0.5, radius: 0.55, threshold: 0.82 },
+    grade: { sat: 0.95, contrast: 1.07, gain: [1.03, 1.0, 0.98], lift: [0.0, 0.005, 0.015], vignette: 0.45, grain: 0.05 },
+    exposure: 1.0,
+    update(t) {
+      const d = lerp(1.75, 1.55, easeInOut(t / 8));
+      const ang = -0.3;
+      c.position.set(Math.sin(ang) * d, 0.28, -Math.cos(ang) * d);
+      c.lookAt(0, 0.02, -0.04);
+      S.dof.focus = c.position.distanceTo(new THREE.Vector3(0, 0.3, -0.1));
+      // こちらを見て、首をかしげる（「次はだれ？」）
+      const h = snapHead([{ t: 0, yaw: -0.4, pitch: 0 }, { t: 0.7, yaw: 0.3, pitch: 0.02 }, { t: 2.4, yaw: 0.3, pitch: -0.04 }, { t: 4.6, yaw: 0.25, pitch: 0.02 }], t, 0.14);
+      const roll = 0.42 * (smooth(2.4, 2.6, t) - smooth(3.9, 4.1, t)) - 0.38 * (smooth(4.6, 4.8, t) - smooth(6.3, 6.5, t));
+      let open = 0, bob = 0;
+      for (const k of [1.1]) { const u = (t - k) / 0.42; if (u > 0 && u < 1) { open = Math.sin(Math.PI * u); bob = open; } }
+      crow.userData.pose({ yaw: h.yaw, pitch: h.pitch - bob * 0.12, roll, open, fluff: 0.15 + Math.sin(t * 2.4) * 0.03 });
+      crow.position.y = Math.sin(t * 2.4) * 0.002;
+      W.city.userData.update(t);
+    },
+  };
+  return S;
+}
