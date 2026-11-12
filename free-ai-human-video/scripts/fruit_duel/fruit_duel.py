@@ -609,10 +609,11 @@ def render(seed):
         text(ctx, "りんごおじさん", W / 2 - 270, 345, 52, rgb=COLS[0], sw=10)
         text(ctx, "VS", W / 2, 345, 60, rgb=(1, 1, 1), sw=10)
         text(ctx, "スイカおじさん", W / 2 + 270, 345, 52, rgb=COLS[1], sw=10)
+        text(ctx, "りんごが勝てば成功！", W / 2, 440, 70, rgb=GOLD, sw=12)   # 成功の条件のテロップ
         labels = [l_ for l_ in labels if t - l_[2] < 1.4]
         for j, (s_, col, t0) in enumerate(labels[-2:]):
             k2 = min(1.0, (t - t0) / 0.12)
-            text(ctx, s_, W / 2, 470 + 70 * j, 46 * (1.2 - 0.2 * k2), rgb=col, sw=9)
+            text(ctx, s_, W / 2, 530 + 56 * j, 42 * (1.2 - 0.2 * k2), rgb=col, sw=8)
         if ko_t is not None and t >= ko_t:
             k2 = min(1.0, (t - ko_t) / 0.15)
             text(ctx, "K.O.!!", W / 2, 1000, 170 * (1.4 - 0.4 * k2), rgb=GOLD, sw=24)
