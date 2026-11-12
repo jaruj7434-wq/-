@@ -42,7 +42,7 @@ def mat_molten():
     C.link(nt, addr.outputs[0], cr.inputs["Fac"])
     liquid = n.new("ShaderNodeBsdfPrincipled")
     liquid.inputs["Base Color"].default_value = (0.93, 0.92, 0.9, 1)
-    liquid.inputs["Metallic"].default_value = 1.0; liquid.inputs["Roughness"].default_value = 0.06
+    liquid.inputs["Metallic"].default_value = 1.0; liquid.inputs["Roughness"].default_value = 0.035
     dross = n.new("ShaderNodeBsdfPrincipled")
     dn = n.new("ShaderNodeTexNoise"); dn.inputs["Scale"].default_value = 0.8; dn.inputs["Detail"].default_value = 10
     C.link(nt, tc.outputs["Object"], dn.inputs["Vector"])
@@ -57,7 +57,7 @@ def mat_molten():
     bb = n.new("ShaderNodeBlackbody"); bb.inputs["Temperature"].default_value = 1050
     em = n.new("ShaderNodeEmission")
     C.link(nt, bb.outputs["Color"], em.inputs["Color"])
-    es = n.new("ShaderNodeMapRange"); es.inputs["To Min"].default_value = 0.9; es.inputs["To Max"].default_value = 0.35
+    es = n.new("ShaderNodeMapRange"); es.inputs["To Min"].default_value = 0.22; es.inputs["To Max"].default_value = 0.1
     C.link(nt, cr.outputs["Color"], es.inputs["Value"]); C.link(nt, es.outputs["Result"], em.inputs["Strength"])
     add = n.new("ShaderNodeAddShader")
     C.link(nt, mix.outputs["Shader"], add.inputs[0]); C.link(nt, em.outputs["Emission"], add.inputs[1])
@@ -89,7 +89,7 @@ def mat_refractory():
     geo = n.new("ShaderNodeNewGeometry"); C.link(nt, geo.outputs["Position"], sep.inputs["Vector"])
     zr = n.new("ShaderNodeMapRange")
     zr.inputs["From Min"].default_value = 0.0; zr.inputs["From Max"].default_value = 15.0
-    zr.inputs["To Min"].default_value = 3.0; zr.inputs["To Max"].default_value = 0.05
+    zr.inputs["To Min"].default_value = 1.3; zr.inputs["To Max"].default_value = 0.05
     C.link(nt, sep.outputs["Z"], zr.inputs["Value"])
     dotn = n.new("ShaderNodeVectorMath"); dotn.operation = "DOT_PRODUCT"
     C.link(nt, geo.outputs["Normal"], dotn.inputs[0]); C.link(nt, geo.outputs["Position"], dotn.inputs[1])
@@ -131,7 +131,7 @@ def mat_ingot(name):
     hv = n.new("ShaderNodeValue"); hv.name = "Heat"; hv.outputs[0].default_value = 0.0
     bb = n.new("ShaderNodeBlackbody"); bb.inputs["Temperature"].default_value = 980
     em = n.new("ShaderNodeEmission"); C.link(nt, bb.outputs["Color"], em.inputs["Color"])
-    st = n.new("ShaderNodeMath"); st.operation = "MULTIPLY"; st.inputs[1].default_value = 2.5
+    st = n.new("ShaderNodeMath"); st.operation = "MULTIPLY"; st.inputs[1].default_value = 0.9
     C.link(nt, hv.outputs[0], st.inputs[0])
     st2 = n.new("ShaderNodeMath"); st2.operation = "MULTIPLY"
     C.link(nt, st.outputs[0], st2.inputs[0]); C.link(nt, nz.outputs["Fac"], st2.inputs[1])
@@ -168,7 +168,7 @@ def mat_checker_plate():
 
 
 # ------------------------------------------------------------------ 形状
-def make_ingot(name, mat, size=(34, 9, 6.5)):
+def make_ingot(name, mat, size=(52, 13, 9)):
     """台形断面のインゴット。溶ける表現のため細分化+Displace(強さをキー)。"""
     bpy.ops.mesh.primitive_cube_add(size=1)
     o = bpy.context.object; o.name = name
@@ -243,10 +243,10 @@ def build(sc):
     # A: 手前、半分沈んだ状態から溶けて沈む
     ma = mat_ingot("IngotA"); a, da = make_ingot("IngotA", ma)
     hv = ma.node_tree.nodes["Heat"].outputs[0]
-    C.key(a, "location", 1, (-6, -8, 0.5)); C.key(a, "rotation_euler", 1, (math.radians(4), math.radians(-6), math.radians(18)))
-    C.key(a, "location", 100, (-5, -6, -6.5)); C.key(a, "rotation_euler", 100, (math.radians(9), math.radians(-12), math.radians(24)))
+    C.key(a, "location", 1, (-6, -8, 2.6)); C.key(a, "rotation_euler", 1, (math.radians(4), math.radians(-6), math.radians(18)))
+    C.key(a, "location", 100, (-5, -6, -4.0)); C.key(a, "rotation_euler", 100, (math.radians(9), math.radians(-12), math.radians(24)))
     C.key(a, "scale", 1, (1, 1, 1)); C.key(a, "scale", 100, (0.86, 0.8, 0.7))
-    F.key_socket(hv, 1, 0.35); F.key_socket(hv, 100, 1.0)
+    F.key_socket(hv, 1, 0.2); F.key_socket(hv, 100, 0.6)
     da.strength = 0.0; da.keyframe_insert("strength", frame=1); da.strength = 3.5; da.keyframe_insert("strength", frame=100)
     add_wave(pool, -6, -8, -40, height=0.18, width=5, speed=0.5, life=0)  # 常に揺らぐ溶け際
     # B: 奥の縁から滑り込む
@@ -282,7 +282,7 @@ def build(sc):
     spark.data.materials.append(C.emissive("SparkM", temp=2300, strength=80))
     ps = pool.modifiers.new("sparks", "PARTICLE_SYSTEM").particle_system.settings
     ps.count = 160; ps.frame_start = 1; ps.frame_end = FRAMES; ps.lifetime = 14; ps.lifetime_random = 0.6
-    ps.normal_factor = 160; ps.factor_random = 140; ps.effector_weights.gravity = 1.0
+    ps.normal_factor = 150; ps.factor_random = 45; ps.effector_weights.gravity = 1.0
     ps.render_type = "OBJECT"; ps.instance_object = spark; ps.particle_size = 1.0; ps.size_random = 0.8
     ps.use_rotations = False; ps.emit_from = "FACE"; ps.use_emit_random = True
     if hasattr(ps, "use_dynamic_rotation"):
@@ -295,18 +295,22 @@ def build(sc):
         em.data.materials.append(C.principled("Inv", (0, 0, 0), alpha=0.0))
         s2 = em.modifiers.new("sp", "PARTICLE_SYSTEM").particle_system.settings
         s2.count = 70; s2.frame_start = f; s2.frame_end = f + 3; s2.lifetime = 16; s2.lifetime_random = 0.5
-        s2.normal_factor = 260; s2.factor_random = 160; s2.render_type = "OBJECT"; s2.instance_object = spark
+        s2.normal_factor = 240; s2.factor_random = 70; s2.render_type = "OBJECT"; s2.instance_object = spark
         s2.particle_size = 0.8; s2.size_random = 0.7; s2.use_rotations = False
         em.show_instancer_for_render = False
 
     # --- 照明
     # 湯面から立ちのぼる熱の照り返し(炉内の暖色)
-    C.point_light((0, 0, 8), 2.5e5, (1.0, 0.45, 0.18), radius=30, name="PoolGlow")
+    gl = C.point_light((0, 0, 8), 2.5e4, (1.0, 0.45, 0.18), radius=30, name="PoolGlow")
+    gl.data.specular_factor = 0.0  # 湯面(鏡面)に光源そのものを映さない
     # 天井の作業灯(湯面に映り込む冷たい白): 映り込み用の発光板+エリアライト
-    P.light_card("ReflCard", (260, 160), (0, 210, 190), (0, 0, 0), strength=2.2, color=(0.95, 0.93, 0.9))
-    C.area_light((-120, -60, 260), (20, -25, 0), 120, 1.6e6, (1.0, 0.92, 0.82), "Overhead")
-    C.area_light((180, 120, 120), (60, 0, 125), 80, 4e5, (0.6, 0.7, 1.0), "Rim")
+    P.light_card("ReflCard", (520, 300), (0, 230, 210), (0, 0, 0), strength=3.0, color=(0.95, 0.93, 0.9))
+    C.area_light((-120, -60, 260), (20, -25, 0), 120, 2.0e5, (1.0, 0.92, 0.82), "Overhead")
+    C.area_light((180, 120, 120), (60, 0, 125), 80, 3e4, (0.6, 0.7, 1.0), "Rim")
 
+    # 湯面(鏡面)が画面外の作業灯・天井を映せるよう反射プローブを置く
+    bpy.ops.object.lightprobe_add(type="SPHERE", location=(0, 0, 30))
+    pr = bpy.context.object; pr.data.influence_distance = 120
     # --- カメラ: 炉の縁越しに見下ろし、ゆっくり寄る
     cam, tgt = C.camera((-18, -175, 128), (4, 4, 0), lens=45, fstop=4.0)
     C.key(cam, "location", 1, (-18, -175, 128)); C.key(cam, "location", FRAMES, (-8, -122, 88))

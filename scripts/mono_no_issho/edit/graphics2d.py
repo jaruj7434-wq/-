@@ -155,7 +155,7 @@ def big_numbers(items, note=""):
                 l0 = font(130).getlength(items[i - 1][1]) / 2; l1 = font(130).getlength(num) / 2
                 arrow(d, (px + l0 + 30, H / 2 + 10), (x - l1 - 30, H / 2 + 10), prog(t, 0.3 + i * 1.2 - .4), SUB, 6)
         if note:
-            text(d, (W / 2, H - 120), note, 34, SUB, anchor="mm", alpha=prog(t, 1.5), bold=False)
+            text(d, (W / 2, H - 230), note, 34, SUB, anchor="mm", alpha=prog(t, 1.5), bold=False)
         return apply_fade(im, fade(t, dur))
     return f
 
@@ -282,7 +282,7 @@ def bar_circulation():
             text(d, (x0 - 40, y + 60), lab, 64, anchor="rm", alpha=prog(t, 0.3))
             d.rounded_rectangle([x0, y, x0 + (x1 - x0) * v / maxv * a + 2, y + 120], 14, fill=col)
             text(d, (x0 + (x1 - x0) * v / maxv * a + 30, y + 60), f"{int(v * a)}億枚", 64, anchor="lm", alpha=a)
-        text(d, (120, H - 90), "出典：日本銀行「通貨流通高」（野村證券コラムより）", 30, SUB, alpha=prog(t, 1), bold=False)
+        text(d, (120, H - 230), "出典：日本銀行「通貨流通高」（野村證券コラムより）", 30, SUB, alpha=prog(t, 1), bold=False)
         return apply_fade(im, fade(t, dur))
     return f
 
@@ -297,7 +297,7 @@ def per_capita():
         for i in range(min(n, 300)):
             cx = 330 + (i % 30) * 44; cy = 560 + (i // 30) * 44
             d.ellipse([cx - 18, cy - 18, cx + 18, cy + 18], fill=SILVER)
-        text(d, (W / 2, H - 70), "364億枚 ÷ 約1.24億人", 32, SUB, anchor="mm", bold=False, alpha=prog(t, 1))
+        text(d, (W / 2, H - 230), "364億枚 ÷ 約1.24億人", 32, SUB, anchor="mm", bold=False, alpha=prog(t, 1))
         return apply_fade(im, fade(t, dur))
     return f
 
@@ -308,10 +308,10 @@ def vending_diagram():
         text(d, (W / 2, 90), "自販機に1円玉が使えない理由（メーカー担当者の説明）", 50, anchor="mm", alpha=prog(t, 0.1))
         k = prog(t, dur * 0.45, 1.5)   # 1円用の筒が増える
         for side, (ox, ttl) in enumerate([(300, "いま"), (1100, "1円も使えるようにすると")]):
-            text(d, (ox + 260, 200), ttl, 44, SUB, anchor="mm", alpha=prog(t, 0.3 + side * dur * 0.4))
+            text(d, (ox + 260, 185), ttl, 44, SUB, anchor="mm", alpha=prog(t, 0.3 + side * dur * 0.4))
             if side == 1 and t < dur * 0.4:
                 continue
-            d.rounded_rectangle([ox, 250, ox + 520, 1000], 20, outline=SUB, width=4)
+            d.rounded_rectangle([ox, 230, ox + 520, 830], 20, outline=SUB, width=4)
             tubes = [("500", 60), ("100", 60), ("50", 50), ("10", 50)]
             if side == 1:
                 tubes += [("1", 50)]
@@ -319,15 +319,15 @@ def vending_diagram():
             for lab, w in tubes:
                 grow = k if (side == 1 and lab == "1") else 1
                 ww = w * grow
-                d.rectangle([x, 700, x + ww, 970], fill=ACCENT if lab == "1" else (90, 104, 130))
+                d.rectangle([x, 580, x + ww, 810], fill=ACCENT if lab == "1" else (90, 104, 130))
                 if grow > 0.5:
-                    text(d, (x + ww / 2, 680), lab, 30, anchor="mm")
+                    text(d, (x + ww / 2, 560), lab, 30, anchor="mm")
                 x += ww + 12
             # 商品スペース(1円筒が増えると狭くなる)
             shrink = (62 * k) if side == 1 else 0
-            d.rectangle([ox + 30, 280, ox + 490 - shrink, 640], fill=(50, 120, 90))
-            text(d, (ox + 260 - shrink / 2, 460), "商品", 60, anchor="mm", bg=(50, 120, 90))
-            text(d, (ox + 260, 1030), "釣り銭ストッカー", 30, SUB, anchor="mm", bold=False)
+            d.rectangle([ox + 30, 260, ox + 490 - shrink, 520], fill=(50, 120, 90))
+            text(d, (ox + 260 - shrink / 2, 390), "商品", 60, anchor="mm", bg=(50, 120, 90))
+            text(d, (ox + 260, 860), "釣り銭ストッカー", 30, SUB, anchor="mm", bold=False)
         return apply_fade(im, fade(t, dur))
     return f
 
@@ -360,7 +360,7 @@ def cost():
         text(d, (x1, y - 40), "合計 約3.1円（試算）", 50, anchor="rm", alpha=prog(t, dur * 0.4 + 1.5))
         d.line([(x0 + (x1 - x0) / tot, y - 20), (x0 + (x1 - x0) / tot, y + 180)], fill=FG, width=3)
         text(d, (x0 + (x1 - x0) / tot, y + 220), "額面 1円", 36, anchor="mm", alpha=k)
-        text(d, (W / 2, H - 100), "※ 民間試算（三菱UFJ信託銀行・2018年頃）。公式の数字ではありません", 32, SUB, anchor="mm",
+        text(d, (W / 2, H - 230), "※ 民間試算（三菱UFJ信託銀行・2018年頃）。公式の数字ではありません", 32, SUB, anchor="mm",
              bold=False, alpha=prog(t, 1))
         return apply_fade(im, fade(t, dur))
     return f
@@ -372,7 +372,7 @@ def production_chart():
     labels = {1990: "約27億枚", 1997: "約7.8億枚", 2013: "約55万枚", 2014: "約1.24億枚\n消費税8%"}
 
     def X(yr): return 260 + (yr - 1988) / (2028 - 1988) * 1460
-    def Y(v): return 900 - (math.log10(v) - 5) / (10 - 5) * 700
+    def Y(v): return 790 - (math.log10(v) - 5) / (10 - 5) * 620
 
     def f(t, dur):
         im = canvas(); d = ImageDraw.Draw(im)
@@ -381,7 +381,7 @@ def production_chart():
             y = Y(10 ** e); d.line([(260, y), (1720, y)], fill=(40, 50, 68), width=2)
             text(d, (240, y), lab, 28, SUB, anchor="rm", bold=False)
         for yr in (1990, 2000, 2010, 2020):
-            text(d, (X(yr), 940), str(yr), 30, SUB, anchor="mt", bold=False)
+            text(d, (X(yr), 815), str(yr), 30, SUB, anchor="mt", bold=False)
         k = clamp((t - 0.6) / max(1.0, dur - 3.0)) * (len(pts) - 1)
         for i in range(len(pts) - 1):
             if k <= i:
@@ -401,9 +401,9 @@ def production_chart():
             d.rectangle([X(2016), Y(5e5) - 40, X(2025), Y(5e5) + 40], outline=BLUE, width=3)
             text(d, ((X(2016) + X(2025)) / 2, Y(5e5) + 80), "販売用の貨幣セット分のみ", 32, BLUE, anchor="mm")
         if t > dur - 2.2:
-            x = X(2026); d.line([(x, 150), (x, 900)], fill=RED, width=4)
+            x = X(2026); d.line([(x, 150), (x, 790)], fill=RED, width=4)
             text(d, (x - 10, 175), "2026年 量産再開", 40, RED, anchor="rm")
-        text(d, (120, H - 50), "主要年のみ・対数目盛。出典：造幣局資料を引用した各報道（plan.md参照）", 28, SUB, bold=False)
+        text(d, (1800, 70), "主要年のみ・対数目盛。出典：造幣局資料を引用した各報道", 26, SUB, anchor="ra", bold=False)
         return apply_fade(im, fade(t, dur))
     return f
 
@@ -417,7 +417,7 @@ def quote_post():
         s = "「現在、平成27年度以来11年ぶりに、\n　1円の量産を行っています」"
         n = int(len(s) * prog(t, 1.0, max(1.0, dur - 2)))
         d.multiline_text((320, 450), s[:n], font=font(66), fill=FG, spacing=24)
-        text(d, (W / 2, 900), "※ 投稿文面を引用", 30, SUB, anchor="mm", bold=False, alpha=prog(t, 1))
+        text(d, (W / 2, 860), "※ 投稿文面を引用", 30, SUB, anchor="mm", bold=False, alpha=prog(t, 1))
         return apply_fade(im, fade(t, dur))
     return f
 
@@ -433,7 +433,7 @@ def law_20():
             if i >= 20:
                 d.line([(cx - 50, cy - 50), (cx + 50, cy + 50)], fill=RED, width=10)
                 d.line([(cx + 50, cy - 50), (cx - 50, cy + 50)], fill=RED, width=10)
-        text(d, (W / 2, H - 120), "通貨の単位及び貨幣の発行等に関する法律 第7条（額面の20倍まで）", 34, SUB, anchor="mm",
+        text(d, (W / 2, H - 230), "通貨の単位及び貨幣の発行等に関する法律 第7条（額面の20倍まで）", 34, SUB, anchor="mm",
              bold=False, alpha=prog(t, 1))
         return apply_fade(im, fade(t, dur))
     return f
