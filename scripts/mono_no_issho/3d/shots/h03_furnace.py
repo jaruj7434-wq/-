@@ -37,8 +37,8 @@ def mat_molten():
     addr = n.new("ShaderNodeMath"); addr.operation = "ADD"
     C.link(nt, nz.outputs["Fac"], addr.inputs[0]); C.link(nt, rad.outputs["Result"], addr.inputs[1])
     cr = n.new("ShaderNodeValToRGB")
-    cr.color_ramp.elements[0].position = 0.56; cr.color_ramp.elements[0].color = (0, 0, 0, 1)
-    cr.color_ramp.elements[1].position = 0.66; cr.color_ramp.elements[1].color = (1, 1, 1, 1)
+    cr.color_ramp.elements[0].position = 0.64; cr.color_ramp.elements[0].color = (0, 0, 0, 1)
+    cr.color_ramp.elements[1].position = 0.72; cr.color_ramp.elements[1].color = (1, 1, 1, 1)
     C.link(nt, addr.outputs[0], cr.inputs["Fac"])
     liquid = n.new("ShaderNodeBsdfPrincipled")
     liquid.inputs["Base Color"].default_value = (0.93, 0.92, 0.9, 1)
@@ -47,17 +47,20 @@ def mat_molten():
     dn = n.new("ShaderNodeTexNoise"); dn.inputs["Scale"].default_value = 0.8; dn.inputs["Detail"].default_value = 10
     C.link(nt, tc.outputs["Object"], dn.inputs["Vector"])
     dcr = n.new("ShaderNodeValToRGB")
-    dcr.color_ramp.elements[0].color = (0.10, 0.095, 0.09, 1); dcr.color_ramp.elements[1].color = (0.38, 0.36, 0.33, 1)
+    dcr.color_ramp.elements[0].color = (0.12, 0.12, 0.12, 1); dcr.color_ramp.elements[1].color = (0.42, 0.42, 0.41, 1)
     C.link(nt, dn.outputs["Fac"], dcr.inputs["Fac"]); C.link(nt, dcr.outputs["Color"], dross.inputs["Base Color"])
     dross.inputs["Metallic"].default_value = 0.5; dross.inputs["Roughness"].default_value = 0.75
+    env = F.fake_env(nt, strength=1.5, rows=2.2, duty=0.1, sky=(0.2, 0.2, 0.2), floor=(0.05, 0.03, 0.02), structure=0.85, lamp=(3.2, 3.0, 2.7))
+    liq = n.new("ShaderNodeAddShader")
+    C.link(nt, liquid.outputs["BSDF"], liq.inputs[0]); C.link(nt, env.outputs["Emission"], liq.inputs[1])
     mix = n.new("ShaderNodeMixShader")
     C.link(nt, cr.outputs["Color"], mix.inputs["Fac"])
-    C.link(nt, liquid.outputs["BSDF"], mix.inputs[1]); C.link(nt, dross.outputs["BSDF"], mix.inputs[2])
+    C.link(nt, liq.outputs["Shader"], mix.inputs[1]); C.link(nt, dross.outputs["BSDF"], mix.inputs[2])
     # 熱の自己発光(にぶい赤橙、ドロスの割れ目=液面側をわずかに強く)
     bb = n.new("ShaderNodeBlackbody"); bb.inputs["Temperature"].default_value = 1050
     em = n.new("ShaderNodeEmission")
     C.link(nt, bb.outputs["Color"], em.inputs["Color"])
-    es = n.new("ShaderNodeMapRange"); es.inputs["To Min"].default_value = 0.22; es.inputs["To Max"].default_value = 0.1
+    es = n.new("ShaderNodeMapRange"); es.inputs["To Min"].default_value = 0.012; es.inputs["To Max"].default_value = 0.006
     C.link(nt, cr.outputs["Color"], es.inputs["Value"]); C.link(nt, es.outputs["Result"], em.inputs["Strength"])
     add = n.new("ShaderNodeAddShader")
     C.link(nt, mix.outputs["Shader"], add.inputs[0]); C.link(nt, em.outputs["Emission"], add.inputs[1])
@@ -89,7 +92,7 @@ def mat_refractory():
     geo = n.new("ShaderNodeNewGeometry"); C.link(nt, geo.outputs["Position"], sep.inputs["Vector"])
     zr = n.new("ShaderNodeMapRange")
     zr.inputs["From Min"].default_value = 0.0; zr.inputs["From Max"].default_value = 15.0
-    zr.inputs["To Min"].default_value = 1.3; zr.inputs["To Max"].default_value = 0.05
+    zr.inputs["To Min"].default_value = 0.6; zr.inputs["To Max"].default_value = 0.05
     C.link(nt, sep.outputs["Z"], zr.inputs["Value"])
     dotn = n.new("ShaderNodeVectorMath"); dotn.operation = "DOT_PRODUCT"
     C.link(nt, geo.outputs["Normal"], dotn.inputs[0]); C.link(nt, geo.outputs["Position"], dotn.inputs[1])
@@ -131,7 +134,7 @@ def mat_ingot(name):
     hv = n.new("ShaderNodeValue"); hv.name = "Heat"; hv.outputs[0].default_value = 0.0
     bb = n.new("ShaderNodeBlackbody"); bb.inputs["Temperature"].default_value = 980
     em = n.new("ShaderNodeEmission"); C.link(nt, bb.outputs["Color"], em.inputs["Color"])
-    st = n.new("ShaderNodeMath"); st.operation = "MULTIPLY"; st.inputs[1].default_value = 0.9
+    st = n.new("ShaderNodeMath"); st.operation = "MULTIPLY"; st.inputs[1].default_value = 0.035
     C.link(nt, hv.outputs[0], st.inputs[0])
     st2 = n.new("ShaderNodeMath"); st2.operation = "MULTIPLY"
     C.link(nt, st.outputs[0], st2.inputs[0]); C.link(nt, nz.outputs["Fac"], st2.inputs[1])
@@ -201,7 +204,7 @@ def add_wave(pool, x, y, frame, height=0.5, width=6.0, speed=0.9, life=70):
 
 def build(sc):
     sc.gravity = (0, 0, -981.0)
-    C.world((0.035, 0.03, 0.028))
+    C.world((0.03, 0.027, 0.025))
     random.seed(3)
 
     # --- 炉
@@ -244,10 +247,10 @@ def build(sc):
     ma = mat_ingot("IngotA"); a, da = make_ingot("IngotA", ma)
     hv = ma.node_tree.nodes["Heat"].outputs[0]
     C.key(a, "location", 1, (-6, -8, 2.6)); C.key(a, "rotation_euler", 1, (math.radians(4), math.radians(-6), math.radians(18)))
-    C.key(a, "location", 100, (-5, -6, -4.0)); C.key(a, "rotation_euler", 100, (math.radians(9), math.radians(-12), math.radians(24)))
+    C.key(a, "location", 100, (-5, -6, -4.0)); C.key(a, "rotation_euler", 100, (math.radians(6), math.radians(-8), math.radians(24)))
     C.key(a, "scale", 1, (1, 1, 1)); C.key(a, "scale", 100, (0.86, 0.8, 0.7))
     F.key_socket(hv, 1, 0.2); F.key_socket(hv, 100, 0.6)
-    da.strength = 0.0; da.keyframe_insert("strength", frame=1); da.strength = 3.5; da.keyframe_insert("strength", frame=100)
+    da.strength = 0.0; da.keyframe_insert("strength", frame=1); da.strength = 2.0; da.keyframe_insert("strength", frame=100)
     add_wave(pool, -6, -8, -40, height=0.18, width=5, speed=0.5, life=0)  # 常に揺らぐ溶け際
     # B: 奥の縁から滑り込む
     mb = mat_ingot("IngotB"); b, db = make_ingot("IngotB", mb)
@@ -301,7 +304,7 @@ def build(sc):
 
     # --- 照明
     # 湯面から立ちのぼる熱の照り返し(炉内の暖色)
-    gl = C.point_light((0, 0, 8), 2.5e4, (1.0, 0.45, 0.18), radius=30, name="PoolGlow")
+    gl = C.point_light((0, 0, 8), 1.0e4, (1.0, 0.5, 0.25), radius=30, name="PoolGlow")
     gl.data.specular_factor = 0.0  # 湯面(鏡面)に光源そのものを映さない
     # 天井の作業灯(湯面に映り込む冷たい白): 映り込み用の発光板+エリアライト
     P.light_card("ReflCard", (520, 300), (0, 230, 210), (0, 0, 0), strength=3.0, color=(0.95, 0.93, 0.9))

@@ -268,3 +268,96 @@ def factory_hall(size=(4000, 3000, 900), floor_mat=None, wall_color=(0.22, 0.23,
             l = P.box(f"Lamp{y}_{i}", (120, 30, 6), (x, y, cz + sz - 60), mat=lamp_m)
             lamps.append(l)
     return floor, lamps
+
+
+def world_gradient(top=(0.5, 0.48, 0.45), horizon=(0.08, 0.07, 0.065), bottom=(0.02, 0.018, 0.016),
+                   strength=1.0, camera_color=(0.02, 0.02, 0.02), strips=0.0,
+                   strip_color=(4.0, 3.7, 3.3)):
+    """反射用のワールド: 上(天井照明)ほど明るいグラデーション。カメラから直接見える背景は暗く。
+    EEVEE は画面外の物体を映せないので、金属・湯面の映り込みはこのワールドが受け持つ。"""
+    w = bpy.data.worlds.new("World"); bpy.context.scene.world = w
+    w.use_nodes = True
+    nt = w.node_tree; n = nt.nodes; n.clear()
+    out = n.new("ShaderNodeOutputWorld")
+    tc = n.new("ShaderNodeTexCoord"); sep = n.new("ShaderNodeSeparateXYZ")
+    C.link(nt, tc.outputs["Generated"], sep.inputs["Vector"])
+    cr = n.new("ShaderNodeValToRGB")
+    cr.color_ramp.elements[0].position = 0.35; cr.color_ramp.elements[0].color = (*bottom, 1)
+    cr.color_ramp.elements.new(0.52).color = (*horizon, 1)
+    cr.color_ramp.elements[2].position = 0.85; cr.color_ramp.elements[2].color = (*top, 1)
+    mr = n.new("ShaderNodeMapRange"); mr.inputs["From Min"].default_value = -1; mr.inputs["From Max"].default_value = 1
+    C.link(nt, sep.outputs["Z"], mr.inputs["Value"]); C.link(nt, mr.outputs["Result"], cr.inputs["Fac"])
+    bg = n.new("ShaderNodeBackground"); bg.inputs["Strength"].default_value = strength
+    col = cr.outputs["Color"]
+    if strips:
+        # 天井の照明列(上半球にだけ明るい帯)
+        wv = n.new("ShaderNodeTexWave"); wv.wave_type = "BANDS"; wv.bands_direction = "X"
+        wv.inputs["Scale"].default_value = strips; wv.inputs["Distortion"].default_value = 0.0
+        C.link(nt, tc.outputs["Generated"], wv.inputs["Vector"])
+        sr = n.new("ShaderNodeValToRGB")
+        sr.color_ramp.elements[0].position = 0.82; sr.color_ramp.elements[1].position = 0.9
+        C.link(nt, wv.outputs["Fac"], sr.inputs["Fac"])
+        up = n.new("ShaderNodeMath"); up.operation = "GREATER_THAN"; up.inputs[1].default_value = 0.25
+        C.link(nt, sep.outputs["Z"], up.inputs[0])
+        msk = n.new("ShaderNodeMath"); msk.operation = "MULTIPLY"
+        C.link(nt, sr.outputs["Color"], msk.inputs[0]); C.link(nt, up.outputs[0], msk.inputs[1])
+        lamp = n.new("ShaderNodeMix"); lamp.data_type = "RGBA"; lamp.blend_type = "ADD"
+        C.link(nt, msk.outputs[0], lamp.inputs["Factor"])
+        C.link(nt, col, lamp.inputs["A"]); lamp.inputs["B"].default_value = (*strip_color, 1)
+        col = lamp.outputs["Result"]
+    C.link(nt, col, bg.inputs["Color"])
+    bgc = n.new("ShaderNodeBackground"); bgc.inputs["Color"].default_value = (*camera_color, 1)
+    lp = n.new("ShaderNodeLightPath")
+    mix = n.new("ShaderNodeMixShader")
+    C.link(nt, lp.outputs["Is Camera Ray"], mix.inputs["Fac"])
+    C.link(nt, bg.outputs["Background"], mix.inputs[1]); C.link(nt, bgc.outputs["Background"], mix.inputs[2])
+    C.link(nt, mix.outputs["Shader"], out.inputs["Surface"])
+    return w
+
+
+def fake_env(nt, strength=1.0, rows=3.0, duty=0.12, sky=(0.22, 0.21, 0.2), floor=(0.02, 0.02, 0.02),
+             lamp=(3.0, 2.8, 2.5), along_x=1.5, lamp_len=0.55, structure=0.6):
+    """鏡面材料用の「映り込み」発光色(ソケット)を作る。
+    EEVEE は画面外を映せず湯面・研磨ロールが真っ黒になるため、反射ベクトルから
+    天井の照明列(X方向に平行な帯)と上下のグラデーションを計算して Emission に足す。"""
+    n = nt.nodes
+    tc = n.new("ShaderNodeTexCoord"); sep = n.new("ShaderNodeSeparateXYZ")
+    C.link(nt, tc.outputs["Reflection"], sep.inputs["Vector"])
+    rz = n.new("ShaderNodeMath"); rz.operation = "MAXIMUM"; rz.inputs[1].default_value = 0.05
+    C.link(nt, sep.outputs["Z"], rz.inputs[0])
+
+    def ratio(sock, k):
+        d = n.new("ShaderNodeMath"); d.operation = "DIVIDE"
+        C.link(nt, sock, d.inputs[0]); C.link(nt, rz.outputs[0], d.inputs[1])
+        mlt = n.new("ShaderNodeMath"); mlt.operation = "MULTIPLY"; mlt.inputs[1].default_value = k
+        C.link(nt, d.outputs[0], mlt.inputs[0])
+        fr = n.new("ShaderNodeMath"); fr.operation = "FRACT"; C.link(nt, mlt.outputs[0], fr.inputs[0])
+        return fr
+    fy = ratio(sep.outputs["Y"], rows); fx = ratio(sep.outputs["X"], along_x)
+    ly = n.new("ShaderNodeMath"); ly.operation = "LESS_THAN"; ly.inputs[1].default_value = duty
+    C.link(nt, fy.outputs[0], ly.inputs[0])
+    lx = n.new("ShaderNodeMath"); lx.operation = "LESS_THAN"; lx.inputs[1].default_value = lamp_len
+    C.link(nt, fx.outputs[0], lx.inputs[0])
+    up = n.new("ShaderNodeMath"); up.operation = "GREATER_THAN"; up.inputs[1].default_value = 0.2
+    C.link(nt, sep.outputs["Z"], up.inputs[0])
+    m1 = n.new("ShaderNodeMath"); m1.operation = "MULTIPLY"; C.link(nt, ly.outputs[0], m1.inputs[0]); C.link(nt, lx.outputs[0], m1.inputs[1])
+    m2 = n.new("ShaderNodeMath"); m2.operation = "MULTIPLY"; C.link(nt, m1.outputs[0], m2.inputs[0]); C.link(nt, up.outputs[0], m2.inputs[1])
+    grad = n.new("ShaderNodeMix"); grad.data_type = "RGBA"
+    gm = n.new("ShaderNodeMapRange"); gm.inputs["From Min"].default_value = -0.3; gm.inputs["From Max"].default_value = 0.9
+    C.link(nt, sep.outputs["Z"], gm.inputs["Value"]); C.link(nt, gm.outputs["Result"], grad.inputs["Factor"])
+    grad.inputs["A"].default_value = (*floor, 1); grad.inputs["B"].default_value = (*sky, 1)
+    # 天井の構造物(梁・ダクト)の陰影ムラ
+    sn = n.new("ShaderNodeTexNoise"); sn.inputs["Scale"].default_value = 2.5; sn.inputs["Detail"].default_value = 3
+    C.link(nt, tc.outputs["Reflection"], sn.inputs["Vector"])
+    snr = n.new("ShaderNodeMapRange"); snr.inputs["To Min"].default_value = 1 - structure; snr.inputs["To Max"].default_value = 1 + structure * 0.5
+    snr.inputs["From Min"].default_value = 0.35; snr.inputs["From Max"].default_value = 0.65
+    C.link(nt, sn.outputs["Fac"], snr.inputs["Value"])
+    gmul = n.new("ShaderNodeMix"); gmul.data_type = "RGBA"; gmul.blend_type = "MULTIPLY"; gmul.inputs["Factor"].default_value = 1.0
+    C.link(nt, grad.outputs["Result"], gmul.inputs["A"])
+    C.link(nt, snr.outputs["Result"], gmul.inputs["B"])
+    mixl = n.new("ShaderNodeMix"); mixl.data_type = "RGBA"
+    C.link(nt, m2.outputs[0], mixl.inputs["Factor"])
+    C.link(nt, gmul.outputs["Result"], mixl.inputs["A"]); mixl.inputs["B"].default_value = (*lamp, 1)
+    em = n.new("ShaderNodeEmission"); em.inputs["Strength"].default_value = strength
+    C.link(nt, mixl.outputs["Result"], em.inputs["Color"])
+    return em

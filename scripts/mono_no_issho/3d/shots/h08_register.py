@@ -101,7 +101,7 @@ def build(sc):
     snack = C.principled("Snack", (0.65, 0.35, 0.1), rough=0.6, bump=0.3, bump_scale=2)
     for i in range(6):
         P.box(f"Snack{i}", (8, 5, 3), (-58 + (i % 3) * 10, 18 + (i // 3) * 8, 6 + (i // 3) * 12), mat=snack, bevel=1.5)
-    P.box("DonationBox", (12, 10, 16), (30, 20, 8), mat=C.principled("ClearBox", (0.9, 0.95, 1.0), rough=0.1, transmission=0.9))
+    P.box("Display", (14, 10, 18), (30, 20, 9), mat=C.principled("DisplayM", (0.85, 0.2, 0.15), rough=0.4), bevel=0.4)
     reg = P.box("Register", (34, 26, 12), (55, 18, 6), mat=C.principled("RegisterBody", (0.85, 0.86, 0.87), rough=0.4), bevel=1.0)
     P.box("RegisterScreen", (30, 2, 22), (55, 26, 22), (math.radians(-12), 0, 0),
           mat=C.principled("Scr", (0.02, 0.02, 0.03), rough=0.15, emission=(0.4, 0.6, 0.9), emission_strength=0.6), bevel=0.5)
@@ -111,18 +111,18 @@ def build(sc):
             (0.9, 0.45, 0.1), (0.5, 0.2, 0.6), (0.15, 0.15, 0.15)]
     pmats = [C.principled(f"Pkg{i}", c, rough=0.35, coat=0.3) for i, c in enumerate(cols)]
     shelf_m = C.principled("Shelf", (0.85, 0.86, 0.88), rough=0.4)
-    wall = P.box("BackWall", (400, 2, 250), (0, 110, 60), mat=C.principled("Wall", (0.8, 0.82, 0.83), rough=0.7))
-    for row in range(5):
-        z = -40 + row * 32
-        P.box(f"Shelf{row}", (300, 40, 2), (0, 95, z), mat=shelf_m)
+    wall = P.box("BackWall", (400, 2, 250), (0, 200, 60), mat=C.principled("Wall", (0.8, 0.82, 0.83), rough=0.7))
+    for row in range(7):
+        z = -60 + row * 30
+        P.box(f"Shelf{row}", (300, 40, 2), (0, 185, z), mat=shelf_m)
         x = -150
         while x < 150:
             w = rnd.uniform(5, 12); h = rnd.uniform(10, 26)
-            P.box(f"Pkg{row}_{int(x)}", (w, rnd.uniform(6, 14), h), (x + w / 2, 92, z + 1 + h / 2),
+            P.box(f"Pkg{row}_{int(x)}", (w, rnd.uniform(6, 14), h), (x + w / 2, 182, z + 1 + h / 2),
                   mat=rnd.choice(pmats), bevel=0.3, segments=1)
             x += w + rnd.uniform(0.5, 2.5)
         # 棚の値札レール(無地の帯)
-        P.box(f"Rail{row}", (300, 1, 3), (0, 76, z - 0.5), mat=C.principled("Rail", (0.95, 0.95, 0.9), rough=0.5))
+        P.box(f"Rail{row}", (300, 1, 3), (0, 166, z - 0.5), mat=C.principled("Rail", (0.95, 0.95, 0.9), rough=0.5))
 
     # 天井の蛍光灯(ライン照明) + 実際の照明
     tube = C.emissive("Tube", (0.9, 0.95, 1.0), strength=12)
@@ -145,9 +145,8 @@ def build(sc):
         C.rigid(c, True, "CYLINDER", mass=s["r"] ** 2 * s["t"], friction=0.3, bounce=0.3)
         P.hold_then_release(c, 18 + i * 2, park=(300 + i * 5, 300, 0))
 
-    cam, tgt = C.camera((0, -30, 12), (1.0, 1.0, 0.5), lens=35, fstop=0.2)
+    cam, tgt = C.camera((0, -30, 12), (1.0, 1.0, 0.5), lens=35, fstop=0.04)  # 1BU=1cm のため実効F値は fstop*100 (=F4)
     P.key_seq(cam, "location", [(1, (-5, -32, 13)), (FRAMES, (1, -24, 10))])
-    sc.eevee.use_bokeh_jittered = True
     P.key_seq(tgt, "location", [(1, (0.5, 2.0, 0.5)), (FRAMES, (1.5, 0.5, 0.3))])
 
 

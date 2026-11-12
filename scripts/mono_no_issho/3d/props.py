@@ -42,10 +42,10 @@ def mat_alloy(name, color, rough=0.3, tarnish=0.25):
     cr.color_ramp.elements[1].color = (color[0] * d, color[1] * d * 0.95, color[2] * d * 0.9, 1)
     C.link(nt, dz.outputs["Fac"], cr.inputs["Fac"]); C.link(nt, cr.outputs["Color"], p.inputs["Base Color"])
     # 面の浮き彫り感(ランダムな凹凸を薄く)
-    vz = n.new("ShaderNodeTexVoronoi"); vz.inputs["Scale"].default_value = 6
+    vz = n.new("ShaderNodeTexNoise"); vz.inputs["Scale"].default_value = 5; vz.inputs["Detail"].default_value = 3
     C.link(nt, tc.outputs["Object"], vz.inputs["Vector"])
-    b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.25; b.inputs["Distance"].default_value = 0.02
-    C.link(nt, vz.outputs["Distance"], b.inputs["Height"]); C.link(nt, b.outputs["Normal"], p.inputs["Normal"])
+    b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.12; b.inputs["Distance"].default_value = 0.01
+    C.link(nt, vz.outputs["Fac"], b.inputs["Height"]); C.link(nt, b.outputs["Normal"], p.inputs["Normal"])
     C.link(nt, p.outputs["BSDF"], out.inputs["Surface"])
     return m
 
@@ -320,3 +320,82 @@ def _fcurves(obj):
     except AttributeError:
         return [fc for layer in ad.action.layers for strip in layer.strips
                 for bag in strip.channelbags for fc in bag.fcurves]
+
+
+def settle(sc, frames=60, time_scale=1.0):
+    """今あるリジッドボディを frames まで計算し、その姿勢で静止オブジェクトとして固定する
+    (自然に積み重なった静物用)。物理ワールドは削除するので run_shot では焼かれない。"""
+    physics(sc, max(frames, 2), time_scale=time_scale)
+    bpy.ops.ptcache.bake_all(bake=True)
+    sc.frame_set(frames)
+    rb_objs = [o for o in sc.objects if o.rigid_body]
+    mats = {o.name: o.matrix_world.copy() for o in rb_objs}
+    bpy.ops.ptcache.free_bake_all()
+    sc.frame_set(1)
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in rb_objs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = rb_objs[0] if rb_objs else None
+    if rb_objs:
+        bpy.ops.rigidbody.objects_remove()
+    bpy.ops.rigidbody.world_remove()
+    for o in rb_objs:
+        o.matrix_world = mats[o.name]
+        o.select_set(False)
+
+
+def drop_pile(kinds, center, spread, z0, seed=1, verts=40, prefix="P", friction=0.5):
+    """settle() 用: 重ならないよう縦に間隔を空けて硬貨を配置(リジッドボディ付き)。"""
+    rnd = random.Random(seed)
+    out = []
+    for i, k in enumerate(kinds):
+        loc = (center[0] + rnd.uniform(-spread, spread), center[1] + rnd.uniform(-spread, spread), z0 + i * 1.3)
+        rot = (rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), rnd.uniform(0, math.tau))
+        c = make_any_coin(k, f"{prefix}{i}", loc, rot, verts=verts)
+        s = COINS[k]
+        C.rigid(c, True, "CYLINDER", mass=s["r"] ** 2 * s["t"], friction=friction, bounce=0.1)
+        out.append(c)
+    return out
+
+
+def reflection_probe(loc, radius=100.0, clip_start=0.5):
+    """EEVEE の球面反射プローブ。金属の映り込みに周囲の物体・ライトカードを入れるため必須級
+    (無いとスクリーン外は world しか映らず、硬貨が黒く見える)。"""
+    bpy.ops.object.lightprobe_add(type="SPHERE", location=loc)
+    o = bpy.context.object; o.name = "ReflProbe"
+    o.data.influence_distance = radius
+    o.data.clip_start = clip_start
+    return o
+
+
+def world_studio(bottom=(0.02, 0.02, 0.02), horizon=(0.08, 0.08, 0.08), top=(0.5, 0.5, 0.5), strength=1.0,
+                 camera_color=None):
+    """上方向が明るいグラデーションの world(部屋・空の映り込み代わり)。
+    camera_color を渡すと、カメラから直接見える背景だけその色にする。"""
+    w = bpy.data.worlds.new("WorldStudio")
+    bpy.context.scene.world = w
+    w.use_nodes = True
+    nt = w.node_tree; n = nt.nodes; n.clear()
+    out = n.new("ShaderNodeOutputWorld")
+    tc = n.new("ShaderNodeTexCoord")
+    sep = n.new("ShaderNodeSeparateXYZ"); C.link(nt, tc.outputs["Generated"], sep.inputs["Vector"])
+    cr = n.new("ShaderNodeValToRGB")
+    e = cr.color_ramp.elements
+    e[0].position = 0.35; e[0].color = (*bottom, 1)
+    e[1].position = 0.85; e[1].color = (*top, 1)
+    mid = e.new(0.52); mid.color = (*horizon, 1)
+    mr = n.new("ShaderNodeMapRange")  # Generated の Z は -1..1 → 0..1
+    mr.inputs["From Min"].default_value = -1; mr.inputs["From Max"].default_value = 1
+    C.link(nt, sep.outputs["Z"], mr.inputs["Value"]); C.link(nt, mr.outputs["Result"], cr.inputs["Fac"])
+    bg = n.new("ShaderNodeBackground"); bg.inputs["Strength"].default_value = strength
+    C.link(nt, cr.outputs["Color"], bg.inputs["Color"])
+    final = bg.outputs["Background"]
+    if camera_color is not None:
+        lp = n.new("ShaderNodeLightPath")
+        bg2 = n.new("ShaderNodeBackground"); bg2.inputs["Color"].default_value = (*camera_color, 1)
+        mx = n.new("ShaderNodeMixShader")
+        C.link(nt, lp.outputs["Is Camera Ray"], mx.inputs["Fac"])
+        C.link(nt, final, mx.inputs[1]); C.link(nt, bg2.outputs["Background"], mx.inputs[2])
+        final = mx.outputs["Shader"]
+    C.link(nt, final, out.inputs["Surface"])
+    return w
