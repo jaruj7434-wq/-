@@ -1,0 +1,511 @@
+<title>たこ焼き返し</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<style>
+/* 夜の屋台。縦長 9:16 の画面を中央に置く1画面構成(暖色の単一テーマ) */
+:root {
+  --night: #1a1210;    /* 背景(夜の屋台) */
+  --wood: #3a2418;     /* カウンター */
+  --iron: #2a2a2e;     /* 鉄板 */
+  --cream: #fbeed0;    /* 文字 */
+  --noren: #c23a2b;    /* のれんの赤 */
+  --gold: #f2b544;     /* きつね色・強調 */
+  --green: #6fbf5a;    /* 青のり */
+  --font-d: "Dela Gothic One", "Hiragino Kaku Gothic StdN", "Yu Gothic", sans-serif;
+  --font-b: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { margin: 0; background: var(--night); color: var(--cream); font-family: var(--font-b); overflow: hidden; -webkit-user-select: none; user-select: none; }
+#wrap { position: fixed; inset: 0; display: flex; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+#fit { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#stage { position: relative; }
+canvas { display: block; touch-action: none; cursor: pointer; }
+.ui { position: absolute; left: 8px; right: 8px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.ui .btn { font-size: 14px; padding: 8px 14px; }
+.ui[hidden] { display: none !important; }
+.btn {
+  font: 700 15px var(--font-b);
+  color: var(--night);
+  background: var(--cream);
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  min-height: 44px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.btn.alt { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 2px var(--cream); }
+.btn:focus-visible, .mini:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.mini { position: absolute; bottom: 4px; right: 8px; font: 700 12px var(--font-b); color: var(--cream); background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(251, 238, 208, 0.3); border-radius: 999px; padding: 6px 12px; min-height: 32px; cursor: pointer; }
+#toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18%; background: rgba(0, 0, 0, 0.75); color: var(--cream); padding: 8px 14px; border-radius: 8px; font-size: 13px; }
+</style>
+
+<div id="wrap">
+  <div id="fit">
+    <div id="stage">
+      <canvas id="cv" aria-label="たこ焼き返し ゲーム画面"></canvas>
+      <button id="soundBtn" class="mini" type="button" aria-pressed="true">音 ON</button>
+      <div id="resultUi" class="ui" hidden>
+        <button id="againBtn" class="btn" type="button">もう一回</button>
+        <a id="shareBtn" class="btn alt" href="#" target="_blank" rel="noopener">X でシェア</a>
+        <button id="copyBtn" class="btn alt" type="button">コピー</button>
+      </div>
+      <div id="toast" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const W = 360, H = 640;
+  // サイトを公開したら、ここにゲームの URL を入れる(シェア文に載る)
+  const GAME_URL = '';
+  const SHARE_TAG = '#たこ焼き返し';
+
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const stage = document.getElementById('stage');
+  const fit = document.getElementById('fit');
+  const resultUi = document.getElementById('resultUi');
+  const againBtn = document.getElementById('againBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const soundBtn = document.getElementById('soundBtn');
+  const toastEl = document.getElementById('toast');
+
+  const css = getComputedStyle(document.documentElement);
+  const tok = n => css.getPropertyValue(n).trim();
+  const C = { night: tok('--night'), wood: tok('--wood'), iron: tok('--iron'), cream: tok('--cream'), noren: tok('--noren'), gold: tok('--gold'), green: tok('--green') };
+  const FD = '"Dela Gothic One", sans-serif';
+  const FB = '"Zen Maru Gothic", sans-serif';
+  try {
+    document.fonts.load('20px "Dela Gothic One"', 'たこ焼き返し点職人伝説の屋台看板見習い修行中きつね色生焼けコゲ!パーフェクト0123456789');
+    document.fonts.load('700 14px "Zen Maru Gothic"', 'ふちがきつね色になったらタップしてくるっと返そう。もう一回で皿へ12個ぜんぶまん丸に焼こう生焼けコゲ気味ここ!タップでスタートハイスコア焼けた個連続結果をコピーXでシェア音');
+  } catch (e) {}
+
+  // ---------- 画面サイズ ----------
+  let scale = 1;
+  function resize() {
+    const r = fit.getBoundingClientRect();
+    scale = Math.max(0.1, Math.min(r.width / W, r.height / H));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = W * scale, ch = H * scale;
+    stage.style.width = cw + 'px'; stage.style.height = ch + 'px';
+    cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+    resultUi.style.top = (535 * scale) + 'px';
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  // ---------- 保存 ----------
+  const store = {
+    get(k, fb) { try { const v = localStorage.getItem(k); return v == null ? fb : JSON.parse(v); } catch (e) { return fb; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  };
+  let best = Number(store.get('takoyaki-best', 0)) || 0;
+  let plays = Number(store.get('takoyaki-plays', 0)) || 0;
+
+  // ---------- 音 ----------
+  let actx = null, muted = !!store.get('takoyaki-mute', false), noiseBuf = null, sizzle = null;
+  function audio() {
+    if (!actx) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+      noiseBuf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
+      const a = noiseBuf.getChannelData(0);
+      for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1;
+      // ジュー音(ずっと鳴らして、焼いている数で音量を変える)
+      const src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
+      src.buffer = noiseBuf; src.loop = true;
+      bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 0.7;
+      g.gain.value = 0;
+      src.connect(bp).connect(g).connect(actx.destination);
+      src.start();
+      sizzle = g;
+    }
+    if (actx.state === 'suspended') actx.resume();
+  }
+  function tone(f, d, type, v, f2, delay) {
+    if (muted || !actx) return;
+    const t = actx.currentTime + (delay || 0), o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+  }
+  function burst(d, v, freq) {
+    if (muted || !actx) return;
+    const t = actx.currentTime, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    s.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = freq || 1500;
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(f).connect(g).connect(actx.destination); s.start(t); s.stop(t + d);
+  }
+  const sfx = {
+    pour: () => burst(0.5, 0.12, 2500),
+    flip: () => { tone(520, 0.08, 'sine', 0.12, 900); burst(0.25, 0.1, 2000); },
+    perfect: () => { tone(988, 0.1, 'triangle', 0.08); tone(1319, 0.16, 'triangle', 0.08, null, 0.08); },
+    pick: () => tone(700, 0.08, 'sine', 0.1, 1200),
+    burn: () => { burst(0.6, 0.18, 800); tone(150, 0.3, 'sawtooth', 0.04, 80); },
+    fanfare: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.2, 'triangle', 0.08, null, i * 0.12)),
+  };
+
+  // ---------- 焼き加減 ----------
+  // c: 0 = 生地のまま、0.62〜0.82 = きつね色(ベスト)、1.0〜 = コゲ、1.35 で炭
+  const GOOD_LO = 0.62, GOOD_HI = 0.82, BURN = 1.35;
+  const STOPS = [[0, [246, 231, 184]], [0.45, [242, 206, 120]], [0.72, [222, 150, 58]], [0.95, [158, 88, 36]], [1.15, [86, 50, 24]], [1.35, [34, 24, 18]]];
+  function cookRGB(c) {
+    c = Math.max(0, Math.min(1.35, c));
+    for (let i = 1; i < STOPS.length; i++) {
+      if (c <= STOPS[i][0]) {
+        const [c0, a] = STOPS[i - 1], [c1, b] = STOPS[i], t = (c - c0) / (c1 - c0);
+        return a.map((v, k) => Math.round(v + (b[k] - v) * t));
+      }
+    }
+    return STOPS[STOPS.length - 1][1];
+  }
+  const rgb = (a, m) => `rgb(${a.map(v => Math.max(0, Math.min(255, Math.round(v * (m || 1))))).join(',')})`;
+  function quality(d) {
+    if (d >= GOOD_LO && d <= GOOD_HI) return 1;
+    const dist = d < GOOD_LO ? GOOD_LO - d : d - GOOD_HI;
+    return Math.max(0, 1 - dist / 0.35);
+  }
+  function verdict(d) {
+    if (d >= GOOD_LO && d <= GOOD_HI) return ['きつね色!', C.gold];
+    if (d < 0.45) return ['生焼け…', '#f6e7b8'];
+    if (d < GOOD_LO) return ['ちょい早', '#f2ce78'];
+    if (d < 1.0) return ['焦げ気味', '#d98a4a'];
+    return ['コゲ!', '#9a9a9a'];
+  }
+  const RANKS = [[95, '伝説の職人'], [85, 'たこ焼き職人'], [70, '屋台の看板'], [50, '見習い'], [0, '修行中']];
+  const rankOf = s => RANKS.find(r => s >= r[0])[1];
+
+  // ---------- 盤面 ----------
+  const COLS = 3, ROWS = 4, HOLE_R = 36, BALL_R = 31;
+  const holeX = c => 90 + c * 90;
+  const holeY = r => 178 + r * 86;
+  let state = 'title', balls = [], dish = [], fx = [], popups = [], time = 0, combo = 0, bestCombo = 0, score = 0, lock = 0, blink = 0, newBest = false;
+
+  function newRound() {
+    balls = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const toppings = [];
+      for (let i = 0; i < 5; i++) toppings.push({ a: Math.random() * 6.283, d: Math.random() * 18, k: Math.random() < 0.6 ? 'g' : 'r' });
+      balls.push({
+        x: holeX(c), y: holeY(r), st: 'wait', pourAt: 0.4 + r * 0.7 + c * 0.12, p: 0,
+        c: 0, rate: 0.105 + Math.random() * 0.065, d1: null, d2: null, flipT: 0, outT: 0, burnT: 0, toppings,
+      });
+    }
+    dish = []; fx = []; popups = []; time = 0; combo = 0; bestCombo = 0; score = 0; newBest = false;
+  }
+  function start() {
+    audio();
+    newRound();
+    state = 'play';
+    plays++; store.set('takoyaki-plays', plays);
+    resultUi.hidden = true;
+  }
+
+  // ---------- 入力 ----------
+  function toLogical(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    audio();
+    if (state === 'title') { start(); return; }
+    if (state !== 'play') return;
+    const p = toLogical(e);
+    let hit = null, hd = 46 * 46;
+    for (const b of balls) { const dd = (b.x - p.x) ** 2 + (b.y - p.y) ** 2; if (dd < hd) { hd = dd; hit = b; } }
+    if (hit) tapBall(hit);
+  });
+  addEventListener('keydown', e => {
+    if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) return;
+    if ((e.code === 'Enter' || e.code === 'Space') && state === 'title') { e.preventDefault(); start(); }
+    if (e.code === 'KeyM') toggleMute();
+  });
+  againBtn.addEventListener('click', () => { start(); againBtn.blur(); });
+
+  function tapBall(b) {
+    if (b.st === 'side1') {
+      b.d1 = b.c; b.st = 'flip'; b.flipT = 0; sfx.flip();
+      judge(b, b.d1);
+    } else if (b.st === 'side2') {
+      b.d2 = b.c; b.st = 'out'; b.outT = 0; sfx.pick();
+      judge(b, b.d2);
+      dish.push(b);
+    }
+  }
+  function judge(b, d) {
+    const [label, col] = verdict(d);
+    const perfect = d >= GOOD_LO && d <= GOOD_HI;
+    if (perfect) { combo++; bestCombo = Math.max(bestCombo, combo); sfx.perfect(); } else combo = 0;
+    popups.push({ x: b.x, y: b.y - 40, s: label, col, t: 0 });
+    if (perfect && combo >= 3) popups.push({ x: b.x, y: b.y - 62, s: combo + '連続!', col: C.cream, t: 0, small: true });
+  }
+
+  // ---------- 更新 ----------
+  function update(dt) {
+    time += dt;
+    let cooking = 0;
+    for (const b of balls) {
+      if (b.st === 'wait' && time >= b.pourAt) { b.st = 'pour'; b.p = 0; sfx.pour(); }
+      if (b.st === 'pour') { b.p += dt / 0.45; if (b.p >= 1) { b.st = 'side1'; b.c = 0; } }
+      if (b.st === 'side1' || b.st === 'side2') {
+        cooking++;
+        b.c += b.rate * dt;
+        if (Math.random() < dt * 1.5) fx.push({ x: b.x + (Math.random() - 0.5) * 30, y: b.y - 10, vy: -25 - Math.random() * 20, life: 1.2, max: 1.2, r: 4 + Math.random() * 5, kind: 'steam' });
+        if (b.c >= BURN) {
+          if (b.st === 'side1') b.d1 = b.c; else b.d2 = b.c;
+          b.st = 'burnt'; b.burnT = 0; combo = 0; sfx.burn();
+          popups.push({ x: b.x, y: b.y - 40, s: 'コゲ!', col: '#9a9a9a', t: 0 });
+        }
+      }
+      if (b.st === 'flip') { b.flipT += dt / 0.32; if (b.flipT >= 1) { b.st = 'side2'; b.c = 0; b.rate *= 0.9 + Math.random() * 0.25; } }
+      if (b.st === 'out') { b.outT += dt / 0.45; if (b.outT >= 1) b.st = 'done'; }
+      if (b.st === 'burnt') {
+        b.burnT += dt;
+        if (Math.random() < dt * 8) fx.push({ x: b.x + (Math.random() - 0.5) * 30, y: b.y - 6, vy: -30 - Math.random() * 30, life: 1.4, max: 1.4, r: 6 + Math.random() * 6, kind: 'smoke' });
+        if (b.burnT > 1.1) { b.st = 'gone'; if (b.d2 == null) b.d2 = 0; dish.push(b); }
+      }
+    }
+    if (sizzle) sizzle.gain.setTargetAtTime(muted ? 0 : Math.min(0.06, cooking * 0.006), actx.currentTime, 0.1);
+    for (const f of fx) { f.life -= dt; f.y += f.vy * dt; f.x += Math.sin(f.life * 3) * 6 * dt; }
+    fx = fx.filter(f => f.life > 0);
+    for (const p of popups) p.t += dt;
+    popups = popups.filter(p => p.t < 0.9);
+
+    if (balls.every(b => b.st === 'done' || b.st === 'gone')) finish();
+  }
+
+  function ballScore(b) {
+    if (b.d1 == null || b.d2 == null) return 0;
+    return (quality(b.d1) + quality(b.d2)) / 2;
+  }
+  function finish() {
+    score = Math.round(balls.reduce((s, b) => s + ballScore(b), 0) / balls.length * 100);
+    if (score > best) { best = score; store.set('takoyaki-best', best); newBest = true; }
+    state = 'result';
+    lock = 0.6;
+    if (sizzle) sizzle.gain.setTargetAtTime(0, actx.currentTime, 0.05);
+    sfx.fanfare();
+    const text = `たこ焼き返しで ${score}点!ランク「${rankOf(score)}」` + '\n' + SHARE_TAG + (GAME_URL ? '\n' + GAME_URL : '');
+    shareBtn.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+    copyBtn.dataset.text = text;
+    setTimeout(() => { if (state === 'result') resultUi.hidden = false; }, 600);
+  }
+  copyBtn.addEventListener('click', () => {
+    const text = copyBtn.dataset.text || '';
+    const ok = () => toast('コピーしました');
+    try { navigator.clipboard.writeText(text).then(ok, () => toast('コピーできませんでした')); } catch (e) { toast('コピーできませんでした'); }
+  });
+  let toastTimer = 0;
+  function toast(s) { toastEl.textContent = s; toastEl.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.hidden = true; }, 1600); }
+  function toggleMute() { muted = !muted; store.set('takoyaki-mute', muted); soundBtn.textContent = muted ? '音 OFF' : '音 ON'; soundBtn.setAttribute('aria-pressed', String(!muted)); }
+  soundBtn.addEventListener('click', () => { audio(); toggleMute(); soundBtn.blur(); });
+  soundBtn.textContent = muted ? '音 OFF' : '音 ON';
+
+  // ---------- 描画 ----------
+  function circle(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill(); }
+  function text(s, x, y, size, col, font, align, alpha) {
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    font = font || FB;
+    ctx.font = font.startsWith('700 ') ? '700 ' + size + 'px ' + font.slice(4) : size + 'px ' + font;
+    ctx.fillStyle = col; ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(s, x, y);
+    ctx.globalAlpha = 1;
+  }
+  function outlined(s, x, y, size, col, font) {
+    ctx.font = size + 'px ' + (font || FD);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size * 0.18); ctx.strokeStyle = '#2a140c';
+    ctx.strokeText(s, x, y);
+    ctx.fillStyle = col; ctx.fillText(s, x, y);
+  }
+
+  function drawBackground() {
+    ctx.fillStyle = C.night; ctx.fillRect(0, 0, W, H);
+    // 提灯の灯り
+    const g = ctx.createRadialGradient(W / 2, 40, 10, W / 2, 40, 360);
+    g.addColorStop(0, 'rgba(255, 170, 80, 0.28)'); g.addColorStop(1, 'rgba(255, 170, 80, 0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // のれん
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = C.noren;
+      ctx.fillRect(8 + i * 87, 0, 82, 64);
+    }
+    outlined('た', 8 + 41, 32, 30, C.cream);
+    outlined('こ', 95 + 41, 32, 30, C.cream);
+    outlined('焼', 182 + 41, 32, 30, C.cream);
+    outlined('き', 269 + 41, 32, 30, C.cream);
+    // カウンター
+    ctx.fillStyle = C.wood; ctx.fillRect(0, 498, W, H - 498);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    for (let i = 0; i < 6; i++) ctx.fillRect(0, 512 + i * 22, W, 1);
+    // 鉄板
+    ctx.fillStyle = '#121214'; roundRect(22, 120, W - 44, 372, 18); ctx.fill();
+    const ig = ctx.createLinearGradient(0, 128, 0, 484);
+    ig.addColorStop(0, '#3a3a40'); ig.addColorStop(1, C.iron);
+    ctx.fillStyle = ig; roundRect(30, 128, W - 60, 356, 14); ctx.fill();
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const x = holeX(c), y = holeY(r);
+      const hg = ctx.createRadialGradient(x - 8, y - 8, 4, x, y, HOLE_R);
+      hg.addColorStop(0, '#1a1a1d'); hg.addColorStop(1, '#0a0a0b');
+      circle(x, y, HOLE_R, hg);
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, HOLE_R, 0.6, 2.6); ctx.stroke();
+    }
+  }
+  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+  // たこ焼き1個を描く。top = 上に見えている面の焼き色(null なら生地)、rim = ふちに見える底面の焼き色
+  function drawBall(x, y, r, top, rim, toppings, sy) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(1, sy == null ? 1 : sy);
+    if (rim != null) circle(0, 0, r + 3, rgb(cookRGB(rim)));      // ふち(底の焼き色がのぞく)
+    const base = top == null ? [246, 231, 184] : cookRGB(top);
+    const g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r);
+    g.addColorStop(0, rgb(base, 1.12)); g.addColorStop(0.7, rgb(base)); g.addColorStop(1, rgb(base, 0.78));
+    circle(0, 0, r, g);
+    if (top == null && toppings) {
+      for (const t of toppings) circle(Math.cos(t.a) * t.d, Math.sin(t.a) * t.d, 2.4, t.k === 'g' ? '#58a84a' : '#e0525a');
+    } else if (top != null) {
+      ctx.fillStyle = rgb(base, 0.82);
+      for (let i = 0; i < 6; i++) { const a = i * 1.1 + (toppings ? toppings[0].a : 0); circle(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.45, 2.2, rgb(base, 0.8)); }
+    }
+    circle(-r * 0.35, -r * 0.42, r * 0.16, 'rgba(255,255,255,0.35)');
+    ctx.restore();
+  }
+
+  function drawBalls() {
+    for (const b of balls) {
+      if (b.st === 'wait' || b.st === 'done' || b.st === 'gone') continue;
+      if (b.st === 'pour') {
+        const p = Math.min(1, b.p);
+        circle(b.x, b.y, BALL_R * p, 'rgba(246,231,184,0.95)');
+        ctx.fillStyle = 'rgba(246,231,184,0.8)';
+        ctx.fillRect(b.x - 3, b.y - 70 * (1 - p) - 20, 6, 70 * (1 - p) + 20 * (1 - p));
+        continue;
+      }
+      if (b.st === 'side1') drawBall(b.x, b.y, BALL_R, null, b.c, b.toppings);
+      else if (b.st === 'flip') {
+        const t = b.flipT, sy = Math.max(0.08, Math.abs(Math.cos(Math.PI * t)));
+        const lift = Math.sin(Math.PI * t) * 14;
+        if (t < 0.5) drawBall(b.x, b.y - lift, BALL_R, null, b.d1, b.toppings, sy);
+        else drawBall(b.x, b.y - lift, BALL_R, b.d1, 0, b.toppings, sy);
+      } else if (b.st === 'side2') drawBall(b.x, b.y, BALL_R, b.d1, b.c, b.toppings);
+      else if (b.st === 'out') {
+        const t = b.outT, tx = dishPos(dish.indexOf(b));
+        const x = b.x + (tx.x - b.x) * t, y = b.y + (tx.y - b.y) * t - Math.sin(Math.PI * t) * 60;
+        drawBall(x, y, BALL_R + (13 - BALL_R) * t, b.d1, null, b.toppings);
+      } else if (b.st === 'burnt') {
+        drawBall(b.x, b.y, BALL_R * (1 - Math.max(0, b.burnT - 0.6) * 0.6), BURN, BURN, null);
+      }
+    }
+  }
+  function dishPos(i) { return { x: 62 + (i % 6) * 47, y: 545 + Math.floor(i / 6) * 31 }; }
+  function drawDish() {
+    // 舟皿
+    ctx.fillStyle = '#c99a5b'; roundRect(36, 520, W - 72, 82, 10); ctx.fill();
+    ctx.fillStyle = '#b4874c'; roundRect(44, 527, W - 88, 68, 8); ctx.fill();
+    dish.forEach((b, i) => {
+      if (b.st === 'out') return;
+      const p = dishPos(i);
+      if (b.st === 'gone') drawBall(p.x, p.y, 13, BURN, null, null);
+      else drawBall(p.x, p.y, 13, b.d1, null, b.toppings);
+    });
+  }
+  function drawFx() {
+    for (const f of fx) {
+      const a = f.life / f.max;
+      circle(f.x, f.y, f.r * (1.6 - a * 0.6), f.kind === 'smoke' ? `rgba(60,60,60,${0.5 * a})` : `rgba(255,255,255,${0.18 * a})`);
+    }
+    for (const p of popups) {
+      const a = 1 - p.t / 0.9;
+      ctx.globalAlpha = a;
+      outlined(p.s, p.x, p.y - p.t * 26, p.small ? 14 : 20, p.col);
+      ctx.globalAlpha = 1;
+    }
+  }
+  function drawHud() {
+    const done = balls.filter(b => b.st === 'done' || b.st === 'gone' || b.st === 'out').length;
+    text('焼けた ' + done + ' / 12', 34, 96, 14, C.cream, '700 ' + FB, 'left');
+    if (combo >= 2) text(combo + '連続 きつね色', W - 34, 96, 14, C.gold, '700 ' + FB, 'right');
+  }
+  function swatch(x, y, c, label, mark) {
+    drawBall(x, y, 20, null, c, [{ a: 1, d: 6, k: 'g' }, { a: 3, d: 9, k: 'r' }]);
+    text(label, x, y + 36, 12, mark ? C.gold : C.cream, '700 ' + FB);
+    if (mark) text('ここ!', x, y - 36, 13, C.gold, '700 ' + FB);
+  }
+  function drawTitle() {
+    ctx.fillStyle = 'rgba(26,18,16,0.82)'; ctx.fillRect(0, 70, W, H - 70);
+    outlined('たこ焼き', W / 2, 150, 46, C.cream);
+    outlined('返し', W / 2, 206, 58, C.gold);
+    text('ふちが きつね色 になったら', W / 2, 262, 15, C.cream, '700 ' + FB);
+    text('タップして くるっと返そう。', W / 2, 284, 15, C.cream, '700 ' + FB);
+    text('もう一回タップで お皿へ。', W / 2, 306, 15, C.cream, '700 ' + FB);
+    swatch(90, 380, 0.3, 'まだ', false);
+    swatch(180, 380, 0.72, 'きつね色', true);
+    swatch(270, 380, 1.15, 'コゲ', false);
+    text('12個ぜんぶ まん丸に焼けたら 職人!', W / 2, 452, 13, C.cream, FB, 'center', 0.85);
+    text('タップでスタート', W / 2, 520, 20, C.cream, FD, 'center', 0.55 + Math.sin(blink * 4) * 0.45);
+    text('ハイスコア ' + best + '点', W / 2, 562, 13, C.cream, FB, 'center', 0.7);
+  }
+  function drawResult() {
+    ctx.fillStyle = 'rgba(26,18,16,0.86)'; ctx.fillRect(0, 70, W, H - 70);
+    const good = balls.filter(b => quality(b.d1 ?? 0) === 1 && quality(b.d2 ?? 0) === 1).length;
+    const burnt = balls.filter(b => b.st === 'gone').length;
+    text('きょうの たこ焼き', W / 2, 108, 16, C.cream, '700 ' + FB);
+    // 盛り付け(ソース・マヨ・青のり)
+    ctx.fillStyle = '#c99a5b'; roundRect(40, 128, W - 80, 168, 12); ctx.fill();
+    balls.forEach((b, i) => {
+      const x = 78 + (i % 4) * 68, y = 162 + Math.floor(i / 4) * 50;
+      if (b.st === 'gone') { drawBall(x, y, 21, BURN, null, null); return; }
+      drawBall(x, y, 21, b.d1, null, b.toppings);
+      ctx.fillStyle = 'rgba(70,30,12,0.85)'; ctx.beginPath(); ctx.ellipse(x, y - 3, 15, 11, 0, 0, 6.283); ctx.fill();
+      ctx.strokeStyle = '#fff7df'; ctx.lineWidth = 2; ctx.beginPath();
+      for (let k = 0; k <= 6; k++) ctx.lineTo(x - 12 + k * 4, y - 3 + (k % 2 ? 4 : -4));
+      ctx.stroke();
+      for (let k = 0; k < 4; k++) circle(x - 8 + k * 5, y - 10 + (k % 2) * 3, 1.4, C.green);
+    });
+    outlined(score + '点', W / 2, 344, 54, C.gold);
+    outlined(rankOf(score), W / 2, 398, 26, C.cream);
+    if (newBest) text('ハイスコア更新!', W / 2, 432, 15, C.gold, '700 ' + FB);
+    text('まん丸 ' + good + '個 / コゲ ' + burnt + '個 / 最大 ' + bestCombo + '連続', W / 2, 464, 13, C.cream, FB, 'center', 0.85);
+    text('ハイスコア ' + best + '点', W / 2, 490, 12, C.cream, FB, 'center', 0.6);
+  }
+
+  function draw() {
+    drawBackground();
+    if (state !== 'title') { drawBalls(); drawDish(); drawFx(); }
+    if (state === 'play') drawHud();
+    if (state === 'title') drawTitle();
+    if (state === 'result') drawResult();
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now; blink += dt; lock -= dt;
+    if (state === 'play') update(dt);
+    else { for (const f of fx) f.life -= dt; fx = fx.filter(f => f.life > 0); }
+    draw();
+    requestAnimationFrame(frame);
+  }
+  document.addEventListener('visibilitychange', () => { if (sizzle && document.hidden) sizzle.gain.value = 0; });
+  // 宣伝動画の自動撮影用(URL に ?capture を付けたときだけ有効)
+  if (/[?&]capture\b/.test(location.search)) {
+    window.__capture = {
+      state: () => state,
+      balls: () => balls.map(b => ({ x: b.x, y: b.y, st: b.st, c: b.c })),
+    };
+  }
+  newRound();
+  requestAnimationFrame(frame);
+})();
+</script>
