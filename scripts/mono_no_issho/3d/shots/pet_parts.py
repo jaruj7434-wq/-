@@ -11,7 +11,7 @@ import math, random
 
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 import common as C
 import props as P
@@ -227,7 +227,12 @@ def mat_label(name="LabelM", base=(0.08, 0.36, 0.62), stripe=(0.95, 0.95, 0.92),
     C.link(nt, cr.outputs["Color"], mx.inputs["A"]); mx.inputs["B"].default_value = (*base, 1)
     p = n.new("ShaderNodeBsdfPrincipled"); p.inputs["Roughness"].default_value = 0.28
     p.inputs["Coat Weight"].default_value = 0.4
-    C.link(nt, mx.outputs["Result"], p.inputs["Base Color"])
+    # 裏面は白(はがれた時に見える)
+    geo = n.new("ShaderNodeNewGeometry")
+    bk = n.new("ShaderNodeMix"); bk.data_type = "RGBA"
+    C.link(nt, geo.outputs["Backfacing"], bk.inputs["Factor"])
+    C.link(nt, mx.outputs["Result"], bk.inputs["A"]); bk.inputs["B"].default_value = (0.85, 0.86, 0.86, 1)
+    C.link(nt, bk.outputs["Result"], p.inputs["Base Color"])
     C.link(nt, p.outputs["BSDF"], out.inputs["Surface"])
     m.use_backface_culling = False
     return m
@@ -328,8 +333,7 @@ def make_label(name, mat, seg=72, rows=6):
         p.use_smooth = True
     o = bpy.data.objects.new(name, me); bpy.context.collection.objects.link(o)
     o.data.materials.append(mat)
-    sol = o.modifiers.new("sol", "SOLIDIFY"); sol.thickness = 0.03
-    return o
+    return o   # 厚みなし(裏面は Backfacing で白くする)
 
 
 # ------------------------------------------------------------------ シェイプキー補助
@@ -369,8 +373,9 @@ def stage_keys(obj, coords_list, frames, prefix="S"):
 
 # ------------------------------------------------------------------ ベール(圧縮ボトルの塊)
 def mat_bale(name="BaleM", seed=0.0):
-    """つぶれたボトルの塊: ボロノイのセルごとに 透明PET風(青白)・白・緑・ラベル色 を割り当て、
-    セルの縁を強いバンプで凹ませる。不透明なので軽い。"""
+    """つぶれたボトルの塊: 横長にゆがめたボロノイのセル1つ=つぶれたボトル1本。
+    セルごとに透明PET風の青白〜くもり・緑・まれに取り残しのラベル色、セル内はしわ(筋状の明暗+強いバンプ)。
+    不透明なので軽い。"""
     m = bpy.data.materials.get(name)
     if m:
         return m
@@ -378,52 +383,143 @@ def mat_bale(name="BaleM", seed=0.0):
     n = nt.nodes
     tc = n.new("ShaderNodeTexCoord")
     mp = n.new("ShaderNodeMapping"); mp.inputs["Location"].default_value = (seed * 37.1, seed * 11.3, seed * 5.7)
-    mp.inputs["Scale"].default_value = (1.0, 1.0, 1.6)      # 上下に押しつぶされた向き
+    mp.inputs["Scale"].default_value = (1.0, 1.0, 3.2)      # 上下に押しつぶされて横長
     C.link(nt, tc.outputs["Object"], mp.inputs["Vector"])
-    warp = n.new("ShaderNodeTexNoise"); warp.inputs["Scale"].default_value = 0.08; warp.inputs["Detail"].default_value = 3
+    warp = n.new("ShaderNodeTexNoise"); warp.inputs["Scale"].default_value = 0.12; warp.inputs["Detail"].default_value = 4
     C.link(nt, mp.outputs["Vector"], warp.inputs["Vector"])
-    wmix = n.new("ShaderNodeMix"); wmix.data_type = "VECTOR"; wmix.inputs["Factor"].default_value = 0.08
-    C.link(nt, mp.outputs["Vector"], wmix.inputs["A"]); C.link(nt, warp.outputs["Color"], wmix.inputs["B"])
-    vo = n.new("ShaderNodeTexVoronoi"); vo.inputs["Scale"].default_value = 0.16
-    C.link(nt, wmix.outputs["Result"], vo.inputs["Vector"])
-    ve = n.new("ShaderNodeTexVoronoi"); ve.feature = "DISTANCE_TO_EDGE"; ve.inputs["Scale"].default_value = 0.16
-    C.link(nt, wmix.outputs["Result"], ve.inputs["Vector"])
-    # セルの色
+    wsub = n.new("ShaderNodeVectorMath"); wsub.operation = "SUBTRACT"; wsub.inputs[1].default_value = (0.5, 0.5, 0.5)
+    C.link(nt, warp.outputs["Color"], wsub.inputs[0])
+    wsc = n.new("ShaderNodeVectorMath"); wsc.operation = "SCALE"; wsc.inputs["Scale"].default_value = 9.0
+    C.link(nt, wsub.outputs[0], wsc.inputs[0])
+    wadd = n.new("ShaderNodeVectorMath"); wadd.operation = "ADD"
+    C.link(nt, mp.outputs["Vector"], wadd.inputs[0]); C.link(nt, wsc.outputs[0], wadd.inputs[1])
+    vo = n.new("ShaderNodeTexVoronoi"); vo.inputs["Scale"].default_value = 0.05; vo.inputs["Randomness"].default_value = 1.0
+    C.link(nt, wadd.outputs[0], vo.inputs["Vector"])
+    ve = n.new("ShaderNodeTexVoronoi"); ve.feature = "DISTANCE_TO_EDGE"; ve.inputs["Scale"].default_value = 0.05
+    C.link(nt, wadd.outputs[0], ve.inputs["Vector"])
+    # セルの色(1セル=1本)
     sepc = n.new("ShaderNodeSeparateColor"); C.link(nt, vo.outputs["Color"], sepc.inputs["Color"])
-    cr = n.new("ShaderNodeValToRGB"); cr.color_ramp.interpolation = "CONSTANT"
+    cr = n.new("ShaderNodeValToRGB"); cr.color_ramp.interpolation = "LINEAR"
     e = cr.color_ramp.elements
-    e[0].position = 0.0; e[0].color = (0.55, 0.66, 0.72, 1)     # 透明PET(青白)
-    e[1].position = 0.50; e[1].color = (0.75, 0.80, 0.83, 1)    # くもったPET
-    e.new(0.72).color = (0.36, 0.52, 0.42, 1)                    # 緑がかったボトル
-    e.new(0.80).color = (0.62, 0.70, 0.76, 1)
-    e.new(0.90).color = (0.60, 0.12, 0.08, 1)                    # 取り残しのラベル(赤)
-    e.new(0.94).color = (0.10, 0.25, 0.55, 1)                    # 〃(青)
-    e.new(0.97).color = (0.85, 0.85, 0.82, 1)                    # 白キャップ
+    e[0].position = 0.0; e[0].color = (0.30, 0.42, 0.50, 1)     # 透明PET(奥が透けて暗い青)
+    e[1].position = 0.45; e[1].color = (0.52, 0.62, 0.68, 1)
+    e.new(0.70).color = (0.70, 0.76, 0.80, 1)                    # くもったPET
+    e.new(0.78).color = (0.70, 0.76, 0.80, 1)
+    e.new(0.80).color = (0.25, 0.45, 0.32, 1)                    # 緑がかったボトル
+    e.new(0.86).color = (0.30, 0.50, 0.38, 1)
+    e.new(0.88).color = (0.62, 0.70, 0.76, 1)
+    e.new(0.95).color = (0.62, 0.70, 0.76, 1)
+    e.new(0.955).color = (0.62, 0.14, 0.08, 1)                   # 取り残しのラベル(まれ)
+    e.new(0.975).color = (0.12, 0.25, 0.55, 1)
+    e.new(0.99).color = (0.90, 0.90, 0.86, 1)                    # 白キャップ
     C.link(nt, sepc.outputs["Red"], cr.inputs["Fac"])
-    # セルの縁は暗く(隙間の影)
-    edge = n.new("ShaderNodeMapRange"); edge.inputs["From Min"].default_value = 0.0; edge.inputs["From Max"].default_value = 0.12
+    # しわ: 細かい筋状ノイズで明るい反射の筋と暗い折り目
+    cm = n.new("ShaderNodeMapping"); cm.inputs["Scale"].default_value = (0.6, 0.6, 2.5)
+    C.link(nt, wadd.outputs[0], cm.inputs["Vector"])
+    wr = n.new("ShaderNodeTexNoise"); wr.inputs["Scale"].default_value = 0.9; wr.inputs["Detail"].default_value = 8
+    wr.inputs["Roughness"].default_value = 0.65
+    C.link(nt, cm.outputs["Vector"], wr.inputs["Vector"])
+    crk = n.new("ShaderNodeValToRGB")
+    crk.color_ramp.elements[0].position = 0.35; crk.color_ramp.elements[0].color = (0.3, 0.3, 0.3, 1)
+    crk.color_ramp.elements[1].position = 0.75; crk.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1)
+    C.link(nt, wr.outputs["Fac"], crk.inputs["Fac"])
+    mul = n.new("ShaderNodeMix"); mul.data_type = "RGBA"; mul.blend_type = "MULTIPLY"; mul.inputs["Factor"].default_value = 1.0
+    C.link(nt, cr.outputs["Color"], mul.inputs["A"]); C.link(nt, crk.outputs["Color"], mul.inputs["B"])
+    # セルの境目(ボトルどうしの隙間)は暗く細く
+    edge = n.new("ShaderNodeMapRange"); edge.inputs["From Min"].default_value = 0.0; edge.inputs["From Max"].default_value = 0.06
     C.link(nt, ve.outputs["Distance"], edge.inputs["Value"])
     dk = n.new("ShaderNodeMix"); dk.data_type = "RGBA"
     C.link(nt, edge.outputs["Result"], dk.inputs["Factor"])
-    dk.inputs["A"].default_value = (0.05, 0.06, 0.07, 1); C.link(nt, cr.outputs["Color"], dk.inputs["B"])
+    dk.inputs["A"].default_value = (0.04, 0.05, 0.06, 1); C.link(nt, mul.outputs["Result"], dk.inputs["B"])
     p = n.new("ShaderNodeBsdfPrincipled")
     C.link(nt, dk.outputs["Result"], p.inputs["Base Color"])
-    p.inputs["Coat Weight"].default_value = 0.5; p.inputs["Coat Roughness"].default_value = 0.15
-    # しわ(細かいノイズ)で粗さ・凹凸
-    wr = n.new("ShaderNodeTexNoise"); wr.inputs["Scale"].default_value = 0.9; wr.inputs["Detail"].default_value = 6
-    C.link(nt, mp.outputs["Vector"], wr.inputs["Vector"])
-    rr = n.new("ShaderNodeMapRange"); rr.inputs["To Min"].default_value = 0.12; rr.inputs["To Max"].default_value = 0.45
+    p.inputs["Coat Weight"].default_value = 0.6; p.inputs["Coat Roughness"].default_value = 0.12
+    rr = n.new("ShaderNodeMapRange"); rr.inputs["To Min"].default_value = 0.08; rr.inputs["To Max"].default_value = 0.35
     C.link(nt, wr.outputs["Fac"], rr.inputs["Value"]); C.link(nt, rr.outputs["Result"], p.inputs["Roughness"])
-    h = n.new("ShaderNodeMath"); h.operation = "MULTIPLY_ADD"; h.inputs[1].default_value = 0.25
+    h = n.new("ShaderNodeMath"); h.operation = "MULTIPLY_ADD"; h.inputs[1].default_value = 0.6
     C.link(nt, wr.outputs["Fac"], h.inputs[0]); C.link(nt, edge.outputs["Result"], h.inputs[2])
-    b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.9; b.inputs["Distance"].default_value = 1.5
+    b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 1.0; b.inputs["Distance"].default_value = 1.2
     C.link(nt, h.outputs[0], b.inputs["Height"]); C.link(nt, b.outputs["Normal"], p.inputs["Normal"])
     C.link(nt, p.outputs["BSDF"], out.inputs["Surface"])
     return m
 
 
-def bale(name, size=(110, 100, 80), loc=(0, 0, 0), seed=0, mat=None, strap_mat=None, straps=4):
-    """ベール1個(凸凹の直方体+針金バンド)。原点=底面中心。戻り値 root(Empty)。"""
+def mat_crushed_pet(name="CrushedPET"):
+    """ベール表面に埋まった「つぶれたボトル」(不透明。暗い地+強い映り込み+縁が白く光るフレネル風)。"""
+    m = bpy.data.materials.get(name)
+    if m:
+        return m
+    m, nt, out = C.node_mat(name)
+    n = nt.nodes
+    tc = n.new("ShaderNodeTexCoord")
+    oi = n.new("ShaderNodeObjectInfo")
+    cr = n.new("ShaderNodeValToRGB"); cr.color_ramp.interpolation = "CONSTANT"
+    e = cr.color_ramp.elements
+    e[0].position = 0.0; e[0].color = (0.30, 0.38, 0.44, 1)
+    e[1].position = 0.5; e[1].color = (0.50, 0.56, 0.60, 1)
+    e.new(0.8).color = (0.22, 0.40, 0.28, 1)
+    e.new(0.92).color = (0.65, 0.68, 0.70, 1)
+    C.link(nt, oi.outputs["Random"], cr.inputs["Fac"])
+    lw = n.new("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.12
+    mx = n.new("ShaderNodeMix"); mx.data_type = "RGBA"
+    C.link(nt, lw.outputs["Facing"], mx.inputs["Factor"])
+    C.link(nt, cr.outputs["Color"], mx.inputs["A"]); mx.inputs["B"].default_value = (0.62, 0.68, 0.72, 1)
+    p = n.new("ShaderNodeBsdfPrincipled")
+    C.link(nt, mx.outputs["Result"], p.inputs["Base Color"])
+    p.inputs["Roughness"].default_value = 0.12; p.inputs["Coat Weight"].default_value = 1.0
+    nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 0.6; nz.inputs["Detail"].default_value = 6
+    C.link(nt, tc.outputs["Object"], nz.inputs["Vector"])
+    b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.7
+    C.link(nt, nz.outputs["Fac"], b.inputs["Height"]); C.link(nt, b.outputs["Normal"], p.inputs["Normal"])
+    C.link(nt, b.outputs["Normal"], lw.inputs["Normal"])
+    C.link(nt, p.outputs["BSDF"], out.inputs["Surface"])
+    return m
+
+
+def crushed_bottle_mesh():
+    """つぶれたボトル用の低ポリ回転体(共有メッシュ)。"""
+    me = bpy.data.meshes.get("CrushedBottleMesh")
+    if me:
+        return me
+    o = lathe_mesh("CrushedBottleMesh", _resample(_bottle_body(), 22) + _finish()[1:3] + [(1.3, TOP_Z)], "flat", seg=14)
+    me = o.data; me.name = "CrushedBottleMesh"
+    tx = bpy.data.textures.get("CrushTx") or bpy.data.textures.new("CrushTx", "CLOUDS")
+    tx.noise_scale = 2.0
+    bpy.data.objects.remove(o)
+    return me
+
+
+def _surface_bottles(root, name, size, rnd, count, mat):
+    """ベールの側面・上面に、つぶれたボトルを埋め込む(面の法線方向につぶす)。"""
+    me = crushed_bottle_mesh()
+    sx, sy, sz = size
+    faces = [(Vector((0, -1, 0)), Vector((1, 0, 0)), Vector((0, 0, 1)), sy / 2, sx, sz, 1.0),   # 前
+             (Vector((0, 1, 0)), Vector((1, 0, 0)), Vector((0, 0, 1)), sy / 2, sx, sz, 0.5),
+             (Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)), sx / 2, sy, sz, 1.0),    # 右
+             (Vector((-1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)), sx / 2, sy, sz, 0.6),
+             (Vector((0, 0, 1)), Vector((1, 0, 0)), Vector((0, 1, 0)), sz / 2, sx, sy, 0.8)]    # 上
+    k = 0
+    for nrm, u, v, half, lu, lv, w in faces:
+        for i in range(int(count * w)):
+            a = rnd.uniform(-0.45, 0.45) * lu; b = rnd.uniform(-0.44, 0.44) * lv
+            phi = rnd.uniform(-0.5, 0.5) + (0.0 if nrm.z == 0 else rnd.uniform(0, math.pi))
+            d = u * math.cos(phi) + v * math.sin(phi)
+            x_ax = d.cross(nrm)
+            rot = Matrix((x_ax, nrm, d)).transposed()          # ローカル x, y(=法線), z(=ボトル軸)
+            scl = rnd.uniform(0.85, 1.1)
+            mw = Matrix.Translation(Vector((0, 0, sz / 2)) + nrm * (half - 0.9) + u * a + v * b - d * 10 * scl) \
+                @ rot.to_4x4() @ Matrix.Diagonal((scl * rnd.uniform(1.0, 1.35), scl * 0.2, scl, 1))
+            o = bpy.data.objects.new(f"{name}_PB{k}", me); bpy.context.collection.objects.link(o)
+            o.parent = root; o.matrix_parent_inverse = Matrix.Identity(4)
+            o.matrix_basis = mw
+            if not o.data.materials:
+                o.data.materials.append(mat)
+            k += 1
+
+
+def bale(name, size=(110, 100, 80), loc=(0, 0, 0), seed=0, mat=None, strap_mat=None, straps=4, surface=0):
+    """ベール1個(凸凹の直方体+針金バンド)。原点=底面中心。戻り値 root(Empty)。
+    surface>0 で各面に約 surface 本の「つぶれたボトル」(不透明・共有メッシュ)を埋め込む。"""
     rnd = random.Random(seed)
     root = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(root)
     root.location = loc
@@ -440,17 +536,19 @@ def bale(name, size=(110, 100, 80), loc=(0, 0, 0), seed=0, mat=None, strap_mat=N
     blk.data.materials.append(mat or mat_bale())
     for poly in blk.data.polygons:
         poly.use_smooth = True
-    sm = strap_mat or bpy.data.materials.get("StrapM") or C.principled("StrapM", (0.55, 0.56, 0.58), metallic=1, rough=0.35)
+    if surface:
+        _surface_bottles(root, name, size, rnd, surface, mat_crushed_pet())
+    sm = strap_mat or bpy.data.materials.get("StrapM") or C.principled("StrapM", (0.32, 0.33, 0.35), metallic=1, rough=0.3)
     for i in range(straps):          # 針金バンド(X 方向に巻く)
         x = -sx / 2 + sx * (i + 0.5) / straps + rnd.uniform(-3, 3)
         bpy.ops.mesh.primitive_cube_add(size=1, location=(x, 0, sz / 2))
         s = bpy.context.object; s.name = f"{name}_Strap{i}"
-        s.scale = (0.5, sy + 1.6, sz + 1.6)
+        s.scale = (1.0, sy + 2.4, sz + 2.4)
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
         bm = bmesh.new(); bm.from_mesh(s.data)
         bmesh.ops.delete(bm, geom=[f for f in bm.faces if abs(f.normal.x) > 0.9], context="FACES")
         bm.to_mesh(s.data); bm.free()
-        so = s.modifiers.new("sol", "SOLIDIFY"); so.thickness = 0.4
+        so = s.modifiers.new("sol", "SOLIDIFY"); so.thickness = 0.6
         s.data.materials.append(sm)
         s.parent = root; s.location = (x, 0, sz / 2)
     return root

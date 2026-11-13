@@ -23,16 +23,32 @@ ENTER = 63          # ボトルの底が投入口のフチを通る
 G = 420.0           # 見やすいよう少しスロー(実重力 981 cm/s^2 の約0.43倍)
 
 
+def mat_brick_wall(name="BrickWall"):
+    m, nt, out = C.node_mat(name)
+    n = nt.nodes
+    tc = n.new("ShaderNodeTexCoord")
+    mp = n.new("ShaderNodeMapping"); mp.inputs["Rotation"].default_value = (math.radians(-90), 0, 0)
+    C.link(nt, tc.outputs["Object"], mp.inputs["Vector"])
+    br = n.new("ShaderNodeTexBrick"); br.offset = 0.5
+    br.inputs["Scale"].default_value = 1.0; br.inputs["Mortar Size"].default_value = 0.8
+    br.inputs["Brick Width"].default_value = 23.0; br.inputs["Row Height"].default_value = 7.5
+    br.inputs["Color1"].default_value = (0.26, 0.15, 0.11, 1); br.inputs["Color2"].default_value = (0.2, 0.12, 0.09, 1)
+    br.inputs["Mortar"].default_value = (0.38, 0.36, 0.33, 1)
+    C.link(nt, mp.outputs["Vector"], br.inputs["Vector"])
+    p = n.new("ShaderNodeBsdfPrincipled"); p.inputs["Roughness"].default_value = 0.8
+    C.link(nt, br.outputs["Color"], p.inputs["Base Color"])
+    b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.4; b.invert = True
+    C.link(nt, br.outputs["Fac"], b.inputs["Height"]); C.link(nt, b.outputs["Normal"], p.inputs["Normal"])
+    C.link(nt, p.outputs["BSDF"], out.inputs["Surface"])
+    return m
+
+
 def build(sc):
     P.world_studio((0.12, 0.11, 0.1), (0.55, 0.58, 0.62), (0.45, 0.6, 0.85), 0.6, camera_color=(0.55, 0.62, 0.72))
     P.plane("Ground", (3000, 2000), (0, -300, 0), mat=mat_pavers("Pavers", base=(0.46, 0.44, 0.41)))
     P.box("Curb", (3000, 18, 12), (0, -330, 6), mat=F.mat_concrete("CurbM", (0.5, 0.49, 0.47)))
-    # 背後の塀(ブロック目地)
-    wall = C.principled("BlockWall", (0.58, 0.56, 0.52), rough=0.9, bump=0.25, bump_scale=0.3)
-    P.box("Wall", (3000, 15, 180), (0, 55, 90), mat=wall)
-    jm = C.principled("JointM", (0.38, 0.37, 0.35), rough=0.9)
-    for i in range(1, 10):
-        P.box(f"Joint{i}", (3000, 0.6, 0.8), (0, 47.3, i * 19.5), mat=jm)
+    # 背後の塀(れんがタイル。濃い色で透明ボトルの輪郭を読ませる)
+    P.box("Wall", (3000, 15, 180), (0, 55, 90), mat=mat_brick_wall())
     P.box("WallCap", (3000, 18, 4), (0, 55, 182), mat=F.mat_concrete("CapM2", (0.55, 0.54, 0.52)))
 
     fy = PP.vending_machine(VM_X, 0.0, body_color=(0.86, 0.87, 0.88), accent=(0.12, 0.38, 0.62), glow=1.6)
@@ -49,15 +65,17 @@ def build(sc):
             o.location.z = 88 - 7 - 20
 
     # ---- ボトル(キャップ・ラベルなし)。底が原点
-    b = PP.bottle("Bottle", (0, 0, 0), cap=False, label=False, mat=PP.mat_pet("PET", a_min=0.1, a_max=0.8, glow=0.25))
+    b = PP.bottle("Bottle", (0, 0, 0), cap=False, label=False, mat=PP.mat_pet("PET", a_min=0.1, a_max=0.8, glow=0.08))
     body = b["body"]
     z_rim = hole[2]
     z0 = 175.0
     t_hit = math.sqrt(2 * (z0 - z_rim) / G)
     f0 = ENTER - t_hit * C.FPS
-    for f in range(int(f0) - 1, ENTER + 9):
+    for f in range(int(f0) - 1, ENTER + 11):
         t = max(0.0, (f - f0) / C.FPS)
         z = z0 - 0.5 * G * t * t
+        if f > ENTER:                     # フチに触れて減速しながら吸い込まれる
+            z = z_rim - 5.5 * (f - ENTER)
         u = min(1.0, max(0.0, (f - f0) / (ENTER - f0)))
         x = hole[0] + 6.0 * (1 - u) ** 2
         y = hole[1] - 2.0 * (1 - u) ** 2
@@ -68,7 +86,7 @@ def build(sc):
     F.set_interp(body, "LINEAR")
     body.hide_render = True; body.keyframe_insert("hide_render", frame=1)
     body.hide_render = False; body.keyframe_insert("hide_render", frame=int(f0))
-    body.hide_render = True; body.keyframe_insert("hide_render", frame=ENTER + 9)
+    body.hide_render = True; body.keyframe_insert("hide_render", frame=ENTER + 11)
     F.set_interp(body, "CONSTANT", path="hide_render")
 
     # ボトルが底に当たる「コトン」: ボックスがわずかに揺れる
@@ -84,9 +102,9 @@ def build(sc):
     # ---- 照明: 午後の日差し(右手前上から。自販機の影は左の塀へ)+ 空の補助光
     bpy.ops.object.light_add(type="SUN")
     sun = bpy.context.object; sun.name = "Sun"
-    sun.data.energy = 4.5; sun.data.angle = math.radians(2.0); sun.data.color = (1.0, 0.92, 0.8)
+    sun.data.energy = 3.0; sun.data.angle = math.radians(2.0); sun.data.color = (1.0, 0.92, 0.8)
     sun.rotation_euler = (math.radians(52), 0, math.radians(38))
-    fill = C.area_light((150, -320, 260), (0, 0, 0), 300, 4.0e5, (0.85, 0.9, 1.0), "SkyFill")
+    fill = C.area_light((150, -320, 260), (0, 0, 0), 300, 2.5e5, (0.85, 0.9, 1.0), "SkyFill")
     C.light_look_at(fill, (BOX_X, fy, 80))
     rim = C.area_light((120, 40, 200), (0, 0, 0), 80, 1.2e5, (1.0, 0.96, 0.9), "BottleRim")
     C.light_look_at(rim, (hole[0], hole[1], 115))
@@ -95,14 +113,14 @@ def build(sc):
 
     # ---- カメラ: ミディアム → 投入口へゆっくり寄る(左に自販機の窓を残す)
     cam, tgt = C.camera((95, -300, 150), (-5, -10, 100), lens=40, fstop=0.06)
-    P.key_seq(cam, "location", [(1, (95, -290, 215)), (FRAMES, (58, -175, 178))])
-    P.key_seq(tgt, "location", [(1, (-2, -12, 92)), (FRAMES, (16, -18, 94))])
+    P.key_seq(cam, "location", [(1, (82, -255, 200)), (FRAMES, (52, -160, 172))])
+    P.key_seq(tgt, "location", [(1, (2, -12, 96)), (FRAMES, (20, -18, 98))])
     cam.data.dof.focus_object = None
     cam.data.dof.focus_distance = 280
     cam.data.keyframe_insert("dof.focus_distance", frame=1)
     cam.data.dof.focus_distance = 195
     cam.data.keyframe_insert("dof.focus_distance", frame=FRAMES)
-    sc.view_settings.exposure = 0.0
+    sc.view_settings.exposure = -0.35
 
 
 if __name__ == "__main__":

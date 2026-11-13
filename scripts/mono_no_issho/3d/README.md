@@ -40,3 +40,21 @@ ffmpeg -framerate 24 -i assets/output/mono_no_issho/ep01/shot_melt/f_%04d.png -c
 SAMPLES=32 scripts/mono_no_issho/3d/render_queue.sh k02_store_stand k06_umbrella_explode k08_last_umbrella
 ```
 ビニールは半透明(BLENDED)で 8 サンプルだと粒状ノイズが出やすい。本番は `--samples 32` 以上推奨。
+
+## 第3話（ペットボトル）
+- 出力先は `assets/output/mono_no_issho/ep03/3d/<name>/`（各ショットで `C.EPISODE = "ep03"`）。
+- P01〜P04 の小道具は `shots/pet_parts.py`：ボトル/プリフォーム（同じ頂点構成の回転体なのでシェイプキーで膨らむ）、
+  透明PET（BLENDED のフレネル・アルファ。屈折なしで軽い）、架空ラベル（文字なし）、ベール（ボロノイ模様＋つぶれたボトルの共有メッシュ）、
+  ロゴなし自販機・回収ボックス・コンベア。
+- 透明素材は各ショット数個まで。透明(BLENDED)は深度を書かないので、DOF をかけると背景の深度でぼける（P03 は DOF なし）。
+
+| スクリプト | 台本カット | 内容 | 960x540・8サンプル |
+|---|---|---|---|
+| `shots/p01_recycle_box.py` | 1-1 | 自販機横の回収ボックスに、透明ボトルが上から落ちて入る（ゆっくり寄る） | 約25秒/フレーム |
+| `shots/p02_blow_mold.py` | 2-1 | 金型の断面図。温まったプリフォームが延伸ロッドで伸び、空気でボトルにふくらむ | 約20〜30秒/フレーム |
+| `shots/p03_cap_label.py` | 4-1 | 食卓のボトル。キャップが回って外れて浮き、ラベルがほどけて飛び、透明ボトルだけ残る | 約22秒/フレーム |
+| `shots/p04_bale_conveyor.py` | 5-1 | リサイクル工場。針金でしばったベールがコンベアで流れる（奥にベールの山） | 約42秒/フレーム |
+
+```bash
+SAMPLES=16 scripts/mono_no_issho/3d/render_queue.sh p01_recycle_box p02_blow_mold p03_cap_label p04_bale_conveyor
+```
