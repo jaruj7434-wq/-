@@ -1,0 +1,731 @@
+<meta charset="utf-8">
+<title>ソフトクリーム巻き</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<style>
+/* 昼のソフトクリーム屋さん。3D(下の canvas)の上に文字やゲージ(上の canvas)を重ねる縦長 9:16 の1画面構成 */
+:root {
+  --shop: #e9f5ef;     /* 店の壁(ミント) */
+  --cream: #fff8ec;    /* 生成り */
+  --ink: #3b2a24;      /* 文字(チョコ色) */
+  --pink: #f08aa6;     /* 日よけの縞・強調 */
+  --mint: #4fb39a;     /* 良い判定 */
+  --gold: #f2b544;     /* ハイスコア */
+  --red: #e0525a;      /* 注意 */
+  --font-d: "Dela Gothic One", "Hiragino Kaku Gothic StdN", "Yu Gothic", sans-serif;
+  --font-b: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body { margin: 0; background: var(--shop); color: var(--ink); font-family: var(--font-b); overflow: hidden; -webkit-user-select: none; user-select: none; }
+#wrap { position: fixed; inset: 0; display: flex; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+#fit { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#stage { position: relative; background: var(--shop); }
+#gl { position: absolute; left: 0; top: 0; display: block; }
+#cv { position: relative; display: block; touch-action: none; cursor: pointer; }
+.ui { position: absolute; left: 8px; right: 8px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.ui[hidden], .btn[hidden] { display: none !important; }
+.btn {
+  font: 700 15px var(--font-b);
+  color: var(--cream);
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 18px;
+  min-height: 46px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 4px 0 rgba(59, 42, 36, 0.25);
+}
+.btn.alt { background: var(--cream); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.btn.go { background: var(--pink); color: #fff; }
+.btn:focus-visible, .mini:focus-visible { outline: 3px solid var(--mint); outline-offset: 2px; }
+.mini { position: absolute; bottom: 4px; right: 8px; font: 700 12px var(--font-b); color: var(--ink); background: rgba(255, 248, 236, 0.85); border: 1px solid rgba(59, 42, 36, 0.25); border-radius: 999px; padding: 6px 12px; min-height: 32px; cursor: pointer; }
+#toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18%; background: rgba(59, 42, 36, 0.85); color: var(--cream); padding: 8px 14px; border-radius: 8px; font-size: 13px; }
+</style>
+
+<div id="wrap">
+  <div id="fit">
+    <div id="stage">
+      <canvas id="gl"></canvas>
+      <canvas id="cv" aria-label="ソフトクリーム巻き ゲーム画面"></canvas>
+      <button id="soundBtn" class="mini" type="button" aria-pressed="true">音 ON</button>
+      <div id="doneUi" class="ui"><button id="doneBtn" class="btn go" type="button" hidden>できあがり!</button></div>
+      <div id="resultUi" class="ui" hidden>
+        <button id="againBtn" class="btn" type="button">次のお客さん</button>
+        <a id="shareBtn" class="btn alt" href="#" target="_blank" rel="noopener">X でシェア</a>
+        <button id="copyBtn" class="btn alt" type="button">コピー</button>
+      </div>
+      <div id="toast" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+(() => {
+  const W = 360, H = 640;
+  // サイトで公開するときは、ビルドでこのページの URL が入る(シェア文に載る)
+  const GAME_URL = '';
+  const SHARE_TAG = '#ソフトクリーム巻き';
+
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d'), gl = $('gl'), stage = $('stage'), fit = $('fit');
+  const doneUi = $('doneUi'), doneBtn = $('doneBtn'), resultUi = $('resultUi');
+  const againBtn = $('againBtn'), shareBtn = $('shareBtn'), copyBtn = $('copyBtn'), soundBtn = $('soundBtn'), toastEl = $('toast');
+  const css = getComputedStyle(document.documentElement);
+  const tok = n => css.getPropertyValue(n).trim();
+  const C = { shop: tok('--shop'), cream: tok('--cream'), ink: tok('--ink'), pink: tok('--pink'), mint: tok('--mint'), gold: tok('--gold'), red: tok('--red') };
+  const FD = '"Dela Gothic One", sans-serif', FB = '"Zen Maru Gothic", sans-serif';
+  try {
+    document.fonts.load('20px "Dela Gothic One"', 'ソフトクリーム巻き点職人伝説の看板アルバイト見習い新人倒れたできあがりご注文高さバニラチョコ抹茶ミックス0123456789cm');
+    document.fonts.load('700 14px "Zen Maru Gothic"', '長押しでしぼる左右にずらして外側から少しずつ真ん中へ注文の高さで止めて最後にツノを立てるタップでスタートハイスコア次のお客さんXでシェアコピー音形まっすぐこぼさない判定中かたむきクリーム残りいらっしゃいませ');
+  } catch (e) {}
+
+  // ---------- 画面サイズ ----------
+  let scale = 1;
+  let renderer;
+  function resize() {
+    const r = fit.getBoundingClientRect();
+    scale = Math.max(0.1, Math.min(r.width / W, r.height / H));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = W * scale, ch = H * scale;
+    stage.style.width = cw + 'px'; stage.style.height = ch + 'px';
+    cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+    doneUi.style.top = (560 * scale) + 'px';
+    resultUi.style.top = (548 * scale) + 'px';
+    if (renderer) { renderer.setPixelRatio(dpr); renderer.setSize(cw, ch); }
+  }
+  addEventListener('resize', resize);
+
+  // ---------- 保存 ----------
+  const store = {
+    get(k, fb) { try { const v = localStorage.getItem(k); return v == null ? fb : JSON.parse(v); } catch (e) { return fb; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  };
+  let best = Number(store.get('softcream-best', 0)) || 0;
+  let served = Number(store.get('softcream-served', 0)) || 0;
+
+  // ---------- 音 ----------
+  let actx = null, muted = !!store.get('softcream-mute', false), noiseBuf = null, squeeze = null;
+  function audio() {
+    if (!actx) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+      noiseBuf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
+      const a = noiseBuf.getChannelData(0);
+      for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1;
+      const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+      src.buffer = noiseBuf; src.loop = true; f.type = 'lowpass'; f.frequency.value = 380; g.gain.value = 0;
+      src.connect(f).connect(g).connect(actx.destination); src.start();
+      squeeze = g;
+    }
+    if (actx.state === 'suspended') actx.resume();
+  }
+  function setLoop(g, v) { if (g && actx) g.gain.setTargetAtTime(muted ? 0 : v, actx.currentTime, 0.05); }
+  function tone(f, d, type, v, f2, delay) {
+    if (muted || !actx) return;
+    const t = actx.currentTime + (delay || 0), o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+  }
+  function burst(d, v, freq, type) {
+    if (muted || !actx) return;
+    const t = actx.currentTime, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    s.buffer = noiseBuf; f.type = type || 'lowpass'; f.frequency.value = freq || 800;
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(f).connect(g).connect(actx.destination); s.start(t); s.stop(t + d);
+  }
+  const sfx = {
+    lever: () => { tone(220, 0.06, 'square', 0.05, 160); burst(0.08, 0.1, 1500, 'highpass'); },
+    bell: () => { tone(1568, 0.5, 'sine', 0.08); tone(2093, 0.6, 'sine', 0.05, null, 0.05); },
+    drip: () => tone(500, 0.12, 'sine', 0.08, 180),
+    fall: () => { burst(0.6, 0.3, 300); tone(140, 0.4, 'sawtooth', 0.05, 60); },
+    fanfare: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.2, 'triangle', 0.08, null, i * 0.12)),
+  };
+
+  // ---------- ルール ----------
+  // 1ユニット = 3cm。コーンのふちの半径 1.4(約4cm)、クリームの太さの半径 0.3
+  const UNIT_CM = 3, RIM = 1.4, ROPE = 0.3, SPIN = 3.9, START_X = 1.15, MAX_POINTS = 1150;
+  const FLAVORS = {
+    'バニラ': { a: [246, 239, 224], b: [246, 239, 224] },
+    'チョコ': { a: [110, 66, 44], b: [110, 66, 44] },
+    '抹茶': { a: [170, 196, 120], b: [170, 196, 120] },
+    'ミックス': { a: [246, 239, 224], b: [110, 66, 44] },
+  };
+  const RANKS = [[95, '伝説のソフト職人'], [85, 'ソフトクリーム職人'], [70, '看板アルバイト'], [50, '見習い'], [0, '新人']];
+  const rankOf = s => RANKS.find(r => s >= r[0])[1];
+
+  // ---------- 3D の準備 ----------
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: gl, antialias: true });
+  } catch (e) { renderer = null; }
+  resize();
+  if (!renderer) { toastEl.textContent = 'この端末は3D表示に対応していません'; toastEl.hidden = false; return; }
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 100);
+
+  function canvasTex(w, h, draw, repeat) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
+    return t;
+  }
+  // 店の壁(ミントのタイル)
+  scene.background = canvasTex(512, 1024, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#d7efe6'); gr.addColorStop(0.65, '#eaf6f0'); gr.addColorStop(1, '#f6efe2');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(79,179,154,0.12)'; g.lineWidth = 2;
+    for (let y = 0; y < h * 0.62; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+    for (let x = 0; x < w; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h * 0.62); g.stroke(); }
+  });
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd9c6b0, 1.1));
+  const sun = new THREE.DirectionalLight(0xfff6ea, 2.2);
+  sun.position.set(-5, 12, 9); sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, { left: -6, right: 6, top: 10, bottom: -8, near: 1, far: 40 });
+  sun.shadow.bias = -0.0008;
+  scene.add(sun);
+  const rim = new THREE.DirectionalLight(0xd8fff2, 0.9); rim.position.set(6, 4, -6); scene.add(rim);
+
+  // カウンター
+  const COUNTER_Y = -4.6;
+  const counter = new THREE.Mesh(new THREE.BoxGeometry(30, 0.6, 14), new THREE.MeshStandardMaterial({ color: 0xf3e6d3, roughness: 0.55 }));
+  counter.position.set(0, COUNTER_Y - 0.3, 0); counter.receiveShadow = true; scene.add(counter);
+
+  // ソフトクリームの機械(上)
+  const NOZZLE_Y = 5.3;
+  const steel = new THREE.MeshStandardMaterial({ color: 0xe8ecf0, metalness: 0.8, roughness: 0.28 });
+  const machine = new THREE.Mesh(new THREE.BoxGeometry(6.5, 3.2, 3.2), steel);
+  machine.position.set(0, NOZZLE_Y + 2.6, -0.9); machine.castShadow = true; scene.add(machine);
+  const nozzleBody = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.55, 1.0, 24), steel);
+  nozzleBody.position.set(0, NOZZLE_Y + 0.6, 0); scene.add(nozzleBody);
+  const starPts = [];
+  for (let i = 0; i <= 16; i++) { const a = i / 16 * Math.PI * 2, r = 0.34 * (1 + 0.16 * Math.cos(8 * a)); starPts.push(new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r)); }
+  const nozzleTip = new THREE.Mesh(new THREE.ExtrudeGeometry(new THREE.Shape(starPts), { depth: 0.22, bevelEnabled: false }), steel);
+  nozzleTip.rotation.x = Math.PI / 2; nozzleTip.position.set(0, NOZZLE_Y + 0.12, 0); scene.add(nozzleTip);
+  const lever = new THREE.Group();
+  const lv = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.8, 10), steel); lv.rotation.z = Math.PI / 2; lv.position.x = 0.9; lever.add(lv);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf08aa6, roughness: 0.35 })); knob.position.x = 1.8; lever.add(knob);
+  lever.position.set(0.45, NOZZLE_Y + 1.2, 0.4); scene.add(lever);
+
+  // コーン(回る台にのっている)
+  const waffle = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#d9a25b'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#a8692d'; g.lineWidth = 7;
+    for (let k = -h; k < w + h; k += 32) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + h, h); g.stroke(); g.beginPath(); g.moveTo(k, h); g.lineTo(k + h, 0); g.stroke(); }
+    for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,230,180,${Math.random() * 0.18})`; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+  }, [3, 2]);
+  const coneSpin = new THREE.Group();     // 回転するもの(コーンとクリーム)
+  const coneHolder = new THREE.Group();   // 左右に動かす台
+  coneHolder.add(coneSpin); scene.add(coneHolder);
+  const coneProfile = [[0.05, -4.3], [0.4, -3.4], [1.25, -0.2], [1.45, 0.0], [1.5, 0.12], [1.36, 0.14], [1.3, 0.02]].map(p => new THREE.Vector2(p[0], p[1]));
+  const cone = new THREE.Mesh(new THREE.LatheGeometry(coneProfile, 48), new THREE.MeshStandardMaterial({ map: waffle, roughness: 0.75, side: THREE.DoubleSide }));
+  cone.castShadow = true; cone.receiveShadow = true; coneSpin.add(cone);
+  const coneTop = new THREE.Mesh(new THREE.CircleGeometry(1.32, 40), new THREE.MeshStandardMaterial({ color: 0x8a5a2b, roughness: 0.9 }));
+  coneTop.rotation.x = -Math.PI / 2; coneTop.position.y = -0.03; coneSpin.add(coneTop);
+  const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 1.1, 0.5, 32), new THREE.MeshStandardMaterial({ color: 0xf08aa6, roughness: 0.4 }));
+  stand.position.y = -4.35; stand.castShadow = true; coneHolder.add(stand);
+  const creamGroup = new THREE.Group(); coneSpin.add(creamGroup);
+  const creamMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0 });
+
+  // 落ちてくるクリーム(機械から真下へ)
+  const streamMat = new THREE.MeshStandardMaterial({ color: 0xf6efe0, roughness: 0.4 });
+  const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 1, 12), streamMat);
+  stream.visible = false; scene.add(stream);
+
+  // ---------- クリームの積み上がり(コーンから見た高さの地図) ----------
+  const GRID = 72, CELL = 0.09, HALF = GRID * CELL / 2;
+  const height = new Float32Array(GRID * GRID);
+  function resetHeight() {
+    for (let i = 0; i < GRID; i++) for (let j = 0; j < GRID; j++) {
+      const x = (i + 0.5) * CELL - HALF, z = (j + 0.5) * CELL - HALF, r = Math.hypot(x, z);
+      height[i * GRID + j] = r <= RIM - 0.04 ? -0.05 : -999;
+    }
+  }
+  function cellsAround(x, z, rad, fn) {
+    const i0 = Math.max(0, Math.floor((x - rad + HALF) / CELL)), i1 = Math.min(GRID - 1, Math.floor((x + rad + HALF) / CELL));
+    const j0 = Math.max(0, Math.floor((z - rad + HALF) / CELL)), j1 = Math.min(GRID - 1, Math.floor((z + rad + HALF) / CELL));
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const cx = (i + 0.5) * CELL - HALF, cz = (j + 0.5) * CELL - HALF, d = Math.hypot(cx - x, cz - z);
+      if (d <= rad) fn(i * GRID + j, d);
+    }
+  }
+  function supportAt(x, z, rad) { let m = -999; cellsAround(x, z, rad, k => { if (height[k] > m) m = height[k]; }); return m; }
+  function stamp(x, z, y, rad) { cellsAround(x, z, rad, (k, d) => { const v = y + Math.sqrt(Math.max(0, rad * rad - d * d)) * 0.85; if (v > height[k]) height[k] = v; }); }
+
+  // ---------- クリームの形(星形の口金で絞った、すじ入りの太いひも) ----------
+  const RS = 16;
+  function ropeGeometry(pts, colA, colB, capStart, capEnd) {
+    const n = pts.length, pos = new Float32Array(n * RS * 3), nor = new Float32Array(n * RS * 3), col = new Float32Array(n * RS * 3), idx = [];
+    const t = new THREE.Vector3(), u = new THREE.Vector3(), v = new THREE.Vector3(), ref = new THREE.Vector3(), radial = new THREE.Vector3(), tang = new THREE.Vector3(), nn = new THREE.Vector3();
+    const ca = colA.map(c => Math.pow(c / 255, 2.2)), cb = colB.map(c => Math.pow(c / 255, 2.2));
+    for (let i = 0; i < n; i++) {
+      const p0 = pts[Math.max(0, i - 1)], p1 = pts[Math.min(n - 1, i + 1)];
+      t.subVectors(p1, p0); if (t.lengthSq() < 1e-8) t.set(1, 0, 0); t.normalize();
+      ref.set(0, 1, 0); if (Math.abs(t.y) > 0.9) ref.set(1, 0, 0);
+      u.crossVectors(t, ref).normalize(); v.crossVectors(t, u).normalize();
+      let rr = ROPE;
+      if (capStart && i < 3) rr *= 0.45 + 0.55 * (i / 3);
+      if (capEnd && i > n - 4) rr *= 0.35 + 0.65 * ((n - 1 - i) / 3);
+      for (let j = 0; j < RS; j++) {
+        const a = j / RS * Math.PI * 2, ridge = 1 + 0.15 * Math.cos(8 * a), r = rr * ridge;
+        radial.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(v, Math.sin(a));
+        tang.copy(u).multiplyScalar(-Math.sin(a)).addScaledVector(v, Math.cos(a));
+        nn.copy(radial).addScaledVector(tang, 1.2 * Math.sin(8 * a) * 0.15 * 8 / 8).normalize();
+        const k = (i * RS + j) * 3;
+        pos[k] = pts[i].x + radial.x * r; pos[k + 1] = pts[i].y + radial.y * r; pos[k + 2] = pts[i].z + radial.z * r;
+        nor[k] = nn.x; nor[k + 1] = nn.y; nor[k + 2] = nn.z;
+        const useB = ((j + Math.floor(i * 0.5)) % RS) >= RS / 2;
+        const c = useB ? cb : ca, shade = 0.94 + 0.06 * Math.cos(8 * a);
+        col[k] = c[0] * shade; col[k + 1] = c[1] * shade; col[k + 2] = c[2] * shade;
+      }
+    }
+    for (let i = 0; i < n - 1; i++) for (let j = 0; j < RS; j++) {
+      const a = i * RS + j, b = i * RS + (j + 1) % RS, c = (i + 1) * RS + j, d = (i + 1) * RS + (j + 1) % RS;
+      idx.push(a, c, b, b, c, d);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    g.setIndex(idx);
+    return g;
+  }
+
+  // ---------- ゲームの状態 ----------
+  let state = 'title';    // title / order / play / judge / result / fall
+  let order, coneX, coneTargetX, spin, ropes, cur, pts, spills, deposits, Hmax, coneY, com, lean, fallT, judgeT, holdOn, result, newBest, stateT, blink = 0, auto = false;
+  const blobs = [];
+  const pointer = { down: false, x: 0, lastX: 0 };
+  const keys = {};
+
+  function newOrder() {
+    const names = Object.keys(FLAVORS);
+    order = { flavor: names[Math.floor(Math.random() * names.length)], cm: 9 + Math.floor(Math.random() * 4) };
+  }
+  function resetCone() {
+    for (const m of creamGroup.children.slice()) { m.geometry.dispose(); creamGroup.remove(m); }
+    for (const b of blobs) { scene.remove(b.m); b.m.geometry.dispose(); }
+    blobs.length = 0;
+    creamGroup.position.set(0, 0, 0); creamGroup.quaternion.identity();
+    resetHeight();
+    coneX = START_X; coneTargetX = START_X; spin = 0;
+    ropes = []; cur = null; pts = 0; spills = 0; deposits = []; Hmax = 0; coneY = 0.2; com = new THREE.Vector3(); lean = 0; fallT = 0; judgeT = 0; holdOn = false; result = null; newBest = false;
+  }
+  function startGame() {
+    audio();
+    newOrder(); resetCone(); auto = false;
+    state = 'order'; stateT = 0;
+    sfx.bell();
+    resultUi.hidden = true;
+  }
+
+  // ---------- 入力 ----------
+  function toLogical(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    audio();
+    const p = toLogical(e);
+    if (state === 'title') { startGame(); return; }
+    if (state === 'order' && stateT > 0.4) { state = 'play'; stateT = 0; }
+    if (state !== 'play') return;
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    pointer.down = true; pointer.x = pointer.lastX = p.x;
+    sfx.lever();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!pointer.down) return;
+    const p = toLogical(e);
+    pointer.lastX = pointer.x; pointer.x = p.x;
+    if (state === 'play') coneTargetX = Math.max(-1.8, Math.min(1.8, coneTargetX + (pointer.x - pointer.lastX) / pxPerUnit()));
+  });
+  const up = () => { pointer.down = false; };
+  cv.addEventListener('pointerup', up);
+  cv.addEventListener('pointercancel', up);
+  addEventListener('keydown', e => {
+    if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) return;
+    keys[e.code] = true;
+    if (e.code === 'Space') e.preventDefault();
+    if (e.repeat) return;
+    if ((e.code === 'Enter' || e.code === 'Space') && state === 'title') startGame();
+    else if ((e.code === 'Enter' || e.code === 'Space') && state === 'order') { state = 'play'; stateT = 0; }
+    if (e.code === 'KeyM') toggleMute();
+  });
+  addEventListener('keyup', e => { keys[e.code] = false; });
+  const holding = () => state === 'play' && (pointer.down || keys.Space);
+  // 画面の1px が、3D で何ユニットぶんか(コーンの高さで測る)
+  function pxPerUnit() {
+    const a = project(new THREE.Vector3(0, coneY, 0)), b = project(new THREE.Vector3(1, coneY, 0));
+    return Math.max(20, Math.abs(b.x - a.x));
+  }
+
+  doneBtn.addEventListener('click', () => { if (state === 'play' && deposits.length > 20) finishBuild(); doneBtn.blur(); });
+  againBtn.addEventListener('click', () => { startGame(); againBtn.blur(); });
+
+  // ---------- クリームを置く ----------
+  const UPV = new THREE.Vector3(0, 1, 0);
+  function deposit() {
+    // 機械の口は常に真上(x=0)。コーンの中心から見た位置に変換する
+    const local = new THREE.Vector3(-coneX, 0, 0).applyAxisAngle(UPV, -spin);
+    const sup = supportAt(local.x, local.z, ROPE * 0.7);
+    if (sup < -100) { spill(); return; }
+    const y = sup + ROPE * 0.8;
+    stamp(local.x, local.z, y, ROPE * 1.05);
+    const p = new THREE.Vector3(local.x, y, local.z);
+    if (!cur) { cur = { pts: [], mesh: null, start: true }; ropes.push(cur); }
+    cur.pts.push(p);
+    deposits.push({ r: Math.hypot(local.x, local.z), y });
+    com.x += local.x; com.z += local.z;
+    Hmax = Math.max(Hmax, y + ROPE * 0.8);
+    rebuildCur(false);
+    if (cur.pts.length > 44) {   // 長くなったら確定して、続きを新しいかたまりにする
+      rebuildCur(false, true);
+      const tail = cur.pts.slice(-2);
+      cur = { pts: tail, mesh: null, start: false }; ropes.push(cur);
+    }
+  }
+  function rebuildCur(capEnd, closing) {
+    if (!cur || cur.pts.length < 2) return;
+    const f = FLAVORS[order.flavor];
+    const g = ropeGeometry(cur.pts, f.a, f.b, cur.start, capEnd);
+    if (cur.mesh) { cur.mesh.geometry.dispose(); cur.mesh.geometry = g; }
+    else { cur.mesh = new THREE.Mesh(g, creamMat); cur.mesh.castShadow = true; cur.mesh.receiveShadow = true; creamGroup.add(cur.mesh); }
+  }
+  function endRope() { if (cur) { rebuildCur(true); cur = null; } }
+  function spill() {
+    spills++;
+    if (spills % 8 === 1) sfx.drip();
+    if (spills % 4 !== 1) return;
+    const f = FLAVORS[order.flavor];
+    const m = new THREE.Mesh(new THREE.SphereGeometry(ROPE * 1.1, 12, 8), new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(f.a[0] / 255, f.a[1] / 255, f.a[2] / 255, THREE.SRGBColorSpace), roughness: 0.4 }));
+    m.position.set(0, coneY + 0.2, 0); m.castShadow = true; scene.add(m);
+    blobs.push({ m, vy: 0, vx: (Math.random() - 0.5) * 1.5, landed: false });
+  }
+
+  // ---------- 判定 ----------
+  function finishBuild() {
+    endRope();
+    pointer.down = false;
+    state = 'judge'; judgeT = 0; stateT = 0;
+    setLoop(squeeze, 0);
+    doneBtn.hidden = true;
+  }
+  function evaluate(fell) {
+    const n = deposits.length || 1;
+    const hcm = Hmax * UNIT_CM;
+    const err = Math.abs(hcm - order.cm);
+    const sHeight = err <= 0.5 ? 1 : Math.max(0, 1 - (err - 0.5) / 3);
+    // 形:下から上へ、半径が少しずつ小さくなっているほど良い
+    let dev = 0;
+    const top = Math.max(0.5, Hmax);
+    for (const d of deposits) { const ideal = START_X * Math.pow(Math.max(0, 1 - d.y / top), 0.85); dev += Math.abs(d.r - ideal); }
+    const sShape = Math.max(0, 1 - (dev / n) / 0.45);
+    const off = Math.hypot(com.x, com.z) / n;
+    const sCenter = Math.max(0, 1 - off / 0.45);
+    const sSpill = Math.max(0, 1 - spills / Math.max(1, n + spills) * 5);
+    const lastN = deposits.slice(-Math.max(6, Math.floor(n * 0.08)));
+    const tipR = lastN.reduce((s, d) => s + d.r, 0) / Math.max(1, lastN.length);
+    const sTip = Math.max(0, Math.min(1, 1 - (tipR - 0.15) / 0.5));
+    let total = Math.round(100 * (0.3 * sHeight + 0.3 * sShape + 0.15 * sCenter + 0.1 * sSpill + 0.15 * sTip));
+    if (fell) total = Math.round(total * 0.4);
+    if (n < 30) total = Math.min(total, 10);
+    return { total, hcm, sHeight, sShape, sCenter, sSpill, sTip, fell };
+  }
+  function showResult(fell) {
+    result = evaluate(fell);
+    if (!auto) {
+      served++; store.set('softcream-served', served);
+      if (result.total > best) { best = result.total; store.set('softcream-best', best); newBest = true; }
+    }
+    state = 'result'; stateT = 0;
+    sfx.fanfare();
+    const text = `ソフトクリーム巻きで ${result.total}点!「${fell ? '倒れた…' : rankOf(result.total)}」\n${order.flavor} ${result.hcm.toFixed(1)}cm(注文 ${order.cm}cm)\n` + SHARE_TAG + (GAME_URL ? '\n' + GAME_URL : '');
+    shareBtn.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+    copyBtn.dataset.text = text;
+    setTimeout(() => { if (state === 'result' && !auto) resultUi.hidden = false; }, 700);
+  }
+  copyBtn.addEventListener('click', () => {
+    const text = copyBtn.dataset.text || '';
+    try { navigator.clipboard.writeText(text).then(() => toast('コピーしました'), () => toast('コピーできませんでした')); } catch (e) { toast('コピーできませんでした'); }
+  });
+  let toastTimer = 0;
+  function toast(s) { toastEl.textContent = s; toastEl.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.hidden = true; }, 1600); }
+  function toggleMute() { muted = !muted; store.set('softcream-mute', muted); soundBtn.textContent = muted ? '音 OFF' : '音 ON'; soundBtn.setAttribute('aria-pressed', String(!muted)); if (muted) setLoop(squeeze, 0); }
+  soundBtn.addEventListener('click', () => { audio(); toggleMute(); soundBtn.blur(); });
+  soundBtn.textContent = muted ? '音 OFF' : '音 ON';
+
+  // ---------- 自動で巻く(タイトル画面の見本・動画の撮影用) ----------
+  function autopilot() {
+    const goal = order.cm / UNIT_CM;
+    const k = Math.min(1, Hmax / (goal * 0.9));
+    coneTargetX = START_X * Math.pow(1 - k, 1.05);
+    return Hmax < goal - 0.05;
+  }
+
+  // ---------- 更新 ----------
+  function update(dt) {
+    stateT += dt; blink += dt;
+    if (state === 'title' || (state === 'play' && auto)) {
+      if (state === 'title' && !order) { newOrder(); resetCone(); }
+      const pour = autopilot();
+      if (state === 'title') {
+        if (pour && deposits.length < MAX_POINTS) { holdOn = true; }
+        else { holdOn = false; endRope(); if (stateT > 0 && Hmax > 0 && !pour) { stateT = -2.5; } }
+        if (stateT < -0.01 && stateT > -0.05) { newOrder(); resetCone(); stateT = 0; }
+      } else {
+        holdOn = pour;
+        if (!pour) finishBuild();
+      }
+    }
+    const pouring = (state === 'play' && (auto ? holdOn : holding()) && deposits.length < MAX_POINTS) || (state === 'title' && holdOn);
+    // コーンを回す・動かす
+    if (state === 'play' || state === 'title') {
+      if (!auto && state === 'play') coneTargetX = Math.max(-1.8, Math.min(1.8, coneTargetX + ((keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0)) * 1.4 * dt));
+      coneX += (coneTargetX - coneX) * Math.min(1, dt * 14);
+      spin += SPIN * dt;
+      if (pouring) deposit();
+      else if (cur) endRope();
+      // クリームが高くなったら、コーンを下げて口との間をあける
+      const want = Math.min(0.2, NOZZLE_Y - 0.55 - Hmax);
+      coneY += (want - coneY) * Math.min(1, dt * 6);
+      // かたむき:重心が中心からずれているほど、高く積むほど倒れやすい
+      const n = Math.max(1, deposits.length);
+      const off = Math.hypot(com.x, com.z) / n;
+      lean = off * (0.55 + Hmax * 0.38);
+      if (state === 'play' && lean > 0.9 && deposits.length > 40) { endRope(); state = 'fall'; fallT = 0; sfx.fall(); doneBtn.hidden = true; setLoop(squeeze, 0); }
+    }
+    if (state === 'play') {
+      setLoop(squeeze, pouring ? 0.12 : 0);
+      doneBtn.hidden = !(deposits.length > 20 && !pouring && !auto);
+      if (deposits.length >= MAX_POINTS && !pouring) toast('クリームがなくなりました');
+    } else if (state !== 'play') setLoop(squeeze, 0);
+
+    if (state === 'judge') {
+      judgeT += dt;
+      if (judgeT > 2.2) showResult(false);
+    }
+    if (state === 'fall') {
+      fallT += dt;
+      // 重心の方向へ、ふちを支点にして倒れる
+      const dir = new THREE.Vector3(com.x, 0, com.z); if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0); dir.normalize();
+      const axis = new THREE.Vector3().crossVectors(UPV, dir).normalize();
+      const ang = Math.min(1.5, fallT * fallT * 2.6);
+      const pivot = dir.clone().multiplyScalar(RIM * 0.8);
+      const q = new THREE.Quaternion().setFromAxisAngle(axis, ang);
+      creamGroup.quaternion.copy(q);
+      creamGroup.position.copy(pivot.clone().sub(pivot.clone().applyQuaternion(q)));
+      creamGroup.position.y -= Math.max(0, fallT - 0.5) * 3;
+      if (fallT > 1.6 && state === 'fall') showResult(true);
+    }
+    for (const b of blobs) {
+      if (b.landed) continue;
+      b.vy += 18 * dt; b.m.position.y -= b.vy * dt; b.m.position.x += b.vx * dt;
+      if (b.m.position.y <= COUNTER_Y + 0.12) { b.m.position.y = COUNTER_Y + 0.12; b.m.scale.set(1.6, 0.45, 1.6); b.landed = true; }
+    }
+  }
+
+  // ---------- 3D の描画 ----------
+  const pv = new THREE.Vector3();
+  function project(v) { pv.copy(v).project(camera); return { x: (pv.x + 1) / 2 * W, y: (1 - pv.y) / 2 * H }; }
+  function render3D() {
+    const t = performance.now() / 1000;
+    if (state === 'judge' || state === 'result') {
+      // できあがりを、ぐるっと回って見せる
+      const a = state === 'judge' ? judgeT * 1.6 : 1.6 * 2.2 + stateT * 0.4;
+      const r = 11.5, cy = coneY + Math.max(1.2, Hmax * 0.6);
+      camera.position.set(Math.sin(a) * r * 0.5, cy + 2.2, Math.cos(a) * r);
+      camera.lookAt(0, cy - 0.6, 0);
+    } else {
+      camera.position.set(0, 3.0, 13.2);
+      camera.lookAt(0, 0.9, 0);
+    }
+    camera.updateMatrixWorld();
+    coneHolder.position.set(coneX, coneY, 0);
+    coneSpin.rotation.y = state === 'fall' ? coneSpin.rotation.y : spin;
+    const pouring = state === 'title' ? holdOn : (state === 'play' && (auto ? holdOn : holding()));
+    lever.rotation.z = pouring ? -0.5 : 0;
+    stream.visible = pouring;
+    if (pouring) {
+      const bottom = deposits.length ? coneY + supportUnderNozzle() + ROPE * 0.3 : coneY;
+      const top = NOZZLE_Y + 0.05, len = Math.max(0.05, top - bottom);
+      stream.scale.set(1, len, 1); stream.position.set(0, (top + bottom) / 2, 0);
+      const f = FLAVORS[order.flavor];
+      streamMat.color.setRGB(f.a[0] / 255, f.a[1] / 255, f.a[2] / 255, THREE.SRGBColorSpace);
+    }
+    renderer.render(scene, camera);
+  }
+  function supportUnderNozzle() {
+    const local = new THREE.Vector3(-coneX, 0, 0).applyAxisAngle(UPV, -spin);
+    const s = supportAt(local.x, local.z, ROPE * 0.7);
+    return s < -100 ? COUNTER_Y - coneY : s + ROPE;
+  }
+
+  // ---------- 文字・ゲージ ----------
+  function text(s, x, y, size, col, font, align, alpha) {
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    font = font || FB;
+    ctx.font = font.startsWith('700 ') ? '700 ' + size + 'px ' + font.slice(4) : size + 'px ' + font;
+    ctx.fillStyle = col; ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(s, x, y);
+    ctx.globalAlpha = 1;
+  }
+  function outlined(s, x, y, size, col, font, stroke) {
+    font = font || FD;
+    ctx.font = font.startsWith('700 ') ? '700 ' + size + 'px ' + font.slice(4) : size + 'px ' + font;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size * 0.2); ctx.strokeStyle = stroke || C.cream;
+    ctx.strokeText(s, x, y);
+    ctx.fillStyle = col; ctx.fillText(s, x, y);
+  }
+  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function awning() {
+    const n = 8, w = W / n;
+    for (let i = 0; i < n; i++) {
+      ctx.fillStyle = i % 2 ? C.cream : C.pink;
+      ctx.fillRect(i * w, 0, w, 34);
+      ctx.beginPath(); ctx.arc(i * w + w / 2, 34, w / 2, 0, Math.PI); ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(59,42,36,0.08)'; ctx.fillRect(0, 34, W, 3);
+  }
+  function orderCard(x, y) {
+    ctx.fillStyle = 'rgba(255,248,236,0.94)'; roundRect(x, y, 150, 62, 10); ctx.fill();
+    ctx.strokeStyle = 'rgba(59,42,36,0.18)'; ctx.lineWidth = 1.5; ctx.stroke();
+    text('ご注文', x + 12, y + 14, 11, C.pink, '700 ' + FB, 'left');
+    text(order.flavor, x + 12, y + 36, 18, C.ink, FD, 'left');
+    text('高さ ' + order.cm + 'cm', x + 138, y + 38, 14, C.ink, '700 ' + FB, 'right');
+  }
+  // 右側の物差し(コーンのふちが 0cm)
+  function ruler() {
+    const x = 316;
+    const y0 = project(new THREE.Vector3(coneX, coneY, 0)).y;
+    const y1 = project(new THREE.Vector3(coneX, coneY + 15 / UNIT_CM, 0)).y;
+    const pxPerCm = (y0 - y1) / 15;
+    ctx.fillStyle = 'rgba(255,248,236,0.85)'; roundRect(x - 6, Math.min(y1, y0) - 10, 40, Math.abs(y0 - y1) + 20, 8); ctx.fill();
+    const tLo = y0 - (order.cm - 0.5) * pxPerCm, tHi = y0 - (order.cm + 0.5) * pxPerCm;
+    ctx.fillStyle = 'rgba(79,179,154,0.4)'; ctx.fillRect(x - 6, tHi, 40, tLo - tHi);
+    for (let cm = 0; cm <= 15; cm++) {
+      const y = y0 - cm * pxPerCm;
+      ctx.fillStyle = C.ink; ctx.fillRect(x, y, cm % 3 === 0 ? 12 : 6, 1.5);
+      if (cm % 3 === 0) text(String(cm), x + 26, y, 10, C.ink, '700 ' + FB);
+    }
+    const hy = y0 - Hmax * UNIT_CM * pxPerCm;
+    ctx.fillStyle = C.pink; ctx.beginPath(); ctx.moveTo(x - 4, hy); ctx.lineTo(x - 14, hy - 6); ctx.lineTo(x - 14, hy + 6); ctx.fill();
+    text((Hmax * UNIT_CM).toFixed(1) + 'cm', x + 14, Math.min(y0, y1) - 22, 12, C.ink, '700 ' + FB);
+  }
+  function meters() {
+    // かたむき
+    const x = 18, y = 600, w = 130;
+    text('かたむき', x, y - 12, 11, C.ink, '700 ' + FB, 'left');
+    ctx.fillStyle = 'rgba(59,42,36,0.15)'; roundRect(x, y, w, 9, 4.5); ctx.fill();
+    const l = Math.min(1, lean / 0.9);
+    ctx.fillStyle = l > 0.75 ? C.red : l > 0.45 ? C.gold : C.mint; roundRect(x, y, Math.max(9, w * l), 9, 4.5); ctx.fill();
+    // クリームの残り
+    const x2 = 170, w2 = 100, rem = 1 - deposits.length / MAX_POINTS;
+    text('クリーム', x2, y - 12, 11, C.ink, '700 ' + FB, 'left');
+    ctx.fillStyle = 'rgba(59,42,36,0.15)'; roundRect(x2, y, w2, 9, 4.5); ctx.fill();
+    ctx.fillStyle = C.pink; roundRect(x2, y, Math.max(9, w2 * rem), 9, 4.5); ctx.fill();
+  }
+  function bar(y, label, v) {
+    text(label, 62, y, 12, C.ink, '700 ' + FB, 'left');
+    ctx.fillStyle = 'rgba(59,42,36,0.12)'; roundRect(160, y - 5, 120, 10, 5); ctx.fill();
+    ctx.fillStyle = v >= 0.85 ? C.mint : v >= 0.6 ? C.gold : C.red; roundRect(160, y - 5, Math.max(10, 120 * v), 10, 5); ctx.fill();
+    text(Math.round(v * 100) + '', 300, y, 12, C.ink, '700 ' + FB, 'right');
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    awning();
+    if (state === 'title') {
+      ctx.fillStyle = 'rgba(255,248,236,0.72)'; roundRect(20, 60, W - 40, 190, 16); ctx.fill();
+      outlined('ソフトクリーム', W / 2, 98, 30, C.ink);
+      outlined('巻き', W / 2, 140, 46, C.pink, FD, C.ink);
+      text('長押しで しぼって、左右にずらして', W / 2, 186, 13, C.ink, '700 ' + FB);
+      text('外側から 少しずつ真ん中へ。注文の高さで ツノを立てる。', W / 2, 206, 11.5, C.ink, '700 ' + FB);
+      text('ハイスコア ' + best + '点 / 作った数 ' + served, W / 2, 232, 11, C.ink, FB, 'center', 0.7);
+      ctx.fillStyle = 'rgba(255,248,236,0.85)'; roundRect(60, 520, W - 120, 46, 23); ctx.fill();
+      text('タップでスタート', W / 2, 543, 18, C.ink, FD, 'center', 0.6 + Math.sin(blink * 4) * 0.4);
+      return;
+    }
+    if (state === 'order') {
+      ctx.fillStyle = 'rgba(255,248,236,0.9)'; roundRect(30, 200, W - 60, 190, 18); ctx.fill();
+      text('いらっしゃいませ!', W / 2, 232, 15, C.pink, '700 ' + FB);
+      outlined(order.flavor, W / 2, 278, 38, C.ink);
+      text('高さ ' + order.cm + 'cm で おねがいします', W / 2, 324, 16, C.ink, '700 ' + FB);
+      text('タップで はじめる', W / 2, 362, 13, C.ink, '700 ' + FB, 'center', 0.5 + Math.sin(blink * 4) * 0.4);
+      return;
+    }
+    if (state === 'play' || state === 'fall' || state === 'judge') {
+      orderCard(16, 50);
+      ruler();
+      if (state === 'play') {
+        meters();
+        if (!deposits.length) {
+          ctx.fillStyle = 'rgba(255,248,236,0.88)'; roundRect(40, 470, W - 80, 50, 12); ctx.fill();
+          text('長押しで しぼる', W / 2, 486, 14, C.ink, '700 ' + FB);
+          text('そのまま 指を左にずらして 真ん中へ', W / 2, 505, 12, C.ink, '700 ' + FB, 'center', 0.8);
+        }
+      }
+      if (state === 'fall') outlined('倒れた…!', W / 2, 300, 40, C.red);
+      if (state === 'judge') outlined('判定中…', W / 2, 140, 26, C.ink);
+      return;
+    }
+    if (state === 'result') {
+      const r = result;
+      ctx.fillStyle = 'rgba(255,248,236,0.9)'; roundRect(20, 54, W - 40, 250, 16); ctx.fill();
+      text(order.flavor + ' / 注文 ' + order.cm + 'cm → ' + r.hcm.toFixed(1) + 'cm', W / 2, 78, 13, C.ink, '700 ' + FB);
+      outlined(r.total + '点', W / 2, 120, 46, r.fell ? C.red : C.pink, FD, C.ink);
+      outlined(r.fell ? '倒れた…' : rankOf(r.total), W / 2, 162, 20, C.ink);
+      if (newBest) text('ハイスコア更新!', W / 2, 186, 13, C.gold, '700 ' + FB);
+      bar(208, '高さ', r.sHeight);
+      bar(229, '形', r.sShape);
+      bar(250, 'まっすぐ', r.sCenter);
+      bar(271, 'こぼさない', r.sSpill);
+      bar(292, 'ツノ', r.sTip);
+    }
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    update(dt);
+    render3D();
+    draw();
+    requestAnimationFrame(frame);
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { setLoop(squeeze, 0); pointer.down = false; } });
+  // テスト・撮影用(URL に ?capture を付けたときだけ)
+  if (/[?&]capture\b/.test(location.search)) {
+    window.__capture = {
+      state: () => state,
+      info: () => ({ H: Hmax * UNIT_CM, lean, coneX, n: deposits.length, spills, order, result }),
+      play(autoplay) { startGame(); state = 'play'; stateT = 0; auto = !!autoplay; },
+      project: (x, y) => project(new THREE.Vector3(x, y, 0)),
+    };
+  }
+  order = null;
+  requestAnimationFrame(frame);
+})();
+</script>
