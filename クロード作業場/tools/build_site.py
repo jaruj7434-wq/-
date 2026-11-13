@@ -19,7 +19,7 @@ BRAND = "ゆびさき工房"
 BRAND_EN = "Yubisaki Kobo"
 TAGLINE = "指先ひとつで遊べる、ちいさな手しごとのゲーム。"
 # 独自ドメインを取ったら書く(例: "https://yubisaki-kobo.com")。空なら相対パスで動く
-SITE_URL = ""
+SITE_URL = "https://yubisaki-kobo-games.pages.dev"
 LINKS = {
     "x": "",       # 例: "https://x.com/yubisaki_kobo"
     "ofuse": "",   # 例: "https://ofuse.me/xxxx"
