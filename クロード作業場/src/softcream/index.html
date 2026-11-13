@@ -293,7 +293,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       t.subVectors(p1, p0); if (t.lengthSq() < 1e-8) t.set(1, 0, 0); t.normalize();
       ref.set(0, 1, 0); if (Math.abs(t.y) > 0.9) ref.set(1, 0, 0);
       u.crossVectors(t, ref).normalize(); v.crossVectors(t, u).normalize();
-      let rr = ROPE;
+      let rr = ROPE * (pts[i].w == null ? 1 : pts[i].w);
       if (capStart && i < 3) rr *= 0.45 + 0.55 * (i / 3);
       if (capEnd && i > n - 4) rr *= 0.35 + 0.65 * ((n - 1 - i) / 3);
       for (let j = 0; j < RS; j++) {
@@ -323,7 +323,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // ---------- ゲームの状態 ----------
   let state = 'title';    // title / order / play / judge / result / fall
-  let gameT = 0, flowAcc = 0, ropeIndex = 0;
+  let gameT = 0, flowAcc = 0, ropeIndex = 0, tipBase = null;
   let order, coneX, coneTargetX, spin, ropes, cur, pts, spills, deposits, Hmax, coneY, com, lean, fallT, judgeT, holdOn, result, newBest, stateT, blink = 0, auto = false;
   const blobs = [];
   const pointer = { down: false, x: 0, lastX: 0 };
@@ -339,7 +339,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     blobs.length = 0;
     creamGroup.position.set(0, 0, 0); creamGroup.quaternion.identity();
     resetHeight();
-    pending.length = 0; flowAcc = 0; ropeIndex = 0;
+    pending.length = 0; flowAcc = 0; ropeIndex = 0; tipBase = null;
     coneX = START_X; coneTargetX = START_X; spin = 0;
     ropes = []; cur = null; pts = 0; spills = 0; deposits = []; Hmax = 0; coneY = 0.2; com = new THREE.Vector3(); lean = 0; fallT = 0; judgeT = 0; holdOn = false; result = null; newBest = false;
   }
@@ -404,13 +404,16 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     let y;
     if (r < 0.22) {
       // ほぼ中心:その場に少しずつ盛り上がって「ツノ」になる
-      y = sup + 0.012;
-      stamp(local.x, local.z, y, ROPE * 0.9, 0.05);
+      y = sup + 0.006;
+      stamp(local.x, local.z, y, ROPE * 0.9, 0.03);
+      if (tipBase == null) tipBase = y;
     } else {
       y = sup + ROPE * 0.6;
       pending.push({ x: local.x, z: local.z, y, t: gameT });
     }
     const p = new THREE.Vector3(local.x, y, local.z);
+    // ツノ:中心で盛り上がるほど細くなる
+    if (r < 0.22) p.w = Math.max(0.28, 0.75 - (y - (tipBase ?? y)) * 1.1); else tipBase = null;
     if (!cur) { cur = { pts: [], mesh: null, start: true, offset: ropeIndex }; ropes.push(cur); }
     ropeIndex++;
     cur.pts.push(p);
@@ -497,9 +500,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   // ---------- 自動で巻く(タイトル画面の見本・動画の撮影用) ----------
   function autopilot() {
     const goal = order.cm / UNIT_CM;
-    const k = Math.min(1, Hmax / (goal * 0.9));
+    const k = Math.min(1, Hmax / (goal * 0.95));
     coneTargetX = START_X * Math.pow(1 - k, 1.05);
-    return Hmax < goal - 0.05;
+    return Hmax < goal - 0.03;
   }
 
   // ---------- 更新 ----------

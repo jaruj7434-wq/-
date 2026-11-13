@@ -84,6 +84,20 @@ async function localRoutes(page) {
     await p.screenshot({ path: path.join(SITE, 'img', 'bullet-alchemist.jpg'), type: 'jpeg', quality: 85, clip: { x: box.x, y: box.y + box.height * 0.12, width: box.width, height: box.width * 4 / 3 } });
     await p.close();
   }
+  // ソフトクリーム巻き:自動で巻いて、できあがる直前
+  {
+    const p = await open('/play/softcream/index.html?capture');
+    await p.addStyleTag({ content: '.mini, .yk-home, #doneUi { display: none !important; }' });
+    await p.evaluate(() => window.__capture.play(true));
+    const t0 = Date.now();
+    while (Date.now() - t0 < 400000) {
+      const info = await p.evaluate(() => window.__capture.info());
+      if (info.H >= info.order.cm - 0.6) break;
+      await wait(300);
+    }
+    await p.screenshot({ path: path.join(SITE, 'img', 'softcream.jpg'), type: 'jpeg', quality: 85, clip: { x: 0, y: 110, width: 360, height: 480 } });
+    await p.close();
+  }
   // SNS シェア用(1200x630)
   {
     const p = await browser.newPage({ viewport: { width: 1200, height: 630 } });
@@ -97,7 +111,7 @@ async function localRoutes(page) {
       .imgs{display:flex;gap:22px;align-items:center}.imgs img{width:230px;height:307px;object-fit:cover;border-radius:16px;border:2px solid rgba(255,255,255,.12)}.imgs img:first-child{transform:rotate(-3deg)}.imgs img:last-child{transform:rotate(3deg) translateY(20px)}</style></head>
       <body><div class="t"><svg class="mark" viewBox="0 0 40 40"><circle cx="20" cy="20" r="6" fill="currentColor"/><circle cx="20" cy="20" r="12" fill="none" stroke="currentColor" stroke-width="2.5" opacity=".55"/><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2" opacity=".25"/></svg>
       <div class="b">ゆびさき工房</div><div class="s">指先ひとつで遊べる、<br>ちいさな手しごとのゲーム。</div></div>
-      <div class="imgs"><img src="img/takoyaki.jpg"><img src="img/bullet-alchemist.jpg"></div></body></html>`);
+      <div class="imgs"><img src="img/softcream.jpg"><img src="img/takoyaki.jpg"></div></body></html>`);
     await p.evaluate(() => document.fonts.ready);
     await wait(800);
     await p.screenshot({ path: path.join(SITE, 'img', 'og.jpg'), type: 'jpeg', quality: 85 });
