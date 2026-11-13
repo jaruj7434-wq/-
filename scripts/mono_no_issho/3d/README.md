@@ -74,3 +74,22 @@ P05〜P08 の補助は `shots/pet_parts2.py`：フレーク/ペレットのメ�
 ```bash
 SAMPLES=16 scripts/mono_no_issho/3d/render_queue.sh p05_flakes p06_pellets p07_reborn p08_new_bottles
 ```
+
+## 第4話（服）
+- 出力先は `assets/output/mono_no_issho/ep04/3d/<name>/`（各ショットで `C.EPISODE = "ep04"`）。
+- C05〜C07 の補助は `shots/fuku_parts2.py`：古着ベール（押しつぶした布の層のボロノイ模様＋PPバンド。形は `pet_parts.bale` を流用）、
+  無地の海上コンテナ（波板・観音扉。ロゴ・文字なし）、ウエス（格子メッシュ＋決定的なしわ、無地/ボーダー/ギンガム/水玉の綿）、
+  歯車メッシュ、油汚れ→ふくと光る金属（`"Wipe"` 値ノードをキー。映り込みは `fake_env`）、
+  反毛の繊維（くるっと曲がった細い管）と `fluff_object`（点ごとに「服→綿雲→板」の3位置と区間を属性に持ち、GN＋シーン時間で補間。キー・物理なし）。
+- C08 は `fuku_parts.build_closet`（C01 と共用）をそのまま組み、値札のシャツだけ取り除いて空のハンガーを `swing` で揺らす。
+
+| スクリプト | 台本カット | 内容 | 960x540・8サンプル |
+|---|---|---|---|
+| `shots/c05_container.py` | 5-2 | 港の岸壁。扉を開けた無地のコンテナの奥にベールの壁、斜めのコンベアを上ってきたベールが空きにすべり込む（ゆっくり寄る） | 約25秒/フレーム |
+| `shots/c06_wiping_rag.py` | 5-3 | 作業台。ウエスの山から1枚が浮き、油で黒い歯車の上をなでると、通った所から鋼が光る（手なし） | 約11秒/フレーム |
+| `shots/c07_hanmo.py` | 5-4 | スタジオ。宙のTシャツが上からほどけて繊維9000本の綿雲になり、渦を巻いて台へ降り、フェルトの板に固まる | 約35〜40秒/フレーム（繊維が多い中盤） |
+| `shots/c08_empty_hanger.py` | 7-1（ラスト） | C01 と同じクローゼット。値札のシャツがあった所で空のハンガーが揺れ、カメラはゆっくり引く | 約25秒/フレーム |
+
+```bash
+EP=ep04 scripts/mono_no_issho/3d/render_queue.sh c05_container c06_wiping_rag c07_hanmo c08_empty_hanger
+```
