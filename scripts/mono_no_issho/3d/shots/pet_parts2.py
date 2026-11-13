@@ -16,6 +16,7 @@ from mathutils import Euler, Vector
 
 import common as C
 import props as P
+import factory_parts as F
 
 
 # ------------------------------------------------------------------ キーフレーム
@@ -156,13 +157,16 @@ def mat_fake_clear(name, tint=(0.55, 0.62, 0.66), edge=(0.04, 0.05, 0.06), rough
     return m
 
 
-def add_reveal(mat, obj_axis="Z", noise_amt=0.6, edge_color=(0.35, 0.85, 1.0), edge_strength=8.0, edge_width=0.5):
+def add_reveal(mat, obj_axis="Z", noise_amt=0.6, edge_color=(0.35, 0.85, 1.0), edge_strength=8.0, edge_width=0.5,
+               coord_obj=None):
     """マテリアルに「下から現れる」ディゾルブを足す。"Reveal" 値ノード(オブジェクト座標の高さ cm)をキーフレーム。
     境目は細く光る(ペレットから形ができていく感じ)。"""
     nt = mat.node_tree; n = nt.nodes
     out = [x for x in n if x.type == "OUTPUT_MATERIAL"][0]
     src = out.inputs["Surface"].links[0].from_socket
     tc = n.new("ShaderNodeTexCoord"); sep = n.new("ShaderNodeSeparateXYZ")
+    if coord_obj is not None:      # 部品が複数でも、基準オブジェクトの座標でそろって現れる
+        tc.object = coord_obj
     C.link(nt, tc.outputs["Object"], sep.inputs["Vector"])
     nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 0.6; nz.inputs["Detail"].default_value = 4
     C.link(nt, tc.outputs["Object"], nz.inputs["Vector"])
@@ -202,7 +206,7 @@ def instance_collection(name, meshes, mats):
     return coll
 
 
-def _gn_pile_group(name, coll, window):
+def _gn_pile_group(name, coll):
     ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
     ng.interface.new_socket("Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
     ng.interface.new_socket("Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
@@ -219,10 +223,8 @@ def _gn_pile_group(name, coll, window):
     rev = attr("reveal", "FLOAT")
     c1 = n.new("FunctionNodeCompare"); c1.data_type = "FLOAT"; c1.operation = "LESS_EQUAL"
     L(rev, c1.inputs["A"]); L(st.outputs["Frame"], c1.inputs["B"])
-    sub = n.new("ShaderNodeMath"); sub.operation = "SUBTRACT"; sub.inputs[1].default_value = window
-    L(st.outputs["Frame"], sub.inputs[0])
-    c2 = n.new("FunctionNodeCompare"); c2.data_type = "FLOAT"; c2.operation = "GREATER_EQUAL"
-    L(rev, c2.inputs["A"]); L(sub.outputs[0], c2.inputs["B"])
+    c2 = n.new("FunctionNodeCompare"); c2.data_type = "FLOAT"; c2.operation = "GREATER_THAN"
+    L(attr("bury", "FLOAT"), c2.inputs["A"]); L(st.outputs["Frame"], c2.inputs["B"])
     an = n.new("FunctionNodeBooleanMath"); an.operation = "AND"
     L(c1.outputs["Result"], an.inputs[0]); L(c2.outputs["Result"], an.inputs[1])
     e2r = n.new("FunctionNodeEulerToRotation"); L(attr("rot", "FLOAT_VECTOR"), e2r.inputs["Euler"])
@@ -235,11 +237,13 @@ def _gn_pile_group(name, coll, window):
     return ng
 
 
-def points_object(name, pts, reveal, rot, scl, var):
+def points_object(name, pts, reveal, rot, scl, var, bury=None):
     me = bpy.data.meshes.new(name + "Pts")
     me.vertices.add(len(pts))
     me.vertices.foreach_set("co", np.asarray(pts, dtype=np.float32).ravel())
-    for nm, dt, data in (("reveal", "FLOAT", reveal), ("scl", "FLOAT", scl), ("var", "INT", var)):
+    if bury is None:
+        bury = np.full(len(pts), 1e9)
+    for nm, dt, data in (("reveal", "FLOAT", reveal), ("bury", "FLOAT", bury), ("scl", "FLOAT", scl), ("var", "INT", var)):
         a = me.attributes.new(nm, dt, "POINT")
         a.data.foreach_set("value", np.asarray(data, dtype=np.int32 if dt == "INT" else np.float32))
     a = me.attributes.new("rot", "FLOAT_VECTOR", "POINT")
@@ -302,18 +306,16 @@ def growing_pile(name, coll, n_var, center, r_of_frame, frames, k=0.6, density=6
     scl = rnd.uniform(*scale_range, n)
     var = rnd.integers(0, n_var, n)
     pts = np.column_stack([x + center[0], y + center[1], z + center[2]])
+    # 表面から shell cm 埋まったフレームで消す(window を指定したら reveal+window で消す)
     if window is None:
-        # 表面が shell cm 進む時間(フレーム)だけ表示
-        window = 1e6
-        w = []
-        for f in (f_lo, (f_lo + f_hi) / 2, f_hi):
-            r = r_of_frame(f); r2 = r + shell
-            g = np.interp(r2, rf, fs) - f if r2 <= r1 else 1e6
-            w.append(g)
-        window = max(1.0, min(w))
-    o = points_object(name, pts, reveal, rot, scl, var)
+        bury = np.interp(rr + shell, rf, fs, right=1e9)
+    else:
+        bury = reveal + window
+    o = points_object(name, pts, reveal, rot, scl, var, bury)
     mod = o.modifiers.new("Pile", "NODES")
-    mod.node_group = _gn_pile_group(name + "GN", coll, window)
+    mod.node_group = _gn_pile_group(name + "GN", coll)
+    f_mid = (f_lo + f_hi) // 2
+    window = int(np.sum((reveal <= f_mid) & (bury > f_mid)))   # 参考: 中間フレームの表示数
     core = None
     if core_mat is not None:
         core = cone(name + "Core", 1.0, k, center, core_mat)
@@ -532,3 +534,139 @@ def frustum(name, top, bottom, z_top, z_bot, mat=None, wall=0.4):
     if mat:
         me.materials.append(mat)
     return o
+
+
+def plant_hall():
+    """リサイクル工場の背景(床・奥壁・天井灯・サイロ・ダクト・奥のコンベア)。戻り値 (steel, grey, blue)。"""
+    floor_m = F.mat_concrete("Floor", (0.12, 0.125, 0.13), rough=0.55, scale=0.006)
+    P.plane("Floor", (6000, 4000), (0, 1000, -0.01), mat=floor_m)
+    wall_m = F.mat_painted("Wall", (0.16, 0.18, 0.2), rough=0.7, wear=0.05, scale=0.003)
+    P.plane("BackWall", (6000, 1400), (0, 1500, 700), rot=(90, 0, 0), mat=wall_m)
+    P.plane("Ceiling", (6000, 4000), (0, 1000, 900), rot=(180, 0, 0), mat=C.principled("CeilM", (0.08, 0.08, 0.085), rough=0.8))
+    lamp_m = C.emissive("LampM", temp=5600, strength=30)
+    for row, y in enumerate((300, 800, 1300)):
+        for i in range(7):
+            P.box(f"Lamp{row}_{i}", (160, 30, 6), (-1500 + i * 500 + row * 120, y, 880), mat=lamp_m)
+    grey = F.mat_painted("MachGrey", (0.55, 0.58, 0.6), rough=0.4, wear=0.08, scale=0.03)
+    blue = F.mat_painted("MachBlue", (0.12, 0.3, 0.5), rough=0.4, wear=0.1, scale=0.03)
+    steel, _ = F.mat_steel("Steel", (0.7, 0.71, 0.73), rough=0.18, streak_axis="Z")
+    # 奥: サイロ・ダクト・コンベア(ボケて見える工場の気配)
+    for i, x in enumerate((-520, -330, 420, 640)):
+        P.cyl(f"Silo{i}", 85, 620, (x, 1050 + 60 * (i % 2), 310), mat=steel, verts=48)
+        P.cyl(f"SiloCone{i}", 85, 10, (x, 1050 + 60 * (i % 2), 0), mat=steel, verts=48)
+    P.box("Duct", (2400, 40, 40), (0, 1000, 700), mat=steel)
+    for x in range(-900, 901, 300):
+        P.box(f"DuctHang{x}", (6, 6, 180), (x, 1000, 810), mat=grey)
+    P.box("ConvFar", (900, 60, 8), (-250, 650, 95), mat=C.principled("Belt", (0.03, 0.03, 0.035), rough=0.7))
+    P.box("ConvFarFrame", (920, 70, 14), (-250, 650, 84), mat=blue)
+    for x in range(-650, 160, 150):
+        P.box(f"ConvLeg{x}", (8, 60, 80), (x, 650, 40), mat=blue)
+    P.box("MachBox", (220, 160, 180), (430, 520, 90), mat=blue, bevel=2)
+    P.box("MachBox2", (140, 120, 130), (-560, 420, 65), mat=grey, bevel=2)
+    # 黄色い通路線(文字なし)
+    yel = F.mat_painted("Yellow", (0.62, 0.45, 0.05), rough=0.5, wear=0.3, scale=0.02)
+    P.box("Walk", (3000, 8, 0.3), (0, 160, 0.15), mat=yel)
+    return steel, grey, blue
+
+
+# ------------------------------------------------------------------ 生まれ変わり先(P07)
+def _cup_sheet(name, cols, rows, pitch, depth, flange=1.2, res=0.25, sign=-1.0, cup_r=None):
+    """卵パック1枚分(並んだくぼみ)。sign=-1 でくぼみが下(トレー)、+1 で上(フタのドーム)。"""
+    cup_r = cup_r or pitch * 0.44
+    w, h = cols * pitch + 2 * flange, rows * pitch + 2 * flange
+    nx, ny = int(w / res), int(h / res)
+    bpy.ops.mesh.primitive_grid_add(x_subdivisions=nx, y_subdivisions=ny, size=1)
+    o = bpy.context.object; o.name = name
+    o.scale = (w, h, 1); bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    cx = [(-cols / 2 + i + 0.5) * pitch for i in range(cols)]
+    cy = [(-rows / 2 + j + 0.5) * pitch for j in range(rows)]
+    for v in o.data.vertices:
+        x, y = v.co.x, v.co.y
+        z = 0.0
+        for a in cx:
+            for b in cy:
+                d = math.hypot(x - a, y - b) / cup_r
+                if d < 1.0:
+                    z = max(z, (1 - d * d) ** 0.6)
+        # 外周の縁(少し立ち上がる)
+        edge = min(w / 2 - abs(x), h / 2 - abs(y))
+        lip = 0.25 if edge < 0.4 else 0.0
+        v.co.z = sign * depth * z - sign * lip
+    P.add_mod(o, "SOLIDIFY", thickness=0.07, offset=0)
+    bpy.ops.object.shade_smooth()
+    return o, w, h
+
+
+def egg_carton(name, mat, cols=5, rows=2, pitch=5.4, depth=3.6, lid_open_deg=105.0):
+    """透明な卵パック(2×5)。トレー(くぼみ下)+ヒンジで開いたフタ(ドーム上)。原点はトレー中心。"""
+    tray, w, h = _cup_sheet(name, cols, rows, pitch, depth, sign=-1.0)
+    lid, _, _ = _cup_sheet(name + "_Lid", cols, rows, pitch, depth * 0.75, sign=1.0)
+    # フタ: ヒンジ(+Y 側の辺)回りに開く。ピボット用 Empty
+    hinge = bpy.data.objects.new(name + "_Hinge", None); bpy.context.collection.objects.link(hinge)
+    hinge.parent = tray; hinge.location = (0, h / 2, 0)
+    lid.parent = hinge; lid.location = (0, h / 2, 0)
+    # フタは開いて +Y 側に広がった状態を基準に、ヒンジ回りに起こす(180-lid_open_deg)
+    hinge.rotation_euler = (math.radians(180.0 - lid_open_deg), 0, 0)
+    for o in (tray, lid):
+        o.data.materials.append(mat)
+    return tray, lid
+
+
+def tshirt(name, mat, size=(24.0, 28.0, 3.2)):
+    """たたんだTシャツ(原点=中心、上面 +Z、襟は +Y 側)。"""
+    sx, sy, sz = size
+    body = P.box(name, size, (0, 0, 0), mat=mat, bevel=1.5, segments=5)
+    P.add_mod(body, "SUBSURF", levels=1, render_levels=1)
+    tex = bpy.data.textures.new(name + "Wrinkle", "CLOUDS"); tex.noise_scale = 6.0
+    P.add_mod(body, "DISPLACE", texture=tex, strength=0.35, texture_coords="LOCAL")
+    bpy.ops.object.shade_smooth()
+    parts = [body]
+    # 袖を内側に折った重なり(左右の帯)
+    for s in (-1, 1):
+        fold = P.box(name + f"_Fold{s}", (6.5, sy - 3.0, 0.7), (s * (sx / 2 - 3.6), -1.0, sz / 2 + 0.2), mat=mat, bevel=0.3, segments=3)
+        fold.parent = body; parts.append(fold)
+    # 襟(半分のリブ)
+    bpy.ops.mesh.primitive_torus_add(major_radius=5.2, minor_radius=0.65, major_segments=40, minor_segments=10,
+                                     location=(0, sy / 2 - 0.6, sz / 2 + 0.4))
+    col = bpy.context.object; col.name = name + "_Collar"
+    bm = bmesh.new(); bm.from_mesh(col.data)
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.y > 0.3], context="VERTS")   # 下半分(U字の襟ぐり)
+    bm.to_mesh(col.data); bm.free()
+    col.scale = (1.0, 0.75, 1.0)
+    bpy.ops.object.shade_smooth()
+    col.data.materials.append(mat)
+    col.parent = body; col.location = (0, sy / 2 - 0.6, sz / 2 + 0.4); parts.append(col)
+    # 襟ぐりの影(内側の布が少し暗い)
+    bm = bmesh.new()
+    c0 = bm.verts.new((0, 0, 0))
+    arc = [bm.verts.new((4.7 * math.cos(a), 4.7 * 0.72 * math.sin(a), 0)) for a in np.linspace(math.pi, math.tau, 25)]
+    for i in range(len(arc) - 1):
+        bm.faces.new((c0, arc[i + 1], arc[i]))
+    me = bpy.data.meshes.new(name + "_Neck"); bm.to_mesh(me); bm.free()
+    neck = bpy.data.objects.new(name + "_Neck", me); bpy.context.collection.objects.link(neck)
+    neck.parent = body; neck.location = (0, sy / 2 - 0.6, sz / 2 + 0.3); parts.append(neck)
+    return body, parts
+
+
+def mat_jersey(name, color=(0.28, 0.48, 0.66), rough=0.85, scale=9.0):
+    """綿/ポリエステルの天竺ニット: 細かい編み目のバンプ+色ムラ。"""
+    m, nt, out = C.node_mat(name)
+    n = nt.nodes
+    tc = n.new("ShaderNodeTexCoord")
+    wv = n.new("ShaderNodeTexWave"); wv.wave_type = "BANDS"; wv.bands_direction = "X"
+    wv.inputs["Scale"].default_value = scale; wv.inputs["Distortion"].default_value = 1.5
+    wv.inputs["Detail"].default_value = 2
+    C.link(nt, tc.outputs["Object"], wv.inputs["Vector"])
+    nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 0.4; nz.inputs["Detail"].default_value = 3
+    C.link(nt, tc.outputs["Object"], nz.inputs["Vector"])
+    cr = n.new("ShaderNodeValToRGB")
+    cr.color_ramp.elements[0].color = (color[0] * 0.85, color[1] * 0.85, color[2] * 0.85, 1)
+    cr.color_ramp.elements[1].color = (*color, 1)
+    C.link(nt, nz.outputs["Fac"], cr.inputs["Fac"])
+    p = n.new("ShaderNodeBsdfPrincipled"); p.inputs["Roughness"].default_value = rough
+    p.inputs["Sheen Weight"].default_value = 0.25; p.inputs["Sheen Roughness"].default_value = 0.4
+    C.link(nt, cr.outputs["Color"], p.inputs["Base Color"])
+    b = n.new("ShaderNodeBump"); b.inputs["Strength"].default_value = 0.25; b.inputs["Distance"].default_value = 0.05
+    C.link(nt, wv.outputs["Fac"], b.inputs["Height"]); C.link(nt, b.outputs["Normal"], p.inputs["Normal"])
+    C.link(nt, p.outputs["BSDF"], out.inputs["Surface"])
+    return m
