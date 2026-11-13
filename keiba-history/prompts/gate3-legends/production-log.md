@@ -46,3 +46,11 @@
 - 馬の名前: Dela Gothic One の銀色の文字 (edit/gate3-legends/mk_names.py)。最初は大きくして画面からはみ出して流したが、名前が最後まで読めないので画面幅に収めて少しだけ流す形に
 - 書き出し: edit/gate3-legends/render.py → 1080x1920、7.0秒、平均 -13.9dB・最大 -2.0dB → Higgs media 5b3dea6f → assets/output/gate3-legends/horses_in_cars_v1.mp4
 - 使用: 3D配置 0 / 画像 約20 (ゲート案5枚 + 車案6枚) / Kling 7秒 約16 / BGM 約1
+
+## v2 (ユーザー指定 2026-11-13): サイレンススズカだけ逆方向を向いている → 直す
+- v1 ではディープ・テイオーは車の前 (画面右) を向いていたが、スズカのアップと最後の引きは画面左向きだった
+- C3 を右 (フロントガラスの方) を向くよう編集 a93d9d68 (C2 を向きの参照に)。C4 は左右反転して車の向きを揃えた (無料、media 7694d02a)
+- 動画 kling4_0 720p 7秒 (C1 4b4b375b → C2 83c0a6dc → C3 a93d9d68 → C4 反転 7694d02a) job 0a4c560a。3頭とも右向き
+  - 0〜1.2秒 ディープ / 2.0〜2.9秒 テイオー / 3.5〜4.5秒 スズカ / 5秒〜 引き → 名前の時間と衝撃音 (4.9秒) を合わせ直した
+- 書き出し: edit/gate3-legends/render.py → 7.0秒、平均 -13.8dB・最大 -2.0dB → Higgs media 5eb88acf → assets/output/gate3-legends/horses_in_cars_v2.mp4
+- 使用: 画像1枚 約2 + Kling 7秒 約16 ≒ 18クレジット
