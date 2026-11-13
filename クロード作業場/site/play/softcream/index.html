@@ -172,10 +172,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   // 1ユニット = 3cm。コーンのふちの半径 1.4(約4cm)、クリームの太さの半径 0.3
   const UNIT_CM = 3, RIM = 1.4, ROPE = 0.3, SPIN = 3.9, START_X = 1.15, MAX_POINTS = 1150;
   const FLAVORS = {
-    'バニラ': { a: [246, 239, 224], b: [246, 239, 224] },
+    'バニラ': { a: [255, 251, 240], b: [255, 251, 240] },
     'チョコ': { a: [110, 66, 44], b: [110, 66, 44] },
     '抹茶': { a: [170, 196, 120], b: [170, 196, 120] },
-    'ミックス': { a: [246, 239, 224], b: [110, 66, 44] },
+    'ミックス': { a: [255, 251, 240], b: [110, 66, 44] },
   };
   const RANKS = [[95, '伝説のソフト職人'], [85, 'ソフトクリーム職人'], [70, '看板アルバイト'], [50, '見習い'], [0, '新人']];
   const rankOf = s => RANKS.find(r => s >= r[0])[1];
@@ -259,7 +259,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 1.1, 0.5, 32), new THREE.MeshStandardMaterial({ color: 0xf08aa6, roughness: 0.4 }));
   stand.position.y = -4.35; stand.castShadow = true; coneHolder.add(stand);
   const creamGroup = new THREE.Group(); coneSpin.add(creamGroup);
-  const creamMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0 });
+  const creamMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0, envMapIntensity: 0.6 });
 
   // 落ちてくるクリーム(機械から真下へ)
   const streamMat = new THREE.MeshStandardMaterial({ color: 0xf6efe0, roughness: 0.4 });
@@ -307,10 +307,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       if (capStart && i < 3) rr *= 0.45 + 0.55 * (i / 3);
       if (capEnd && i > n - 4) rr *= 0.35 + 0.65 * ((n - 1 - i) / 3);
       for (let j = 0; j < RS; j++) {
-        const a = j / RS * Math.PI * 2, ridge = 1 + 0.15 * Math.cos(8 * a), r = rr * ridge;
+        const a = j / RS * Math.PI * 2, ridge = 1 + 0.07 * Math.cos(8 * a), r = rr * ridge;
         radial.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(v, Math.sin(a));
         tang.copy(u).multiplyScalar(-Math.sin(a)).addScaledVector(v, Math.cos(a));
-        nn.copy(radial).addScaledVector(tang, 1.2 * Math.sin(8 * a) * 0.15 * 8 / 8).normalize();
+        nn.copy(radial).addScaledVector(tang, 0.5 * Math.sin(8 * a)).normalize();
         const k = (i * RS + j) * 3;
         pos[k] = pts[i].x + radial.x * r; pos[k + 1] = pts[i].y + radial.y * r; pos[k + 2] = pts[i].z + radial.z * r;
         nor[k] = nn.x; nor[k + 1] = nn.y; nor[k + 2] = nn.z;

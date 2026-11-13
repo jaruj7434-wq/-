@@ -87,7 +87,7 @@ async function localRoutes(page) {
   // ソフトクリーム巻き:自動で巻いて、できあがる直前
   {
     const p = await open('/play/softcream/index.html?capture');
-    await p.addStyleTag({ content: '.mini, .yk-home, #doneUi { display: none !important; }' });
+    await p.addStyleTag({ content: '.mini, .yk-home, #doneUi { display: none !important; } #cv { opacity: 0; }' });
     await p.evaluate(() => window.__capture.play(true));
     const t0 = Date.now();
     while (Date.now() - t0 < 400000) {
