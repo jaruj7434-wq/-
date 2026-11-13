@@ -27,3 +27,6 @@
 ```
 Photorealistic full-body photo, 9:16, of the young Japanese man in the reference photo (keep his face exactly), cosplaying a classic anime ninja hero: bright spiky blond hair sticking out in all directions, a black cloth forehead protector with a polished metal plate engraved with a single spiral swirl like the narutomaki fish-cake pattern (no leaf symbol), three thin whisker-like marks painted on each cheek, an orange-and-black tracksuit-style ninja jumpsuit with a black upper chest and shoulders, a white collar, orange sleeves and orange pants, a kunai holster strapped to the right thigh, blue ninja sandals. He stands facing the camera with a confident grin, fists on hips. Simple Japanese rooftop at daytime, soft natural light, realistic skin and fabric, no text, no logo.
 ```
+- 生成: gpt_image_2 / medium / 2k / 9:16 / 2クレジット、job `3a5a7394-1df3-4e8e-a2a3-0f127caf1d71`(`assets/output/naruto-iyada/ninja-keita-character.png`)
+- 額当てに木ノ葉マークが出てしまったため、ローカルで消して渦巻きの刻印に差し替え → `ninja-keita-character-v2.png`(採用候補)
+- 慶太の写真どおりメガネあり
