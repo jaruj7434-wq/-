@@ -284,7 +284,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // ---------- クリームの形(星形の口金で絞った、すじ入りの太いひも) ----------
   const RS = 16;
-  function ropeGeometry(pts, colA, colB, capStart, capEnd) {
+  function ropeGeometry(pts, colA, colB, capStart, capEnd, offset) {
     const n = pts.length, pos = new Float32Array(n * RS * 3), nor = new Float32Array(n * RS * 3), col = new Float32Array(n * RS * 3), idx = [];
     const t = new THREE.Vector3(), u = new THREE.Vector3(), v = new THREE.Vector3(), ref = new THREE.Vector3(), radial = new THREE.Vector3(), tang = new THREE.Vector3(), nn = new THREE.Vector3();
     const ca = colA.map(c => Math.pow(c / 255, 2.2)), cb = colB.map(c => Math.pow(c / 255, 2.2));
@@ -304,7 +304,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         const k = (i * RS + j) * 3;
         pos[k] = pts[i].x + radial.x * r; pos[k + 1] = pts[i].y + radial.y * r; pos[k + 2] = pts[i].z + radial.z * r;
         nor[k] = nn.x; nor[k + 1] = nn.y; nor[k + 2] = nn.z;
-        const useB = ((j + Math.floor(i * 0.5)) % RS) >= RS / 2;
+        const useB = ((j + Math.floor((i + (offset || 0)) * 0.5)) % RS) >= RS / 2;
         const c = useB ? cb : ca, shade = 0.94 + 0.06 * Math.cos(8 * a);
         col[k] = c[0] * shade; col[k + 1] = c[1] * shade; col[k + 2] = c[2] * shade;
       }
@@ -323,7 +323,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // ---------- ゲームの状態 ----------
   let state = 'title';    // title / order / play / judge / result / fall
-  let gameT = 0, flowAcc = 0;
+  let gameT = 0, flowAcc = 0, ropeIndex = 0;
   let order, coneX, coneTargetX, spin, ropes, cur, pts, spills, deposits, Hmax, coneY, com, lean, fallT, judgeT, holdOn, result, newBest, stateT, blink = 0, auto = false;
   const blobs = [];
   const pointer = { down: false, x: 0, lastX: 0 };
@@ -339,7 +339,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     blobs.length = 0;
     creamGroup.position.set(0, 0, 0); creamGroup.quaternion.identity();
     resetHeight();
-    pending.length = 0; flowAcc = 0;
+    pending.length = 0; flowAcc = 0; ropeIndex = 0;
     coneX = START_X; coneTargetX = START_X; spin = 0;
     ropes = []; cur = null; pts = 0; spills = 0; deposits = []; Hmax = 0; coneY = 0.2; com = new THREE.Vector3(); lean = 0; fallT = 0; judgeT = 0; holdOn = false; result = null; newBest = false;
   }
@@ -407,11 +407,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       y = sup + 0.012;
       stamp(local.x, local.z, y, ROPE * 0.9, 0.05);
     } else {
-      y = sup + ROPE * 0.8;
+      y = sup + ROPE * 0.6;
       pending.push({ x: local.x, z: local.z, y, t: gameT });
     }
     const p = new THREE.Vector3(local.x, y, local.z);
-    if (!cur) { cur = { pts: [], mesh: null, start: true }; ropes.push(cur); }
+    if (!cur) { cur = { pts: [], mesh: null, start: true, offset: ropeIndex }; ropes.push(cur); }
+    ropeIndex++;
     cur.pts.push(p);
     deposits.push({ r: Math.hypot(local.x, local.z), y });
     com.x += local.x; com.z += local.z;
@@ -420,13 +421,13 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     if (cur.pts.length > 44) {   // 長くなったら確定して、続きを新しいかたまりにする
       rebuildCur(false, true);
       const tail = cur.pts.slice(-2);
-      cur = { pts: tail, mesh: null, start: false }; ropes.push(cur);
+      cur = { pts: tail, mesh: null, start: false, offset: ropeIndex - 2 }; ropes.push(cur);
     }
   }
   function rebuildCur(capEnd, closing) {
     if (!cur || cur.pts.length < 2) return;
     const f = FLAVORS[order.flavor];
-    const g = ropeGeometry(cur.pts, f.a, f.b, cur.start, capEnd);
+    const g = ropeGeometry(cur.pts, f.a, f.b, cur.start, capEnd, cur.offset);
     if (cur.mesh) { cur.mesh.geometry.dispose(); cur.mesh.geometry = g; }
     else { cur.mesh = new THREE.Mesh(g, creamMat); cur.mesh.castShadow = true; cur.mesh.receiveShadow = true; creamGroup.add(cur.mesh); }
   }
@@ -634,23 +635,25 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     ctx.fillStyle = 'rgba(59,42,36,0.08)'; ctx.fillRect(0, 34, W, 3);
   }
   function orderCard(x, y) {
-    ctx.fillStyle = 'rgba(255,248,236,0.94)'; roundRect(x, y, 150, 62, 10); ctx.fill();
+    ctx.fillStyle = 'rgba(255,248,236,0.94)'; roundRect(x, y, 128, 76, 10); ctx.fill();
     ctx.strokeStyle = 'rgba(59,42,36,0.18)'; ctx.lineWidth = 1.5; ctx.stroke();
     text('ご注文', x + 12, y + 14, 11, C.pink, '700 ' + FB, 'left');
-    text(order.flavor, x + 12, y + 36, 18, C.ink, FD, 'left');
-    text('高さ ' + order.cm + 'cm', x + 138, y + 38, 14, C.ink, '700 ' + FB, 'right');
+    text(order.flavor, x + 12, y + 37, 18, C.ink, FD, 'left');
+    text('高さ ' + order.cm + 'cm', x + 12, y + 61, 14, C.ink, '700 ' + FB, 'left');
   }
   // 右側の物差し(コーンのふちが 0cm)
   function ruler() {
-    const x = 316;
+    const x = 316, top = order.cm + 3;
     const y0 = project(new THREE.Vector3(coneX, coneY, 0)).y;
-    const y1 = project(new THREE.Vector3(coneX, coneY + 15 / UNIT_CM, 0)).y;
-    const pxPerCm = (y0 - y1) / 15;
+    const yTop = project(new THREE.Vector3(coneX, coneY + top / UNIT_CM, 0)).y;
+    const pxPerCm = (y0 - yTop) / top;
+    const y1 = Math.max(78, yTop);
     ctx.fillStyle = 'rgba(255,248,236,0.85)'; roundRect(x - 6, Math.min(y1, y0) - 10, 40, Math.abs(y0 - y1) + 20, 8); ctx.fill();
     const tLo = y0 - (order.cm - 0.5) * pxPerCm, tHi = y0 - (order.cm + 0.5) * pxPerCm;
     ctx.fillStyle = 'rgba(79,179,154,0.4)'; ctx.fillRect(x - 6, tHi, 40, tLo - tHi);
-    for (let cm = 0; cm <= 15; cm++) {
+    for (let cm = 0; cm <= top; cm++) {
       const y = y0 - cm * pxPerCm;
+      if (y < y1 - 1) break;
       ctx.fillStyle = C.ink; ctx.fillRect(x, y, cm % 3 === 0 ? 12 : 6, 1.5);
       if (cm % 3 === 0) text(String(cm), x + 26, y, 10, C.ink, '700 ' + FB);
     }
@@ -716,16 +719,16 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     }
     if (state === 'result') {
       const r = result;
-      ctx.fillStyle = 'rgba(255,248,236,0.9)'; roundRect(20, 54, W - 40, 250, 16); ctx.fill();
-      text(order.flavor + ' / 注文 ' + order.cm + 'cm → ' + r.hcm.toFixed(1) + 'cm', W / 2, 78, 13, C.ink, '700 ' + FB);
-      outlined(r.total + '点', W / 2, 120, 46, r.fell ? C.red : C.pink, FD, C.ink);
-      outlined(r.fell ? '倒れた…' : rankOf(r.total), W / 2, 162, 20, C.ink);
-      if (newBest) text('ハイスコア更新!', W / 2, 186, 13, C.gold, '700 ' + FB);
-      bar(208, '高さ', r.sHeight);
-      bar(229, '形', r.sShape);
-      bar(250, 'まっすぐ', r.sCenter);
-      bar(271, 'こぼさない', r.sSpill);
-      bar(292, 'ツノ', r.sTip);
+      outlined(r.total + '点', W / 2, 74, 44, r.fell ? C.red : C.pink, FD, C.ink);
+      outlined(r.fell ? '倒れた…' : rankOf(r.total), W / 2, 112, 20, C.ink);
+      if (newBest) outlined('ハイスコア更新!', W / 2, 138, 13, C.gold, '700 ' + FB, C.ink);
+      ctx.fillStyle = 'rgba(255,248,236,0.92)'; roundRect(20, 386, W - 40, 150, 14); ctx.fill();
+      text(order.flavor + ' / 注文 ' + order.cm + 'cm → ' + r.hcm.toFixed(1) + 'cm', W / 2, 404, 12, C.ink, '700 ' + FB);
+      bar(428, '高さ', r.sHeight);
+      bar(451, '形', r.sShape);
+      bar(474, 'まっすぐ', r.sCenter);
+      bar(497, 'こぼさない', r.sSpill);
+      bar(520, 'ツノ', r.sTip);
     }
   }
 
