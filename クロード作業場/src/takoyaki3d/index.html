@@ -1,0 +1,1242 @@
+<title>たこ焼き返し 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<style>
+/* 夜の屋台。3D の鉄板(下の canvas)の上に、文字やゲージ(上の canvas)を重ねる縦長 9:16 の1画面構成 */
+:root {
+  --night: #1a1210;    /* 背景(夜の屋台) */
+  --wood: #3a2418;     /* カウンター */
+  --iron: #2a2a2e;     /* 鉄板 */
+  --cream: #fbeed0;    /* 文字 */
+  --noren: #c23a2b;    /* のれんの赤 */
+  --gold: #f2b544;     /* きつね色・強調 */
+  --green: #6fbf5a;    /* 青のり */
+  --font-d: "Dela Gothic One", "Hiragino Kaku Gothic StdN", "Yu Gothic", sans-serif;
+  --font-b: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { margin: 0; background: var(--night); color: var(--cream); font-family: var(--font-b); overflow: hidden; -webkit-user-select: none; user-select: none; }
+#wrap { position: fixed; inset: 0; display: flex; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+#fit { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#stage { position: relative; background: var(--night); }
+#gl { position: absolute; left: 0; top: 0; display: block; }
+#cv { position: relative; display: block; touch-action: none; cursor: pointer; }
+.ui { position: absolute; left: 8px; right: 8px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.ui[hidden], .btn[hidden] { display: none !important; }
+.btn {
+  font: 700 14px var(--font-b);
+  color: var(--night);
+  background: var(--cream);
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  min-height: 44px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.btn.alt { background: rgba(26, 18, 16, 0.55); color: var(--cream); box-shadow: inset 0 0 0 2px var(--cream); }
+.btn.go { background: var(--gold); }
+.btn:focus-visible, .mini:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.mini { position: absolute; bottom: 4px; right: 8px; font: 700 12px var(--font-b); color: var(--cream); background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(251, 238, 208, 0.3); border-radius: 999px; padding: 6px 12px; min-height: 32px; cursor: pointer; }
+#toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18%; background: rgba(0, 0, 0, 0.75); color: var(--cream); padding: 8px 14px; border-radius: 8px; font-size: 13px; }
+</style>
+
+<div id="wrap">
+  <div id="fit">
+    <div id="stage">
+      <canvas id="gl"></canvas>
+      <canvas id="cv" aria-label="たこ焼き返し ゲーム画面"></canvas>
+      <button id="soundBtn" class="mini" type="button" aria-pressed="true">音 ON</button>
+      <div id="stepUi" class="ui"><button id="nextBtn" class="btn go" type="button" hidden>次へ</button></div>
+      <div id="resultUi" class="ui" hidden>
+        <button id="againBtn" class="btn" type="button">もう一回</button>
+        <a id="shareBtn" class="btn alt" href="#" target="_blank" rel="noopener">X でシェア</a>
+        <button id="copyBtn" class="btn alt" type="button">コピー</button>
+      </div>
+      <div id="toast" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+(() => {
+  const W = 360, H = 640;
+  // サイトを公開したら、ここにゲームの URL を入れる(シェア文に載る)
+  const GAME_URL = '';
+  const SHARE_TAG = '#たこ焼き返し';
+
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage'), fit = $('fit');
+  const resultUi = $('resultUi'), stepUi = $('stepUi'), nextBtn = $('nextBtn');
+  const againBtn = $('againBtn'), shareBtn = $('shareBtn'), copyBtn = $('copyBtn'), soundBtn = $('soundBtn'), toastEl = $('toast');
+
+  const css = getComputedStyle(document.documentElement);
+  const tok = n => css.getPropertyValue(n).trim();
+  const C = { night: tok('--night'), wood: tok('--wood'), iron: tok('--iron'), cream: tok('--cream'), noren: tok('--noren'), gold: tok('--gold'), green: tok('--green') };
+  const FD = '"Dela Gothic One", sans-serif';
+  const FB = '"Zen Maru Gothic", sans-serif';
+  try {
+    document.fonts.load('20px "Dela Gothic One"', 'たこ焼き返し点職人伝説の屋台看板見習い修行中きつね色生焼けコゲ!くっついた連続計量混ぜる油流すタコ焼く0123456789');
+    document.fonts.load('700 14px "Zen Maru Gothic"', 'ふちがきつね色になったらタップしてくるっと返そう。もう一回で皿へ12個ぜんぶまん丸に焼こう生焼けコゲ気味ここ!タップでスタートハイスコア焼けた個連続結果をコピーXでシェア音長押しで小麦粉を入れる目標たまごを割るだしを注ぐぐるぐる混ぜてなめらかに油をひく鉄板をなぞって全部の穴にひいて生地を流し込む穴の上で長押しタコを入れる穴をタップ天かすねぎ紅しょうが焼き始める次へ下ごしらえ生地の出来殻が入ったダマ残りOKgml');
+  } catch (e) {}
+
+  // ---------- 画面サイズ ----------
+  let scale = 1;
+  function resize() {
+    const r = fit.getBoundingClientRect();
+    scale = Math.max(0.1, Math.min(r.width / W, r.height / H));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = W * scale, ch = H * scale;
+    stage.style.width = cw + 'px'; stage.style.height = ch + 'px';
+    cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+    resultUi.style.top = (540 * scale) + 'px';
+    stepUi.style.top = (548 * scale) + 'px';
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  // ---------- 保存 ----------
+  const store = {
+    get(k, fb) { try { const v = localStorage.getItem(k); return v == null ? fb : JSON.parse(v); } catch (e) { return fb; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  };
+  let best = Number(store.get('takoyaki-best', 0)) || 0;
+  let plays = Number(store.get('takoyaki-plays', 0)) || 0;
+
+  // ---------- 音 ----------
+  let actx = null, muted = !!store.get('takoyaki-mute', false), noiseBuf = null, sizzle = null, pourNoise = null;
+  function loopNoise(type, freq, q) {
+    const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    src.buffer = noiseBuf; src.loop = true;
+    f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.value = 0;
+    src.connect(f).connect(g).connect(actx.destination);
+    src.start();
+    return g;
+  }
+  function audio() {
+    if (!actx) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+      noiseBuf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
+      const a = noiseBuf.getChannelData(0);
+      for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1;
+      sizzle = loopNoise('bandpass', 3200, 0.7);     // ジュー
+      pourNoise = loopNoise('lowpass', 900, 0.5);    // サラサラ・トクトク
+    }
+    if (actx.state === 'suspended') actx.resume();
+  }
+  function setLoop(g, v) { if (g && actx) g.gain.setTargetAtTime(muted ? 0 : v, actx.currentTime, 0.06); }
+  function tone(f, d, type, v, f2, delay) {
+    if (muted || !actx) return;
+    const t = actx.currentTime + (delay || 0), o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+  }
+  function burst(d, v, freq, type) {
+    if (muted || !actx) return;
+    const t = actx.currentTime, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    s.buffer = noiseBuf; f.type = type || 'highpass'; f.frequency.value = freq || 1500;
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(f).connect(g).connect(actx.destination); s.start(t); s.stop(t + d);
+  }
+  const sfx = {
+    crack: () => { burst(0.06, 0.3, 2500); tone(300, 0.08, 'triangle', 0.1, 180); },
+    plop: () => tone(260, 0.12, 'sine', 0.15, 120),
+    whisk: () => burst(0.08, 0.05, 4000),
+    step: () => { tone(660, 0.08, 'triangle', 0.08); tone(880, 0.12, 'triangle', 0.08, null, 0.08); },
+    flip: () => { tone(520, 0.08, 'sine', 0.12, 900); burst(0.25, 0.1, 2000); },
+    perfect: () => { tone(988, 0.1, 'triangle', 0.08); tone(1319, 0.16, 'triangle', 0.08, null, 0.08); },
+    pick: () => tone(700, 0.08, 'sine', 0.1, 1200),
+    burn: () => { burst(0.6, 0.18, 800); tone(150, 0.3, 'sawtooth', 0.04, 80); },
+    stick: () => { burst(0.2, 0.2, 400, 'lowpass'); tone(140, 0.2, 'square', 0.05, 90); },
+    sprinkle: () => { for (let i = 0; i < 6; i++) setTimeout(() => burst(0.05, 0.08, 5000), i * 70); },
+    fanfare: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.2, 'triangle', 0.08, null, i * 0.12)),
+  };
+
+  // ---------- レシピ(本物の目安に合わせた) ----------
+  // 小麦粉 100g・卵 1個・だし 350ml(だしは粉の約3.5倍)
+  const RECIPE = { flour: 100, egg: 1, dashi: 350 };
+  const FALL_DELAY = 0.22;
+  // 長押しするほど袋・容器が傾いて勢いが増す(最後は小刻みに足すのがコツ)
+  const flowRate = (base, max, holdT) => Math.min(max, base + (max - base) * Math.min(1, holdT / 1.6));
+  // 計量の判定:目標との差で段階評価
+  function judgeAmount(v, target, tiers) {
+    const err = Math.abs(v - target);
+    const [p, gr, gd, ok] = tiers;
+    if (err <= p) return { s: 1, label: 'ピッタリ!', col: C.gold };
+    if (err <= gr) return { s: 0.9, label: 'おしい!', col: '#f2ce78' };
+    if (err <= gd) return { s: 0.75, label: 'まずまず', col: C.cream };
+    if (err <= ok) return { s: 0.5, label: v > target ? '入れすぎ' : '足りない', col: '#d98a4a' };
+    return { s: Math.max(0.1, 0.5 - (err - ok) / (target * 0.8)), label: v > target ? '入れすぎ!' : '足りない!', col: '#e0525a' };
+  }
+  const FLOUR_TIERS = [1, 3, 6, 12], DASHI_TIERS = [4, 12, 25, 50];
+  // たまご:割る強さゲージ(弱いと割れない・強すぎると殻が入る)
+  const EGG_WEAK = 0.42, EGG_STRONG = 0.66;
+  const qPour = f => f >= 0.9 && f <= 1.3 ? 1 : f < 0.9 ? Math.max(0, f / 0.9) ** 1.5 : Math.max(0.6, 1 - (f - 1.3));
+
+  // ---------- 焼き加減 ----------
+  // c: 0 = 生地のまま、0.62〜0.82 = きつね色(ベスト)、1.0〜 = コゲ、1.35 で炭
+  const GOOD_LO = 0.62, GOOD_HI = 0.82, BURN = 1.35;
+  const STOPS = [[0, [246, 231, 184]], [0.45, [242, 206, 120]], [0.72, [222, 150, 58]], [0.95, [158, 88, 36]], [1.15, [86, 50, 24]], [1.35, [34, 24, 18]]];
+  function cookRGB(c) {
+    c = Math.max(0, Math.min(1.35, c));
+    for (let i = 1; i < STOPS.length; i++) {
+      if (c <= STOPS[i][0]) {
+        const [c0, a] = STOPS[i - 1], [c1, b] = STOPS[i], t = (c - c0) / (c1 - c0);
+        return a.map((v, k) => Math.round(v + (b[k] - v) * t));
+      }
+    }
+    return STOPS[STOPS.length - 1][1];
+  }
+  const rgb = (a, m, al) => `rgba(${a.map(v => Math.max(0, Math.min(255, Math.round(v * (m || 1))))).join(',')},${al == null ? 1 : al})`;
+  const mixRGB = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+  function quality(d) {
+    if (d >= GOOD_LO && d <= GOOD_HI) return 1;
+    const dist = d < GOOD_LO ? GOOD_LO - d : d - GOOD_HI;
+    return Math.max(0, 1 - dist / 0.35);
+  }
+  function verdict(d) {
+    if (d >= GOOD_LO && d <= GOOD_HI) return ['きつね色!', C.gold];
+    if (d < 0.45) return ['生焼け…', '#f6e7b8'];
+    if (d < GOOD_LO) return ['ちょい早', '#f2ce78'];
+    if (d < 1.0) return ['焦げ気味', '#d98a4a'];
+    return ['コゲ!', '#9a9a9a'];
+  }
+  const RANKS = [[95, '伝説の職人'], [85, 'たこ焼き職人'], [70, '屋台の看板'], [50, '見習い'], [0, '修行中']];
+  const rankOf = s => RANKS.find(r => s >= r[0])[1];
+
+  // ---------- 工程 ----------
+  const PHASES = ['flour', 'egg', 'shell', 'dashi', 'mix', 'oil', 'pour', 'tako', 'cook'];
+  const STEPS = [['計量', ['flour', 'egg', 'shell', 'dashi']], ['混ぜる', ['mix']], ['油', ['oil']], ['流す', ['pour']], ['タコ', ['tako']], ['焼く', ['cook']]];
+  const GUIDE = {
+    flour: ['長押しで 小麦粉を入れる', '目標 100g ピッタリ(押すほど勢いが増す)'],
+    egg: ['ゲージが緑のときに タップで割る', '弱いと割れない・強すぎると殻が入る'],
+    shell: ['入った殻を タップして取り出す', '残すと減点'],
+    dashi: ['長押しで だしを注ぐ', '目標 350ml(粉の約3.5倍がとろとろの目安)'],
+    mix: ['ぐるぐる なぞって混ぜる', '早く なめらかにするほど高得点'],
+    oil: ['鉄板をなぞって 油をひく', 'ひき忘れた穴は くっつく'],
+    pour: ['穴の上で長押しして 生地を流す', 'ふちまで たっぷりと'],
+    tako: ['穴をタップして タコを入れる', '入れ終わったら 焼き始める'],
+    cook: ['ふちが きつね色で タップ!', 'もう一回タップで お皿へ'],
+  };
+
+  const COLS = 3, ROWS = 4, HOLE_R = 36, BALL_R = 31;
+  const holeX = c => 90 + c * 90;
+  const holeY = r => 178 + r * 86;
+  const BOWL = { x: 180, y: 318, r: 112 };
+
+  let state = 'title', phase = 'flour', phaseT = 0, time = 0, blink = 0;
+  let mixData, holes, balls, dish, fx, popups, combo, bestCombo, score, newBest, parts, sprinkleT;
+  const pointer = { x: 0, y: 0, down: false, lx: 0, ly: 0 };
+  const keys = {};
+
+  function newGame() {
+    mixData = { flour: 0, flourPending: [], egg: 0, eggAnim: 0, yolks: [], dashi: 0, dashiPending: [], mix: 0, mixT: 0, holdT: 0,
+      eggPow: 0, eggDir: 1, weakTaps: 0, shells: [], shellT: 0, shellsIn: 0, judged: {},
+      lumps: Array.from({ length: 36 }, () => ({ a: Math.random() * 6.283, d: Math.random() * 0.8, s: 2 + Math.random() * 4 })) };
+    holes = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      holes.push({ x: holeX(c), y: holeY(r), oiled: false, fill: 0, order: -1, tako: false, takoT: 0,
+        toppings: Array.from({ length: 5 }, () => ({ a: Math.random() * 6.283, d: Math.random() * 18, k: Math.random() < 0.6 ? 'g' : 'r' })) });
+    }
+    balls = []; dish = []; fx = []; popups = []; parts = [];
+    combo = 0; bestCombo = 0; score = null; newBest = false; time = 0; sprinkleT = 0;
+  }
+  function start() {
+    audio();
+    newGame();
+    state = 'play';
+    setPhase('flour');
+    plays++; store.set('takoyaki-plays', plays);
+    resultUi.hidden = true;
+  }
+  function setPhase(p) {
+    phase = p; phaseT = 0;
+    syncNext();
+  }
+  // 工程ごとの点数(0〜1)と判定ラベル。計量は「次へ」を押した時点で判定する
+  function stepJudge(key, res) {
+    mixData.judged[key] = res;
+    popup(W / 2, 250, res.label, res.col, false, true, Math.round(res.s * 100));
+    if (res.s >= 1) sfx.perfect();
+  }
+  let advancing = false;
+  function nextPhase() {
+    if (advancing) return;
+    // 計量は判定を見せてから次の工程へ
+    if ((phase === 'flour' || phase === 'dashi') && !mixData.judged[phase]) {
+      stepJudge(phase, phase === 'flour' ? judgeAmount(mixData.flour, RECIPE.flour, FLOUR_TIERS) : judgeAmount(mixData.dashi, RECIPE.dashi, DASHI_TIERS));
+      advancing = true;
+      const from = phase;
+      setTimeout(() => { advancing = false; if (state === 'play' && phase === from) nextPhase(); }, 1100);
+      return;
+    }
+    if (phase === 'egg' && !mixData.judged.egg) stepJudge('egg', { s: 0.2, label: '割らずに次へ', col: '#e0525a' });
+    if (phase === 'shell') finishShells();
+    const i = PHASES.indexOf(phase);
+    sfx.step();
+    if (phase === 'egg') { setPhase('dashi'); return; }
+    if (phase === 'tako') { sprinkleT = 0.01; sfx.sprinkle(); nextBtn.hidden = true; return; }
+    if (i < PHASES.length - 1) setPhase(PHASES[i + 1]);
+  }
+  function syncNext() {
+    const labels = { flour: '計量おわり(判定)', egg: 'たまごを入れずに次へ', shell: '次へ(だし)', dashi: '計量おわり(判定)', oil: '次へ(流し込む)', pour: '次へ(タコ)', tako: '焼き始める' };
+    const busy = mixData.flourPending.length || mixData.dashiPending.length || holding();
+    const show = state === 'play' && labels[phase] && sprinkleT === 0 && !advancing &&
+      (phase === 'flour' ? landed('flour') > 0 && !busy : phase === 'dashi' ? landed('dashi') > 0 && !busy : phase === 'pour' ? holes.some(h => h.fill > 0.05) : true);
+    nextBtn.hidden = !show;
+    if (show) nextBtn.textContent = labels[phase];
+  }
+  nextBtn.addEventListener('click', () => { if (state === 'play') nextPhase(); nextBtn.blur(); });
+  const landed = k => mixData[k];
+
+  // ---------- 入力 ----------
+  function toLogical(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
+  const nearestHole = (p, maxD) => { let best = null, bd = maxD * maxD; for (const h of holes) { const dd = (h.x - p.x) ** 2 + (h.y - p.y) ** 2; if (dd < bd) { bd = dd; best = h; } } return best; };
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    audio();
+    const p = toLogical(e);
+    Object.assign(pointer, { x: p.x, y: p.y, lx: p.x, ly: p.y, down: true });
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    if (state === 'title') { start(); pointer.down = false; return; }
+    if (state !== 'play') return;
+    if (phase === 'egg') crackEgg();
+    else if (phase === 'shell') tapShell(p);
+    else if (phase === 'tako' && !sprinkleT) { const h = nearestHole(p, 44); if (h && h.fill > 0.05 && !h.tako) { h.tako = true; h.takoT = 0; sfx.plop(); } }
+    else if (phase === 'cook') { let hit = null, hd = 46 * 46; for (const b of balls) { const dd = (b.x - p.x) ** 2 + (b.y - p.y) ** 2; if (dd < hd) { hd = dd; hit = b; } } if (hit) tapBall(hit); }
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = toLogical(e);
+    pointer.lx = pointer.x; pointer.ly = pointer.y; pointer.x = p.x; pointer.y = p.y;
+    if (!pointer.down || state !== 'play') return;
+    if (phase === 'mix') {
+      const d = Math.hypot(pointer.x - pointer.lx, pointer.y - pointer.ly);
+      if (Math.hypot(p.x - BOWL.x, p.y - BOWL.y) < BOWL.r + 10 && mixData.mix < 1) {
+        mixData.mix = Math.min(1, mixData.mix + d / 1700);
+        if (Math.random() < d / 60) sfx.whisk();
+      }
+    }
+  });
+  const up = () => { pointer.down = false; };
+  cv.addEventListener('pointerup', up);
+  cv.addEventListener('pointercancel', up);
+  addEventListener('keydown', e => {
+    if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) return;
+    keys[e.code] = true;
+    if (e.code === 'Space') e.preventDefault();
+    if (e.repeat) return;
+    if ((e.code === 'Enter' || e.code === 'Space') && state === 'title') start();
+    else if (e.code === 'Space' && state === 'play' && phase === 'egg') crackEgg();
+    if (e.code === 'KeyM') toggleMute();
+  });
+  addEventListener('keyup', e => { keys[e.code] = false; });
+  againBtn.addEventListener('click', () => { start(); againBtn.blur(); });
+  const holding = () => pointer.down || keys.Space;
+
+  // たまごを割る:ゲージの位置で結果が変わる
+  function crackEgg() {
+    const md = mixData;
+    if (md.eggAnim > 0 || md.egg > 0) return;
+    const p = md.eggPow;
+    if (p < EGG_WEAK) {   // 弱い:割れない
+      md.weakTaps++;
+      tone(420, 0.06, 'triangle', 0.12, 380);
+      popup(70, 150, 'コツン…', C.cream, true);
+      return;
+    }
+    md.egg = 1;
+    md.eggAnim = 0.45;
+    md.yolks.push({ a: Math.random() * 6.283, d: 10 + Math.random() * 25 });
+    sfx.crack();
+    const center = (EGG_WEAK + EGG_STRONG) / 2;
+    if (p <= EGG_STRONG) {
+      const perfect = Math.abs(p - center) < 0.05;
+      const s = Math.max(0.5, (perfect ? 1 : 0.9) - md.weakTaps * 0.1);
+      stepJudge('egg', { s, label: perfect ? 'パカッ!きれい!' : 'きれいに割れた', col: perfect ? C.gold : '#f2ce78' });
+      setTimeout(() => { if (state === 'play' && phase === 'egg') { setPhase('dashi'); sfx.step(); } }, 900);
+    } else {              // 強すぎ:殻が入る → 取り出しタイム
+      const n = 2 + Math.floor((p - EGG_STRONG) / (1 - EGG_STRONG) * 3);
+      md.shells = Array.from({ length: n }, () => ({ x: BOWL.x + (Math.random() - 0.5) * 120, y: BOWL.y + (Math.random() - 0.5) * 100, r: Math.random() * 6, out: false }));
+      md.shellsIn = n;
+      popup(W / 2, 250, 'グシャ!殻が入った', '#e6e6e6');
+      burst(0.15, 0.3, 1200);
+      setTimeout(() => { if (state === 'play' && phase === 'egg') { setPhase('shell'); md.shellT = 4; } }, 600);
+    }
+  }
+  function finishShells() {
+    const md = mixData;
+    if (md.judged.egg) return;
+    const left = md.shells.filter(s => !s.out).length;
+    const s = Math.max(0.2, 0.75 - left * 0.15 - md.weakTaps * 0.1);
+    stepJudge('egg', left ? { s, label: '殻が ' + left + 'こ 残った', col: '#d98a4a' } : { s, label: '殻を全部とった!', col: '#f2ce78' });
+  }
+  function tapShell(p) {
+    for (const s of mixData.shells) {
+      if (!s.out && (s.x - p.x) ** 2 + (s.y - p.y) ** 2 < 26 * 26) { s.out = true; tone(900, 0.05, 'triangle', 0.08); return; }
+    }
+  }
+
+  function popup(x, y, s, col, small, big, pts) { popups.push({ x, y, s, col, t: 0, small, big, pts }); }
+
+  // ---------- 焼き ----------
+  function batterFactor() {
+    // だしが少ない(生地が固い)と早く焼け、多い(ゆるい)とゆっくり焼ける
+    const ratio = mixData.dashi / Math.max(1, mixData.flour);
+    return Math.max(0.75, Math.min(1.3, 1 + (3.5 - ratio) * 0.12));
+  }
+  function startCooking() {
+    const f = batterFactor();
+    const poured = holes.filter(h => h.fill > 0.05).sort((a, b) => a.order - b.order);
+    balls = holes.map(h => {
+      const i = poured.indexOf(h);
+      return {
+        x: h.x, y: h.y, hole: h, st: h.fill > 0.05 ? 'side1' : 'none',
+        r: BALL_R * (0.65 + 0.35 * Math.min(1, h.fill)),
+        c: i < 0 ? 0 : 0.14 * (1 - i / Math.max(1, poured.length)),
+        rate: (0.1 + Math.random() * 0.06) * f, d1: null, d2: null, stuck: false, flipT: 0, outT: 0, burnT: 0, toppings: h.toppings,
+      };
+    });
+  }
+  function tapBall(b) {
+    if (b.st === 'side1') {
+      b.d1 = b.c; b.st = 'flip'; b.flipT = 0; sfx.flip();
+      if (!b.hole.oiled && Math.random() < 0.65) { b.stuck = true; sfx.stick(); popup(b.x, b.y - 62, 'くっついた!', '#d8d8d8', true); }
+      judge(b, b.d1);
+    } else if (b.st === 'side2') {
+      b.d2 = b.c; b.st = 'out'; b.outT = 0; sfx.pick();
+      judge(b, b.d2);
+      dish.push(b);
+    }
+  }
+  function judge(b, d) {
+    const [label, col] = verdict(d);
+    const perfect = d >= GOOD_LO && d <= GOOD_HI;
+    if (perfect) { combo++; bestCombo = Math.max(bestCombo, combo); sfx.perfect(); } else combo = 0;
+    popup(b.x, b.y - 40, label, col);
+    if (perfect && combo >= 3) popup(b.x, b.y - 82, combo + '連続!', C.cream, true);
+  }
+  function ballScore(b) {
+    if (b.st === 'none' || b.d1 == null || b.d2 == null) return 0;
+    return (quality(b.d1) * (b.stuck ? 0.5 : 1) + quality(b.d2)) / 2;
+  }
+
+  // ---------- 更新 ----------
+  function flowIn(key, pending, base, max, dt) {
+    if (holding() && !mixData.judged[key]) { mixData.holdT += dt; pending.push({ amt: flowRate(base, max, mixData.holdT) * dt, t: FALL_DELAY }); }
+    else mixData.holdT = 0;
+    let flowing = holding();
+    for (const p of pending) { p.t -= dt; if (p.t <= 0 && !p.done) { mixData[key] += p.amt; p.done = true; } if (!p.done) flowing = true; }
+    for (let i = pending.length - 1; i >= 0; i--) if (pending[i].done) pending.splice(i, 1);
+    return flowing;
+  }
+  function update(dt) {
+    time += dt; phaseT += dt;
+    let pouringSound = 0;
+    if (phase === 'flour') {
+      if (flowIn('flour', mixData.flourPending, 18, 72, dt)) {
+        pouringSound = 0.05;
+        if (holding() && !mixData.judged.flour) for (let i = 0; i < 3; i++) parts.push({ x: BOWL.x + 14 + (Math.random() - 0.5) * 18, y: 190, vx: (Math.random() - 0.5) * 20, vy: 380 + Math.random() * 60, life: 0.5, col: '#fbf7ee', s: 2 + Math.random() * 2 });
+      }
+    } else if (phase === 'egg') {
+      const md = mixData;
+      if (!md.egg) {   // 強さゲージが行ったり来たり
+        md.eggPow += md.eggDir * dt * 1.0;
+        if (md.eggPow > 1) { md.eggPow = 1; md.eggDir = -1; }
+        if (md.eggPow < 0) { md.eggPow = 0; md.eggDir = 1; }
+      }
+    } else if (phase === 'shell') {
+      mixData.shellT -= dt;
+      if (mixData.shellT <= 0 || mixData.shells.every(s => s.out)) { finishShells(); setPhase('dashi'); sfx.step(); }
+    } else if (phase === 'dashi') {
+      if (flowIn('dashi', mixData.dashiPending, 60, 230, dt)) pouringSound = 0.09;
+    } else if (phase === 'mix') {
+      if (mixData.mix < 1 && mixData.mix > 0) mixData.mixT += dt;
+      if (mixData.mix >= 1 && phaseT > 0.3) {
+        const t = mixData.mixT;
+        stepJudge('mix', t <= 4 ? { s: 1, label: '早い!なめらか!', col: C.gold } : t <= 7 ? { s: 0.85, label: 'なめらか!', col: '#f2ce78' } : { s: 0.7, label: 'やっと混ざった', col: C.cream });
+        setPhase('oil'); sfx.step();
+      }
+    } else if (phase === 'oil') {
+      if (pointer.down) { const h = nearestHole(pointer, 40); if (h && !h.oiled) { h.oiled = true; burst(0.12, 0.05, 3000); } }
+    } else if (phase === 'pour') {
+      if (pointer.down) {
+        pouringSound = 0.07;
+        const h = nearestHole(pointer, 40);
+        if (h) { if (h.order < 0) h.order = time; h.fill = Math.min(1.8, h.fill + 1.15 * dt); }
+        if (Math.random() < dt * 30) parts.push({ x: pointer.x + 12, y: pointer.y - 18, vx: 0, vy: 160, life: 0.12, col: 'rgba(246,231,184,0.9)', s: 5 });
+      }
+    } else if (phase === 'tako') {
+      for (const h of holes) if (h.tako && h.takoT < 1) h.takoT = Math.min(1, h.takoT + dt / 0.3);
+      if (sprinkleT > 0) {
+        sprinkleT += dt;
+        if (Math.random() < dt * 60) {
+          const k = Math.random(), col = k < 0.45 ? '#f0dca0' : k < 0.75 ? '#58a84a' : '#e0525a';
+          parts.push({ x: 40 + Math.random() * 280, y: 110, vx: (Math.random() - 0.5) * 30, vy: 260 + Math.random() * 120, life: 1.2, col, s: 2.5 + Math.random() * 2, land: 130 + Math.random() * 340 });
+        }
+        if (sprinkleT > 1.1) { sprinkleT = 0; startCooking(); setPhase('cook'); }
+      }
+    } else if (phase === 'cook') {
+      updateCook(dt);
+    }
+    setLoop(pourNoise, pouringSound);
+    syncNext();
+
+    for (const p of parts) {
+      p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.land && p.y >= p.land) { p.vy = 0; p.vx = 0; }
+      if (!p.land && phase === 'flour' && p.y > BOWL.y - 10) p.life = 0;
+    }
+    parts = parts.filter(p => p.life > 0);
+    for (const f of fx) { f.life -= dt; f.y += f.vy * dt; f.x += Math.sin(f.life * 3) * 6 * dt; }
+    fx = fx.filter(f => f.life > 0);
+    for (const p of popups) p.t += dt;
+    popups = popups.filter(p => p.t < (p.big ? 1.4 : 0.9));
+    if (mixData.eggAnim > 0) mixData.eggAnim -= dt;
+  }
+  function updateCook(dt) {
+    let cooking = 0;
+    for (const b of balls) {
+      if (b.st === 'side1' || b.st === 'side2') {
+        cooking++;
+        b.c += b.rate * dt;
+        if (Math.random() < dt * 1.5) fx.push({ x: b.x + (Math.random() - 0.5) * 30, y: b.y - 10, vy: -25 - Math.random() * 20, life: 1.2, max: 1.2, r: 4 + Math.random() * 5, kind: 'steam' });
+        if (b.c >= BURN) {
+          if (b.st === 'side1') b.d1 = b.c; else b.d2 = b.c;
+          b.st = 'burnt'; b.burnT = 0; combo = 0; sfx.burn();
+          popup(b.x, b.y - 40, 'コゲ!', '#9a9a9a');
+        }
+      }
+      if (b.st === 'flip') { b.flipT += dt / 0.32; if (b.flipT >= 1) { b.st = 'side2'; b.c = 0; b.rate *= 0.9 + Math.random() * 0.25; } }
+      if (b.st === 'out') { b.outT += dt / 0.45; if (b.outT >= 1) b.st = 'done'; }
+      if (b.st === 'burnt') {
+        b.burnT += dt;
+        if (Math.random() < dt * 8) fx.push({ x: b.x + (Math.random() - 0.5) * 30, y: b.y - 6, vy: -30 - Math.random() * 30, life: 1.4, max: 1.4, r: 6 + Math.random() * 6, kind: 'smoke' });
+        if (b.burnT > 1.1) { b.st = 'gone'; if (b.d2 == null) b.d2 = 0; dish.push(b); }
+      }
+    }
+    setLoop(sizzle, Math.min(0.06, cooking * 0.006));
+    if (balls.every(b => b.st === 'done' || b.st === 'gone' || b.st === 'none')) finish();
+  }
+
+  // ---------- 採点 ----------
+  function breakdown() {
+    const j = mixData.judged, sc = k => (j[k] ? j[k].s : 0);
+    const batter = (sc('flour') + sc('egg') + sc('dashi') + sc('mix')) / 4;
+    const oil = holes.filter(h => h.oiled).length / 12;
+    const pour = holes.reduce((s, h) => s + qPour(h.fill), 0) / 12;
+    const tako = holes.filter(h => h.tako).length / 12;
+    const prep = (oil + pour + tako) / 3;
+    const cook = balls.reduce((s, b) => s + ballScore(b), 0) / 12;
+    return { batter, prep, cook, total: Math.round(100 * (0.2 * batter + 0.2 * prep + 0.6 * cook)) };
+  }
+  let result = null;
+  function finish() {
+    result = breakdown();
+    score = result.total;
+    if (score > best) { best = score; store.set('takoyaki-best', best); newBest = true; }
+    state = 'result';
+    setLoop(sizzle, 0); setLoop(pourNoise, 0);
+    nextBtn.hidden = true;
+    sfx.fanfare();
+    const text = `たこ焼き返しで ${score}点!ランク「${rankOf(score)}」` + '\n' + `生地${Math.round(result.batter * 100)} / 下ごしらえ${Math.round(result.prep * 100)} / 焼き${Math.round(result.cook * 100)}` + '\n' + SHARE_TAG + (GAME_URL ? '\n' + GAME_URL : '');
+    shareBtn.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+    copyBtn.dataset.text = text;
+    setTimeout(() => { if (state === 'result') resultUi.hidden = false; }, 600);
+  }
+  copyBtn.addEventListener('click', () => {
+    const text = copyBtn.dataset.text || '';
+    try { navigator.clipboard.writeText(text).then(() => toast('コピーしました'), () => toast('コピーできませんでした')); } catch (e) { toast('コピーできませんでした'); }
+  });
+  let toastTimer = 0;
+  function toast(s) { toastEl.textContent = s; toastEl.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.hidden = true; }, 1600); }
+  function toggleMute() { muted = !muted; store.set('takoyaki-mute', muted); soundBtn.textContent = muted ? '音 OFF' : '音 ON'; soundBtn.setAttribute('aria-pressed', String(!muted)); if (muted) { setLoop(sizzle, 0); setLoop(pourNoise, 0); } }
+  soundBtn.addEventListener('click', () => { audio(); toggleMute(); soundBtn.blur(); });
+  soundBtn.textContent = muted ? '音 OFF' : '音 ON';
+
+
+  // =====================================================================
+  //  3D 描画(Three.js)。ゲームの進行と採点は上の処理のまま、見た目だけを立体にする
+  // =====================================================================
+  const gl = $('gl');
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: gl, antialias: true });
+  } catch (e) {
+    toast('この端末は3D表示に対応していません');
+  }
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1210);
+  scene.fog = new THREE.Fog(0x1a1210, 38, 75);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  const camera = new THREE.PerspectiveCamera(36, W / H, 0.1, 200);
+
+  function resize3D() {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(W * scale, H * scale);
+  }
+  addEventListener('resize', resize3D);
+  resize3D();
+
+  // ---------- 光 ----------
+  scene.add(new THREE.HemisphereLight(0xffe2bd, 0x2a1a12, 0.9));
+  const sun = new THREE.DirectionalLight(0xfff1de, 2.4);
+  sun.position.set(-8, 20, 10);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, { left: -40, right: 14, top: 16, bottom: -16, near: 1, far: 70 });
+  sun.shadow.bias = -0.0006;
+  scene.add(sun);
+  const lantern = new THREE.PointLight(0xff9a4a, 260, 45, 2);
+  lantern.position.set(4, 12, -9);
+  scene.add(lantern);
+
+  // ---------- テクスチャ(いまはプログラムで作る。あとで写真のような素材に差し替え可能) ----------
+  function canvasTex(w, h, draw, repeat) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
+    return t;
+  }
+  function speckle(g, w, h, n, cols, smin, smax) {
+    for (let i = 0; i < n; i++) { g.fillStyle = cols[i % cols.length]; const s = smin + Math.random() * (smax - smin); g.fillRect(Math.random() * w, Math.random() * h, s, s); }
+  }
+  const woodTex = canvasTex(512, 512, (g, w, h) => {
+    g.fillStyle = '#4a2e1c'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(${30 + Math.random() * 40},${15 + Math.random() * 20},8,${0.15 + Math.random() * 0.2})`; g.fillRect(0, y, w, 1 + Math.random() * 2); }
+    for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, i * 86, w, 2); }
+  }, [3, 3]);
+
+  // ---------- 鉄板 ----------
+  const SP = 4.2, HR = 1.9, BR = 1.62;               // 穴の間隔・穴の半径・たこ焼きの半径
+  const holeWorld = (c, r) => new THREE.Vector3((c - 1) * SP, 0, (r - 1.5) * SP);
+  const PW = 13.8, PD = 18.2;
+  const plateGroup = new THREE.Group();
+  scene.add(plateGroup);
+  const plateTex = canvasTex(552, 728, (g, w, h) => {
+    g.fillStyle = '#2b2b2f'; g.fillRect(0, 0, w, h);
+    speckle(g, w, h, 5000, ['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.25)', 'rgba(120,90,60,0.05)'], 1, 3);
+    const k = w / PW;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const v = holeWorld(c, r), x = (v.x + PW / 2) * k, y = (v.z + PD / 2) * k, rr = HR * k;
+      const gr = g.createRadialGradient(x - rr * 0.3, y - rr * 0.3, rr * 0.1, x, y, rr);
+      gr.addColorStop(0, '#060607'); gr.addColorStop(0.75, '#111114'); gr.addColorStop(0.92, '#3a3a40'); gr.addColorStop(1, '#55555c');
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, 6.283); g.fill();
+    }
+  });
+  const plateBody = new THREE.Mesh(new THREE.BoxGeometry(PW + 0.8, 1.4, PD + 0.8), new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.55, metalness: 0.6 }));
+  plateBody.position.y = -0.72; plateBody.castShadow = true; plateBody.receiveShadow = true;
+  plateGroup.add(plateBody);
+  const plateTop = new THREE.Mesh(new THREE.PlaneGeometry(PW, PD), new THREE.MeshStandardMaterial({ map: plateTex, roughness: 0.5, metalness: 0.55 }));
+  plateTop.rotation.x = -Math.PI / 2; plateTop.position.y = 0.005; plateTop.receiveShadow = true;
+  plateGroup.add(plateTop);
+  // カウンター
+  const counter = new THREE.Mesh(new THREE.PlaneGeometry(160, 90), new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.8 }));
+  counter.rotation.x = -Math.PI / 2; counter.position.set(-15, -1.43, 0); counter.receiveShadow = true;
+  scene.add(counter);
+  // 舟皿
+  const boat = new THREE.Mesh(new THREE.BoxGeometry(13, 0.5, 3.8), new THREE.MeshStandardMaterial({ color: 0xc99a5b, roughness: 0.85 }));
+  boat.position.set(0, -1.15, 12.2); boat.receiveShadow = true; boat.castShadow = true;
+  plateGroup.add(boat);
+  const dishWorld = i => new THREE.Vector3(-5 + (i % 6) * 2, -0.35, 11.3 + Math.floor(i / 6) * 1.8);
+
+  // 穴ごとの部品(生地・あふれ・油・タコ・たこ焼き)
+  const batterMat = new THREE.MeshStandardMaterial({ color: 0xf6e7b8, roughness: 0.25, metalness: 0 });
+  const oilMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.45 });
+  const takoMat = new THREE.MeshStandardMaterial({ color: 0xb7445a, roughness: 0.45 });
+  const suckerMat = new THREE.MeshStandardMaterial({ color: 0xf2d6d6, roughness: 0.5 });
+  const topMats = { g: new THREE.MeshStandardMaterial({ color: 0x4f9e3e, roughness: 0.6 }), r: new THREE.MeshStandardMaterial({ color: 0xd8414d, roughness: 0.5 }) };
+  const ballGeo = new THREE.SphereGeometry(BR, 48, 32);
+
+  // たこ焼きの材質:上半分と下半分で焼き色を変える(ふちに底の焼き色がのぞく)
+  function makeBallMat() {
+    const u = { uTop: { value: new THREE.Color() }, uBottom: { value: new THREE.Color() }, uSign: { value: 1 }, uR: { value: BR } };
+    const m = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0 });
+    m.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, u);
+      sh.vertexShader = 'varying vec3 vLocalPos;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vLocalPos = position;');
+      sh.fragmentShader = 'uniform vec3 uTop;\nuniform vec3 uBottom;\nuniform float uSign;\nuniform float uR;\nvarying vec3 vLocalPos;\n' +
+        sh.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
+          float hh = uSign * vLocalPos.y / uR;
+          vec3 base = mix(uBottom, uTop, smoothstep(0.08, 0.42, hh));
+          float n1 = fract(sin(dot(floor(vLocalPos * 9.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+          float n2 = fract(sin(dot(floor(vLocalPos * 23.0), vec3(39.346, 11.135, 83.155))) * 43758.5453);
+          base *= 0.86 + 0.16 * n1 + 0.08 * n2;
+          vec4 diffuseColor = vec4(base, opacity);`);
+    };
+    m.customProgramCacheKey = () => 'takoyaki-ball';
+    m.userData.u = u;
+    return m;
+  }
+  const tmpCol = new THREE.Color();
+  const setCol = (target, arr) => target.setRGB(arr[0] / 255, arr[1] / 255, arr[2] / 255, THREE.SRGBColorSpace);
+  const RAW = [246, 231, 184];
+
+  const holeObjs = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const pos = holeWorld(c, r);
+    const o = { pos };
+    o.batter = new THREE.Mesh(new THREE.CircleGeometry(HR * 0.98, 40), batterMat);
+    o.batter.rotation.x = -Math.PI / 2; o.batter.position.set(pos.x, 0.03, pos.z);
+    o.spill = new THREE.Mesh(new THREE.CircleGeometry(HR, 40), batterMat);
+    o.spill.rotation.x = -Math.PI / 2; o.spill.position.set(pos.x + 0.2, 0.02, pos.z + 0.25);
+    o.oil = new THREE.Mesh(new THREE.RingGeometry(HR * 0.75, HR * 1.02, 40), oilMat);
+    o.oil.rotation.x = -Math.PI / 2; o.oil.position.set(pos.x, 0.015, pos.z);
+    o.tako = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6, 1), takoMat); body.scale.set(1.1, 0.55, 0.85); body.castShadow = true;
+    o.tako.add(body);
+    for (let k = 0; k < 3; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), suckerMat); s.position.set(-0.3 + k * 0.3, 0.3, 0.2); o.tako.add(s); }
+    o.mat = makeBallMat();
+    o.ball = new THREE.Mesh(ballGeo, o.mat);
+    o.ball.castShadow = true; o.ball.receiveShadow = true;
+    o.tops = new THREE.Group(); o.ball.add(o.tops);
+    for (const m of [o.batter, o.spill, o.oil, o.tako, o.ball]) { m.visible = false; plateGroup.add(m); }
+    holeObjs.push(o);
+  }
+  function setTops(o, h) {
+    if (o.tops.userData.h === h) return;
+    o.tops.clear();
+    for (const t of h.toppings) {
+      const rr = Math.min(1.25, t.d / 31 * 1.5), y = Math.sqrt(Math.max(0, BR * BR - rr * rr));
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), topMats[t.k]);
+      m.scale.set(1.3, 0.5, 1); m.position.set(Math.cos(t.a) * rr, y, Math.sin(t.a) * rr);
+      o.tops.add(m);
+    }
+    o.tops.userData.h = h;
+  }
+
+  // ---------- 台所(生地づくり)。鉄板の左どなりに置き、カメラが横に移動する ----------
+  const KX = -32;
+  const kitchen = new THREE.Group(); kitchen.position.x = KX; scene.add(kitchen);
+  const scaleBox = new THREE.Mesh(new THREE.BoxGeometry(15, 1.0, 11), new THREE.MeshStandardMaterial({ color: 0xd9d4cc, roughness: 0.5 }));
+  scaleBox.position.y = -0.95; scaleBox.castShadow = true; scaleBox.receiveShadow = true; kitchen.add(scaleBox);
+  const lcd = new THREE.Mesh(new THREE.BoxGeometry(7, 0.12, 1.8), new THREE.MeshStandardMaterial({ color: 0x1e2a22, roughness: 0.3, emissive: 0x0c1a10 }));
+  lcd.position.set(0, -0.42, 4.6);
+  const PROFILE = [[0, 0], [2.6, 0], [4.8, 0.8], [5.9, 2.2], [6.2, 3.2], [6.45, 3.32], [6.25, 3.42], [5.95, 2.3], [4.85, 0.95], [2.6, 0.15], [0, 0.15]];
+  const bowl = new THREE.Mesh(new THREE.LatheGeometry(PROFILE.map(p => new THREE.Vector2(p[0], p[1])), 64),
+    new THREE.MeshStandardMaterial({ color: 0xf0f3f8, metalness: 0.85, roughness: 0.3, envMapIntensity: 1.6, side: THREE.DoubleSide }));
+  bowl.position.y = -0.45; bowl.castShadow = true; bowl.receiveShadow = true; kitchen.add(bowl);
+  const BOWL_BASE = -0.25;
+  const innerR = y => { const P = [[0.15, 2.6], [0.95, 4.85], [2.3, 5.95], [3.42, 6.25]]; const yy = y - BOWL_BASE + 0.15; for (let i = 1; i < P.length; i++) if (yy <= P[i][0]) { const t = (yy - P[i - 1][0]) / (P[i][0] - P[i - 1][0]); return P[i - 1][1] + (P[i][1] - P[i - 1][1]) * Math.max(0, t); } return 6.2; };
+  const flourMound = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20), new THREE.MeshStandardMaterial({ color: 0xf8f5ee, roughness: 1 }));
+  flourMound.castShadow = true; kitchen.add(flourMound);
+  const liquidMat = new THREE.MeshStandardMaterial({ color: 0xecd6a0, roughness: 0.18, transparent: true, opacity: 0.92 });
+  const liquid = new THREE.Mesh(new THREE.CircleGeometry(1, 64), liquidMat);
+  liquid.rotation.x = -Math.PI / 2; kitchen.add(liquid);
+  const yolkMeshes = [0, 1].map(() => {
+    const g = new THREE.Group();
+    const white = new THREE.Mesh(new THREE.CircleGeometry(1.1, 32), new THREE.MeshStandardMaterial({ color: 0xfffdf6, roughness: 0.15, transparent: true, opacity: 0.85 }));
+    white.rotation.x = -Math.PI / 2; white.position.y = 0.01; g.add(white);
+    const y = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 16), new THREE.MeshStandardMaterial({ color: 0xf5aa1e, roughness: 0.15 }));
+    y.scale.y = 0.55; y.position.y = 0.12; g.add(y);
+    g.visible = false; kitchen.add(g); return g;
+  });
+  const lumpMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+  const lumps = Array.from({ length: 30 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.16 + Math.random() * 0.14, 8, 6), lumpMat); m.visible = false; kitchen.add(m); return m; });
+  const shellMat = new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.6 });
+  const shellMeshes = Array.from({ length: 6 }, () => { const m = new THREE.Mesh(new THREE.TetrahedronGeometry(0.5), shellMat); m.scale.set(1, 0.3, 0.9); m.castShadow = true; m.visible = false; kitchen.add(m); return m; });
+  // 泡立て器
+  const whisk = new THREE.Group();
+  const wireMat = new THREE.MeshStandardMaterial({ color: 0xd6d9de, metalness: 0.9, roughness: 0.25 });
+  for (let k = 0; k < 4; k++) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.035, 6, 32), wireMat); t.scale.y = 1.7; t.rotation.y = k * Math.PI / 4; t.position.y = 1.2; whisk.add(t); }
+  const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 3.2, 12), new THREE.MeshStandardMaterial({ color: 0x7a5134, roughness: 0.6 }));
+  wh.position.y = 4.0; whisk.add(wh);
+  whisk.rotation.x = -0.35; whisk.visible = false; kitchen.add(whisk);
+  // 小麦粉の袋
+  const bagTex = canvasTex(256, 320, (g, w, h) => {
+    g.fillStyle = '#f4efe2'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#c23a2b'; g.fillRect(0, h * 0.42, w, h * 0.2);
+    g.fillStyle = '#fbeed0'; g.font = '700 58px "Zen Maru Gothic", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('小麦粉', w / 2, h * 0.52);
+    g.fillStyle = '#7a5134'; g.font = '700 26px "Zen Maru Gothic", sans-serif'; g.fillText('薄力粉 1kg', w / 2, h * 0.78);
+  });
+  const bag = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.3, 1.3), new THREE.MeshStandardMaterial({ map: bagTex, roughness: 0.9 }));
+  bag.castShadow = true; kitchen.add(bag);
+  const flourPts = Array.from({ length: 90 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), lumpMat); m.visible = false; kitchen.add(m); return { m, v: 0, life: 0 }; });
+  // だしの計量カップ
+  const cup = new THREE.Group();
+  cup.add(new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.0, 2.8, 32, 1, true), new THREE.MeshStandardMaterial({ color: 0xe6f0ff, roughness: 0.05, transparent: true, opacity: 0.3, side: THREE.DoubleSide })));
+  const cupLiquid = new THREE.Mesh(new THREE.CylinderGeometry(1.08, 0.98, 1, 32), new THREE.MeshStandardMaterial({ color: 0xc89a48, roughness: 0.15, transparent: true, opacity: 0.85 }));
+  cup.add(cupLiquid); kitchen.add(cup);
+  const streamMat = new THREE.MeshStandardMaterial({ color: 0xc89a48, roughness: 0.1, transparent: true, opacity: 0.85 });
+  const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1, 8), streamMat);
+  stream.visible = false; kitchen.add(stream);
+  // たまご
+  const eggMat = new THREE.MeshStandardMaterial({ color: 0xf3e2c8, roughness: 0.55 });
+  const egg = new THREE.Mesh(new THREE.SphereGeometry(0.9, 32, 20), eggMat); egg.scale.set(1, 1.3, 1); egg.castShadow = true; kitchen.add(egg);
+  const eggHalves = new THREE.Group();
+  for (const s of [-1, 1]) { const h = new THREE.Mesh(new THREE.SphereGeometry(0.9, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf3e2c8, roughness: 0.55, side: THREE.DoubleSide })); h.rotation.z = s * 2.4; h.position.x = s * 0.9; eggHalves.add(h); }
+  eggHalves.visible = false; kitchen.add(eggHalves);
+  const flyYolk = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf5aa1e, roughness: 0.2 }));
+  flyYolk.visible = false; kitchen.add(flyYolk);
+
+  // ---------- 鉄板の道具 ----------
+  const brush = new THREE.Group();
+  const bh = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.5, 1.0), new THREE.MeshStandardMaterial({ color: 0xe8d3a8, roughness: 0.9 }));
+  bh.castShadow = true; brush.add(bh);
+  const bs = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3.5, 8), new THREE.MeshStandardMaterial({ color: 0x7a5134 })); bs.position.set(0, 1.8, 0.4); bs.rotation.x = -0.25; brush.add(bs);
+  brush.visible = false; plateGroup.add(brush);
+  const pitcher = new THREE.Group();
+  pitcher.add(new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.95, 2.6, 28, 1, true), new THREE.MeshStandardMaterial({ color: 0xe6f0ff, roughness: 0.05, transparent: true, opacity: 0.3, side: THREE.DoubleSide })));
+  const pl = new THREE.Mesh(new THREE.CylinderGeometry(1.03, 0.9, 1.6, 28), batterMat); pl.position.y = -0.4; pitcher.add(pl);
+  pitcher.visible = false; plateGroup.add(pitcher);
+  const pourStream = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1, 8), batterMat);
+  pourStream.visible = false; plateGroup.add(pourStream);
+  // 天かす・ねぎ・紅しょうが
+  const bitMats = [new THREE.MeshStandardMaterial({ color: 0xead39a, roughness: 0.9 }), topMats.g, topMats.r];
+  const bits = Array.from({ length: 170 }, (_, i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.08, 0.16), bitMats[i % 3]); m.visible = false; plateGroup.add(m); return { m, vy: 0, landY: 0, falling: false }; });
+  let bitCursor = 0;
+  // 湯気・煙
+  const puffTex = canvasTex(64, 64, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); });
+  const puffs = Array.from({ length: 70 }, () => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, transparent: true, depthWrite: false, opacity: 0 })); s.visible = false; plateGroup.add(s); return { s, life: 0, max: 1, smoke: false, vy: 0 }; });
+  let puffCursor = 0;
+  function puff(pos, smoke) {
+    const p = puffs[puffCursor++ % puffs.length];
+    p.s.position.set(pos.x + (Math.random() - 0.5) * 1.2, pos.y + 1.2, pos.z + (Math.random() - 0.5) * 1.2);
+    p.life = p.max = smoke ? 1.6 : 1.3; p.smoke = smoke; p.vy = smoke ? 2.5 : 1.8;
+    p.s.material.color.set(smoke ? 0x3a3a3a : 0xffffff);
+    p.s.visible = true;
+  }
+
+  // ---------- 画面の座標 ↔ 3D の座標 ----------
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(), UPV = new THREE.Vector3(0, 1, 0);
+  function toWorldOnPlane(x, y, planeY) {
+    ndc.set(x / W * 2 - 1, -(y / H * 2 - 1));
+    ray.setFromCamera(ndc, camera);
+    plane.set(UPV, -planeY);
+    return ray.ray.intersectPlane(plane, new THREE.Vector3());
+  }
+  const pv = new THREE.Vector3();
+  function project(v) { pv.copy(v).project(camera); return { x: (pv.x + 1) / 2 * W, y: (1 - pv.y) / 2 * H }; }
+
+  // ---------- カメラ(台所 ↔ 鉄板を横移動) ----------
+  const VIEWS = {
+    kitchen: { pos: new THREE.Vector3(KX, 30, 22), look: new THREE.Vector3(KX, 0.2, 2.2) },
+    plate: { pos: new THREE.Vector3(0, 37, 25), look: new THREE.Vector3(0, -0.8, 2.6) },
+  };
+  const camPos = VIEWS.plate.pos.clone(), camLook = VIEWS.plate.look.clone();
+  const KITCHEN_PHASES = ['flour', 'egg', 'shell', 'dashi', 'mix'];
+
+  let lastHoles = null;
+  function resetScene() {
+    for (const b of bits) { b.m.visible = false; b.falling = false; }
+    for (const o of holeObjs) { o.ball.visible = false; o.ball.rotation.set(0, 0, 0); o.tops.userData.h = null; }
+    for (const s of shellMeshes) s.visible = false;
+  }
+
+  function render3D(dt, rawDt) {
+    if (!renderer) return;
+    if (holes !== lastHoles) { lastHoles = holes; resetScene(); }
+    const inKitchen = state === 'play' && KITCHEN_PHASES.includes(phase);
+    const view = inKitchen ? VIEWS.kitchen : VIEWS.plate;
+    // カメラ移動は実時間で(処理が重い端末でも同じ速さで移動する)
+    const k = 1 - Math.exp(-Math.min(rawDt, 0.5) * 4);
+    camPos.lerp(view.pos, k); camLook.lerp(view.look, k);
+    camera.position.copy(camPos); camera.lookAt(camLook);
+    camera.updateMatrixWorld();
+
+    updateKitchen(dt, inKitchen);
+    updatePlate(dt);
+    // 当たり判定に使う画面上の位置を、3D の位置から計算して渡す
+    holes.forEach((h, i) => { const p = project(holeObjs[i].pos); h.x = p.x; h.y = p.y; });
+    if (balls.length) balls.forEach((b, i) => { b.x = holes[i].x; b.y = holes[i].y; });
+    if (inKitchen) {
+      const c = project(new THREE.Vector3(KX, BOWL_BASE + 0.5, 0)), e = project(new THREE.Vector3(KX + 5.6, BOWL_BASE + 0.5, 0));
+      BOWL.x = c.x; BOWL.y = c.y; BOWL.r = Math.abs(e.x - c.x);
+    }
+    renderer.render(scene, camera);
+  }
+
+  function updateKitchen(dt, active) {
+    const md = mixData;
+    const liquidAmt = Math.min(1.2, (md.dashi + (md.egg ? 50 : 0)) / 350);
+    const surfY = BOWL_BASE + 0.2 + 1.5 * Math.min(1, liquidAmt);
+    // 粉の山
+    const fr = Math.min(4.0, 0.5 + Math.sqrt(md.flour) * 0.33) * (1 - md.mix) * (md.flour > 0 ? 1 : 0);
+    flourMound.visible = fr > 0.05;
+    flourMound.scale.set(fr, fr * 0.5 * (1 - 0.5 * Math.min(1, liquidAmt)), fr);
+    flourMound.position.y = BOWL_BASE + 0.15 + (liquidAmt > 0 ? surfY - BOWL_BASE - 0.3 : 0);
+    // 液体(だし → 生地)
+    liquid.visible = md.dashi > 0 || md.egg > 0;
+    liquid.position.y = surfY;
+    const lr = innerR(surfY) - 0.05;
+    liquid.scale.set(lr, lr, 1);
+    setCol(liquidMat.color, md.mix > 0 ? batterColor() : mixRGB([214, 178, 112], [246, 231, 184], Math.min(1, md.flour / 100) * 0.6));
+    liquidMat.opacity = 0.75 + 0.25 * Math.max(md.mix, Math.min(1, md.flour / 100));
+    // 黄身
+    yolkMeshes.forEach((g, i) => {
+      const y = md.yolks[i];
+      g.visible = !!y && md.mix < 0.85;
+      if (!y) return;
+      const a = y.a + md.mix * 6, d = y.d * 0.07 * (1 - md.mix);
+      g.position.set(Math.cos(a) * d, surfY + 0.02, Math.sin(a) * d);
+      g.scale.setScalar(Math.max(0.01, 1 - md.mix));
+    });
+    // ダマ
+    const nL = md.mix > 0 && md.mix < 1 ? Math.ceil(lumps.length * (1 - md.mix)) : 0;
+    lumps.forEach((m, i) => {
+      m.visible = i < nL;
+      if (!m.visible) return;
+      const l = md.lumps[i], a = l.a + md.mix * 7, d = l.d * (lr - 0.6);
+      m.position.set(Math.cos(a) * d, surfY + 0.05, Math.sin(a) * d);
+    });
+    // 殻(画面でタップした位置と同じ場所に置く)
+    shellMeshes.forEach((m, i) => {
+      const s = md.shells[i];
+      m.visible = !!s && !s.out && md.mix < 0.2;
+      if (!m.visible) return;
+      if (!s.w) { const w = toWorldOnPlane(s.x, s.y, surfY + 0.1); s.w = w ? w.sub(kitchen.position) : new THREE.Vector3(); }
+      m.position.set(s.w.x, surfY + 0.1, s.w.z); m.rotation.set(0.2, s.r, 0.1);
+    });
+    // 小麦粉の袋と粉
+    const pouringFlour = active && phase === 'flour' && holding() && !md.judged.flour;
+    bag.visible = active && phase === 'flour';
+    const tilt = pouringFlour ? 0.9 + Math.min(1, md.holdT / 1.6) * 0.5 : 0.35;
+    bag.position.set(3.2, 6.6, -1.2); bag.rotation.set(0.15, 0, tilt);
+    for (const p of flourPts) {
+      if (p.life > 0) { p.life -= dt; p.v += 30 * dt; p.m.position.y -= p.v * dt; if (p.m.position.y < surfY || p.life <= 0) { p.life = 0; p.m.visible = false; } }
+      else if (pouringFlour && Math.random() < 0.5) { p.life = 1; p.v = 3; p.m.visible = true; p.m.position.set(1.6 + (Math.random() - 0.5) * 0.6, 5.6, -1.0 + (Math.random() - 0.5) * 0.6); }
+    }
+    // だし
+    cup.visible = active && phase === 'dashi';
+    const pouringDashi = active && phase === 'dashi' && md.dashiPending.length > 0;
+    cup.position.set(4.4, 6.2, -0.6); cup.rotation.set(0, 0, pouringDashi ? 1.25 : 0.35);
+    cupLiquid.scale.y = Math.max(0.15, 1.6 - md.dashi / 300); cupLiquid.position.y = -1.4 + cupLiquid.scale.y / 2;
+    stream.visible = pouringDashi;
+    if (pouringDashi) { const top = 5.6, bottom = surfY; stream.scale.y = top - bottom; stream.position.set(2.9, (top + bottom) / 2, -0.6); }
+    // たまご
+    egg.visible = active && phase === 'egg' && !md.egg;
+    egg.position.set(-5.4, 3.2, -2.2); egg.rotation.set(0, 0, 0.2 + md.eggPow * 1.1);
+    eggHalves.visible = active && (phase === 'egg' || phase === 'shell') && md.egg > 0;
+    eggHalves.position.set(-5.4, 2.6, -2.2);
+    flyYolk.visible = md.eggAnim > 0;
+    if (flyYolk.visible) { const t = 1 - md.eggAnim / 0.45; flyYolk.position.set(-5.4 * (1 - t), 3.2 * (1 - t) + surfY * t + Math.sin(Math.PI * t) * 1.5, -2.2 * (1 - t)); }
+    // 泡立て器
+    whisk.visible = active && phase === 'mix';
+    if (whisk.visible) {
+      let w = null;
+      if (pointer.down) w = toWorldOnPlane(pointer.x, pointer.y, surfY);
+      if (w) { w.sub(kitchen.position); const d = Math.hypot(w.x, w.z), m = lr - 0.8; if (d > m) { w.x *= m / d; w.z *= m / d; } whisk.position.set(w.x, surfY - 0.6, w.z); }
+      else whisk.position.set(Math.cos(blink * 3) * 2.5, surfY - 0.6, Math.sin(blink * 3) * 2.5);
+    }
+  }
+
+  function updatePlate(dt) {
+    const prep = state === 'play' && ['oil', 'pour', 'tako'].includes(phase);
+    const cooking = state !== 'title' && (phase === 'cook' || state === 'result');
+    holes.forEach((h, i) => {
+      const o = holeObjs[i];
+      o.oil.visible = h.oiled && !cooking;
+      const f = Math.min(1, h.fill);
+      o.batter.visible = h.fill > 0.02 && !cooking;
+      o.batter.scale.setScalar(Math.max(0.05, Math.sqrt(f)));
+      o.spill.visible = h.fill > 1 && !cooking;
+      if (o.spill.visible) o.spill.scale.set(1 + (h.fill - 1) * 0.9, 1 + (h.fill - 1) * 0.7, 1);
+      o.tako.visible = h.tako && !cooking;
+      if (o.tako.visible) o.tako.position.set(o.pos.x, 0.25 + (1 - h.takoT) * 4, o.pos.z);
+    });
+    // 道具
+    brush.visible = state === 'play' && phase === 'oil';
+    if (brush.visible) {
+      const w = pointer.down ? toWorldOnPlane(pointer.x, pointer.y, 0.3) : null;
+      if (w) brush.position.copy(w); else brush.position.set(Math.cos(blink * 2) * 4, 0.3, Math.sin(blink * 3) * 5);
+    }
+    pitcher.visible = state === 'play' && phase === 'pour';
+    pourStream.visible = false;
+    if (pitcher.visible) {
+      const w = pointer.down ? toWorldOnPlane(pointer.x, pointer.y, 0) : null;
+      if (w) {
+        pitcher.position.set(w.x + 1.4, 3.6, w.z - 0.4); pitcher.rotation.set(0, 0, 0.9);
+        pourStream.visible = true; pourStream.scale.y = 3.0; pourStream.position.set(w.x + 0.2, 1.5, w.z - 0.3);
+      } else { pitcher.position.set(5.5, 3.2, -8.5); pitcher.rotation.set(0, 0, 0.2); }
+    }
+    // 天かす・ねぎ・紅しょうが
+    if (state === 'play' && phase === 'tako' && sprinkleT > 0) {
+      for (let n = 0; n < 4; n++) {
+        const b = bits[bitCursor++ % bits.length];
+        b.m.visible = true; b.falling = true; b.vy = 0;
+        b.m.position.set((Math.random() - 0.5) * (PW - 1.5), 9 + Math.random() * 3, (Math.random() - 0.5) * (PD - 2));
+        b.m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+        b.landY = 0.08;
+      }
+    }
+    for (const b of bits) if (b.falling) { b.vy += 40 * dt; b.m.position.y -= b.vy * dt; if (b.m.position.y <= b.landY) { b.m.position.y = b.landY; b.falling = false; } }
+    // たこ焼き
+    const showBalls = state !== 'title' && balls.length > 0;
+    holeObjs.forEach((o, i) => {
+      const b = balls[i];
+      if (!showBalls || !b || b.st === 'none') { o.ball.visible = false; return; }
+      const h = holes[i], u = o.mat.userData.u, sc = b.r / BALL_R;
+      setTops(o, h);
+      o.ball.visible = true;
+      o.ball.scale.setScalar(sc);
+      const base = new THREE.Vector3(o.pos.x, 0.2 * sc, o.pos.z);
+      if (b.st === 'side1') {
+        o.ball.position.copy(base); o.ball.rotation.set(0, 0, 0);
+        u.uSign.value = 1; setCol(u.uTop.value, RAW); setCol(u.uBottom.value, cookRGB(b.c));
+        o.tops.visible = true;
+        if (Math.random() < dt * 1.4) puff(base, false);
+      } else if (b.st === 'flip') {
+        const t = b.flipT;
+        o.ball.position.set(base.x, base.y + Math.sin(Math.PI * t) * 1.6, base.z);
+        o.ball.rotation.set(Math.PI * t, 0, 0);
+        u.uSign.value = 1; setCol(u.uTop.value, RAW); setCol(u.uBottom.value, cookRGB(b.d1));
+      } else if (b.st === 'side2') {
+        o.ball.position.copy(base); o.ball.rotation.set(Math.PI, 0, 0);
+        u.uSign.value = -1; setCol(u.uTop.value, cookRGB(b.d1)); setCol(u.uBottom.value, cookRGB(b.c));
+        if (Math.random() < dt * 1.4) puff(base, false);
+      } else if (b.st === 'out' || b.st === 'done') {
+        const t = b.st === 'done' ? 1 : b.outT, to = dishWorld(dish.indexOf(b));
+        o.ball.position.set(base.x + (to.x - base.x) * t, base.y + (to.y - base.y) * t + Math.sin(Math.PI * t) * 4, base.z + (to.z - base.z) * t);
+        o.ball.rotation.set(Math.PI, 0, 0);
+        o.ball.scale.setScalar(sc * (1 - 0.42 * t));
+        u.uSign.value = -1; setCol(u.uTop.value, cookRGB(b.d1)); setCol(u.uBottom.value, cookRGB(b.d2 ?? b.c));
+      } else if (b.st === 'burnt' || b.st === 'gone') {
+        const t = b.st === 'gone' ? 1 : Math.max(0, b.burnT - 0.6) / 0.5;
+        const to = dishWorld(dish.indexOf(b) < 0 ? i : dish.indexOf(b));
+        if (b.st === 'gone') { o.ball.position.copy(to); o.ball.scale.setScalar(sc * 0.58); }
+        else { o.ball.position.copy(base); o.ball.scale.setScalar(sc * (1 - 0.2 * t)); if (Math.random() < dt * 9) puff(base, true); }
+        setCol(u.uTop.value, cookRGB(BURN)); setCol(u.uBottom.value, cookRGB(BURN));
+      }
+    });
+    for (const p of puffs) {
+      if (p.life <= 0) continue;
+      p.life -= dt;
+      p.s.position.y += p.vy * dt;
+      const a = p.life / p.max;
+      p.s.material.opacity = (p.smoke ? 0.55 : 0.22) * a;
+      p.s.scale.setScalar((p.smoke ? 2.2 : 1.6) * (1.6 - a * 0.6));
+      if (p.life <= 0) p.s.visible = false;
+    }
+  }
+
+  // ---------- 文字・ゲージ(上の canvas) ----------
+  function circle(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, Math.max(0, r), 0, 6.283); ctx.fill(); }
+  function text(s, x, y, size, col, font, align, alpha) {
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    font = font || FB;
+    ctx.font = font.startsWith('700 ') ? '700 ' + size + 'px ' + font.slice(4) : size + 'px ' + font;
+    ctx.fillStyle = col; ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(s, x, y);
+    ctx.globalAlpha = 1;
+  }
+  function outlined(s, x, y, size, col, font) {
+    font = font || FD;
+    ctx.font = font.startsWith('700 ') ? '700 ' + size + 'px ' + font.slice(4) : size + 'px ' + font;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size * 0.18); ctx.strokeStyle = '#2a140c';
+    ctx.strokeText(s, x, y);
+    ctx.fillStyle = col; ctx.fillText(s, x, y);
+  }
+  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  // 2D の小さなたこ焼き(タイトルの見本と結果の盛り付け用)
+  function drawBall(x, y, r, top, rim, toppings, stuck) {
+    if (rim != null) circle(x, y, r + 3, rgb(cookRGB(rim)));
+    const base = top == null ? RAW : cookRGB(top);
+    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+    g.addColorStop(0, rgb(base, 1.12)); g.addColorStop(0.7, rgb(base)); g.addColorStop(1, rgb(base, 0.78));
+    circle(x, y, r, g);
+    if (top == null && toppings) for (const t of toppings) circle(x + Math.cos(t.a) * t.d * r / 31, y + Math.sin(t.a) * t.d * r / 31, 2.4 * r / 31, t.k === 'g' ? '#58a84a' : '#e0525a');
+    if (stuck && top != null) { ctx.strokeStyle = rgb(base, 0.55); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - r * 0.6, y - r * 0.1); ctx.lineTo(x - r * 0.1, y + r * 0.15); ctx.lineTo(x + r * 0.2, y - r * 0.2); ctx.lineTo(x + r * 0.6, y + r * 0.1); ctx.stroke(); }
+    circle(x - r * 0.35, y - r * 0.42, r * 0.16, 'rgba(255,255,255,0.35)');
+  }
+  function batterColor() {
+    const flour = [250, 247, 238], yolk = [246, 196, 70], smooth = [244, 222, 160];
+    return mixRGB(mixRGB(flour, yolk, Math.min(0.35, mixData.egg * 0.15)), smooth, mixData.mix);
+  }
+
+  function drawNoren() {
+    const g = ctx.createRadialGradient(W / 2, 30, 10, W / 2, 30, 300);
+    g.addColorStop(0, 'rgba(255, 170, 80, 0.22)'); g.addColorStop(1, 'rgba(255, 170, 80, 0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 300);
+    for (let i = 0; i < 4; i++) { ctx.fillStyle = C.noren; ctx.fillRect(8 + i * 87, 0, 82, 56); ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(8 + i * 87, 50, 82, 6); }
+    ['た', 'こ', '焼', 'き'].forEach((s, i) => outlined(s, 49 + i * 87, 26, 26, C.cream));
+  }
+  function guideBand() {
+    const g = ctx.createLinearGradient(0, 56, 0, 136);
+    g.addColorStop(0, 'rgba(26,18,16,0.85)'); g.addColorStop(1, 'rgba(26,18,16,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 56, W, 80);
+  }
+  function drawSteps() {
+    guideBand();
+    let x = 18;
+    const cur = STEPS.findIndex(s => s[1].includes(phase));
+    ctx.font = '700 11px ' + FB;
+    STEPS.forEach(([label], i) => {
+      const w = ctx.measureText(label).width + 14;
+      ctx.fillStyle = i === cur ? C.gold : i < cur ? 'rgba(251,238,208,0.35)' : 'rgba(251,238,208,0.15)';
+      roundRect(x, 64, w, 18, 9); ctx.fill();
+      text(label, x + w / 2, 73, 11, i === cur ? C.night : C.cream, '700 ' + FB);
+      x += w + 4;
+    });
+    const [a, b] = GUIDE[phase];
+    outlined(a, W / 2, 98, 15, C.cream, '700 ' + FB);
+    text(b, W / 2, 118, 11.5, C.cream, '700 ' + FB, 'center', 0.85);
+  }
+  function drawKitchenHud() {
+    const md = mixData, gx = 40, gy = 496, gw = W - 80;
+    // はかりの表示(液晶)
+    ctx.fillStyle = 'rgba(20,30,24,0.92)'; roundRect(W / 2 - 110, 440, 220, 36, 8); ctx.fill();
+    ctx.strokeStyle = 'rgba(159,240,178,0.35)'; ctx.lineWidth = 1; ctx.stroke();
+    if (phase === 'egg' || phase === 'shell') {
+      const lbl = phase === 'shell' ? '殻 のこり ' + md.shells.filter(s => !s.out).length + 'こ  ' + Math.max(0, md.shellT).toFixed(1) + '秒' : '割る強さ';
+      text(lbl, W / 2, 458, 14, '#9ff0b2', '700 ' + FB);
+      if (phase === 'egg') {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)'; roundRect(gx, gy, gw, 12, 6); ctx.fill();
+        ctx.fillStyle = 'rgba(224,82,90,0.6)'; ctx.fillRect(gx + gw * EGG_STRONG, gy, gw * (1 - EGG_STRONG), 12);
+        ctx.fillStyle = 'rgba(111,191,90,0.9)'; ctx.fillRect(gx + gw * EGG_WEAK, gy, gw * (EGG_STRONG - EGG_WEAK), 12);
+        ctx.fillStyle = C.gold; ctx.fillRect(gx + gw * ((EGG_WEAK + EGG_STRONG) / 2) - 1, gy, 2, 12);
+        ctx.fillStyle = C.cream; ctx.fillRect(gx + gw * md.eggPow - 2, gy - 5, 4, 22);
+        text('弱い', gx + gw * EGG_WEAK / 2, gy + 26, 11, C.cream, '700 ' + FB, 'center', 0.8);
+        text('ちょうど', gx + gw * (EGG_WEAK + EGG_STRONG) / 2, gy + 26, 11, C.green, '700 ' + FB);
+        text('強すぎ', gx + gw * (1 + EGG_STRONG) / 2, gy + 26, 11, '#e0525a', '700 ' + FB);
+        if (!md.egg) text('タップで割る', W / 2, 410, 14, C.gold, '700 ' + FB, 'center', 0.6 + Math.sin(blink * 5) * 0.4);
+      }
+      if (phase === 'shell') for (const s of md.shells) if (!s.out) { ctx.strokeStyle = 'rgba(242,181,68,' + (0.5 + Math.sin(blink * 8) * 0.4) + ')'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(s.x, s.y, 17, 0, 6.283); ctx.stroke(); }
+      return;
+    }
+    const [label, value, unit, target, max, okLo, okHi] =
+      phase === 'flour' ? ['小麦粉', md.flour, 'g', 100, 160, 99, 101] :
+      phase === 'dashi' ? ['だし', md.dashi, 'ml', 350, 520, 346, 354] :
+      ['混ぜ具合', md.mix * 100, '%', 100, 100, 99, 100];
+    text(label, W / 2 - 100, 458, 12, '#9ff0b2', '700 ' + FB, 'left');
+    text(Math.floor(value) + ' ' + unit, W / 2 + 100, 458, 20, '#9ff0b2', FD, 'right');
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; roundRect(gx, gy, gw, 10, 5); ctx.fill();
+    ctx.fillStyle = 'rgba(111,191,90,0.85)'; ctx.fillRect(gx + gw * okLo / max, gy, Math.max(3, gw * (okHi - okLo) / max), 10);
+    ctx.fillStyle = C.gold; ctx.fillRect(gx + gw * Math.min(1, value / max) - 2, gy - 4, 4, 18);
+    text('目標 ' + target + unit, gx + gw * target / max, gy + 24, 11, C.cream, '700 ' + FB, 'center', 0.85);
+  }
+  function drawPlateHud() {
+    if (phase === 'pour') for (const h of holes) if (h.fill > 0) {
+      const f = Math.min(1.5, h.fill);
+      ctx.strokeStyle = h.fill >= 0.9 && h.fill <= 1.3 ? C.green : h.fill > 1.3 ? '#e0525a' : 'rgba(251,238,208,0.6)';
+      ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(h.x, h.y, 30, -Math.PI / 2, -Math.PI / 2 + 6.283 * f / 1.5); ctx.stroke();
+    }
+    const filled = holes.filter(h => h.fill > 0.05).length, oiled = holes.filter(h => h.oiled).length, tako = holes.filter(h => h.tako).length;
+    const info = phase === 'oil' ? '油をひいた穴 ' + oiled + ' / 12' : phase === 'pour' ? '流した穴 ' + filled + ' / 12' : 'タコ ' + tako + ' / ' + filled;
+    outlined(info, 90, 616, 13, C.cream, '700 ' + FB);
+  }
+  function drawPopups() {
+    for (const p of popups) {
+      if (p.big) {
+        const t = p.t, s = t < 0.15 ? 0.6 + t / 0.15 * 0.5 : t < 0.25 ? 1.1 - (t - 0.15) : 1;
+        ctx.globalAlpha = t > 1.1 ? Math.max(0, 1 - (t - 1.1) / 0.3) : 1;
+        outlined(p.s, p.x, p.y, 30 * s, p.col);
+        if (p.pts != null) outlined('+' + p.pts, p.x, p.y + 38, 22 * s, C.cream);
+        ctx.globalAlpha = 1;
+        continue;
+      }
+      ctx.globalAlpha = 1 - p.t / 0.9;
+      outlined(p.s, p.x, p.y - p.t * 26, p.small ? 14 : 20, p.col);
+      ctx.globalAlpha = 1;
+    }
+  }
+  function drawTitle() {
+    ctx.fillStyle = 'rgba(26,18,16,0.55)'; ctx.fillRect(0, 56, W, H - 56);
+    outlined('たこ焼き', W / 2, 128, 46, C.cream);
+    outlined('返し', W / 2, 184, 58, C.gold);
+    outlined('生地を作って、流して、焼き上げる。', W / 2, 238, 14, C.cream, '700 ' + FB);
+    ctx.fillStyle = 'rgba(26,18,16,0.7)'; roundRect(30, 260, W - 60, 118, 12); ctx.fill();
+    const steps = ['① 小麦粉・たまご・だしを はかる', '② ぐるぐる混ぜる', '③ 鉄板に油 → 生地を流す → タコ', '④ ふちが きつね色で くるっと返す'];
+    steps.forEach((s, i) => text(s, 46, 280 + i * 26, 13, C.cream, '700 ' + FB, 'left', 0.95));
+    [[100, 0.3, 'まだ'], [180, 0.72, 'きつね色'], [260, 1.15, 'コゲ']].forEach(([x, c, l]) => {
+      drawBall(x, 420, 20, null, c, [{ a: 1, d: 6, k: 'g' }, { a: 3, d: 9, k: 'r' }]);
+      outlined(l, x, 455, 12, c === 0.72 ? C.gold : C.cream, '700 ' + FB);
+    });
+    outlined('タップでスタート', W / 2, 520, 20, C.cream);
+    outlined('ハイスコア ' + best + '点', W / 2, 560, 13, C.cream, '700 ' + FB);
+  }
+  function bar(y, label, v) {
+    text(label, 60, y, 12, C.cream, '700 ' + FB, 'left');
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(150, y - 5, 130, 10, 5); ctx.fill();
+    ctx.fillStyle = v >= 0.85 ? C.gold : v >= 0.6 ? '#e8c27a' : '#c98a6a'; roundRect(150, y - 5, Math.max(10, 130 * v), 10, 5); ctx.fill();
+    text(Math.round(v * 100) + '', 300, y, 13, C.cream, '700 ' + FB, 'right');
+  }
+  function drawResult() {
+    ctx.fillStyle = 'rgba(26,18,16,0.86)'; ctx.fillRect(0, 56, W, H - 56);
+    text('きょうの たこ焼き', W / 2, 82, 15, C.cream, '700 ' + FB);
+    ctx.fillStyle = '#c99a5b'; roundRect(40, 98, W - 80, 154, 12); ctx.fill();
+    balls.forEach((b, i) => {
+      const x = 78 + (i % 4) * 68, y = 126 + Math.floor(i / 4) * 48;
+      if (b.st === 'none') return;
+      if (b.st === 'gone') { drawBall(x, y, 20, BURN, null, null); return; }
+      drawBall(x, y, 20 * b.r / BALL_R, b.d1, null, b.toppings, b.stuck);
+      ctx.fillStyle = 'rgba(70,30,12,0.85)'; ctx.beginPath(); ctx.ellipse(x, y - 3, 14, 10, 0, 0, 6.283); ctx.fill();
+      ctx.strokeStyle = '#fff7df'; ctx.lineWidth = 2; ctx.beginPath();
+      for (let k = 0; k <= 6; k++) ctx.lineTo(x - 12 + k * 4, y - 3 + (k % 2 ? 4 : -4));
+      ctx.stroke();
+      for (let k = 0; k < 4; k++) circle(x - 8 + k * 5, y - 10 + (k % 2) * 3, 1.4, C.green);
+    });
+    outlined(score + '点', W / 2, 296, 52, C.gold);
+    outlined(rankOf(score), W / 2, 346, 24, C.cream);
+    if (newBest) text('ハイスコア更新!', W / 2, 376, 14, C.gold, '700 ' + FB);
+    bar(408, '生地の出来', result.batter);
+    bar(434, '下ごしらえ', result.prep);
+    bar(460, '焼き', result.cook);
+    const md = mixData, jl = k => (md.judged[k] ? md.judged[k].label : '-');
+    text(`粉 ${Math.round(md.flour)}g ${jl('flour')} / だし ${Math.round(md.dashi)}ml ${jl('dashi')}`, W / 2, 486, 11, C.cream, FB, 'center', 0.75);
+    text(`たまご ${jl('egg')} / 混ぜ ${jl('mix')}`, W / 2, 503, 11, C.cream, FB, 'center', 0.75);
+    text('最大 ' + bestCombo + '連続 / ハイスコア ' + best + '点', W / 2, 522, 11, C.cream, FB, 'center', 0.6);
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    drawNoren();
+    if (state === 'title') { drawTitle(); return; }
+    if (state === 'result') { drawResult(); return; }
+    if (KITCHEN_PHASES.includes(phase)) drawKitchenHud();
+    else if (phase !== 'cook') drawPlateHud();
+    drawPopups();
+    drawSteps();
+    if (phase === 'cook' && combo >= 2) outlined(combo + '連続 きつね色', W - 80, 616, 13, C.gold, '700 ' + FB);
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const rawDt = (now - last) / 1000, dt = Math.min(rawDt, 1 / 30);
+    last = now; blink += dt;
+    if (state === 'play') update(dt);
+    render3D(dt, rawDt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { setLoop(sizzle, 0); setLoop(pourNoise, 0); } });
+  // 宣伝動画の自動撮影・動作テスト用(URL に ?capture を付けたときだけ有効)
+  if (/[?&]capture\b/.test(location.search)) {
+    window.__capture = {
+      state: () => state, phase: () => phase,
+      mix: () => ({ flour: mixData.flour, egg: mixData.egg, dashi: mixData.dashi, mix: mixData.mix, eggPow: mixData.eggPow, judged: mixData.judged, shells: mixData.shells.map(s => ({ x: s.x, y: s.y, out: s.out })) }),
+      holes: () => holes.map(h => ({ x: h.x, y: h.y, fill: h.fill, oiled: h.oiled, tako: h.tako })),
+      balls: () => balls.map(b => ({ x: b.x, y: b.y, st: b.st, c: b.c })),
+      bowl: () => ({ ...BOWL }),
+    };
+  }
+  newGame();
+  requestAnimationFrame(frame);
+})();
+</script>
