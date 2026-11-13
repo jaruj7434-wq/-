@@ -13,7 +13,7 @@ import math, random
 
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Vector, noise
 
 import common as C
 import props as P
@@ -23,9 +23,9 @@ import pet_parts2 as PP2
 
 # ------------------------------------------------------------------ 布マテリアル
 def mat_cloth(name, color, color2=None, pattern=None, scale=1.0, rough=0.82, sheen=0.35, coord=None,
-              weave=0.15, vary=0.12):
+              weave=0.15, vary=0.12, check_axis="Z"):
     """布。pattern: None(無地)/"stripe"(縦じま、color2)/"check"(ギンガム、color2)/"rib"(ニットの縦うね)。
-    scale はしま・格子の 1cm あたりの本数。coord を渡すとその Object の座標で模様を貼る(切り抜きで模様を合わせる用)。"""
+    scale はしま・格子の 1cm あたりの本数。check_axis はギンガムの2本目の軸(吊り="Z"、平置き="Y")。coord を渡すとその Object の座標で模様を貼る(切り抜きで模様を合わせる用)。"""
     m, nt, out = C.node_mat(name)
     n = nt.nodes
     tc = n.new("ShaderNodeTexCoord")
@@ -61,17 +61,11 @@ def mat_cloth(name, color, color2=None, pattern=None, scale=1.0, rough=0.82, she
             thin = n.new("ShaderNodeMath"); thin.operation = "MULTIPLY"; thin.inputs[1].default_value = 1.0
             C.link(nt, fx, thin.inputs[0]); fac = thin.outputs[0]
         else:
-            fz = bands(sep.outputs["Z"], scale)
-            fy = bands(sep.outputs["Y"], scale)
-            # 平置き(XY)でも吊り(XZ)でも格子になるよう Z と Y の両方を足す
+            fz = bands(sep.outputs[check_axis], scale)
             add = n.new("ShaderNodeMath"); add.operation = "ADD"
             C.link(nt, fx, add.inputs[0]); C.link(nt, fz, add.inputs[1])
-            add2 = n.new("ShaderNodeMath"); add2.operation = "ADD"
-            C.link(nt, add.outputs[0], add2.inputs[0]); C.link(nt, fy, add2.inputs[1])
             half = n.new("ShaderNodeMath"); half.operation = "MULTIPLY"; half.inputs[1].default_value = 0.5
-            C.link(nt, add2.outputs[0], half.inputs[0])
-            mn = n.new("ShaderNodeMath"); mn.operation = "MINIMUM"; mn.inputs[1].default_value = 1.0
-            C.link(nt, half.outputs[0], mn.inputs[0]); fac = mn.outputs[0]
+            C.link(nt, add.outputs[0], half.inputs[0]); fac = half.outputs[0]
         mx = n.new("ShaderNodeMix"); mx.data_type = "RGBA"
         C.link(nt, fac, mx.inputs["Factor"])
         C.link(nt, col, mx.inputs["A"]); mx.inputs["B"].default_value = (*color2, 1)
@@ -87,7 +81,7 @@ def mat_cloth(name, color, color2=None, pattern=None, scale=1.0, rough=0.82, she
     else:
         w1 = n.new("ShaderNodeTexWave"); w1.wave_type = "BANDS"; w1.bands_direction = "X"
         w1.inputs["Scale"].default_value = 40; C.link(nt, vec, w1.inputs["Vector"])
-        w2 = n.new("ShaderNodeTexWave"); w2.wave_type = "BANDS"; w2.bands_direction = "Z"
+        w2 = n.new("ShaderNodeTexWave"); w2.wave_type = "BANDS"; w2.bands_direction = check_axis
         w2.inputs["Scale"].default_value = 40; C.link(nt, vec, w2.inputs["Vector"])
         mw = n.new("ShaderNodeMath"); mw.operation = "MULTIPLY"
         C.link(nt, w1.outputs["Fac"], mw.inputs[0]); C.link(nt, w2.outputs["Fac"], mw.inputs[1])
@@ -108,6 +102,7 @@ def _prism(bm, poly_xz, y0, y1):
     for i in range(k):
         j = (i + 1) % k
         bm.faces.new((vf[i], vf[j], vb[j], vb[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
 
 
 def _quad_along(p0, d, length, w0, w1):
@@ -252,6 +247,28 @@ def garment(name, kind="shirt", mat=None, seed=0, collar=True, buttons=True, tri
             b = bpy.context.object; b.name = name + f"_Btn{i}"; b.parent = o
             b.data.materials.append(bmat if kind == "shirt" else tm)
     return o, anchors
+
+
+# ------------------------------------------------------------------ 丸めた服
+def cloth_wad(name, size, rnd, mat, subdiv=3):
+    """袋に詰めた服のかたまり(つぶれた布)。"""
+    bm = bmesh.new()
+    bmesh.ops.create_icosphere(bm, subdivisions=subdiv, radius=1.0)
+    off = Vector((rnd.uniform(0, 50), rnd.uniform(0, 50), rnd.uniform(0, 50)))
+    dirs = [Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-1, 1))).normalized() for _ in range(3)]
+    for v in bm.verts:
+        p = v.co.copy()
+        d = 1.0 + 0.22 * noise.noise(p * 1.3 + off)
+        # しわ(折り目の筋): 方向のちがう |sin| を重ねる
+        for q in dirs:
+            d -= 0.07 * abs(math.sin(p.dot(q) * 5.5 + 2.0 * noise.noise(p * 0.8 + off)))
+        v.co = Vector((p.x * size[0] * d, p.y * size[1] * d, p.z * size[2] * d))
+    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
+    o = mesh_object(name, me)
+    for poly in o.data.polygons:
+        poly.use_smooth = True
+    o.data.materials.append(mat)
+    return o
 
 
 # ------------------------------------------------------------------ ハンガー
