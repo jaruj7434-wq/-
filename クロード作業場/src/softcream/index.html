@@ -274,7 +274,13 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     }
   }
   function supportAt(x, z, rad) { let m = -999; cellsAround(x, z, rad, k => { if (height[k] > m) m = height[k]; }); return m; }
-  function stamp(x, z, y, rad) { cellsAround(x, z, rad, (k, d) => { const v = y + Math.sqrt(Math.max(0, rad * rad - d * d)) * 0.85; if (v > height[k]) height[k] = v; }); }
+  function stamp(x, z, y, rad, k0) { const kk = k0 == null ? 0.85 : k0; cellsAround(x, z, rad, (k, d) => { const v = y + Math.sqrt(Math.max(0, rad * rad - d * d)) * kk; if (v > height[k]) height[k] = v; }); }
+  // 置いたばかりのクリームは、少し回ってから高さに反映する
+  // (すぐ反映すると、次のクリームがその上に乗って縦に積み上がってしまうため。下の段にだけ乗るようにする)
+  const pending = [];
+  function flushPending(force) {
+    while (pending.length && (force || gameT - pending[0].t > 0.45)) { const q = pending.shift(); stamp(q.x, q.z, q.y, ROPE * 1.05); }
+  }
 
   // ---------- クリームの形(星形の口金で絞った、すじ入りの太いひも) ----------
   const RS = 16;
@@ -317,6 +323,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // ---------- ゲームの状態 ----------
   let state = 'title';    // title / order / play / judge / result / fall
+  let gameT = 0, flowAcc = 0;
   let order, coneX, coneTargetX, spin, ropes, cur, pts, spills, deposits, Hmax, coneY, com, lean, fallT, judgeT, holdOn, result, newBest, stateT, blink = 0, auto = false;
   const blobs = [];
   const pointer = { down: false, x: 0, lastX: 0 };
@@ -332,6 +339,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     blobs.length = 0;
     creamGroup.position.set(0, 0, 0); creamGroup.quaternion.identity();
     resetHeight();
+    pending.length = 0; flowAcc = 0;
     coneX = START_X; coneTargetX = START_X; spin = 0;
     ropes = []; cur = null; pts = 0; spills = 0; deposits = []; Hmax = 0; coneY = 0.2; com = new THREE.Vector3(); lean = 0; fallT = 0; judgeT = 0; holdOn = false; result = null; newBest = false;
   }
@@ -387,13 +395,21 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // ---------- クリームを置く ----------
   const UPV = new THREE.Vector3(0, 1, 0);
-  function deposit() {
+  function deposit(ang) {
     // 機械の口は常に真上(x=0)。コーンの中心から見た位置に変換する
-    const local = new THREE.Vector3(-coneX, 0, 0).applyAxisAngle(UPV, -spin);
-    const sup = supportAt(local.x, local.z, ROPE * 0.7);
+    const local = new THREE.Vector3(-coneX, 0, 0).applyAxisAngle(UPV, -ang);
+    const r = Math.hypot(local.x, local.z);
+    const sup = supportAt(local.x, local.z, ROPE * 0.6);
     if (sup < -100) { spill(); return; }
-    const y = sup + ROPE * 0.8;
-    stamp(local.x, local.z, y, ROPE * 1.05);
+    let y;
+    if (r < 0.22) {
+      // ほぼ中心:その場に少しずつ盛り上がって「ツノ」になる
+      y = sup + 0.012;
+      stamp(local.x, local.z, y, ROPE * 0.9, 0.05);
+    } else {
+      y = sup + ROPE * 0.8;
+      pending.push({ x: local.x, z: local.z, y, t: gameT });
+    }
     const p = new THREE.Vector3(local.x, y, local.z);
     if (!cur) { cur = { pts: [], mesh: null, start: true }; ropes.push(cur); }
     cur.pts.push(p);
@@ -505,9 +521,16 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     if (state === 'play' || state === 'title') {
       if (!auto && state === 'play') coneTargetX = Math.max(-1.8, Math.min(1.8, coneTargetX + ((keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0)) * 1.4 * dt));
       coneX += (coneTargetX - coneX) * Math.min(1, dt * 14);
+      gameT += dt;
+      flushPending(false);
+      if (pouring) {
+        // 1秒に60回ぶん、時間で決まった量を出す(画面の更新が遅い端末でも同じ量)
+        flowAcc += dt * 60;
+        const steps = Math.floor(flowAcc);
+        for (let i = 0; i < steps; i++) { if (deposits.length >= MAX_POINTS) break; deposit(spin + SPIN * dt * (i + 1) / steps); }
+        flowAcc -= steps;
+      } else if (cur) endRope();
       spin += SPIN * dt;
-      if (pouring) deposit();
-      else if (cur) endRope();
       // クリームが高くなったら、コーンを下げて口との間をあける
       const want = Math.min(0.2, NOZZLE_Y - 0.55 - Hmax);
       coneY += (want - coneY) * Math.min(1, dt * 6);
