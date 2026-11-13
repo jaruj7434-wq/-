@@ -93,3 +93,25 @@ SAMPLES=16 scripts/mono_no_issho/3d/render_queue.sh p05_flakes p06_pellets p07_r
 ```bash
 EP=ep04 scripts/mono_no_issho/3d/render_queue.sh c05_container c06_wiping_rag c07_hanmo c08_empty_hanger
 ```
+
+## 第4話（服）
+- 出力先は `assets/output/mono_no_issho/ep04/3d/<name>/`（各ショットで `C.EPISODE = "ep04"`）。
+- C01〜C04 の部品は `shots/fuku_parts.py`：布マテリアル `mat_cloth`（無地／ストライプ／ギンガム／ニットのうね）、
+  吊るした服 `garment`（シャツ・コート・Tシャツ・ニット。身頃と袖の板をボクセルリメッシュで一体化し、縦じわは頂点で足す。物理なし）、
+  ハンガー `hanger`、値札 `price_tag`（無地の紙＋糸。文字なし）、丸めた服 `cloth_wad`、
+  クローゼット一式 `build_closet(layout=...)`（扉を開けたワードローブ・パイプの服・棚のたたんだニット・下の収納ボックス・部屋）と
+  照明 `closet_lights`、ハンガーの減衰振動 `swing`。C01 と C08 は同じ `build_closet()` のセット。
+- 透明素材は C03 の袋1つだけ（BLENDED、透過影なし）。C03 は金属がないので反射プローブも置かない。
+
+| スクリプト | 台本カット | 内容 | 960x540・8サンプル |
+|---|---|---|---|
+| `shots/c01_closet.py` | C01 | 扉を開けたクローゼットへゆっくり寄る。手前に向いた淡いピンクのシャツに無地の値札 | 約24秒/フレーム |
+| `shots/c02_fabric_cut.py` | C02 | 裁断台のギンガムの布。門型の自動裁断機がシャツの形をなぞり、切り抜きが起き上がって襟・ボタン・ポケットの付いたシャツになる（手なし） | 約18秒/フレーム |
+| `shots/c03_garbage_bag.py` | C03（4-1） | ブロック塀の前のごみ集積所。ネットをかけた白い袋の横に、服の詰まった透明な袋が下りてきて落ち着く | 約45秒/フレーム |
+| `shots/c04_sorting.py` | C04（5-1） | 選別工場。コンベアの服が押し出し板でシュートへ押され、青・緑・黄・橙のかごに落ちる（人なし） | 約24秒/フレーム |
+
+（時間は別ショットの並列レンダリングと CPU を分け合った状態での実測。単独ならもう少し速い）
+
+```bash
+SAMPLES=16 scripts/mono_no_issho/3d/render_queue.sh c01_closet c02_fabric_cut c03_garbage_bag c04_sorting
+```

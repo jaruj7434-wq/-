@@ -260,9 +260,11 @@ def build(sc):
     sun.rotation_euler = (math.radians(50), 0, math.radians(-35))
     fill = C.area_light((120, -300, 220), (0, 0, 0), 300, 2.0e5, (0.8, 0.88, 1.0), "SkyFill")
     C.light_look_at(fill, (0, 0, 30))
-    rim = C.area_light((140, 40, 160), (0, 0, 0), 80, 6e4, (1.0, 0.95, 0.88), "BagRim")
-    C.light_look_at(rim, (BAG_POS[0], BAG_POS[1], 30))
-    P.reflection_probe((0, -40, 60), radius=400, clip_start=1)
+    fill.data.use_shadow = False
+    # 描画を軽く: 金属がないので反射プローブなし、袋は透過影を計算しない、影の最小解像度を粗く(1BU=1cm)
+    for L in bpy.data.lights:
+        L.shadow_maximum_resolution = 0.2
+    m_clear.use_transparent_shadow = False
 
     # ---- カメラ: 道路側の低い位置から、ゆっくり寄る
     cam, tgt = C.camera((110, -240, 95), (0, 0, 30), lens=35)
