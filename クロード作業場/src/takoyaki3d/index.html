@@ -759,8 +759,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   });
   const lumpMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
   const lumps = Array.from({ length: 30 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.16 + Math.random() * 0.14, 8, 6), lumpMat); m.visible = false; kitchen.add(m); return m; });
-  const shellMat = new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.6 });
-  const shellMeshes = Array.from({ length: 6 }, () => { const m = new THREE.Mesh(new THREE.TetrahedronGeometry(0.5), shellMat); m.scale.set(1, 0.3, 0.9); m.castShadow = true; m.visible = false; kitchen.add(m); return m; });
+  const shellMat = new THREE.MeshStandardMaterial({ color: 0xd9b48a, roughness: 0.6 });   // 生地の白と見分けやすい茶色い殻
+  const shellMeshes = Array.from({ length: 6 }, () => { const m = new THREE.Mesh(new THREE.TetrahedronGeometry(0.5), shellMat); m.scale.set(1.3, 0.35, 1.2); m.castShadow = true; m.visible = false; kitchen.add(m); return m; });
   // 泡立て器
   const whisk = new THREE.Group();
   const wireMat = new THREE.MeshStandardMaterial({ color: 0xd6d9de, metalness: 0.9, roughness: 0.25 });
@@ -918,25 +918,25 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     const pouringFlour = active && phase === 'flour' && holding() && !md.judged.flour;
     bag.visible = active && phase === 'flour';
     const tilt = pouringFlour ? 0.9 + Math.min(1, md.holdT / 1.6) * 0.5 : 0.35;
-    bag.position.set(3.2, 6.6, -1.2); bag.rotation.set(0.15, 0, tilt);
+    bag.position.set(3.0, 4.6, 1.0); bag.rotation.set(0.15, 0, tilt);
     for (const p of flourPts) {
       if (p.life > 0) { p.life -= dt; p.v += 30 * dt; p.m.position.y -= p.v * dt; if (p.m.position.y < surfY || p.life <= 0) { p.life = 0; p.m.visible = false; } }
-      else if (pouringFlour && Math.random() < 0.5) { p.life = 1; p.v = 3; p.m.visible = true; p.m.position.set(1.6 + (Math.random() - 0.5) * 0.6, 5.6, -1.0 + (Math.random() - 0.5) * 0.6); }
+      else if (pouringFlour && Math.random() < 0.5) { p.life = 1; p.v = 3; p.m.visible = true; p.m.position.set(1.4 + (Math.random() - 0.5) * 0.6, 3.6, 1.2 + (Math.random() - 0.5) * 0.6); }
     }
     // だし
     cup.visible = active && phase === 'dashi';
     const pouringDashi = active && phase === 'dashi' && md.dashiPending.length > 0;
-    cup.position.set(4.4, 6.2, -0.6); cup.rotation.set(0, 0, pouringDashi ? 1.25 : 0.35);
+    cup.position.set(4.3, 4.6, 1.2); cup.rotation.set(0, 0, pouringDashi ? 1.25 : 0.35);
     cupLiquid.scale.y = Math.max(0.15, 1.6 - md.dashi / 300); cupLiquid.position.y = -1.4 + cupLiquid.scale.y / 2;
     stream.visible = pouringDashi;
-    if (pouringDashi) { const top = 5.6, bottom = surfY; stream.scale.y = top - bottom; stream.position.set(2.9, (top + bottom) / 2, -0.6); }
+    if (pouringDashi) { const top = 4.2, bottom = surfY; stream.scale.y = top - bottom; stream.position.set(2.9, (top + bottom) / 2, 1.2); }
     // たまご
     egg.visible = active && phase === 'egg' && !md.egg;
-    egg.position.set(-5.4, 3.2, -2.2); egg.rotation.set(0, 0, 0.2 + md.eggPow * 1.1);
+    egg.position.set(-4.6, 2.6, 3.4); egg.rotation.set(0, 0, 0.2 + md.eggPow * 1.1);
     eggHalves.visible = active && (phase === 'egg' || phase === 'shell') && md.egg > 0;
-    eggHalves.position.set(-5.4, 2.6, -2.2);
+    eggHalves.position.set(-4.6, 2.0, 3.4);
     flyYolk.visible = md.eggAnim > 0;
-    if (flyYolk.visible) { const t = 1 - md.eggAnim / 0.45; flyYolk.position.set(-5.4 * (1 - t), 3.2 * (1 - t) + surfY * t + Math.sin(Math.PI * t) * 1.5, -2.2 * (1 - t)); }
+    if (flyYolk.visible) { const t = 1 - md.eggAnim / 0.45; flyYolk.position.set(-4.6 * (1 - t), 2.6 * (1 - t) + surfY * t + Math.sin(Math.PI * t) * 1.5, 3.4 * (1 - t)); }
     // 泡立て器
     whisk.visible = active && phase === 'mix';
     if (whisk.visible) {
