@@ -589,7 +589,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1210);
-  scene.fog = new THREE.Fog(0x1a1210, 38, 75);
+  scene.fog = new THREE.Fog(0x1a1210, 45, 95);
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   const camera = new THREE.PerspectiveCamera(36, W / H, 0.1, 200);
@@ -633,15 +633,23 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, i * 86, w, 2); }
   }, [3, 3]);
 
+  // ---------- Higgsfield で作った写真風の質感(tex/ フォルダ)。読めなければプログラムの質感のまま ----------
+  const loader = new THREE.TextureLoader();
+  const blank = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); blank.needsUpdate = true;
+  const TEX = { crust: blank, batter: blank, on: { value: 0 } };
+  function loadTex(name, cb) {
+    loader.load('tex/' + name + '.jpg', t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.wrapS = t.wrapT = THREE.RepeatWrapping; cb(t); }, undefined, () => {});
+  }
+
   // ---------- 鉄板 ----------
   const SP = 4.2, HR = 1.9, BR = 1.62;               // 穴の間隔・穴の半径・たこ焼きの半径
   const holeWorld = (c, r) => new THREE.Vector3((c - 1) * SP, 0, (r - 1.5) * SP);
   const PW = 13.8, PD = 18.2;
   const plateGroup = new THREE.Group();
   scene.add(plateGroup);
-  const plateTex = canvasTex(552, 728, (g, w, h) => {
-    g.fillStyle = '#2b2b2f'; g.fillRect(0, 0, w, h);
-    speckle(g, w, h, 5000, ['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.25)', 'rgba(120,90,60,0.05)'], 1, 3);
+  function drawPlateCanvas(g, w, h, img) {
+    if (img) { for (let y = 0; y < h; y += w * 0.7) for (let x = 0; x < w; x += w * 0.7) g.drawImage(img, x, y, w * 0.7, w * 0.7); }
+    else { g.fillStyle = '#2b2b2f'; g.fillRect(0, 0, w, h); speckle(g, w, h, 5000, ['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.25)', 'rgba(120,90,60,0.05)'], 1, 3); }
     const k = w / PW;
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const v = holeWorld(c, r), x = (v.x + PW / 2) * k, y = (v.z + PD / 2) * k, rr = HR * k;
@@ -649,7 +657,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       gr.addColorStop(0, '#060607'); gr.addColorStop(0.75, '#111114'); gr.addColorStop(0.92, '#3a3a40'); gr.addColorStop(1, '#55555c');
       g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, 6.283); g.fill();
     }
-  });
+  }
+  const plateTex = canvasTex(552, 728, (g, w, h) => drawPlateCanvas(g, w, h, null));
+  loadTex('iron', t => { const c = plateTex.image; drawPlateCanvas(c.getContext('2d'), c.width, c.height, t.image); plateTex.needsUpdate = true; });
   const plateBody = new THREE.Mesh(new THREE.BoxGeometry(PW + 0.8, 1.4, PD + 0.8), new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.55, metalness: 0.6 }));
   plateBody.position.y = -0.72; plateBody.castShadow = true; plateBody.receiveShadow = true;
   plateGroup.add(plateBody);
@@ -657,8 +667,11 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   plateTop.rotation.x = -Math.PI / 2; plateTop.position.y = 0.005; plateTop.receiveShadow = true;
   plateGroup.add(plateTop);
   // カウンター
-  const counter = new THREE.Mesh(new THREE.PlaneGeometry(160, 90), new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.8 }));
-  counter.rotation.x = -Math.PI / 2; counter.position.set(-15, -1.43, 0); counter.receiveShadow = true;
+  const counterMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.75 });
+  const counter = new THREE.Mesh(new THREE.PlaneGeometry(160, 75), counterMat);
+  counter.rotation.x = -Math.PI / 2; counter.position.set(-15, -1.43, 22); counter.receiveShadow = true;
+  loadTex('wood', t => { t.repeat.set(10, 5); counterMat.map = t; counterMat.needsUpdate = true; });
+  loadTex('bg', t => { t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; scene.background = t; });
   scene.add(counter);
   // 舟皿
   const boat = new THREE.Mesh(new THREE.BoxGeometry(13, 0.5, 3.8), new THREE.MeshStandardMaterial({ color: 0xc99a5b, roughness: 0.85 }));
@@ -668,6 +681,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // 穴ごとの部品(生地・あふれ・油・タコ・たこ焼き)
   const batterMat = new THREE.MeshStandardMaterial({ color: 0xf6e7b8, roughness: 0.25, metalness: 0 });
+  loadTex('batter', t => { t.repeat.set(0.6, 0.6); batterMat.map = t; batterMat.color.set(0xffffff); batterMat.needsUpdate = true; TEX.batter = t; checkTex(); });
+  loadTex('crust', t => { TEX.crust = t; checkTex(); });
+  const ballMats = [];
+  function checkTex() { if (TEX.batter !== blank && TEX.crust !== blank) { TEX.on.value = 1; for (const m of ballMats) { m.userData.u.uCrust.value = TEX.crust; m.userData.u.uBatter.value = TEX.batter; } } }
   const oilMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.45 });
   const takoMat = new THREE.MeshStandardMaterial({ color: 0xb7445a, roughness: 0.45 });
   const suckerMat = new THREE.MeshStandardMaterial({ color: 0xf2d6d6, roughness: 0.5 });
@@ -676,15 +693,35 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // たこ焼きの材質:上半分と下半分で焼き色を変える(ふちに底の焼き色がのぞく)
   function makeBallMat() {
-    const u = { uTop: { value: new THREE.Color() }, uBottom: { value: new THREE.Color() }, uSign: { value: 1 }, uR: { value: BR } };
+    const u = { uTop: { value: new THREE.Color() }, uBottom: { value: new THREE.Color() }, uSign: { value: 1 }, uR: { value: BR },
+      uTopC: { value: 0 }, uBotC: { value: 0 }, uCrust: { value: TEX.crust }, uBatter: { value: TEX.batter }, uTexOn: TEX.on };
     const m = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0 });
     m.onBeforeCompile = sh => {
       Object.assign(sh.uniforms, u);
-      sh.vertexShader = 'varying vec3 vLocalPos;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vLocalPos = position;');
-      sh.fragmentShader = 'uniform vec3 uTop;\nuniform vec3 uBottom;\nuniform float uSign;\nuniform float uR;\nvarying vec3 vLocalPos;\n' +
+      sh.vertexShader = 'varying vec3 vLocalPos;\nvarying vec2 vUv2;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vLocalPos = position;\n  vUv2 = uv;');
+      sh.fragmentShader = `uniform vec3 uTop;
+uniform vec3 uBottom;
+uniform float uSign;
+uniform float uR;
+uniform float uTopC;
+uniform float uBotC;
+uniform float uTexOn;
+uniform sampler2D uCrust;
+uniform sampler2D uBatter;
+varying vec3 vLocalPos;
+varying vec2 vUv2;
+vec3 sideColor(vec3 col, float c) {
+  vec3 crust = texture2D(uCrust, vUv2 * vec2(3.0, 1.5)).rgb;
+  float l = dot(crust, vec3(0.299, 0.587, 0.114));
+  vec3 cooked = col * (0.45 + 1.05 * l);
+  vec3 raw = texture2D(uBatter, vUv2 * vec2(2.0, 1.0)).rgb;
+  return mix(raw, cooked, smoothstep(0.08, 0.5, c));
+}
+` +
         sh.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
           float hh = uSign * vLocalPos.y / uR;
           vec3 base = mix(uBottom, uTop, smoothstep(0.42, 0.7, hh));   // 底の焼き色が、上から見えるふちの帯になる
+          if (uTexOn > 0.5) base = mix(sideColor(uBottom, uBotC), sideColor(uTop, uTopC), smoothstep(0.42, 0.7, hh));
           float n1 = fract(sin(dot(floor(vLocalPos * 9.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
           float n2 = fract(sin(dot(floor(vLocalPos * 23.0), vec3(39.346, 11.135, 83.155))) * 43758.5453);
           base *= 0.86 + 0.16 * n1 + 0.08 * n2;
@@ -692,6 +729,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     };
     m.customProgramCacheKey = () => 'takoyaki-ball';
     m.userData.u = u;
+    ballMats.push(m);
     return m;
   }
   const tmpCol = new THREE.Color();
@@ -999,30 +1037,30 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       const base = new THREE.Vector3(o.pos.x, 0.2 * sc, o.pos.z);
       if (b.st === 'side1') {
         o.ball.position.copy(base); o.ball.rotation.set(0, 0, 0);
-        u.uSign.value = 1; setCol(u.uTop.value, RAW); setCol(u.uBottom.value, cookRGB(b.c));
+        u.uSign.value = 1; setCol(u.uTop.value, RAW); setCol(u.uBottom.value, cookRGB(b.c)); u.uTopC.value = 0; u.uBotC.value = b.c;
         o.tops.visible = true;
         if (Math.random() < dt * 1.4) puff(base, false);
       } else if (b.st === 'flip') {
         const t = b.flipT;
         o.ball.position.set(base.x, base.y + Math.sin(Math.PI * t) * 1.6, base.z);
         o.ball.rotation.set(Math.PI * t, 0, 0);
-        u.uSign.value = 1; setCol(u.uTop.value, RAW); setCol(u.uBottom.value, cookRGB(b.d1));
+        u.uSign.value = 1; setCol(u.uTop.value, RAW); setCol(u.uBottom.value, cookRGB(b.d1)); u.uTopC.value = 0; u.uBotC.value = b.d1;
       } else if (b.st === 'side2') {
         o.ball.position.copy(base); o.ball.rotation.set(Math.PI, 0, 0);
-        u.uSign.value = -1; setCol(u.uTop.value, cookRGB(b.d1)); setCol(u.uBottom.value, cookRGB(b.c));
+        u.uSign.value = -1; setCol(u.uTop.value, cookRGB(b.d1)); setCol(u.uBottom.value, cookRGB(b.c)); u.uTopC.value = b.d1; u.uBotC.value = b.c;
         if (Math.random() < dt * 1.4) puff(base, false);
       } else if (b.st === 'out' || b.st === 'done') {
         const t = b.st === 'done' ? 1 : b.outT, to = dishWorld(dish.indexOf(b));
         o.ball.position.set(base.x + (to.x - base.x) * t, base.y + (to.y - base.y) * t + Math.sin(Math.PI * t) * 4, base.z + (to.z - base.z) * t);
         o.ball.rotation.set(Math.PI, 0, 0);
         o.ball.scale.setScalar(sc * (1 - 0.42 * t));
-        u.uSign.value = -1; setCol(u.uTop.value, cookRGB(b.d1)); setCol(u.uBottom.value, cookRGB(b.d2 ?? b.c));
+        u.uSign.value = -1; setCol(u.uTop.value, cookRGB(b.d1)); setCol(u.uBottom.value, cookRGB(b.d2 ?? b.c)); u.uTopC.value = b.d1; u.uBotC.value = b.d2 ?? b.c;
       } else if (b.st === 'burnt' || b.st === 'gone') {
         const t = b.st === 'gone' ? 1 : Math.max(0, b.burnT - 0.6) / 0.5;
         const to = dishWorld(dish.indexOf(b) < 0 ? i : dish.indexOf(b));
         if (b.st === 'gone') { o.ball.position.copy(to); o.ball.scale.setScalar(sc * 0.58); }
         else { o.ball.position.copy(base); o.ball.scale.setScalar(sc * (1 - 0.2 * t)); if (Math.random() < dt * 9) puff(base, true); }
-        setCol(u.uTop.value, cookRGB(BURN)); setCol(u.uBottom.value, cookRGB(BURN));
+        setCol(u.uTop.value, cookRGB(BURN)); setCol(u.uBottom.value, cookRGB(BURN)); u.uTopC.value = u.uBotC.value = BURN;
       }
     });
     for (const p of puffs) {
