@@ -17,3 +17,13 @@
 ### 制作
 1. 開始画像: 屋上で印を結ぶ忍者(gpt_image_2 / medium / 9:16)
 2. 動画化: 開始画像から煙 → 分身全員スマホ(Cinema Studio Video 2 / pro / 4秒 / 9:16)
+
+## キャラ作成(主役の忍者)
+- 顔: 慶太(本人同意済みの写真 media `9e6a89ba-8fd6-4530-b720-06e29d9e7a3a` を参照)
+- 髪型・服装: ユーザー指定で、なるべく元ネタに寄せる(コスプレ風)
+- 額当てのマークだけは、木ノ葉マークの代わりにラーメンの「なると」の渦巻きにする
+- 予定: gpt_image_2 / medium / 9:16、全身・正面、白背景に近いシンプルな屋外
+- プロンプト案:
+```
+Photorealistic full-body photo, 9:16, of the young Japanese man in the reference photo (keep his face exactly), cosplaying a classic anime ninja hero: bright spiky blond hair sticking out in all directions, a black cloth forehead protector with a polished metal plate engraved with a single spiral swirl like the narutomaki fish-cake pattern (no leaf symbol), three thin whisker-like marks painted on each cheek, an orange-and-black tracksuit-style ninja jumpsuit with a black upper chest and shoulders, a white collar, orange sleeves and orange pants, a kunai holster strapped to the right thigh, blue ninja sandals. He stands facing the camera with a confident grin, fists on hips. Simple Japanese rooftop at daytime, soft natural light, realistic skin and fabric, no text, no logo.
+```
