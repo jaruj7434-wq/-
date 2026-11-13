@@ -163,10 +163,22 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   // ---------- レシピ(本物の目安に合わせた) ----------
   // 小麦粉 100g・卵 1個・だし 350ml(だしは粉の約3.5倍)
   const RECIPE = { flour: 100, egg: 1, dashi: 350 };
-  const FLOUR_RATE = 46, DASHI_RATE = 150, FALL_DELAY = 0.22;
-  const qFlour = g => Math.abs(g - 100) <= 5 ? 1 : Math.max(0, 1 - (Math.abs(g - 100) - 5) / 40);
-  const qDashi = m => Math.abs(m - 350) <= 20 ? 1 : Math.max(0, 1 - (Math.abs(m - 350) - 20) / 150);
-  const qEgg = (n, shell) => Math.max(0, (n === 1 ? 1 : n === 2 ? 0.8 : n === 0 ? 0.4 : 0.5) - (shell ? 0.25 : 0));
+  const FALL_DELAY = 0.22;
+  // 長押しするほど袋・容器が傾いて勢いが増す(最後は小刻みに足すのがコツ)
+  const flowRate = (base, max, holdT) => Math.min(max, base + (max - base) * Math.min(1, holdT / 1.6));
+  // 計量の判定:目標との差で段階評価
+  function judgeAmount(v, target, tiers) {
+    const err = Math.abs(v - target);
+    const [p, gr, gd, ok] = tiers;
+    if (err <= p) return { s: 1, label: 'ピッタリ!', col: C.gold };
+    if (err <= gr) return { s: 0.9, label: 'おしい!', col: '#f2ce78' };
+    if (err <= gd) return { s: 0.75, label: 'まずまず', col: C.cream };
+    if (err <= ok) return { s: 0.5, label: v > target ? '入れすぎ' : '足りない', col: '#d98a4a' };
+    return { s: Math.max(0.1, 0.5 - (err - ok) / (target * 0.8)), label: v > target ? '入れすぎ!' : '足りない!', col: '#e0525a' };
+  }
+  const FLOUR_TIERS = [1, 3, 6, 12], DASHI_TIERS = [4, 12, 25, 50];
+  // たまご:割る強さゲージ(弱いと割れない・強すぎると殻が入る)
+  const EGG_WEAK = 0.42, EGG_STRONG = 0.66;
   const qPour = f => f >= 0.9 && f <= 1.3 ? 1 : f < 0.9 ? Math.max(0, f / 0.9) ** 1.5 : Math.max(0.6, 1 - (f - 1.3));
 
   // ---------- 焼き加減 ----------
@@ -201,13 +213,14 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   const rankOf = s => RANKS.find(r => s >= r[0])[1];
 
   // ---------- 工程 ----------
-  const PHASES = ['flour', 'egg', 'dashi', 'mix', 'oil', 'pour', 'tako', 'cook'];
-  const STEPS = [['計量', ['flour', 'egg', 'dashi']], ['混ぜる', ['mix']], ['油', ['oil']], ['流す', ['pour']], ['タコ', ['tako']], ['焼く', ['cook']]];
+  const PHASES = ['flour', 'egg', 'shell', 'dashi', 'mix', 'oil', 'pour', 'tako', 'cook'];
+  const STEPS = [['計量', ['flour', 'egg', 'shell', 'dashi']], ['混ぜる', ['mix']], ['油', ['oil']], ['流す', ['pour']], ['タコ', ['tako']], ['焼く', ['cook']]];
   const GUIDE = {
-    flour: ['長押しで 小麦粉を入れる', '目標 100g(はなすのが遅いと入りすぎる)'],
-    egg: ['たまごを タップして割る', '目標 1個(あわてて連打すると殻が入る)'],
+    flour: ['長押しで 小麦粉を入れる', '目標 100g ピッタリ(押すほど勢いが増す)'],
+    egg: ['ゲージが緑のときに タップで割る', '弱いと割れない・強すぎると殻が入る'],
+    shell: ['入った殻を タップして取り出す', '残すと減点'],
     dashi: ['長押しで だしを注ぐ', '目標 350ml(粉の約3.5倍がとろとろの目安)'],
-    mix: ['ぐるぐる なぞって混ぜる', 'ダマがなくなるまで'],
+    mix: ['ぐるぐる なぞって混ぜる', '早く なめらかにするほど高得点'],
     oil: ['鉄板をなぞって 油をひく', 'ひき忘れた穴は くっつく'],
     pour: ['穴の上で長押しして 生地を流す', 'ふちまで たっぷりと'],
     tako: ['穴をタップして タコを入れる', '入れ終わったら 焼き始める'],
@@ -225,7 +238,8 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   const keys = {};
 
   function newGame() {
-    mixData = { flour: 0, flourPending: [], egg: 0, shell: false, lastEgg: -9, eggAnim: 0, yolks: [], dashi: 0, dashiPending: [], mix: 0,
+    mixData = { flour: 0, flourPending: [], egg: 0, eggAnim: 0, yolks: [], dashi: 0, dashiPending: [], mix: 0, mixT: 0, holdT: 0,
+      eggPow: 0, eggDir: 1, weakTaps: 0, shells: [], shellT: 0, shellsIn: 0, judged: {},
       lumps: Array.from({ length: 36 }, () => ({ a: Math.random() * 6.283, d: Math.random() * 0.8, s: 2 + Math.random() * 4 })) };
     holes = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
@@ -247,16 +261,36 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     phase = p; phaseT = 0;
     syncNext();
   }
+  // 工程ごとの点数(0〜1)と判定ラベル。計量は「次へ」を押した時点で判定する
+  function stepJudge(key, res) {
+    mixData.judged[key] = res;
+    popup(W / 2, 250, res.label, res.col, false, true, Math.round(res.s * 100));
+    if (res.s >= 1) sfx.perfect();
+  }
+  let advancing = false;
   function nextPhase() {
+    if (advancing) return;
+    // 計量は判定を見せてから次の工程へ
+    if ((phase === 'flour' || phase === 'dashi') && !mixData.judged[phase]) {
+      stepJudge(phase, phase === 'flour' ? judgeAmount(mixData.flour, RECIPE.flour, FLOUR_TIERS) : judgeAmount(mixData.dashi, RECIPE.dashi, DASHI_TIERS));
+      advancing = true;
+      const from = phase;
+      setTimeout(() => { advancing = false; if (state === 'play' && phase === from) nextPhase(); }, 1100);
+      return;
+    }
+    if (phase === 'egg' && !mixData.judged.egg) stepJudge('egg', { s: 0.2, label: '割らずに次へ', col: '#e0525a' });
+    if (phase === 'shell') finishShells();
     const i = PHASES.indexOf(phase);
     sfx.step();
+    if (phase === 'egg') { setPhase('dashi'); return; }
     if (phase === 'tako') { sprinkleT = 0.01; sfx.sprinkle(); nextBtn.hidden = true; return; }
     if (i < PHASES.length - 1) setPhase(PHASES[i + 1]);
   }
   function syncNext() {
-    const labels = { flour: '次へ(たまご)', egg: '次へ(だし)', dashi: '次へ(混ぜる)', oil: '次へ(流し込む)', pour: '次へ(タコ)', tako: '焼き始める' };
-    const show = state === 'play' && labels[phase] && sprinkleT === 0 &&
-      (phase === 'flour' ? landed('flour') > 0 : phase === 'dashi' ? landed('dashi') > 0 : phase === 'pour' ? holes.some(h => h.fill > 0.05) : true);
+    const labels = { flour: '計量おわり(判定)', egg: 'たまごを入れずに次へ', shell: '次へ(だし)', dashi: '計量おわり(判定)', oil: '次へ(流し込む)', pour: '次へ(タコ)', tako: '焼き始める' };
+    const busy = mixData.flourPending.length || mixData.dashiPending.length || holding();
+    const show = state === 'play' && labels[phase] && sprinkleT === 0 && !advancing &&
+      (phase === 'flour' ? landed('flour') > 0 && !busy : phase === 'dashi' ? landed('dashi') > 0 && !busy : phase === 'pour' ? holes.some(h => h.fill > 0.05) : true);
     nextBtn.hidden = !show;
     if (show) nextBtn.textContent = labels[phase];
   }
@@ -275,6 +309,7 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     if (state === 'title') { start(); pointer.down = false; return; }
     if (state !== 'play') return;
     if (phase === 'egg') crackEgg();
+    else if (phase === 'shell') tapShell(p);
     else if (phase === 'tako' && !sprinkleT) { const h = nearestHole(p, 44); if (h && h.fill > 0.05 && !h.tako) { h.tako = true; h.takoT = 0; sfx.plop(); } }
     else if (phase === 'cook') { let hit = null, hd = 46 * 46; for (const b of balls) { const dd = (b.x - p.x) ** 2 + (b.y - p.y) ** 2; if (dd < hd) { hd = dd; hit = b; } } if (hit) tapBall(hit); }
   });
@@ -306,17 +341,50 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   againBtn.addEventListener('click', () => { start(); againBtn.blur(); });
   const holding = () => pointer.down || keys.Space;
 
+  // たまごを割る:ゲージの位置で結果が変わる
   function crackEgg() {
-    if (mixData.eggAnim > 0) return;
-    if (time - mixData.lastEgg < 0.35 && mixData.egg > 0) { mixData.shell = true; popup(BOWL.x, BOWL.y - 60, '殻が入った!', '#e6e6e6'); }
-    mixData.lastEgg = time;
-    mixData.egg++;
-    mixData.eggAnim = 0.45;
-    mixData.yolks.push({ a: Math.random() * 6.283, d: 20 + Math.random() * 40 });
+    const md = mixData;
+    if (md.eggAnim > 0 || md.egg > 0) return;
+    const p = md.eggPow;
+    if (p < EGG_WEAK) {   // 弱い:割れない
+      md.weakTaps++;
+      tone(420, 0.06, 'triangle', 0.12, 380);
+      popup(70, 150, 'コツン…', C.cream, true);
+      return;
+    }
+    md.egg = 1;
+    md.eggAnim = 0.45;
+    md.yolks.push({ a: Math.random() * 6.283, d: 10 + Math.random() * 25 });
     sfx.crack();
+    const center = (EGG_WEAK + EGG_STRONG) / 2;
+    if (p <= EGG_STRONG) {
+      const perfect = Math.abs(p - center) < 0.05;
+      const s = Math.max(0.5, (perfect ? 1 : 0.9) - md.weakTaps * 0.1);
+      stepJudge('egg', { s, label: perfect ? 'パカッ!きれい!' : 'きれいに割れた', col: perfect ? C.gold : '#f2ce78' });
+      setTimeout(() => { if (state === 'play' && phase === 'egg') { setPhase('dashi'); sfx.step(); } }, 900);
+    } else {              // 強すぎ:殻が入る → 取り出しタイム
+      const n = 2 + Math.floor((p - EGG_STRONG) / (1 - EGG_STRONG) * 3);
+      md.shells = Array.from({ length: n }, () => ({ x: BOWL.x + (Math.random() - 0.5) * 120, y: BOWL.y + (Math.random() - 0.5) * 100, r: Math.random() * 6, out: false }));
+      md.shellsIn = n;
+      popup(W / 2, 250, 'グシャ!殻が入った', '#e6e6e6');
+      burst(0.15, 0.3, 1200);
+      setTimeout(() => { if (state === 'play' && phase === 'egg') { setPhase('shell'); md.shellT = 4; } }, 600);
+    }
+  }
+  function finishShells() {
+    const md = mixData;
+    if (md.judged.egg) return;
+    const left = md.shells.filter(s => !s.out).length;
+    const s = Math.max(0.2, 0.75 - left * 0.15 - md.weakTaps * 0.1);
+    stepJudge('egg', left ? { s, label: '殻が ' + left + 'こ 残った', col: '#d98a4a' } : { s, label: '殻を全部とった!', col: '#f2ce78' });
+  }
+  function tapShell(p) {
+    for (const s of mixData.shells) {
+      if (!s.out && (s.x - p.x) ** 2 + (s.y - p.y) ** 2 < 26 * 26) { s.out = true; tone(900, 0.05, 'triangle', 0.08); return; }
+    }
   }
 
-  function popup(x, y, s, col, small) { popups.push({ x, y, s, col, t: 0, small }); }
+  function popup(x, y, s, col, small, big, pts) { popups.push({ x, y, s, col, t: 0, small, big, pts }); }
 
   // ---------- 焼き ----------
   function batterFactor() {
@@ -361,8 +429,9 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   }
 
   // ---------- 更新 ----------
-  function flowIn(key, pending, rate, dt) {
-    if (holding()) pending.push({ amt: rate * dt, t: FALL_DELAY });
+  function flowIn(key, pending, base, max, dt) {
+    if (holding() && !mixData.judged[key]) { mixData.holdT += dt; pending.push({ amt: flowRate(base, max, mixData.holdT) * dt, t: FALL_DELAY }); }
+    else mixData.holdT = 0;
     let flowing = holding();
     for (const p of pending) { p.t -= dt; if (p.t <= 0 && !p.done) { mixData[key] += p.amt; p.done = true; } if (!p.done) flowing = true; }
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i].done) pending.splice(i, 1);
@@ -372,14 +441,29 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     time += dt; phaseT += dt;
     let pouringSound = 0;
     if (phase === 'flour') {
-      if (flowIn('flour', mixData.flourPending, FLOUR_RATE, dt)) {
+      if (flowIn('flour', mixData.flourPending, 18, 72, dt)) {
         pouringSound = 0.05;
-        if (holding()) for (let i = 0; i < 3; i++) parts.push({ x: BOWL.x + 14 + (Math.random() - 0.5) * 18, y: 190, vx: (Math.random() - 0.5) * 20, vy: 380 + Math.random() * 60, life: 0.5, col: '#fbf7ee', s: 2 + Math.random() * 2 });
+        if (holding() && !mixData.judged.flour) for (let i = 0; i < 3; i++) parts.push({ x: BOWL.x + 14 + (Math.random() - 0.5) * 18, y: 190, vx: (Math.random() - 0.5) * 20, vy: 380 + Math.random() * 60, life: 0.5, col: '#fbf7ee', s: 2 + Math.random() * 2 });
       }
+    } else if (phase === 'egg') {
+      const md = mixData;
+      if (!md.egg) {   // 強さゲージが行ったり来たり
+        md.eggPow += md.eggDir * dt * 1.0;
+        if (md.eggPow > 1) { md.eggPow = 1; md.eggDir = -1; }
+        if (md.eggPow < 0) { md.eggPow = 0; md.eggDir = 1; }
+      }
+    } else if (phase === 'shell') {
+      mixData.shellT -= dt;
+      if (mixData.shellT <= 0 || mixData.shells.every(s => s.out)) { finishShells(); setPhase('dashi'); sfx.step(); }
     } else if (phase === 'dashi') {
-      if (flowIn('dashi', mixData.dashiPending, DASHI_RATE, dt)) pouringSound = 0.09;
+      if (flowIn('dashi', mixData.dashiPending, 60, 230, dt)) pouringSound = 0.09;
     } else if (phase === 'mix') {
-      if (mixData.mix >= 1 && phaseT > 0.3) { popup(BOWL.x, BOWL.y - 40, 'なめらか!', C.gold); setPhase('oil'); sfx.step(); }
+      if (mixData.mix < 1 && mixData.mix > 0) mixData.mixT += dt;
+      if (mixData.mix >= 1 && phaseT > 0.3) {
+        const t = mixData.mixT;
+        stepJudge('mix', t <= 4 ? { s: 1, label: '早い!なめらか!', col: C.gold } : t <= 7 ? { s: 0.85, label: 'なめらか!', col: '#f2ce78' } : { s: 0.7, label: 'やっと混ざった', col: C.cream });
+        setPhase('oil'); sfx.step();
+      }
     } else if (phase === 'oil') {
       if (pointer.down) { const h = nearestHole(pointer, 40); if (h && !h.oiled) { h.oiled = true; burst(0.12, 0.05, 3000); } }
     } else if (phase === 'pour') {
@@ -414,7 +498,7 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     for (const f of fx) { f.life -= dt; f.y += f.vy * dt; f.x += Math.sin(f.life * 3) * 6 * dt; }
     fx = fx.filter(f => f.life > 0);
     for (const p of popups) p.t += dt;
-    popups = popups.filter(p => p.t < 0.9);
+    popups = popups.filter(p => p.t < (p.big ? 1.4 : 0.9));
     if (mixData.eggAnim > 0) mixData.eggAnim -= dt;
   }
   function updateCook(dt) {
@@ -444,7 +528,8 @@ canvas { display: block; touch-action: none; cursor: pointer; }
 
   // ---------- 採点 ----------
   function breakdown() {
-    const batter = (qFlour(mixData.flour) + qEgg(mixData.egg, mixData.shell) + qDashi(mixData.dashi)) / 3;
+    const j = mixData.judged, sc = k => (j[k] ? j[k].s : 0);
+    const batter = (sc('flour') + sc('egg') + sc('dashi') + sc('mix')) / 4;
     const oil = holes.filter(h => h.oiled).length / 12;
     const pour = holes.reduce((s, h) => s + qPour(h.fill), 0) / 12;
     const tako = holes.filter(h => h.tako).length / 12;
@@ -635,14 +720,33 @@ canvas { display: block; touch-action: none; cursor: pointer; }
       if (md.dashiPending.length) { ctx.strokeStyle = 'rgba(214,170,90,0.85)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(B.x + 58, 170); ctx.quadraticCurveTo(B.x + 36, 220, B.x + 20, B.y - 20); ctx.stroke(); }
     }
     if (phase === 'egg') {
-      const ex = 70, ey = 200;
+      const ex = 70, ey = 205;
       if (md.eggAnim > 0) {
         const t = 1 - md.eggAnim / 0.45;
         circle(ex + (B.x - ex) * t, ey + (B.y - ey) * t, 12, '#f5b52e');
       }
-      ctx.fillStyle = '#fbf3e4'; ctx.beginPath(); ctx.ellipse(ex, ey, 22, 28, 0, 0, 6.283); ctx.fill();
-      ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.beginPath(); ctx.ellipse(ex + 6, ey + 6, 14, 18, 0, 0, 6.283); ctx.fill();
-      text('タップ', ex, ey + 44, 12, C.gold, '700 ' + FB, 'center', 0.6 + Math.sin(blink * 5) * 0.4);
+      if (!md.egg) {
+        // 振りかぶる角度 = 割る強さ
+        ctx.save(); ctx.translate(ex, ey); ctx.rotate(-0.9 * md.eggPow);
+        ctx.fillStyle = '#fbf3e4'; ctx.beginPath(); ctx.ellipse(0, 0, 22, 28, 0, 0, 6.283); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.beginPath(); ctx.ellipse(6, 6, 14, 18, 0, 0, 6.283); ctx.fill();
+        ctx.restore();
+        text('タップ', ex, ey + 46, 12, C.gold, '700 ' + FB, 'center', 0.6 + Math.sin(blink * 5) * 0.4);
+      } else {
+        ctx.fillStyle = '#fbf3e4';
+        ctx.beginPath(); ctx.moveTo(ex - 22, ey); ctx.lineTo(ex - 14, ey - 8); ctx.lineTo(ex - 6, ey + 2); ctx.lineTo(ex + 2, ey - 8); ctx.lineTo(ex + 22, ey); ctx.arc(ex, ey, 22, 0, Math.PI); ctx.fill();
+      }
+    }
+    // 入ってしまった殻
+    if (md.mix < 0.2) {
+      for (const s of md.shells) {
+        if (s.out) continue;
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.r);
+        ctx.fillStyle = '#fffaf0'; ctx.strokeStyle = 'rgba(120,100,80,0.6)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-9, -6); ctx.lineTo(8, -8); ctx.lineTo(10, 4); ctx.lineTo(-2, 9); ctx.lineTo(-10, 3); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.restore();
+        if (phase === 'shell') { ctx.strokeStyle = 'rgba(242,181,68,' + (0.5 + Math.sin(blink * 8) * 0.4) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 16, 0, 6.283); ctx.stroke(); }
+      }
     }
     if (phase === 'mix') {
       const wx = pointer.down ? pointer.x : B.x + Math.cos(blink * 3) * 50, wy = pointer.down ? pointer.y : B.y + Math.sin(blink * 3) * 50;
@@ -652,16 +756,32 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     }
     for (const p of parts) circle(p.x, p.y, p.s, p.col);
     // はかりの表示
+    const gx = 40, gy = 486, gw = W - 80;
+    if (phase === 'egg' || phase === 'shell') {
+      ctx.fillStyle = '#1e2a22'; roundRect(B.x - 110, B.y + 100, 220, 34, 6); ctx.fill();
+      const lbl = phase === 'shell' ? '殻 のこり ' + md.shells.filter(s => !s.out).length + 'こ  ' + Math.max(0, md.shellT).toFixed(1) + '秒' : '割る強さ';
+      text(lbl, B.x, B.y + 117, 14, '#9ff0b2', '700 ' + FB);
+      if (phase === 'egg') {
+        // 強さゲージ:弱い(割れない) / ちょうど / 強すぎ(殻が入る)
+        ctx.fillStyle = 'rgba(0,0,0,0.4)'; roundRect(gx, gy, gw, 12, 6); ctx.fill();
+        ctx.fillStyle = 'rgba(224,82,90,0.45)'; ctx.fillRect(gx + gw * EGG_STRONG, gy, gw * (1 - EGG_STRONG), 12);
+        ctx.fillStyle = 'rgba(111,191,90,0.85)'; ctx.fillRect(gx + gw * EGG_WEAK, gy, gw * (EGG_STRONG - EGG_WEAK), 12);
+        ctx.fillStyle = C.gold; ctx.fillRect(gx + gw * ((EGG_WEAK + EGG_STRONG) / 2) - 1, gy, 2, 12);
+        ctx.fillStyle = C.cream; ctx.fillRect(gx + gw * md.eggPow - 2, gy - 5, 4, 22);
+        text('弱い', gx + gw * EGG_WEAK / 2, gy + 26, 11, C.cream, '700 ' + FB, 'center', 0.7);
+        text('ちょうど', gx + gw * (EGG_WEAK + EGG_STRONG) / 2, gy + 26, 11, C.green, '700 ' + FB);
+        text('強すぎ', gx + gw * (1 + EGG_STRONG) / 2, gy + 26, 11, '#e0525a', '700 ' + FB, 'center', 0.8);
+      }
+      return;
+    }
     const [label, value, unit, target, max, okLo, okHi] =
-      phase === 'flour' ? ['小麦粉', md.flour, 'g', 100, 160, 95, 105] :
-      phase === 'egg' ? ['たまご', md.egg, '個', 1, 3, 0.75, 1.25] :
-      phase === 'dashi' ? ['だし', md.dashi, 'ml', 350, 520, 330, 370] :
+      phase === 'flour' ? ['小麦粉', md.flour, 'g', 100, 160, 99, 101] :
+      phase === 'dashi' ? ['だし', md.dashi, 'ml', 350, 520, 346, 354] :
       ['混ぜ具合', md.mix * 100, '%', 100, 100, 99, 100];
     ctx.fillStyle = '#1e2a22'; roundRect(B.x - 110, B.y + 100, 220, 34, 6); ctx.fill();
     text(label, B.x - 100, B.y + 117, 12, '#9ff0b2', '700 ' + FB, 'left');
-    text(Math.floor(value) + ' ' + unit, B.x + 100, B.y + 117, 20, '#9ff0b2', FD, 'right');
+    text((phase === 'mix' ? Math.floor(value) : value.toFixed(0)) + ' ' + unit, B.x + 100, B.y + 117, 20, '#9ff0b2', FD, 'right');
     // 目標ゲージ
-    const gx = 40, gy = 486, gw = W - 80;
     ctx.fillStyle = 'rgba(0,0,0,0.4)'; roundRect(gx, gy, gw, 10, 5); ctx.fill();
     ctx.fillStyle = 'rgba(111,191,90,0.75)'; ctx.fillRect(gx + gw * okLo / max, gy, gw * (okHi - okLo) / max, 10);
     ctx.fillStyle = C.gold; ctx.fillRect(gx + gw * Math.min(1, value / max) - 2, gy - 4, 4, 18);
@@ -738,6 +858,14 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   function dishPos(i) { return { x: 62 + (i % 6) * 47, y: 545 + Math.floor(i / 6) * 31 }; }
   function drawPopups() {
     for (const p of popups) {
+      if (p.big) {   // 工程の判定(大きく、少しはずんで出る)
+        const t = p.t, s = t < 0.15 ? 0.6 + t / 0.15 * 0.5 : t < 0.25 ? 1.1 - (t - 0.15) : 1;
+        ctx.globalAlpha = t > 1.1 ? Math.max(0, 1 - (t - 1.1) / 0.3) : 1;
+        outlined(p.s, p.x, p.y, 30 * s, p.col);
+        if (p.pts != null) outlined('+' + p.pts, p.x, p.y + 38, 22 * s, C.cream);
+        ctx.globalAlpha = 1;
+        continue;
+      }
       ctx.globalAlpha = 1 - p.t / 0.9;
       outlined(p.s, p.x, p.y - p.t * 26, p.small ? 14 : 20, p.col);
       ctx.globalAlpha = 1;
@@ -788,15 +916,17 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     bar(434, '下ごしらえ', result.prep);
     bar(460, '焼き', result.cook);
     const md = mixData;
-    text(`粉 ${Math.round(md.flour)}g / たまご ${md.egg}個${md.shell ? '(殻)' : ''} / だし ${Math.round(md.dashi)}ml`, W / 2, 490, 11.5, C.cream, FB, 'center', 0.75);
-    text('最大 ' + bestCombo + '連続 / ハイスコア ' + best + '点', W / 2, 512, 11.5, C.cream, FB, 'center', 0.6);
+    const jl = k => (md.judged[k] ? md.judged[k].label : '-');
+    text(`粉 ${Math.round(md.flour)}g ${jl('flour')} / だし ${Math.round(md.dashi)}ml ${jl('dashi')}`, W / 2, 486, 11, C.cream, FB, 'center', 0.75);
+    text(`たまご ${jl('egg')} / 混ぜ ${jl('mix')}`, W / 2, 503, 11, C.cream, FB, 'center', 0.75);
+    text('最大 ' + bestCombo + '連続 / ハイスコア ' + best + '点', W / 2, 522, 11, C.cream, FB, 'center', 0.6);
   }
 
   function draw() {
     drawNoren();
     if (state === 'title') { drawTitle(); return; }
     if (state === 'result') { drawResult(); return; }
-    if (['flour', 'egg', 'dashi', 'mix'].includes(phase)) drawBowlScene();
+    if (['flour', 'egg', 'shell', 'dashi', 'mix'].includes(phase)) drawBowlScene();
     else if (phase === 'cook') drawCook();
     else drawPrepPlate();
     drawPopups();
@@ -817,7 +947,7 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   if (/[?&]capture\b/.test(location.search)) {
     window.__capture = {
       state: () => state, phase: () => phase,
-      mix: () => ({ flour: mixData.flour, egg: mixData.egg, dashi: mixData.dashi, mix: mixData.mix }),
+      mix: () => ({ flour: mixData.flour, egg: mixData.egg, dashi: mixData.dashi, mix: mixData.mix, eggPow: mixData.eggPow, judged: mixData.judged, shells: mixData.shells }),
       holes: () => holes.map(h => ({ x: h.x, y: h.y, fill: h.fill, oiled: h.oiled, tako: h.tako })),
       balls: () => balls.map(b => ({ x: b.x, y: b.y, st: b.st, c: b.c })),
     };
