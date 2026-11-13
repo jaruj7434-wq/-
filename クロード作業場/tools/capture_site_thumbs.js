@@ -63,8 +63,8 @@ async function localRoutes(page) {
       if (balls.filter(b => b.st === 'side2').length >= 6 && balls.some(b => b.st === 'side2' && b.c > 0.3)) break;
       await wait(80);
     }
-    await wait(300);
-    await p.screenshot({ path: path.join(SITE, 'img', 'takoyaki.jpg'), type: 'jpeg', quality: 85, clip: { x: 0, y: 100, width: 360, height: 480 } });
+    await wait(1600);   // 「きつね色!」などの表示が消えるのを待つ
+    await p.screenshot({ path: path.join(SITE, 'img', 'takoyaki.jpg'), type: 'jpeg', quality: 85, clip: { x: 36, y: 128, width: 288, height: 384 } });
     await p.close();
   }
   // 弾丸の調合師:敵と弾でにぎやかな瞬間
@@ -93,7 +93,7 @@ async function localRoutes(page) {
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@700&display=swap">
       <style>body{margin:0;width:1200px;height:630px;background:#121318;color:#f1ece2;font-family:"Zen Maru Gothic";display:flex;align-items:center;gap:56px;padding:0 70px;box-sizing:border-box;overflow:hidden;
       background:radial-gradient(ellipse 60% 70% at 85% 30%,rgba(242,181,68,.16),transparent 70%),#121318}
-      .t{flex:1}.mark{width:84px;height:84px;color:#f2b544}.b{font:400 92px/1.1 "Dela Gothic One";margin:18px 0 0}.s{font-size:30px;margin-top:22px;color:#cfc9bd}
+      .t{flex:1}.mark{width:84px;height:84px;color:#f2b544}.b{font:400 78px/1.1 "Dela Gothic One";margin:18px 0 0;white-space:nowrap}.s{font-size:30px;margin-top:22px;color:#cfc9bd}
       .imgs{display:flex;gap:22px;align-items:center}.imgs img{width:230px;height:307px;object-fit:cover;border-radius:16px;border:2px solid rgba(255,255,255,.12)}.imgs img:first-child{transform:rotate(-3deg)}.imgs img:last-child{transform:rotate(3deg) translateY(20px)}</style></head>
       <body><div class="t"><svg class="mark" viewBox="0 0 40 40"><circle cx="20" cy="20" r="6" fill="currentColor"/><circle cx="20" cy="20" r="12" fill="none" stroke="currentColor" stroke-width="2.5" opacity=".55"/><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2" opacity=".25"/></svg>
       <div class="b">ゆびさき工房</div><div class="s">指先ひとつで遊べる、<br>ちいさな手しごとのゲーム。</div></div>
