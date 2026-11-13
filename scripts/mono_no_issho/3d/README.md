@@ -58,3 +58,19 @@ SAMPLES=32 scripts/mono_no_issho/3d/render_queue.sh k02_store_stand k06_umbrella
 ```bash
 SAMPLES=16 scripts/mono_no_issho/3d/render_queue.sh p01_recycle_box p02_blow_mold p03_cap_label p04_bale_conveyor
 ```
+
+P05〜P08 の補助は `shots/pet_parts2.py`：フレーク/ペレットのメッシュ（光沢＋Translucent の不透明マテリアル、屈折なし）、
+`bake_keys`（数百個の粒を毎フレーム位置キー。着地したら沈めて口へ戻し使い回す）、`growing_pile`（点群＋ジオメトリノードで
+小粒を数千個インスタンスし、円錐の山が育つ。表面付近の粒だけ表示）、新品ボトル（中身の水・無地ラベル・キャップ）、卵パック、たたんだTシャツ、
+下から光る境目で現れるディゾルブ `add_reveal`。
+
+| スクリプト | 台本カット | 内容 | 960x540・8サンプル |
+|---|---|---|---|
+| `shots/p05_flakes.py` | P05 | 工場のホッパーの口から透明・水色のフレークがひらひら落ち、トレーの山が育つ | 約23秒/フレーム |
+| `shots/p06_pellets.py` | P06 | 斜めのシュートから乳白のペレットが帯になって流れ落ち、容器の中で山になる | 約20〜26秒/フレーム |
+| `shots/p07_reborn.py` | P07 | スタジオ。ペレットの山から粒が舞い上がり、ボトル・卵パック・Tシャツが順に形になって並ぶ（分解図風） | 約35〜42秒/フレーム |
+| `shots/p08_new_bottles.py` | P08（ラスト） | 店の棚に並ぶ新しい透明ボトル（文字なし）。斜めからゆっくりドリー。屈折は最前列27本だけ | 約42秒/フレーム |
+
+```bash
+SAMPLES=16 scripts/mono_no_issho/3d/render_queue.sh p05_flakes p06_pellets p07_reborn p08_new_bottles
+```
