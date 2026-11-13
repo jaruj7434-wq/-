@@ -3,3 +3,8 @@ dist/
 
 # ダウンロードしたフォントなどの素材(tools/build_chougoushi.py が自動で取得する)
 assets/source/
+
+# 例外:公開サイト(site/)の画像はコミットする。
+# Cloudflare Pages が GitHub から直接サイトを読み込んで公開するため、リポジトリに必要
+!site/**/*.jpg
+!site/**/*.png
