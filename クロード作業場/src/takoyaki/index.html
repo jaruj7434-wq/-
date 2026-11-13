@@ -23,15 +23,14 @@ body { margin: 0; background: var(--night); color: var(--cream); font-family: va
 #stage { position: relative; }
 canvas { display: block; touch-action: none; cursor: pointer; }
 .ui { position: absolute; left: 8px; right: 8px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.ui .btn { font-size: 14px; padding: 8px 14px; }
-.ui[hidden] { display: none !important; }
+.ui[hidden], .btn[hidden] { display: none !important; }
 .btn {
-  font: 700 15px var(--font-b);
+  font: 700 14px var(--font-b);
   color: var(--night);
   background: var(--cream);
   border: 0;
   border-radius: 999px;
-  padding: 10px 18px;
+  padding: 8px 16px;
   min-height: 44px;
   cursor: pointer;
   text-decoration: none;
@@ -39,6 +38,7 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   align-items: center;
 }
 .btn.alt { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 2px var(--cream); }
+.btn.go { background: var(--gold); }
 .btn:focus-visible, .mini:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .mini { position: absolute; bottom: 4px; right: 8px; font: 700 12px var(--font-b); color: var(--cream); background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(251, 238, 208, 0.3); border-radius: 999px; padding: 6px 12px; min-height: 32px; cursor: pointer; }
 #toast { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18%; background: rgba(0, 0, 0, 0.75); color: var(--cream); padding: 8px 14px; border-radius: 8px; font-size: 13px; }
@@ -49,6 +49,7 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     <div id="stage">
       <canvas id="cv" aria-label="たこ焼き返し ゲーム画面"></canvas>
       <button id="soundBtn" class="mini" type="button" aria-pressed="true">音 ON</button>
+      <div id="stepUi" class="ui"><button id="nextBtn" class="btn go" type="button" hidden>次へ</button></div>
       <div id="resultUi" class="ui" hidden>
         <button id="againBtn" class="btn" type="button">もう一回</button>
         <a id="shareBtn" class="btn alt" href="#" target="_blank" rel="noopener">X でシェア</a>
@@ -67,16 +68,10 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   const GAME_URL = '';
   const SHARE_TAG = '#たこ焼き返し';
 
-  const cv = document.getElementById('cv');
-  const ctx = cv.getContext('2d');
-  const stage = document.getElementById('stage');
-  const fit = document.getElementById('fit');
-  const resultUi = document.getElementById('resultUi');
-  const againBtn = document.getElementById('againBtn');
-  const shareBtn = document.getElementById('shareBtn');
-  const copyBtn = document.getElementById('copyBtn');
-  const soundBtn = document.getElementById('soundBtn');
-  const toastEl = document.getElementById('toast');
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage'), fit = $('fit');
+  const resultUi = $('resultUi'), stepUi = $('stepUi'), nextBtn = $('nextBtn');
+  const againBtn = $('againBtn'), shareBtn = $('shareBtn'), copyBtn = $('copyBtn'), soundBtn = $('soundBtn'), toastEl = $('toast');
 
   const css = getComputedStyle(document.documentElement);
   const tok = n => css.getPropertyValue(n).trim();
@@ -84,8 +79,8 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   const FD = '"Dela Gothic One", sans-serif';
   const FB = '"Zen Maru Gothic", sans-serif';
   try {
-    document.fonts.load('20px "Dela Gothic One"', 'たこ焼き返し点職人伝説の屋台看板見習い修行中きつね色生焼けコゲ!パーフェクト0123456789');
-    document.fonts.load('700 14px "Zen Maru Gothic"', 'ふちがきつね色になったらタップしてくるっと返そう。もう一回で皿へ12個ぜんぶまん丸に焼こう生焼けコゲ気味ここ!タップでスタートハイスコア焼けた個連続結果をコピーXでシェア音');
+    document.fonts.load('20px "Dela Gothic One"', 'たこ焼き返し点職人伝説の屋台看板見習い修行中きつね色生焼けコゲ!くっついた連続計量混ぜる油流すタコ焼く0123456789');
+    document.fonts.load('700 14px "Zen Maru Gothic"', 'ふちがきつね色になったらタップしてくるっと返そう。もう一回で皿へ12個ぜんぶまん丸に焼こう生焼けコゲ気味ここ!タップでスタートハイスコア焼けた個連続結果をコピーXでシェア音長押しで小麦粉を入れる目標たまごを割るだしを注ぐぐるぐる混ぜてなめらかに油をひく鉄板をなぞって全部の穴にひいて生地を流し込む穴の上で長押しタコを入れる穴をタップ天かすねぎ紅しょうが焼き始める次へ下ごしらえ生地の出来殻が入ったダマ残りOKgml');
   } catch (e) {}
 
   // ---------- 画面サイズ ----------
@@ -99,7 +94,8 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
     cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
     ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
-    resultUi.style.top = (535 * scale) + 'px';
+    resultUi.style.top = (540 * scale) + 'px';
+    stepUi.style.top = (548 * scale) + 'px';
   }
   addEventListener('resize', resize);
   resize();
@@ -113,24 +109,28 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   let plays = Number(store.get('takoyaki-plays', 0)) || 0;
 
   // ---------- 音 ----------
-  let actx = null, muted = !!store.get('takoyaki-mute', false), noiseBuf = null, sizzle = null;
+  let actx = null, muted = !!store.get('takoyaki-mute', false), noiseBuf = null, sizzle = null, pourNoise = null;
+  function loopNoise(type, freq, q) {
+    const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    src.buffer = noiseBuf; src.loop = true;
+    f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.value = 0;
+    src.connect(f).connect(g).connect(actx.destination);
+    src.start();
+    return g;
+  }
   function audio() {
     if (!actx) {
       try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
       noiseBuf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
       const a = noiseBuf.getChannelData(0);
       for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1;
-      // ジュー音(ずっと鳴らして、焼いている数で音量を変える)
-      const src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
-      src.buffer = noiseBuf; src.loop = true;
-      bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 0.7;
-      g.gain.value = 0;
-      src.connect(bp).connect(g).connect(actx.destination);
-      src.start();
-      sizzle = g;
+      sizzle = loopNoise('bandpass', 3200, 0.7);     // ジュー
+      pourNoise = loopNoise('lowpass', 900, 0.5);    // サラサラ・トクトク
     }
     if (actx.state === 'suspended') actx.resume();
   }
+  function setLoop(g, v) { if (g && actx) g.gain.setTargetAtTime(muted ? 0 : v, actx.currentTime, 0.06); }
   function tone(f, d, type, v, f2, delay) {
     if (muted || !actx) return;
     const t = actx.currentTime + (delay || 0), o = actx.createOscillator(), g = actx.createGain();
@@ -139,21 +139,35 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
   }
-  function burst(d, v, freq) {
+  function burst(d, v, freq, type) {
     if (muted || !actx) return;
     const t = actx.currentTime, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
-    s.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = freq || 1500;
+    s.buffer = noiseBuf; f.type = type || 'highpass'; f.frequency.value = freq || 1500;
     g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     s.connect(f).connect(g).connect(actx.destination); s.start(t); s.stop(t + d);
   }
   const sfx = {
-    pour: () => burst(0.5, 0.12, 2500),
+    crack: () => { burst(0.06, 0.3, 2500); tone(300, 0.08, 'triangle', 0.1, 180); },
+    plop: () => tone(260, 0.12, 'sine', 0.15, 120),
+    whisk: () => burst(0.08, 0.05, 4000),
+    step: () => { tone(660, 0.08, 'triangle', 0.08); tone(880, 0.12, 'triangle', 0.08, null, 0.08); },
     flip: () => { tone(520, 0.08, 'sine', 0.12, 900); burst(0.25, 0.1, 2000); },
     perfect: () => { tone(988, 0.1, 'triangle', 0.08); tone(1319, 0.16, 'triangle', 0.08, null, 0.08); },
     pick: () => tone(700, 0.08, 'sine', 0.1, 1200),
     burn: () => { burst(0.6, 0.18, 800); tone(150, 0.3, 'sawtooth', 0.04, 80); },
+    stick: () => { burst(0.2, 0.2, 400, 'lowpass'); tone(140, 0.2, 'square', 0.05, 90); },
+    sprinkle: () => { for (let i = 0; i < 6; i++) setTimeout(() => burst(0.05, 0.08, 5000), i * 70); },
     fanfare: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.2, 'triangle', 0.08, null, i * 0.12)),
   };
+
+  // ---------- レシピ(本物の目安に合わせた) ----------
+  // 小麦粉 100g・卵 1個・だし 350ml(だしは粉の約3.5倍)
+  const RECIPE = { flour: 100, egg: 1, dashi: 350 };
+  const FLOUR_RATE = 46, DASHI_RATE = 150, FALL_DELAY = 0.22;
+  const qFlour = g => Math.abs(g - 100) <= 5 ? 1 : Math.max(0, 1 - (Math.abs(g - 100) - 5) / 40);
+  const qDashi = m => Math.abs(m - 350) <= 20 ? 1 : Math.max(0, 1 - (Math.abs(m - 350) - 20) / 150);
+  const qEgg = (n, shell) => Math.max(0, (n === 1 ? 1 : n === 2 ? 0.8 : n === 0 ? 0.4 : 0.5) - (shell ? 0.25 : 0));
+  const qPour = f => f >= 0.9 && f <= 1.3 ? 1 : f < 0.9 ? Math.max(0, f / 0.9) ** 1.5 : Math.max(0.6, 1 - (f - 1.3));
 
   // ---------- 焼き加減 ----------
   // c: 0 = 生地のまま、0.62〜0.82 = きつね色(ベスト)、1.0〜 = コゲ、1.35 で炭
@@ -169,7 +183,8 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     }
     return STOPS[STOPS.length - 1][1];
   }
-  const rgb = (a, m) => `rgb(${a.map(v => Math.max(0, Math.min(255, Math.round(v * (m || 1))))).join(',')})`;
+  const rgb = (a, m, al) => `rgba(${a.map(v => Math.max(0, Math.min(255, Math.round(v * (m || 1))))).join(',')},${al == null ? 1 : al})`;
+  const mixRGB = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
   function quality(d) {
     if (d >= GOOD_LO && d <= GOOD_HI) return 1;
     const dist = d < GOOD_LO ? GOOD_LO - d : d - GOOD_HI;
@@ -185,54 +200,147 @@ canvas { display: block; touch-action: none; cursor: pointer; }
   const RANKS = [[95, '伝説の職人'], [85, 'たこ焼き職人'], [70, '屋台の看板'], [50, '見習い'], [0, '修行中']];
   const rankOf = s => RANKS.find(r => s >= r[0])[1];
 
-  // ---------- 盤面 ----------
+  // ---------- 工程 ----------
+  const PHASES = ['flour', 'egg', 'dashi', 'mix', 'oil', 'pour', 'tako', 'cook'];
+  const STEPS = [['計量', ['flour', 'egg', 'dashi']], ['混ぜる', ['mix']], ['油', ['oil']], ['流す', ['pour']], ['タコ', ['tako']], ['焼く', ['cook']]];
+  const GUIDE = {
+    flour: ['長押しで 小麦粉を入れる', '目標 100g(はなすのが遅いと入りすぎる)'],
+    egg: ['たまごを タップして割る', '目標 1個(あわてて連打すると殻が入る)'],
+    dashi: ['長押しで だしを注ぐ', '目標 350ml(粉の約3.5倍がとろとろの目安)'],
+    mix: ['ぐるぐる なぞって混ぜる', 'ダマがなくなるまで'],
+    oil: ['鉄板をなぞって 油をひく', 'ひき忘れた穴は くっつく'],
+    pour: ['穴の上で長押しして 生地を流す', 'ふちまで たっぷりと'],
+    tako: ['穴をタップして タコを入れる', '入れ終わったら 焼き始める'],
+    cook: ['ふちが きつね色で タップ!', 'もう一回タップで お皿へ'],
+  };
+
   const COLS = 3, ROWS = 4, HOLE_R = 36, BALL_R = 31;
   const holeX = c => 90 + c * 90;
   const holeY = r => 178 + r * 86;
-  let state = 'title', balls = [], dish = [], fx = [], popups = [], time = 0, combo = 0, bestCombo = 0, score = 0, lock = 0, blink = 0, newBest = false;
+  const BOWL = { x: 180, y: 318, r: 112 };
 
-  function newRound() {
-    balls = [];
+  let state = 'title', phase = 'flour', phaseT = 0, time = 0, blink = 0;
+  let mixData, holes, balls, dish, fx, popups, combo, bestCombo, score, newBest, parts, sprinkleT;
+  const pointer = { x: 0, y: 0, down: false, lx: 0, ly: 0 };
+  const keys = {};
+
+  function newGame() {
+    mixData = { flour: 0, flourPending: [], egg: 0, shell: false, lastEgg: -9, eggAnim: 0, yolks: [], dashi: 0, dashiPending: [], mix: 0,
+      lumps: Array.from({ length: 36 }, () => ({ a: Math.random() * 6.283, d: Math.random() * 0.8, s: 2 + Math.random() * 4 })) };
+    holes = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-      const toppings = [];
-      for (let i = 0; i < 5; i++) toppings.push({ a: Math.random() * 6.283, d: Math.random() * 18, k: Math.random() < 0.6 ? 'g' : 'r' });
-      balls.push({
-        x: holeX(c), y: holeY(r), st: 'wait', pourAt: 0.4 + r * 0.7 + c * 0.12, p: 0,
-        c: 0, rate: 0.105 + Math.random() * 0.065, d1: null, d2: null, flipT: 0, outT: 0, burnT: 0, toppings,
-      });
+      holes.push({ x: holeX(c), y: holeY(r), oiled: false, fill: 0, order: -1, tako: false, takoT: 0,
+        toppings: Array.from({ length: 5 }, () => ({ a: Math.random() * 6.283, d: Math.random() * 18, k: Math.random() < 0.6 ? 'g' : 'r' })) });
     }
-    dish = []; fx = []; popups = []; time = 0; combo = 0; bestCombo = 0; score = 0; newBest = false;
+    balls = []; dish = []; fx = []; popups = []; parts = [];
+    combo = 0; bestCombo = 0; score = null; newBest = false; time = 0; sprinkleT = 0;
   }
   function start() {
     audio();
-    newRound();
+    newGame();
     state = 'play';
+    setPhase('flour');
     plays++; store.set('takoyaki-plays', plays);
     resultUi.hidden = true;
   }
+  function setPhase(p) {
+    phase = p; phaseT = 0;
+    syncNext();
+  }
+  function nextPhase() {
+    const i = PHASES.indexOf(phase);
+    sfx.step();
+    if (phase === 'tako') { sprinkleT = 0.01; sfx.sprinkle(); nextBtn.hidden = true; return; }
+    if (i < PHASES.length - 1) setPhase(PHASES[i + 1]);
+  }
+  function syncNext() {
+    const labels = { flour: '次へ(たまご)', egg: '次へ(だし)', dashi: '次へ(混ぜる)', oil: '次へ(流し込む)', pour: '次へ(タコ)', tako: '焼き始める' };
+    const show = state === 'play' && labels[phase] && sprinkleT === 0 &&
+      (phase === 'flour' ? landed('flour') > 0 : phase === 'dashi' ? landed('dashi') > 0 : phase === 'pour' ? holes.some(h => h.fill > 0.05) : true);
+    nextBtn.hidden = !show;
+    if (show) nextBtn.textContent = labels[phase];
+  }
+  nextBtn.addEventListener('click', () => { if (state === 'play') nextPhase(); nextBtn.blur(); });
+  const landed = k => mixData[k];
 
   // ---------- 入力 ----------
   function toLogical(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
+  const nearestHole = (p, maxD) => { let best = null, bd = maxD * maxD; for (const h of holes) { const dd = (h.x - p.x) ** 2 + (h.y - p.y) ** 2; if (dd < bd) { bd = dd; best = h; } } return best; };
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
     audio();
-    if (state === 'title') { start(); return; }
-    if (state !== 'play') return;
     const p = toLogical(e);
-    let hit = null, hd = 46 * 46;
-    for (const b of balls) { const dd = (b.x - p.x) ** 2 + (b.y - p.y) ** 2; if (dd < hd) { hd = dd; hit = b; } }
-    if (hit) tapBall(hit);
+    Object.assign(pointer, { x: p.x, y: p.y, lx: p.x, ly: p.y, down: true });
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    if (state === 'title') { start(); pointer.down = false; return; }
+    if (state !== 'play') return;
+    if (phase === 'egg') crackEgg();
+    else if (phase === 'tako' && !sprinkleT) { const h = nearestHole(p, 44); if (h && h.fill > 0.05 && !h.tako) { h.tako = true; h.takoT = 0; sfx.plop(); } }
+    else if (phase === 'cook') { let hit = null, hd = 46 * 46; for (const b of balls) { const dd = (b.x - p.x) ** 2 + (b.y - p.y) ** 2; if (dd < hd) { hd = dd; hit = b; } } if (hit) tapBall(hit); }
   });
+  cv.addEventListener('pointermove', e => {
+    const p = toLogical(e);
+    pointer.lx = pointer.x; pointer.ly = pointer.y; pointer.x = p.x; pointer.y = p.y;
+    if (!pointer.down || state !== 'play') return;
+    if (phase === 'mix') {
+      const d = Math.hypot(pointer.x - pointer.lx, pointer.y - pointer.ly);
+      if (Math.hypot(p.x - BOWL.x, p.y - BOWL.y) < BOWL.r + 10 && mixData.mix < 1) {
+        mixData.mix = Math.min(1, mixData.mix + d / 1700);
+        if (Math.random() < d / 60) sfx.whisk();
+      }
+    }
+  });
+  const up = () => { pointer.down = false; };
+  cv.addEventListener('pointerup', up);
+  cv.addEventListener('pointercancel', up);
   addEventListener('keydown', e => {
     if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) return;
-    if ((e.code === 'Enter' || e.code === 'Space') && state === 'title') { e.preventDefault(); start(); }
+    keys[e.code] = true;
+    if (e.code === 'Space') e.preventDefault();
+    if (e.repeat) return;
+    if ((e.code === 'Enter' || e.code === 'Space') && state === 'title') start();
+    else if (e.code === 'Space' && state === 'play' && phase === 'egg') crackEgg();
     if (e.code === 'KeyM') toggleMute();
   });
+  addEventListener('keyup', e => { keys[e.code] = false; });
   againBtn.addEventListener('click', () => { start(); againBtn.blur(); });
+  const holding = () => pointer.down || keys.Space;
 
+  function crackEgg() {
+    if (mixData.eggAnim > 0) return;
+    if (time - mixData.lastEgg < 0.35 && mixData.egg > 0) { mixData.shell = true; popup(BOWL.x, BOWL.y - 60, '殻が入った!', '#e6e6e6'); }
+    mixData.lastEgg = time;
+    mixData.egg++;
+    mixData.eggAnim = 0.45;
+    mixData.yolks.push({ a: Math.random() * 6.283, d: 20 + Math.random() * 40 });
+    sfx.crack();
+  }
+
+  function popup(x, y, s, col, small) { popups.push({ x, y, s, col, t: 0, small }); }
+
+  // ---------- 焼き ----------
+  function batterFactor() {
+    // だしが少ない(生地が固い)と早く焼け、多い(ゆるい)とゆっくり焼ける
+    const ratio = mixData.dashi / Math.max(1, mixData.flour);
+    return Math.max(0.75, Math.min(1.3, 1 + (3.5 - ratio) * 0.12));
+  }
+  function startCooking() {
+    const f = batterFactor();
+    const poured = holes.filter(h => h.fill > 0.05).sort((a, b) => a.order - b.order);
+    balls = holes.map(h => {
+      const i = poured.indexOf(h);
+      return {
+        x: h.x, y: h.y, hole: h, st: h.fill > 0.05 ? 'side1' : 'none',
+        r: BALL_R * (0.65 + 0.35 * Math.min(1, h.fill)),
+        c: i < 0 ? 0 : 0.14 * (1 - i / Math.max(1, poured.length)),
+        rate: (0.1 + Math.random() * 0.06) * f, d1: null, d2: null, stuck: false, flipT: 0, outT: 0, burnT: 0, toppings: h.toppings,
+      };
+    });
+  }
   function tapBall(b) {
     if (b.st === 'side1') {
       b.d1 = b.c; b.st = 'flip'; b.flipT = 0; sfx.flip();
+      if (!b.hole.oiled && Math.random() < 0.65) { b.stuck = true; sfx.stick(); popup(b.x, b.y - 62, 'くっついた!', '#d8d8d8', true); }
       judge(b, b.d1);
     } else if (b.st === 'side2') {
       b.d2 = b.c; b.st = 'out'; b.outT = 0; sfx.pick();
@@ -244,17 +352,74 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     const [label, col] = verdict(d);
     const perfect = d >= GOOD_LO && d <= GOOD_HI;
     if (perfect) { combo++; bestCombo = Math.max(bestCombo, combo); sfx.perfect(); } else combo = 0;
-    popups.push({ x: b.x, y: b.y - 40, s: label, col, t: 0 });
-    if (perfect && combo >= 3) popups.push({ x: b.x, y: b.y - 62, s: combo + '連続!', col: C.cream, t: 0, small: true });
+    popup(b.x, b.y - 40, label, col);
+    if (perfect && combo >= 3) popup(b.x, b.y - 82, combo + '連続!', C.cream, true);
+  }
+  function ballScore(b) {
+    if (b.st === 'none' || b.d1 == null || b.d2 == null) return 0;
+    return (quality(b.d1) * (b.stuck ? 0.5 : 1) + quality(b.d2)) / 2;
   }
 
   // ---------- 更新 ----------
+  function flowIn(key, pending, rate, dt) {
+    if (holding()) pending.push({ amt: rate * dt, t: FALL_DELAY });
+    let flowing = holding();
+    for (const p of pending) { p.t -= dt; if (p.t <= 0 && !p.done) { mixData[key] += p.amt; p.done = true; } if (!p.done) flowing = true; }
+    for (let i = pending.length - 1; i >= 0; i--) if (pending[i].done) pending.splice(i, 1);
+    return flowing;
+  }
   function update(dt) {
-    time += dt;
+    time += dt; phaseT += dt;
+    let pouringSound = 0;
+    if (phase === 'flour') {
+      if (flowIn('flour', mixData.flourPending, FLOUR_RATE, dt)) {
+        pouringSound = 0.05;
+        if (holding()) for (let i = 0; i < 3; i++) parts.push({ x: BOWL.x + 14 + (Math.random() - 0.5) * 18, y: 190, vx: (Math.random() - 0.5) * 20, vy: 380 + Math.random() * 60, life: 0.5, col: '#fbf7ee', s: 2 + Math.random() * 2 });
+      }
+    } else if (phase === 'dashi') {
+      if (flowIn('dashi', mixData.dashiPending, DASHI_RATE, dt)) pouringSound = 0.09;
+    } else if (phase === 'mix') {
+      if (mixData.mix >= 1 && phaseT > 0.3) { popup(BOWL.x, BOWL.y - 40, 'なめらか!', C.gold); setPhase('oil'); sfx.step(); }
+    } else if (phase === 'oil') {
+      if (pointer.down) { const h = nearestHole(pointer, 40); if (h && !h.oiled) { h.oiled = true; burst(0.12, 0.05, 3000); } }
+    } else if (phase === 'pour') {
+      if (pointer.down) {
+        pouringSound = 0.07;
+        const h = nearestHole(pointer, 40);
+        if (h) { if (h.order < 0) h.order = time; h.fill = Math.min(1.8, h.fill + 1.15 * dt); }
+        if (Math.random() < dt * 30) parts.push({ x: pointer.x + 12, y: pointer.y - 18, vx: 0, vy: 160, life: 0.12, col: 'rgba(246,231,184,0.9)', s: 5 });
+      }
+    } else if (phase === 'tako') {
+      for (const h of holes) if (h.tako && h.takoT < 1) h.takoT = Math.min(1, h.takoT + dt / 0.3);
+      if (sprinkleT > 0) {
+        sprinkleT += dt;
+        if (Math.random() < dt * 60) {
+          const k = Math.random(), col = k < 0.45 ? '#f0dca0' : k < 0.75 ? '#58a84a' : '#e0525a';
+          parts.push({ x: 40 + Math.random() * 280, y: 110, vx: (Math.random() - 0.5) * 30, vy: 260 + Math.random() * 120, life: 1.2, col, s: 2.5 + Math.random() * 2, land: 130 + Math.random() * 340 });
+        }
+        if (sprinkleT > 1.1) { sprinkleT = 0; startCooking(); setPhase('cook'); }
+      }
+    } else if (phase === 'cook') {
+      updateCook(dt);
+    }
+    setLoop(pourNoise, pouringSound);
+    syncNext();
+
+    for (const p of parts) {
+      p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.land && p.y >= p.land) { p.vy = 0; p.vx = 0; }
+      if (!p.land && phase === 'flour' && p.y > BOWL.y - 10) p.life = 0;
+    }
+    parts = parts.filter(p => p.life > 0);
+    for (const f of fx) { f.life -= dt; f.y += f.vy * dt; f.x += Math.sin(f.life * 3) * 6 * dt; }
+    fx = fx.filter(f => f.life > 0);
+    for (const p of popups) p.t += dt;
+    popups = popups.filter(p => p.t < 0.9);
+    if (mixData.eggAnim > 0) mixData.eggAnim -= dt;
+  }
+  function updateCook(dt) {
     let cooking = 0;
     for (const b of balls) {
-      if (b.st === 'wait' && time >= b.pourAt) { b.st = 'pour'; b.p = 0; sfx.pour(); }
-      if (b.st === 'pour') { b.p += dt / 0.45; if (b.p >= 1) { b.st = 'side1'; b.c = 0; } }
       if (b.st === 'side1' || b.st === 'side2') {
         cooking++;
         b.c += b.rate * dt;
@@ -262,7 +427,7 @@ canvas { display: block; touch-action: none; cursor: pointer; }
         if (b.c >= BURN) {
           if (b.st === 'side1') b.d1 = b.c; else b.d2 = b.c;
           b.st = 'burnt'; b.burnT = 0; combo = 0; sfx.burn();
-          popups.push({ x: b.x, y: b.y - 40, s: 'コゲ!', col: '#9a9a9a', t: 0 });
+          popup(b.x, b.y - 40, 'コゲ!', '#9a9a9a');
         }
       }
       if (b.st === 'flip') { b.flipT += dt / 0.32; if (b.flipT >= 1) { b.st = 'side2'; b.c = 0; b.rate *= 0.9 + Math.random() * 0.25; } }
@@ -273,44 +438,46 @@ canvas { display: block; touch-action: none; cursor: pointer; }
         if (b.burnT > 1.1) { b.st = 'gone'; if (b.d2 == null) b.d2 = 0; dish.push(b); }
       }
     }
-    if (sizzle) sizzle.gain.setTargetAtTime(muted ? 0 : Math.min(0.06, cooking * 0.006), actx.currentTime, 0.1);
-    for (const f of fx) { f.life -= dt; f.y += f.vy * dt; f.x += Math.sin(f.life * 3) * 6 * dt; }
-    fx = fx.filter(f => f.life > 0);
-    for (const p of popups) p.t += dt;
-    popups = popups.filter(p => p.t < 0.9);
-
-    if (balls.every(b => b.st === 'done' || b.st === 'gone')) finish();
+    setLoop(sizzle, Math.min(0.06, cooking * 0.006));
+    if (balls.every(b => b.st === 'done' || b.st === 'gone' || b.st === 'none')) finish();
   }
 
-  function ballScore(b) {
-    if (b.d1 == null || b.d2 == null) return 0;
-    return (quality(b.d1) + quality(b.d2)) / 2;
+  // ---------- 採点 ----------
+  function breakdown() {
+    const batter = (qFlour(mixData.flour) + qEgg(mixData.egg, mixData.shell) + qDashi(mixData.dashi)) / 3;
+    const oil = holes.filter(h => h.oiled).length / 12;
+    const pour = holes.reduce((s, h) => s + qPour(h.fill), 0) / 12;
+    const tako = holes.filter(h => h.tako).length / 12;
+    const prep = (oil + pour + tako) / 3;
+    const cook = balls.reduce((s, b) => s + ballScore(b), 0) / 12;
+    return { batter, prep, cook, total: Math.round(100 * (0.2 * batter + 0.2 * prep + 0.6 * cook)) };
   }
+  let result = null;
   function finish() {
-    score = Math.round(balls.reduce((s, b) => s + ballScore(b), 0) / balls.length * 100);
+    result = breakdown();
+    score = result.total;
     if (score > best) { best = score; store.set('takoyaki-best', best); newBest = true; }
     state = 'result';
-    lock = 0.6;
-    if (sizzle) sizzle.gain.setTargetAtTime(0, actx.currentTime, 0.05);
+    setLoop(sizzle, 0); setLoop(pourNoise, 0);
+    nextBtn.hidden = true;
     sfx.fanfare();
-    const text = `たこ焼き返しで ${score}点!ランク「${rankOf(score)}」` + '\n' + SHARE_TAG + (GAME_URL ? '\n' + GAME_URL : '');
+    const text = `たこ焼き返しで ${score}点!ランク「${rankOf(score)}」` + '\n' + `生地${Math.round(result.batter * 100)} / 下ごしらえ${Math.round(result.prep * 100)} / 焼き${Math.round(result.cook * 100)}` + '\n' + SHARE_TAG + (GAME_URL ? '\n' + GAME_URL : '');
     shareBtn.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
     copyBtn.dataset.text = text;
     setTimeout(() => { if (state === 'result') resultUi.hidden = false; }, 600);
   }
   copyBtn.addEventListener('click', () => {
     const text = copyBtn.dataset.text || '';
-    const ok = () => toast('コピーしました');
-    try { navigator.clipboard.writeText(text).then(ok, () => toast('コピーできませんでした')); } catch (e) { toast('コピーできませんでした'); }
+    try { navigator.clipboard.writeText(text).then(() => toast('コピーしました'), () => toast('コピーできませんでした')); } catch (e) { toast('コピーできませんでした'); }
   });
   let toastTimer = 0;
   function toast(s) { toastEl.textContent = s; toastEl.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.hidden = true; }, 1600); }
-  function toggleMute() { muted = !muted; store.set('takoyaki-mute', muted); soundBtn.textContent = muted ? '音 OFF' : '音 ON'; soundBtn.setAttribute('aria-pressed', String(!muted)); }
+  function toggleMute() { muted = !muted; store.set('takoyaki-mute', muted); soundBtn.textContent = muted ? '音 OFF' : '音 ON'; soundBtn.setAttribute('aria-pressed', String(!muted)); if (muted) { setLoop(sizzle, 0); setLoop(pourNoise, 0); } }
   soundBtn.addEventListener('click', () => { audio(); toggleMute(); soundBtn.blur(); });
   soundBtn.textContent = muted ? '音 OFF' : '音 ON';
 
-  // ---------- 描画 ----------
-  function circle(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill(); }
+  // ---------- 描画の部品 ----------
+  function circle(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, Math.max(0, r), 0, 6.283); ctx.fill(); }
   function text(s, x, y, size, col, font, align, alpha) {
     ctx.globalAlpha = alpha == null ? 1 : alpha;
     font = font || FB;
@@ -326,186 +493,336 @@ canvas { display: block; touch-action: none; cursor: pointer; }
     ctx.strokeText(s, x, y);
     ctx.fillStyle = col; ctx.fillText(s, x, y);
   }
+  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
-  function drawBackground() {
+  function drawNoren() {
     ctx.fillStyle = C.night; ctx.fillRect(0, 0, W, H);
-    // 提灯の灯り
     const g = ctx.createRadialGradient(W / 2, 40, 10, W / 2, 40, 360);
     g.addColorStop(0, 'rgba(255, 170, 80, 0.28)'); g.addColorStop(1, 'rgba(255, 170, 80, 0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    // のれん
-    for (let i = 0; i < 4; i++) {
-      ctx.fillStyle = C.noren;
-      ctx.fillRect(8 + i * 87, 0, 82, 64);
-    }
-    outlined('た', 8 + 41, 32, 30, C.cream);
-    outlined('こ', 95 + 41, 32, 30, C.cream);
-    outlined('焼', 182 + 41, 32, 30, C.cream);
-    outlined('き', 269 + 41, 32, 30, C.cream);
-    // カウンター
+    for (let i = 0; i < 4; i++) { ctx.fillStyle = C.noren; ctx.fillRect(8 + i * 87, 0, 82, 56); }
+    ['た', 'こ', '焼', 'き'].forEach((s, i) => outlined(s, 49 + i * 87, 28, 26, C.cream));
     ctx.fillStyle = C.wood; ctx.fillRect(0, 498, W, H - 498);
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     for (let i = 0; i < 6; i++) ctx.fillRect(0, 512 + i * 22, W, 1);
-    // 鉄板
-    ctx.fillStyle = '#121214'; roundRect(22, 120, W - 44, 372, 18); ctx.fill();
-    const ig = ctx.createLinearGradient(0, 128, 0, 484);
+  }
+  function drawSteps() {
+    let x = 18;
+    const cur = STEPS.findIndex(s => s[1].includes(phase));
+    ctx.font = '700 11px ' + FB;
+    STEPS.forEach(([label], i) => {
+      const w = ctx.measureText(label).width + 14;
+      ctx.fillStyle = i === cur ? C.gold : i < cur ? 'rgba(251,238,208,0.35)' : 'rgba(251,238,208,0.12)';
+      roundRect(x, 64, w, 18, 9); ctx.fill();
+      text(label, x + w / 2, 73, 11, i === cur ? C.night : C.cream, '700 ' + FB);
+      x += w + 4;
+    });
+    const [a, b] = GUIDE[phase];
+    text(a, W / 2, 98, 16, C.cream, '700 ' + FB);
+    text(b, W / 2, 117, 11.5, C.cream, FB, 'center', 0.7);
+  }
+  function drawPlate() {
+    ctx.fillStyle = '#121214'; roundRect(22, 128, W - 44, 364, 18); ctx.fill();
+    const ig = ctx.createLinearGradient(0, 134, 0, 486);
     ig.addColorStop(0, '#3a3a40'); ig.addColorStop(1, C.iron);
-    ctx.fillStyle = ig; roundRect(30, 128, W - 60, 356, 14); ctx.fill();
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-      const x = holeX(c), y = holeY(r);
-      const hg = ctx.createRadialGradient(x - 8, y - 8, 4, x, y, HOLE_R);
+    ctx.fillStyle = ig; roundRect(30, 134, W - 60, 350, 14); ctx.fill();
+    for (const h of holes) {
+      const hg = ctx.createRadialGradient(h.x - 8, h.y - 8, 4, h.x, h.y, HOLE_R);
       hg.addColorStop(0, '#1a1a1d'); hg.addColorStop(1, '#0a0a0b');
-      circle(x, y, HOLE_R, hg);
+      circle(h.x, h.y, HOLE_R, hg);
       ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(x, y, HOLE_R, 0.6, 2.6); ctx.stroke();
+      ctx.beginPath(); ctx.arc(h.x, h.y, HOLE_R, 0.6, 2.6); ctx.stroke();
+      if (h.oiled && phase !== 'cook') {
+        ctx.strokeStyle = 'rgba(255, 214, 120, 0.55)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(h.x, h.y, HOLE_R - 6, 3.6, 5.2); ctx.stroke();
+        circle(h.x - 12, h.y - 14, 3, 'rgba(255,240,200,0.5)');
+      }
     }
   }
-  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-
-  // たこ焼き1個を描く。top = 上に見えている面の焼き色(null なら生地)、rim = ふちに見える底面の焼き色
-  function drawBall(x, y, r, top, rim, toppings, sy) {
+  // たこ焼き1個。top = 上に見える面の焼き色(null なら生地)、rim = ふちに見える底面の焼き色
+  function drawBall(x, y, r, top, rim, toppings, sy, stuck) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(1, sy == null ? 1 : sy);
-    if (rim != null) circle(0, 0, r + 3, rgb(cookRGB(rim)));      // ふち(底の焼き色がのぞく)
+    if (rim != null) circle(0, 0, r + 3, rgb(cookRGB(rim)));
     const base = top == null ? [246, 231, 184] : cookRGB(top);
     const g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r);
     g.addColorStop(0, rgb(base, 1.12)); g.addColorStop(0.7, rgb(base)); g.addColorStop(1, rgb(base, 0.78));
     circle(0, 0, r, g);
     if (top == null && toppings) {
-      for (const t of toppings) circle(Math.cos(t.a) * t.d, Math.sin(t.a) * t.d, 2.4, t.k === 'g' ? '#58a84a' : '#e0525a');
+      for (const t of toppings) circle(Math.cos(t.a) * t.d * r / 31, Math.sin(t.a) * t.d * r / 31, 2.4 * r / 31, t.k === 'g' ? '#58a84a' : '#e0525a');
     } else if (top != null) {
-      ctx.fillStyle = rgb(base, 0.82);
-      for (let i = 0; i < 6; i++) { const a = i * 1.1 + (toppings ? toppings[0].a : 0); circle(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.45, 2.2, rgb(base, 0.8)); }
+      for (let i = 0; i < 6; i++) { const a = i * 1.1 + (toppings ? toppings[0].a : 0); circle(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.45, 2.2 * r / 31, rgb(base, 0.8)); }
+    }
+    if (stuck && top != null) {
+      ctx.strokeStyle = rgb(base, 0.55); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-r * 0.6, -r * 0.1); ctx.lineTo(-r * 0.1, r * 0.15); ctx.lineTo(r * 0.2, -r * 0.2); ctx.lineTo(r * 0.6, r * 0.1); ctx.stroke();
     }
     circle(-r * 0.35, -r * 0.42, r * 0.16, 'rgba(255,255,255,0.35)');
     ctx.restore();
   }
+  function drawTako(x, y, s) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.fillStyle = '#b7445a';
+    ctx.beginPath(); ctx.moveTo(-9, -4); ctx.quadraticCurveTo(0, -12, 9, -5); ctx.quadraticCurveTo(12, 4, 4, 8); ctx.quadraticCurveTo(-6, 10, -10, 3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f2d6d6';
+    circle(-3, 3, 2, '#f2d6d6'); circle(3, 4, 1.6, '#f2d6d6'); circle(6, -1, 1.3, '#f2d6d6');
+    ctx.restore();
+  }
 
-  function drawBalls() {
-    for (const b of balls) {
-      if (b.st === 'wait' || b.st === 'done' || b.st === 'gone') continue;
-      if (b.st === 'pour') {
-        const p = Math.min(1, b.p);
-        circle(b.x, b.y, BALL_R * p, 'rgba(246,231,184,0.95)');
-        ctx.fillStyle = 'rgba(246,231,184,0.8)';
-        ctx.fillRect(b.x - 3, b.y - 70 * (1 - p) - 20, 6, 70 * (1 - p) + 20 * (1 - p));
-        continue;
-      }
-      if (b.st === 'side1') drawBall(b.x, b.y, BALL_R, null, b.c, b.toppings);
-      else if (b.st === 'flip') {
-        const t = b.flipT, sy = Math.max(0.08, Math.abs(Math.cos(Math.PI * t)));
-        const lift = Math.sin(Math.PI * t) * 14;
-        if (t < 0.5) drawBall(b.x, b.y - lift, BALL_R, null, b.d1, b.toppings, sy);
-        else drawBall(b.x, b.y - lift, BALL_R, b.d1, 0, b.toppings, sy);
-      } else if (b.st === 'side2') drawBall(b.x, b.y, BALL_R, b.d1, b.c, b.toppings);
-      else if (b.st === 'out') {
-        const t = b.outT, tx = dishPos(dish.indexOf(b));
-        const x = b.x + (tx.x - b.x) * t, y = b.y + (tx.y - b.y) * t - Math.sin(Math.PI * t) * 60;
-        drawBall(x, y, BALL_R + (13 - BALL_R) * t, b.d1, null, b.toppings);
-      } else if (b.st === 'burnt') {
-        drawBall(b.x, b.y, BALL_R * (1 - Math.max(0, b.burnT - 0.6) * 0.6), BURN, BURN, null);
+  // ---------- 生地づくり(ボウル)の画面 ----------
+  function batterColor() {
+    const flour = [250, 247, 238], yolk = [246, 196, 70], smooth = [244, 222, 160];
+    const m = mixData.mix;
+    return mixRGB(mixRGB(flour, yolk, Math.min(0.35, mixData.egg * 0.15)), smooth, m);
+  }
+  function drawBowlScene() {
+    const md = mixData, B = BOWL;
+    // はかり
+    ctx.fillStyle = '#d9d4cc'; roundRect(B.x - 130, B.y + 92, 260, 60, 12); ctx.fill();
+    ctx.fillStyle = '#9b958c'; roundRect(B.x - 130, B.y + 140, 260, 12, 6); ctx.fill();
+    // ボウル(上から見た図)
+    const bg = ctx.createRadialGradient(B.x - 30, B.y - 40, 20, B.x, B.y, B.r + 14);
+    bg.addColorStop(0, '#f2f2f4'); bg.addColorStop(0.75, '#b8bcc4'); bg.addColorStop(1, '#7c818a');
+    circle(B.x, B.y, B.r + 14, bg);
+    circle(B.x, B.y, B.r, '#cfd3da');
+    // 中身
+    const liquid = Math.min(1, md.dashi / 350);
+    if (md.dashi > 0 || md.mix > 0) {
+      const col = md.mix > 0 ? batterColor() : [236, 214, 160];
+      circle(B.x, B.y, B.r * (0.55 + 0.4 * Math.max(liquid, md.mix > 0 ? 1 : 0)), rgb(col, 1, 0.55 + 0.45 * Math.max(liquid, md.mix)));
+    }
+    if (md.flour > 0) {
+      // 粉の山(混ぜると消える)
+      const fr = Math.min(B.r * 0.8, 14 + Math.sqrt(md.flour) * 5.5) * (1 - md.mix);
+      if (fr > 1) {
+        const fg = ctx.createRadialGradient(B.x - fr * 0.3, B.y - fr * 0.3, 2, B.x, B.y, fr);
+        fg.addColorStop(0, '#ffffff'); fg.addColorStop(1, '#ece6da');
+        circle(B.x, B.y, fr, fg);
       }
     }
+    for (const y of md.yolks) {
+      if (md.mix > 0.7) break;
+      const x0 = B.x + Math.cos(y.a + md.mix * 6) * y.d * (1 - md.mix), y0 = B.y + Math.sin(y.a + md.mix * 6) * y.d * (1 - md.mix);
+      circle(x0, y0, 15 * (1 - md.mix), 'rgba(255,255,250,0.85)');
+      circle(x0, y0, 9 * (1 - md.mix * 0.8), '#f5b52e');
+    }
+    // ダマ
+    if (md.mix > 0 && md.mix < 1) {
+      for (const l of md.lumps.slice(0, Math.ceil(md.lumps.length * (1 - md.mix)))) {
+        const a = l.a + md.mix * 5;
+        circle(B.x + Math.cos(a) * l.d * B.r * 0.8, B.y + Math.sin(a) * l.d * B.r * 0.8, l.s, 'rgba(255,255,255,0.8)');
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2;
+      for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(B.x, B.y, 30 + k * 24, md.mix * 20 + k, md.mix * 20 + k + 2); ctx.stroke(); }
+    }
+    // 道具
+    if (phase === 'flour') {
+      const tilt = holding() ? 0.5 : 0.2;
+      ctx.save(); ctx.translate(B.x + 30, 172); ctx.rotate(tilt);
+      ctx.fillStyle = '#f4efe2'; roundRect(-34, -40, 68, 52, 6); ctx.fill();
+      ctx.fillStyle = C.noren; ctx.fillRect(-34, -18, 68, 14);
+      text('小麦粉', 0, -11, 10, C.cream, '700 ' + FB);
+      ctx.restore();
+    }
+    if (phase === 'dashi') {
+      const tilt = holding() ? -0.7 : -0.2;
+      ctx.save(); ctx.translate(B.x + 84, 178); ctx.rotate(tilt);
+      ctx.fillStyle = 'rgba(230,240,255,0.5)'; roundRect(-26, -34, 52, 66, 6); ctx.fill();
+      ctx.fillStyle = 'rgba(214,170,90,0.85)'; roundRect(-24, -6 + (1 - Math.max(0.1, 1 - md.dashi / 500)) * 30, 48, 36 - (1 - Math.max(0.1, 1 - md.dashi / 500)) * 30, 4); ctx.fill();
+      text('だし', 0, -20, 11, '#2a140c', '700 ' + FB);
+      ctx.restore();
+      if (md.dashiPending.length) { ctx.strokeStyle = 'rgba(214,170,90,0.85)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(B.x + 58, 170); ctx.quadraticCurveTo(B.x + 36, 220, B.x + 20, B.y - 20); ctx.stroke(); }
+    }
+    if (phase === 'egg') {
+      const ex = 70, ey = 200;
+      if (md.eggAnim > 0) {
+        const t = 1 - md.eggAnim / 0.45;
+        circle(ex + (B.x - ex) * t, ey + (B.y - ey) * t, 12, '#f5b52e');
+      }
+      ctx.fillStyle = '#fbf3e4'; ctx.beginPath(); ctx.ellipse(ex, ey, 22, 28, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.beginPath(); ctx.ellipse(ex + 6, ey + 6, 14, 18, 0, 0, 6.283); ctx.fill();
+      text('タップ', ex, ey + 44, 12, C.gold, '700 ' + FB, 'center', 0.6 + Math.sin(blink * 5) * 0.4);
+    }
+    if (phase === 'mix') {
+      const wx = pointer.down ? pointer.x : B.x + Math.cos(blink * 3) * 50, wy = pointer.down ? pointer.y : B.y + Math.sin(blink * 3) * 50;
+      ctx.strokeStyle = '#d6d9de'; ctx.lineWidth = 2;
+      for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.ellipse(wx + k * 3, wy, 6, 20, 0, 0, 6.283); ctx.stroke(); }
+      ctx.fillStyle = '#7a5134'; roundRect(wx - 4, wy - 70, 8, 48, 4); ctx.fill();
+    }
+    for (const p of parts) circle(p.x, p.y, p.s, p.col);
+    // はかりの表示
+    const [label, value, unit, target, max, okLo, okHi] =
+      phase === 'flour' ? ['小麦粉', md.flour, 'g', 100, 160, 95, 105] :
+      phase === 'egg' ? ['たまご', md.egg, '個', 1, 3, 0.75, 1.25] :
+      phase === 'dashi' ? ['だし', md.dashi, 'ml', 350, 520, 330, 370] :
+      ['混ぜ具合', md.mix * 100, '%', 100, 100, 99, 100];
+    ctx.fillStyle = '#1e2a22'; roundRect(B.x - 110, B.y + 100, 220, 34, 6); ctx.fill();
+    text(label, B.x - 100, B.y + 117, 12, '#9ff0b2', '700 ' + FB, 'left');
+    text(Math.floor(value) + ' ' + unit, B.x + 100, B.y + 117, 20, '#9ff0b2', FD, 'right');
+    // 目標ゲージ
+    const gx = 40, gy = 486, gw = W - 80;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; roundRect(gx, gy, gw, 10, 5); ctx.fill();
+    ctx.fillStyle = 'rgba(111,191,90,0.75)'; ctx.fillRect(gx + gw * okLo / max, gy, gw * (okHi - okLo) / max, 10);
+    ctx.fillStyle = C.gold; ctx.fillRect(gx + gw * Math.min(1, value / max) - 2, gy - 4, 4, 18);
+    text('目標 ' + target + unit, gx + gw * target / max, gy + 24, 11, C.cream, '700 ' + FB, 'center', 0.8);
   }
-  function dishPos(i) { return { x: 62 + (i % 6) * 47, y: 545 + Math.floor(i / 6) * 31 }; }
-  function drawDish() {
-    // 舟皿
+
+  // ---------- 鉄板の画面 ----------
+  function drawPrepPlate() {
+    drawPlate();
+    for (const h of holes) {
+      if (h.fill > 0) {
+        const r = Math.min(HOLE_R - 2, HOLE_R * Math.sqrt(Math.min(1, h.fill)));
+        circle(h.x, h.y, r, 'rgba(246,231,184,0.95)');
+        if (h.fill > 1) { // あふれた生地
+          ctx.fillStyle = 'rgba(246,231,184,0.75)';
+          ctx.beginPath(); ctx.ellipse(h.x, h.y, HOLE_R + (h.fill - 1) * 18, HOLE_R + (h.fill - 1) * 14, 0.4, 0, 6.283); ctx.fill();
+          circle(h.x, h.y, HOLE_R - 2, 'rgba(246,231,184,1)');
+        }
+        if (phase === 'pour') {
+          const f = Math.min(1.5, h.fill);
+          ctx.strokeStyle = h.fill >= 0.9 && h.fill <= 1.3 ? C.green : h.fill > 1.3 ? '#e0525a' : 'rgba(251,238,208,0.5)';
+          ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(h.x, h.y, HOLE_R + 5, -Math.PI / 2, -Math.PI / 2 + 6.283 * f / 1.5); ctx.stroke();
+        }
+      }
+      if (h.tako) {
+        const t = h.takoT;
+        drawTako(h.x, h.y - (1 - t) * 50, 1);
+      }
+    }
+    for (const p of parts) circle(p.x, p.y, p.s, p.col);
+    if (phase === 'oil') {
+      const x = pointer.down ? pointer.x : 180 + Math.cos(blink * 2) * 90, y = pointer.down ? pointer.y : 300 + Math.sin(blink * 4) * 60;
+      ctx.fillStyle = '#e8d3a8'; roundRect(x - 12, y - 12, 24, 22, 6); ctx.fill();
+      ctx.fillStyle = '#7a5134'; roundRect(x - 3, y - 52, 6, 42, 3); ctx.fill();
+      text('油', x, y - 1, 11, '#7a5134', '700 ' + FB);
+    }
+    if (phase === 'pour') {
+      const x = pointer.down ? pointer.x : 300, y = pointer.down ? pointer.y : 205;
+      ctx.save(); ctx.translate(x + 26, y - 40); ctx.rotate(pointer.down ? -0.6 : 0);
+      ctx.fillStyle = 'rgba(230,240,255,0.55)'; roundRect(-18, -26, 36, 50, 6); ctx.fill();
+      ctx.fillStyle = 'rgba(246,231,184,0.95)'; roundRect(-16, -6, 32, 28, 4); ctx.fill();
+      ctx.restore();
+      if (pointer.down) { ctx.strokeStyle = 'rgba(246,231,184,0.95)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(x + 8, y - 30); ctx.lineTo(x, y); ctx.stroke(); }
+    }
+    const filled = holes.filter(h => h.fill > 0.05).length, oiled = holes.filter(h => h.oiled).length, tako = holes.filter(h => h.tako).length;
+    const info = phase === 'oil' ? '油をひいた穴 ' + oiled + ' / 12' : phase === 'pour' ? '流した穴 ' + filled + ' / 12' : 'タコ ' + tako + ' / ' + filled;
+    text(info, 34, 516, 13, C.cream, '700 ' + FB, 'left', 0.85);
+  }
+
+  function drawCook() {
+    drawPlate();
+    for (const b of balls) {
+      if (b.st === 'none' || b.st === 'done' || b.st === 'gone') continue;
+      if (b.st === 'side1') drawBall(b.x, b.y, b.r, null, b.c, b.toppings);
+      else if (b.st === 'flip') {
+        const t = b.flipT, sy = Math.max(0.08, Math.abs(Math.cos(Math.PI * t))), lift = Math.sin(Math.PI * t) * 14;
+        if (t < 0.5) drawBall(b.x, b.y - lift, b.r, null, b.d1, b.toppings, sy);
+        else drawBall(b.x, b.y - lift, b.r, b.d1, 0, b.toppings, sy, b.stuck);
+      } else if (b.st === 'side2') drawBall(b.x, b.y, b.r, b.d1, b.c, b.toppings, 1, b.stuck);
+      else if (b.st === 'out') {
+        const t = b.outT, tx = dishPos(dish.indexOf(b));
+        drawBall(b.x + (tx.x - b.x) * t, b.y + (tx.y - b.y) * t - Math.sin(Math.PI * t) * 60, b.r + (13 - b.r) * t, b.d1, null, b.toppings, 1, b.stuck);
+      } else if (b.st === 'burnt') drawBall(b.x, b.y, b.r * (1 - Math.max(0, b.burnT - 0.6) * 0.6), BURN, BURN, null);
+    }
     ctx.fillStyle = '#c99a5b'; roundRect(36, 520, W - 72, 82, 10); ctx.fill();
     ctx.fillStyle = '#b4874c'; roundRect(44, 527, W - 88, 68, 8); ctx.fill();
     dish.forEach((b, i) => {
       if (b.st === 'out') return;
       const p = dishPos(i);
-      if (b.st === 'gone') drawBall(p.x, p.y, 13, BURN, null, null);
-      else drawBall(p.x, p.y, 13, b.d1, null, b.toppings);
+      drawBall(p.x, p.y, 13, b.st === 'gone' ? BURN : b.d1, null, b.st === 'gone' ? null : b.toppings, 1, b.stuck);
     });
+    for (const f of fx) { const a = f.life / f.max; circle(f.x, f.y, f.r * (1.6 - a * 0.6), f.kind === 'smoke' ? `rgba(60,60,60,${0.5 * a})` : `rgba(255,255,255,${0.18 * a})`); }
   }
-  function drawFx() {
-    for (const f of fx) {
-      const a = f.life / f.max;
-      circle(f.x, f.y, f.r * (1.6 - a * 0.6), f.kind === 'smoke' ? `rgba(60,60,60,${0.5 * a})` : `rgba(255,255,255,${0.18 * a})`);
-    }
+  function dishPos(i) { return { x: 62 + (i % 6) * 47, y: 545 + Math.floor(i / 6) * 31 }; }
+  function drawPopups() {
     for (const p of popups) {
-      const a = 1 - p.t / 0.9;
-      ctx.globalAlpha = a;
+      ctx.globalAlpha = 1 - p.t / 0.9;
       outlined(p.s, p.x, p.y - p.t * 26, p.small ? 14 : 20, p.col);
       ctx.globalAlpha = 1;
     }
   }
-  function drawHud() {
-    const done = balls.filter(b => b.st === 'done' || b.st === 'gone' || b.st === 'out').length;
-    text('焼けた ' + done + ' / 12', 34, 96, 14, C.cream, '700 ' + FB, 'left');
-    if (combo >= 2) text(combo + '連続 きつね色', W - 34, 96, 14, C.gold, '700 ' + FB, 'right');
-  }
-  function swatch(x, y, c, label, mark) {
-    drawBall(x, y, 20, null, c, [{ a: 1, d: 6, k: 'g' }, { a: 3, d: 9, k: 'r' }]);
-    text(label, x, y + 36, 12, mark ? C.gold : C.cream, '700 ' + FB);
-    if (mark) text('ここ!', x, y - 36, 13, C.gold, '700 ' + FB);
-  }
+
   function drawTitle() {
-    ctx.fillStyle = 'rgba(26,18,16,0.82)'; ctx.fillRect(0, 70, W, H - 70);
-    outlined('たこ焼き', W / 2, 150, 46, C.cream);
-    outlined('返し', W / 2, 206, 58, C.gold);
-    text('ふちが きつね色 になったら', W / 2, 262, 15, C.cream, '700 ' + FB);
-    text('タップして くるっと返そう。', W / 2, 284, 15, C.cream, '700 ' + FB);
-    text('もう一回タップで お皿へ。', W / 2, 306, 15, C.cream, '700 ' + FB);
-    swatch(90, 380, 0.3, 'まだ', false);
-    swatch(180, 380, 0.72, 'きつね色', true);
-    swatch(270, 380, 1.15, 'コゲ', false);
-    text('12個ぜんぶ まん丸に焼けたら 職人!', W / 2, 452, 13, C.cream, FB, 'center', 0.85);
+    drawPlate();
+    ctx.fillStyle = 'rgba(26,18,16,0.84)'; ctx.fillRect(0, 56, W, H - 56);
+    outlined('たこ焼き', W / 2, 128, 46, C.cream);
+    outlined('返し', W / 2, 184, 58, C.gold);
+    text('生地を作って、流して、焼き上げる。', W / 2, 238, 14, C.cream, '700 ' + FB);
+    const steps = ['① 小麦粉・たまご・だしを はかる', '② ぐるぐる混ぜる', '③ 鉄板に油 → 生地を流す → タコ', '④ ふちが きつね色で くるっと返す'];
+    steps.forEach((s, i) => text(s, 46, 278 + i * 26, 13, C.cream, FB, 'left', 0.9));
+    [[100, 0.3, 'まだ'], [180, 0.72, 'きつね色'], [260, 1.15, 'コゲ']].forEach(([x, c, l]) => {
+      drawBall(x, 420, 20, null, c, [{ a: 1, d: 6, k: 'g' }, { a: 3, d: 9, k: 'r' }]);
+      text(l, x, 455, 12, c === 0.72 ? C.gold : C.cream, '700 ' + FB);
+    });
     text('タップでスタート', W / 2, 520, 20, C.cream, FD, 'center', 0.55 + Math.sin(blink * 4) * 0.45);
-    text('ハイスコア ' + best + '点', W / 2, 562, 13, C.cream, FB, 'center', 0.7);
+    text('ハイスコア ' + best + '点', W / 2, 560, 13, C.cream, FB, 'center', 0.7);
+  }
+  function bar(y, label, v) {
+    text(label, 60, y, 12, C.cream, '700 ' + FB, 'left');
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(150, y - 5, 130, 10, 5); ctx.fill();
+    ctx.fillStyle = v >= 0.85 ? C.gold : v >= 0.6 ? '#e8c27a' : '#c98a6a'; roundRect(150, y - 5, Math.max(10, 130 * v), 10, 5); ctx.fill();
+    text(Math.round(v * 100) + '', 300, y, 13, C.cream, '700 ' + FB, 'right');
   }
   function drawResult() {
-    ctx.fillStyle = 'rgba(26,18,16,0.86)'; ctx.fillRect(0, 70, W, H - 70);
-    const good = balls.filter(b => quality(b.d1 ?? 0) === 1 && quality(b.d2 ?? 0) === 1).length;
-    const burnt = balls.filter(b => b.st === 'gone').length;
-    text('きょうの たこ焼き', W / 2, 108, 16, C.cream, '700 ' + FB);
-    // 盛り付け(ソース・マヨ・青のり)
-    ctx.fillStyle = '#c99a5b'; roundRect(40, 128, W - 80, 168, 12); ctx.fill();
+    drawCook();
+    ctx.fillStyle = 'rgba(26,18,16,0.88)'; ctx.fillRect(0, 56, W, H - 56);
+    text('きょうの たこ焼き', W / 2, 82, 15, C.cream, '700 ' + FB);
+    ctx.fillStyle = '#c99a5b'; roundRect(40, 98, W - 80, 154, 12); ctx.fill();
     balls.forEach((b, i) => {
-      const x = 78 + (i % 4) * 68, y = 162 + Math.floor(i / 4) * 50;
-      if (b.st === 'gone') { drawBall(x, y, 21, BURN, null, null); return; }
-      drawBall(x, y, 21, b.d1, null, b.toppings);
-      ctx.fillStyle = 'rgba(70,30,12,0.85)'; ctx.beginPath(); ctx.ellipse(x, y - 3, 15, 11, 0, 0, 6.283); ctx.fill();
+      const x = 78 + (i % 4) * 68, y = 126 + Math.floor(i / 4) * 48;
+      if (b.st === 'none') return;
+      if (b.st === 'gone') { drawBall(x, y, 20, BURN, null, null); return; }
+      drawBall(x, y, 20 * b.r / BALL_R, b.d1, null, b.toppings, 1, b.stuck);
+      ctx.fillStyle = 'rgba(70,30,12,0.85)'; ctx.beginPath(); ctx.ellipse(x, y - 3, 14, 10, 0, 0, 6.283); ctx.fill();
       ctx.strokeStyle = '#fff7df'; ctx.lineWidth = 2; ctx.beginPath();
       for (let k = 0; k <= 6; k++) ctx.lineTo(x - 12 + k * 4, y - 3 + (k % 2 ? 4 : -4));
       ctx.stroke();
       for (let k = 0; k < 4; k++) circle(x - 8 + k * 5, y - 10 + (k % 2) * 3, 1.4, C.green);
     });
-    outlined(score + '点', W / 2, 344, 54, C.gold);
-    outlined(rankOf(score), W / 2, 398, 26, C.cream);
-    if (newBest) text('ハイスコア更新!', W / 2, 432, 15, C.gold, '700 ' + FB);
-    text('まん丸 ' + good + '個 / コゲ ' + burnt + '個 / 最大 ' + bestCombo + '連続', W / 2, 464, 13, C.cream, FB, 'center', 0.85);
-    text('ハイスコア ' + best + '点', W / 2, 490, 12, C.cream, FB, 'center', 0.6);
+    outlined(score + '点', W / 2, 296, 52, C.gold);
+    outlined(rankOf(score), W / 2, 346, 24, C.cream);
+    if (newBest) text('ハイスコア更新!', W / 2, 376, 14, C.gold, '700 ' + FB);
+    bar(408, '生地の出来', result.batter);
+    bar(434, '下ごしらえ', result.prep);
+    bar(460, '焼き', result.cook);
+    const md = mixData;
+    text(`粉 ${Math.round(md.flour)}g / たまご ${md.egg}個${md.shell ? '(殻)' : ''} / だし ${Math.round(md.dashi)}ml`, W / 2, 490, 11.5, C.cream, FB, 'center', 0.75);
+    text('最大 ' + bestCombo + '連続 / ハイスコア ' + best + '点', W / 2, 512, 11.5, C.cream, FB, 'center', 0.6);
   }
 
   function draw() {
-    drawBackground();
-    if (state !== 'title') { drawBalls(); drawDish(); drawFx(); }
-    if (state === 'play') drawHud();
-    if (state === 'title') drawTitle();
-    if (state === 'result') drawResult();
+    drawNoren();
+    if (state === 'title') { drawTitle(); return; }
+    if (state === 'result') { drawResult(); return; }
+    if (['flour', 'egg', 'dashi', 'mix'].includes(phase)) drawBowlScene();
+    else if (phase === 'cook') drawCook();
+    else drawPrepPlate();
+    drawPopups();
+    drawSteps();
+    if (phase === 'cook' && combo >= 2) text(combo + '連続 きつね色', W - 30, 516, 13, C.gold, '700 ' + FB, 'right');
   }
 
   let last = performance.now();
   function frame(now) {
     const dt = Math.min((now - last) / 1000, 1 / 30);
-    last = now; blink += dt; lock -= dt;
+    last = now; blink += dt;
     if (state === 'play') update(dt);
-    else { for (const f of fx) f.life -= dt; fx = fx.filter(f => f.life > 0); }
     draw();
     requestAnimationFrame(frame);
   }
-  document.addEventListener('visibilitychange', () => { if (sizzle && document.hidden) sizzle.gain.value = 0; });
-  // 宣伝動画の自動撮影用(URL に ?capture を付けたときだけ有効)
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { setLoop(sizzle, 0); setLoop(pourNoise, 0); } });
+  // 宣伝動画の自動撮影・動作テスト用(URL に ?capture を付けたときだけ有効)
   if (/[?&]capture\b/.test(location.search)) {
     window.__capture = {
-      state: () => state,
+      state: () => state, phase: () => phase,
+      mix: () => ({ flour: mixData.flour, egg: mixData.egg, dashi: mixData.dashi, mix: mixData.mix }),
+      holes: () => holes.map(h => ({ x: h.x, y: h.y, fill: h.fill, oiled: h.oiled, tako: h.tako })),
       balls: () => balls.map(b => ({ x: b.x, y: b.y, st: b.st, c: b.c })),
     };
   }
-  newRound();
+  newGame();
   requestAnimationFrame(frame);
 })();
 </script>
