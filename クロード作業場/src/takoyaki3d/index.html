@@ -1234,6 +1234,17 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       holes: () => holes.map(h => ({ x: h.x, y: h.y, fill: h.fill, oiled: h.oiled, tako: h.tako })),
       balls: () => balls.map(b => ({ x: b.x, y: b.y, st: b.st, c: b.c })),
       bowl: () => ({ ...BOWL }),
+      // テスト・撮影用:生地づくりを済ませた状態で、指定の工程から始める
+      skip(to) {
+        if (state !== 'play') start();
+        Object.assign(mixData, { flour: 100, egg: 1, dashi: 350, mix: 1 });
+        mixData.judged = { flour: { s: 1, label: 'ピッタリ!' }, egg: { s: 1, label: 'パカッ!きれい!' }, dashi: { s: 1, label: 'ピッタリ!' }, mix: { s: 1, label: '早い!なめらか!' } };
+        if (to === 'oil') return setPhase('oil');
+        holes.forEach((h, i) => { h.oiled = true; if (to !== 'pour') { h.fill = 1.05; h.order = i; } });
+        if (to === 'pour' || to === 'tako') return setPhase(to);
+        holes.forEach(h => { h.tako = true; h.takoT = 1; });
+        startCooking(); setPhase('cook');
+      },
     };
   }
   newGame();
