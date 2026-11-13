@@ -26,7 +26,7 @@ def bottle_icon(d, cx, cy, s, col=CLEAR, a=1.0):
                                                                             for i in range(3)))
 
 
-def quiz():
+def quiz(answer=True):
     opts = [("A", "またペットボトル", CLEAR), ("B", "お弁当のフタ・トレー", ACCENT), ("C", "シャツ（服）", TEAL)]
 
     def f(t, dur):
@@ -43,7 +43,7 @@ def quiz():
             d.ellipse([x + 26, y - 44, x + 114, y + 44], fill=col)
             text(d, (x + 70, y), k, 52, BG, anchor="mm", alpha=a, bg=col)
             text(d, (x + 160, y), s, 58, anchor="lm", alpha=a, bg=CARD)
-        a = prog(t, 0.4 + 3 * step, 0.5)
+        a = prog(t, 0.4 + 3 * step, 0.5) if answer else 0
         if a > 0:
             text(d, (W / 2, 920), "答え：ぜんぶ正解", 70, ACCENT, anchor="mm", alpha=a)
         return apply_fade(im, fade(t, dur))
@@ -229,6 +229,7 @@ def next_card():
 REGISTRY = {
     "title": lambda: title_card("ペットボトルは何に生まれ変わる？", "モノの一生 #3"),
     "quiz": quiz,
+    "quiz_q": lambda: quiz(False),   # ショート用：答えを出さない
     "history": history,
     "amount": amount,
     "lightweight": lightweight,

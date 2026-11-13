@@ -48,6 +48,7 @@ SEGS = [
 CTA_DUR = 3.6
 CTA = ["2週間後、傘が向かう", "{\\c&H00D7FF&}“最後の場所”{\\c&HFFFFFF&}とは…？"]
 CTA2 = ["フルはコメント欄から！", "▼ 本編で答え合わせ"]
+CTA_Y = (700, 830)   # 締めの2行の縦位置。2D図解で止める時は図の上に逃がす
 CTA_AT = None   # 締めに止める映像の位置(秒)。None なら最後のカットの最終フレーム
 CAPS = {22: ["持ち主が現れなかった傘は…"]}   # 字幕を差し替える行(音声を途中で切る行など)
 
@@ -237,7 +238,7 @@ def main():
     run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", str(last), "-t", f"{CTA_DUR}", "-r", str(FPS),
          "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", str(cta_src)])
     p = WORK / "v_cta.mp4"
-    compose(cta_src, CTA_DUR, "3d", p, dark=True)
+    compose(cta_src, CTA_DUR, kind, p, dark=True)   # 最後のカットと同じ切り抜き
     parts.append(p)
     lst = WORK / "concat.txt"
     lst.write_text("".join(f"file '{q}'\n" for q in parts))
@@ -261,8 +262,8 @@ def main():
             ass += ev("Sub", a, b + (GAP if q == ph[-1] else 0), pop + "\\N".join(hl(L, s["words"]) for L in wrap(q)))
             a = b
     c0 = end_nar
-    ass += ev("Big", c0 + 0.15, total, pop + "{\\pos(540,700)}" + CTA[0])
-    ass += ev("Big", c0 + 0.45, total, pop + "{\\pos(540,830)}" + CTA[1])
+    ass += ev("Big", c0 + 0.15, total, pop + f"{{\\pos(540,{CTA_Y[0]})}}" + CTA[0])
+    ass += ev("Big", c0 + 0.45, total, pop + f"{{\\pos(540,{CTA_Y[1]})}}" + CTA[1])
     ass += ev("CTA", c0 + 1.1, total,
               "{\\fscx70\\fscy70\\t(0,120,\\fscx105\\fscy105)\\t(120,200,\\fscx100\\fscy100)}" + CTA2[0])
     ass += ev("Big", c0 + 1.5, total, "{\\fs60\\pos(540,1700)\\c&H00D7FF&}" + CTA2[1])
