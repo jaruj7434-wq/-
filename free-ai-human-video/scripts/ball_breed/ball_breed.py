@@ -37,20 +37,22 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 38.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 30.0))
 CX, CY, R = 540.0, 1130.0, 460.0
-R0 = float(os.environ.get("R0", 44.0))                                            # はじめのボールの大きさ(半径)
-SPEED = float(os.environ.get("SPEED", 290.0))       # ゆっくり
-MATURE = float(os.environ.get("MATURE", 1.0))        # 生まれてから、おとなになるまで
-REST = float(os.environ.get("REST", 1.3))            # 生んだあとに休む時間
+R0 = float(os.environ.get("R0", 9.0))                                            # はじめのボールの大きさ(半径)
+SPEED = float(os.environ.get("SPEED", 240.0))       # ゆっくり
+MATURE = float(os.environ.get("MATURE", 1.5))       # 生まれたばかりのボールは、この時間がたつまで増やせない
+REST = 0.0                                            # 当たった瞬間に増える(休みなし)
+HIT_V = float(os.environ.get("HIT_V", 1.1))           # 「しっかり当たった」とみなす、ぶつかる速さ(ふだんの速さに対する割合)
 N_FULL = 30.0
+N_START = int(os.environ.get("N_START", 10))         # はじめのボールの数
 MIN_R = 6.0
 MAX_OBJ = TARGET + 40
 OUTRO = 4.2
 
 
 def size_for(n):
-    return max(MIN_R, min(R0, R0 * math.sqrt(N_FULL / max(1, n))))
+    return R0   # ボールの大きさはずっと同じ
 
 
 class Game:
@@ -74,12 +76,16 @@ class Game:
         self.events = []
         self.pairs = []
         self.result, self.result_t = None, None
-        for k in range(2):
+        placed = []
+        while len(placed) < N_START:   # はじめのボール(重ならないように、わくの中にばらばらに置く)
             a = rng.uniform(0, 2 * math.pi)
-            d = rng.uniform(80, 330)
+            d = (R - 40) * math.sqrt(rng.uniform(0, 1))
+            p = (CX + d * math.cos(a), CY + d * math.sin(a))
+            if all(math.hypot(p[0] - q[0], p[1] - q[1]) > 6 * R0 for q in placed):
+                placed.append(p)
+        for p in placed:
             v = rng.uniform(0, 2 * math.pi)
-            self.add((CX + d * math.cos(a), CY + d * math.sin(a)), (SPEED * math.cos(v), SPEED * math.sin(v)),
-                     born=-MATURE, parent_col=None)
+            self.add(p, (SPEED * math.cos(v), SPEED * math.sin(v)), born=-MATURE, parent_col=None)
         sp.on_collision(1, 1, begin=self._touch)
         sp.on_collision(1, 2, post_solve=self._wall)
 
@@ -91,10 +97,7 @@ class Game:
         s.elasticity, s.friction = 1.0, 0.0
         s.collision_type = 1
         self.space.add(b, s)
-        if parent_col is None:
-            hue = self.rng.uniform(0, 1)
-        else:   # 親の色を少し変えた色
-            hue = (parent_col + self.rng.normal(0, 0.06)) % 1.0
+        hue = self.rng.uniform(0, 1)   # 1個ずつちがう、あざやかな色
         self.objs[b] = {"id": self.next_id, "shape": s, "born": born, "ready": born + MATURE, "hue": hue}
         self.next_id += 1
         return b
@@ -102,7 +105,11 @@ class Game:
     def _touch(self, arb, space, data):
         a, b = (s.body for s in arb.shapes)
         ia, ib = self.objs.get(a), self.objs.get(b)
-        if ia is not None and ib is not None and self.t >= ia["ready"] and self.t >= ib["ready"]:
+        if ia is None or ib is None or self.t < ia["ready"] or self.t < ib["ready"]:
+            return True
+        n = arb.normal
+        vrel = (a.velocity - b.velocity).dot(n)   # 正面からぶつかる速さ(かすっただけでは小さい)
+        if abs(vrel) >= HIT_V * SPEED:
             self.pairs.append((a, b))
         return True
 
@@ -204,11 +211,11 @@ def hsv(h, s, v):
 
 
 def draw_ball(ctx, x, y, r, hue, ready, eyes):
-    col = hsv(hue, 0.55, 1.0)
-    g = cairo.RadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r)
-    g.add_color_stop_rgb(0, 1, 1, 1)
-    g.add_color_stop_rgb(0.35, *col)
-    g.add_color_stop_rgb(1, *(c * 0.6 for c in col))
+    col = hsv(hue, 0.95, 1.0)   # 目立つ、あざやかな色(1個ずつちがう)
+    g = cairo.RadialGradient(x - r * 0.35, y - r * 0.4, r * 0.05, x, y, r)
+    g.add_color_stop_rgb(0, *(min(1, c + 0.45) for c in col))
+    g.add_color_stop_rgb(0.4, *col)
+    g.add_color_stop_rgb(1, *(c * 0.7 for c in col))
     ctx.set_source(g)
     ctx.arc(x, y, r, 0, 2 * math.pi)
     ctx.fill()
@@ -295,7 +302,7 @@ def render(seed):
             ctx.set_line_width(wdt)
             ctx.stroke()
         r = fr["r"]
-        eyes = r > 11
+        eyes = False   # 顔はなし(シンプルに)
         for x, y, oid, born, hue, ready in fr["objs"]:
             a = t - born
             k = 1.0 if a > 0.18 else 0.4 + 0.6 * a / 0.18 + 0.3 * math.sin(math.pi * a / 0.18)   # ぽこっと生まれる
