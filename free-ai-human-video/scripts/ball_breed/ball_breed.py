@@ -1,10 +1,10 @@
-"""「ボールを1000個に増やせる?」丸いわくの中で、ボール同士がくっつくと1個ずつ増えていく物理ショート。
+"""「ボールを1000個に増やせる?」丸いわくの中で、ボールが当たるたびに1個ずつ増えていく物理ショート。
 
-- 丸いわくの中を、はじめは2個のボールがゆっくり跳ね返りながら、軌道どおりに動く(重力・摩擦なし。いつも同じ速さ)。
-- 生まれてから少し時間がたったボール(おとなのボール)同士がくっつくと、そのあいだから新しいボールが1個生まれる(+1)。
-  生んだ2個は、少しのあいだ休む(すぐには次を生まない)。ねらって近づけることはしない(補正なし)。
-- 数が増えるとわくに入りきらないので、全員がいっしょに少しずつ小さくなる。
-- 制限時間内に 1000 個になれば成功(おじさんフィーバー風の演出)、ならなければ失敗(幽霊)。
+- 丸いわくの中を、はじめは1個の小さなボールが、ゆっくり跳ね返りながら軌道どおりに動く(重力・摩擦なし。いつも同じ速さ)。
+- ボールが当たったら必ず1個増える:わくに当たったら、わくの内側に1個生まれる。ボール同士が当たったら、そのあいだから1個生まれる。
+  (生まれた瞬間に親と重なって「当たった」と数えないよう、生まれてから0.15秒だけは数えない)
+- ボールの大きさはずっと同じ。1個ずつちがう、あざやかな色。ねらって近づけることはしない(補正なし)。
+- 制限時間内に 1000 個になれば成功(天使)、ならなければ失敗(幽霊)。
 - ボールが生まれる瞬間に、かん高い鳴き声のような「ピヨッ」。
 
 使い方:
@@ -37,15 +37,13 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 30.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 28.0))
 CX, CY, R = 540.0, 1130.0, 460.0
 R0 = float(os.environ.get("R0", 9.0))                                            # はじめのボールの大きさ(半径)
-SPEED = float(os.environ.get("SPEED", 240.0))       # ゆっくり
-MATURE = float(os.environ.get("MATURE", 1.5))       # 生まれたばかりのボールは、この時間がたつまで増やせない
-REST = 0.0                                            # 当たった瞬間に増える(休みなし)
-HIT_V = float(os.environ.get("HIT_V", 1.1))           # 「しっかり当たった」とみなす、ぶつかる速さ(ふだんの速さに対する割合)
+SPEED = float(os.environ.get("SPEED", 120.0))       # ゆっくり
+MATURE = float(os.environ.get("MATURE", 0.15))      # 生まれた瞬間に親と重なって「当たった」と数えないための、ごく短い時間
 N_FULL = 30.0
-N_START = int(os.environ.get("N_START", 10))         # はじめのボールの数
+N_START = int(os.environ.get("N_START", 1))          # はじめのボールの数
 MIN_R = 6.0
 MAX_OBJ = TARGET + 40
 OUTRO = 4.2
@@ -87,7 +85,8 @@ class Game:
             v = rng.uniform(0, 2 * math.pi)
             self.add(p, (SPEED * math.cos(v), SPEED * math.sin(v)), born=-MATURE, parent_col=None)
         sp.on_collision(1, 1, begin=self._touch)
-        sp.on_collision(1, 2, post_solve=self._wall)
+        sp.on_collision(1, 2, begin=self._wall_begin)
+        self.walls = []
 
     def add(self, pos, vel, born, parent_col):
         b = pymunk.Body(1.0, pymunk.moment_for_circle(1.0, 0, self.r))
@@ -107,15 +106,16 @@ class Game:
         ia, ib = self.objs.get(a), self.objs.get(b)
         if ia is None or ib is None or self.t < ia["ready"] or self.t < ib["ready"]:
             return True
-        n = arb.normal
-        vrel = (a.velocity - b.velocity).dot(n)   # 正面からぶつかる速さ(かすっただけでは小さい)
-        if abs(vrel) >= HIT_V * SPEED:
-            self.pairs.append((a, b))
+        self.pairs.append((a, b))   # 当たったら必ず1個増える
         return True
 
-    def _wall(self, arb, space, data):
-        if arb.is_first_contact and len(self.events) < 400000:
-            self.events.append(("wall", self.t, None))
+    def _wall_begin(self, arb, space, data):
+        """わくに当たったときも1個増える(はじめの1個は、わくに当たって増えていく)。"""
+        for sh in arb.shapes:
+            info = self.objs.get(sh.body)
+            if info is not None and self.t >= info["ready"]:
+                self.walls.append(sh.body)
+        return True
 
     def step(self, dt):
         self.t += dt
@@ -131,7 +131,7 @@ class Game:
             ia, ib = self.objs.get(a), self.objs.get(b)
             if ia is None or ib is None or self.t < ia["ready"] or self.t < ib["ready"] or len(self.objs) >= MAX_OBJ:
                 continue
-            ia["ready"] = ib["ready"] = self.t + REST
+            ia["ready"] = ib["ready"] = self.t + MATURE
             mid = (a.position + b.position) / 2
             d = b.position - a.position
             if d.length < 1e-6:
@@ -144,6 +144,19 @@ class Game:
             self.add(pos, perp * SPEED, self.t, hue)
             self.events.append(("born", self.t, (pos.x, pos.y, len(self.objs))))
         self.pairs = []
+        for b in self.walls:
+            info = self.objs.get(b)
+            if info is None or len(self.objs) >= MAX_OBJ:
+                continue
+            info["ready"] = self.t + MATURE
+            nrm = (b.position - (CX, CY)).normalized()   # わくから中心へ
+            pos = b.position - nrm * self.r * 2.6
+            tang = pymunk.Vec2d(-nrm.y, nrm.x) * (1 if self.rng.random() < 0.5 else -1)
+            vel = (tang * 0.6 - nrm * 0.8).normalized() * SPEED
+            self.add(pos, vel, self.t, None)
+            self.events.append(("born", self.t, (pos.x, pos.y, len(self.objs))))
+            self.events.append(("wall", self.t, None))
+        self.walls = []
         want = size_for(len(self.objs))
         if want < self.r - 0.01:
             self.r = max(want, self.r - 15.0 * dt)
