@@ -52,7 +52,7 @@ GAMES = [
             "高さは右の物差しで確認。注文の±0.5cm以内なら満点です。",
         ],
         "src": "src/softcream/index.html",
-        "extra_dirs": [],
+        "extra_dirs": ["src/softcream/tex"],
         "share_tag": "#ソフトクリーム巻き",
     },
     {

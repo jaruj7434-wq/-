@@ -195,6 +195,11 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 100);
 
+  // Higgsfield で作った写真風の質感(tex/ フォルダ)。読めなければプログラムの質感のまま
+  const loader = new THREE.TextureLoader();
+  function loadTex(name, cb) {
+    loader.load('tex/' + name + '.jpg', t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.wrapS = t.wrapT = THREE.RepeatWrapping; cb(t); }, undefined, () => {});
+  }
   function canvasTex(w, h, draw, repeat) {
     const c = document.createElement('canvas'); c.width = w; c.height = h;
     draw(c.getContext('2d'), w, h);
@@ -211,6 +216,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     for (let x = 0; x < w; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h * 0.62); g.stroke(); }
   });
 
+  loadTex('bg', t => { t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; scene.background = t; });
   scene.add(new THREE.HemisphereLight(0xffffff, 0xd9c6b0, 1.1));
   const sun = new THREE.DirectionalLight(0xfff6ea, 2.2);
   sun.position.set(-5, 12, 9); sun.castShadow = true;
@@ -222,7 +228,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // カウンター
   const COUNTER_Y = -4.6;
-  const counter = new THREE.Mesh(new THREE.BoxGeometry(30, 0.6, 14), new THREE.MeshStandardMaterial({ color: 0xf3e6d3, roughness: 0.55 }));
+  const counterMat = new THREE.MeshStandardMaterial({ color: 0xf3e6d3, roughness: 0.55 });
+  const counter = new THREE.Mesh(new THREE.BoxGeometry(30, 0.6, 14), counterMat);
+  loadTex('marble', t => { t.repeat.set(4, 2); counterMat.map = t; counterMat.color.set(0xffffff); counterMat.roughness = 0.25; counterMat.needsUpdate = true; });
   counter.position.set(0, COUNTER_Y - 0.3, 0); counter.receiveShadow = true; scene.add(counter);
 
   // ソフトクリームの機械(上)
@@ -252,7 +260,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   const coneHolder = new THREE.Group();   // 左右に動かす台
   coneHolder.add(coneSpin); scene.add(coneHolder);
   const coneProfile = [[0.05, -4.3], [0.4, -3.4], [1.25, -0.2], [1.45, 0.0], [1.5, 0.12], [1.36, 0.14], [1.3, 0.02]].map(p => new THREE.Vector2(p[0], p[1]));
-  const cone = new THREE.Mesh(new THREE.LatheGeometry(coneProfile, 48), new THREE.MeshStandardMaterial({ map: waffle, roughness: 0.75, side: THREE.DoubleSide }));
+  const coneMat = new THREE.MeshStandardMaterial({ map: waffle, roughness: 0.75, side: THREE.DoubleSide });
+  const cone = new THREE.Mesh(new THREE.LatheGeometry(coneProfile, 48), coneMat);
+  loadTex('waffle', t => { t.repeat.set(4, 2.5); coneMat.map = t; coneMat.needsUpdate = true; });
   cone.castShadow = true; cone.receiveShadow = true; coneSpin.add(cone);
   const coneTop = new THREE.Mesh(new THREE.CircleGeometry(1.32, 40), new THREE.MeshStandardMaterial({ color: 0x8a5a2b, roughness: 0.9 }));
   coneTop.rotation.x = -Math.PI / 2; coneTop.position.y = -0.03; coneSpin.add(coneTop);
@@ -260,6 +270,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   stand.position.y = -4.35; stand.castShadow = true; coneHolder.add(stand);
   const creamGroup = new THREE.Group(); coneSpin.add(creamGroup);
   const creamMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0, envMapIntensity: 0.6 });
+  // クリームの写真(白)に味の色を掛け合わせて、なめらかな表面のしわを出す
+  loadTex('cream', t => { t.repeat.set(1, 1); creamMat.map = t; creamMat.needsUpdate = true; });
 
   // 落ちてくるクリーム(機械から真下へ)
   const streamMat = new THREE.MeshStandardMaterial({ color: 0xf6efe0, roughness: 0.4 });
@@ -295,7 +307,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   // ---------- クリームの形(星形の口金で絞った、すじ入りの太いひも) ----------
   const RS = 16;
   function ropeGeometry(pts, colA, colB, capStart, capEnd, offset) {
-    const n = pts.length, pos = new Float32Array(n * RS * 3), nor = new Float32Array(n * RS * 3), col = new Float32Array(n * RS * 3), idx = [];
+    const n = pts.length, pos = new Float32Array(n * RS * 3), nor = new Float32Array(n * RS * 3), col = new Float32Array(n * RS * 3), uv = new Float32Array(n * RS * 2), idx = [];
     const t = new THREE.Vector3(), u = new THREE.Vector3(), v = new THREE.Vector3(), ref = new THREE.Vector3(), radial = new THREE.Vector3(), tang = new THREE.Vector3(), nn = new THREE.Vector3();
     const ca = colA.map(c => Math.pow(c / 255, 2.2)), cb = colB.map(c => Math.pow(c / 255, 2.2));
     for (let i = 0; i < n; i++) {
@@ -311,7 +323,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         radial.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(v, Math.sin(a));
         tang.copy(u).multiplyScalar(-Math.sin(a)).addScaledVector(v, Math.cos(a));
         nn.copy(radial).addScaledVector(tang, 0.5 * Math.sin(8 * a)).normalize();
-        const k = (i * RS + j) * 3;
+        const k = (i * RS + j) * 3, ku = (i * RS + j) * 2;
+        uv[ku] = j / RS; uv[ku + 1] = (i + (offset || 0)) * 0.035;
         pos[k] = pts[i].x + radial.x * r; pos[k + 1] = pts[i].y + radial.y * r; pos[k + 2] = pts[i].z + radial.z * r;
         nor[k] = nn.x; nor[k + 1] = nn.y; nor[k + 2] = nn.z;
         const useB = ((j + Math.floor((i + (offset || 0)) * 0.5)) % RS) >= RS / 2;
@@ -327,6 +340,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     g.setIndex(idx);
     return g;
   }
