@@ -30,3 +30,7 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - 生成: gpt_image_2 / medium / 2k / 9:16 / 2クレジット、job `3a5a7394-1df3-4e8e-a2a3-0f127caf1d71`(`assets/output/naruto-iyada/ninja-keita-character.png`)
 - 額当てに木ノ葉マークが出てしまったため、ローカルで消して渦巻きの刻印に差し替え → `ninja-keita-character-v2.png`(採用候補)
 - 慶太の写真どおりメガネあり
+- キャラ参照(額当て修正版)アップロード: media `13c30c66-8502-4555-9f60-64d0e7ba3eae`(md5 一致を確認)
+- ネタ1 構図変更(ユーザー指定): 森の広場、分身数百人が輪になって広場を埋める+木の上にも、全員正面向き、文字なし
+- 開始画像: gpt_image_2 / medium / 2k / 9:16、job `030fa170-5834-49cb-88f9-2a67a89883ab`(`bit1-start.png`)
+- 終了画像: 同上、job `e9583ac7-570f-4be1-abc5-8ad222439691`(`bit1-end.png`)。手前の分身の額当てに木ノ葉風マークが出ている
