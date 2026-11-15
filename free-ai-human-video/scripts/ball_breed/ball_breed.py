@@ -36,7 +36,7 @@ SUBSTEPS = 4
 SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
-TARGET = int(os.environ.get("TARGET", 1000))
+TARGET = int(os.environ.get("TARGET", 500))
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 60.0))
 CX, CY, R = 540.0, 1130.0, float(os.environ.get("ARENA_R", 460.0))
 R0 = float(os.environ.get("R0", 10.0))                                            # はじめのボールの大きさ(半径)
@@ -345,7 +345,7 @@ def render(seed):
         for x, y, oid, born, hue, ready in fr["objs"]:
             a = t - born
             k = 1.0 if a > 0.18 else 0.4 + 0.6 * a / 0.18 + 0.3 * math.sin(math.pi * a / 0.18)   # ぽこっと生まれる
-            draw_ball(ctx, x, y, r * k, hue, ready, eyes)
+            draw_ball(ctx, x, y, r * 0.93 * k, hue, ready, eyes)   # 当たり判定より少しだけ小さく描く(画面で触れて見えたら、必ず本当に当たっている)
         keep = []
         for rg in rings:
             a = t - rg[2]
