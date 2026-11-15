@@ -674,6 +674,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         for (let k = cur.pts.length - 1; k >= Math.max(0, cur.pts.length - 3); k--) {
           const q = coneSpin.localToWorld(cur.pts[k].clone()); q.w = 1; sp.push(q);
         }
+        // ひも側(横向き)から口金側へ逆順に組み立てると、断面の向きが曲がり角でねじれず、
+        // ひじの部分がつぶれたり折れたりしない
+        sp.reverse();
       } else {
         // まだ巻き始め:コーン(またはクリーム)の上に、丸く盛り上がって着地する
         const bottom = deposits.length ? coneY + supportUnderNozzle() : coneY + 0.1;
