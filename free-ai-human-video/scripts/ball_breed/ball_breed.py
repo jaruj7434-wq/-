@@ -1,7 +1,7 @@
 """「ボールを1000個に増やせる?」丸いわくの中で、ボールが当たるたびに1個ずつ増えていく物理ショート。
 
 - 丸いわくの中を、はじめは2個の小さなボールが、ゆっくり跳ね返りながら軌道どおりに動く(重力・摩擦なし。いつも同じ速さ)。
-- ボールが当たったら必ず1個増える:わくに当たったら、わくの内側に1個生まれる。ボール同士が当たったら、そのあいだから1個生まれる。
+- ボールとボールが触れたら必ず1個増える(そのあいだから1個生まれる)。わくに当たっても増えない。
   (生まれた瞬間に親と重なって「当たった」と数えないよう、生まれてから0.15秒だけは数えない)
 - ボールの大きさはずっと同じ。1個ずつちがう、あざやかな色。ねらって近づけることはしない(補正なし)。
 - 制限時間内に 1000 個になれば成功(天使)、ならなければ失敗(幽霊)。
@@ -36,11 +36,11 @@ SUBSTEPS = 4
 SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
-TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 16.8))
-CX, CY, R = 540.0, 1130.0, 460.0
-R0 = float(os.environ.get("R0", 9.0))                                            # はじめのボールの大きさ(半径)
-SPEED = float(os.environ.get("SPEED", 170.0))       # ゆっくり
+TARGET = int(os.environ.get("TARGET", 500))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 29.0))
+CX, CY, R = 540.0, 1130.0, float(os.environ.get("ARENA_R", 400.0))
+R0 = float(os.environ.get("R0", 15.0))                                            # はじめのボールの大きさ(半径)
+SPEED = float(os.environ.get("SPEED", 450.0))       # ボールの速さ(いつも同じ)
 MATURE = float(os.environ.get("MATURE", 0.15))      # 生まれた瞬間に親と重なって「当たった」と数えないための、ごく短い時間
 N_FULL = 30.0
 N_START = int(os.environ.get("N_START", 2))          # はじめのボールの数
@@ -85,7 +85,7 @@ class Game:
             v = rng.uniform(0, 2 * math.pi)
             self.add(p, (SPEED * math.cos(v), SPEED * math.sin(v)), born=-MATURE, parent_col=None)
         sp.on_collision(1, 1, begin=self._touch)
-        sp.on_collision(1, 2, begin=self._wall_begin)
+        sp.on_collision(1, 2, post_solve=self._wall)
         self.walls = []
 
     def add(self, pos, vel, born, parent_col):
@@ -108,6 +108,11 @@ class Game:
             return True
         self.pairs.append((a, b))   # 当たったら必ず1個増える
         return True
+
+    def _wall(self, arb, space, data):
+        """わくに当たったときは増えない(音だけ)。"""
+        if arb.is_first_contact and len(self.events) < 400000:
+            self.events.append(("wall", self.t, None))
 
     def _wall_begin(self, arb, space, data):
         """わくに当たったときも1個増える(はじめの1個は、わくに当たって増えていく)。"""
