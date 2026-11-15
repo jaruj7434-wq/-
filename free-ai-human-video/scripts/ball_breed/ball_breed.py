@@ -2,7 +2,7 @@
 
 - 丸いわくの中を、はじめは2個の小さなボールが、ゆっくり跳ね返りながら軌道どおりに動く(重力・摩擦なし。いつも同じ速さ)。
 - ボールとボールが触れたら必ず1個増える(そのあいだから1個生まれる)。わくに当たっても増えない。
-  (生まれた瞬間に親と重なって「当たった」と数えないよう、生まれてから0.15秒だけは数えない)
+  新しいボールは、ほかのボールと重ならない近くの空いている所に生まれる(触れても増えない、ということはない)。
 - ボールの大きさはずっと同じ。1個ずつちがう、あざやかな色。ねらって近づけることはしない(補正なし)。
 - 制限時間内に 1000 個になれば成功(天使)、ならなければ失敗(幽霊)。
 - ボールが生まれる瞬間に、かん高い鳴き声のような「ピヨッ」。
@@ -37,16 +37,17 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 TARGET = int(os.environ.get("TARGET", 500))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 29.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 47.0))
 CX, CY, R = 540.0, 1130.0, float(os.environ.get("ARENA_R", 400.0))
-R0 = float(os.environ.get("R0", 15.0))                                            # はじめのボールの大きさ(半径)
-SPEED = float(os.environ.get("SPEED", 450.0))       # ボールの速さ(いつも同じ)
-MATURE = float(os.environ.get("MATURE", 0.15))      # 生まれた瞬間に親と重なって「当たった」と数えないための、ごく短い時間
+R0 = float(os.environ.get("R0", 12.0))                                            # はじめのボールの大きさ(半径)
+SPEED = float(os.environ.get("SPEED", 300.0))       # ボールの速さ(いつも同じ)
+MATURE = 0.0                                         # (数えない時間はなし。触れたら必ず増える)
 N_FULL = 30.0
 N_START = int(os.environ.get("N_START", 2))          # はじめのボールの数
 MIN_R = 6.0
 MAX_OBJ = TARGET + 40
 OUTRO = 4.2
+FAIL_SHOW = 2.6   # 時間切れのあとも物理はそのまま動き続ける。何秒おそかったかを見せてから幽霊
 
 
 def size_for(n):
@@ -101,10 +102,25 @@ class Game:
         self.next_id += 1
         return b
 
+    def free_spot(self, mid, perp):
+        """生まれる場所:2つのボールのあいだの近くで、ほかのボールと重ならない空いている所(重なると、生まれた瞬間に「触れた」ことになるため)。"""
+        best, best_d = None, -1e9
+        for dist in (1.2, 2.2, 3.0, 4.0, 5.5, 7.0, 9.0):
+            for k in range(12):
+                ang = math.atan2(perp.y, perp.x) + (k // 2) * (math.pi / 6) * (1 if k % 2 == 0 else -1)
+                p = mid + pymunk.Vec2d(math.cos(ang), math.sin(ang)) * self.r * dist
+                if (p - (CX, CY)).length > R - self.r - 3:
+                    continue
+                q = self.space.point_query_nearest(p, 2 * self.r + 6, pymunk.ShapeFilter())
+                if q is None or q.shape is None or q.shape.collision_type != 1:
+                    return p
+                if q.distance > best_d:
+                    best, best_d = p, q.distance
+        return best if best is not None else mid
+
     def _touch(self, arb, space, data):
         a, b = (s.body for s in arb.shapes)
-        ia, ib = self.objs.get(a), self.objs.get(b)
-        if ia is None or ib is None or self.t < ia["ready"] or self.t < ib["ready"]:
+        if a not in self.objs or b not in self.objs:
             return True
         self.pairs.append((a, b))   # 当たったら必ず1個増える
         return True
@@ -131,22 +147,19 @@ class Game:
             n = v.length
             if n > 1e-6:
                 b.velocity = v * ((n + (SPEED - n) * k) / n)
-        # おとな同士がくっついたら、そのあいだから1個生まれる
+        # ボールとボールが触れたら、必ず1個生まれる(1回触れるごとに1個。数えない時間はなし)
         for a, b in self.pairs:
-            ia, ib = self.objs.get(a), self.objs.get(b)
-            if ia is None or ib is None or self.t < ia["ready"] or self.t < ib["ready"] or len(self.objs) >= MAX_OBJ:
+            if a not in self.objs or b not in self.objs or len(self.objs) >= MAX_OBJ:
                 continue
-            ia["ready"] = ib["ready"] = self.t + MATURE
             mid = (a.position + b.position) / 2
             d = b.position - a.position
             if d.length < 1e-6:
                 d = pymunk.Vec2d(1, 0)
             perp = pymunk.Vec2d(-d.y, d.x).normalized() * (1 if self.rng.random() < 0.5 else -1)
-            pos = mid + perp * self.r * 1.2
-            if (pos - (CX, CY)).length > R - self.r - 2:
-                pos = mid
-            hue = (ia["hue"] + ib["hue"]) / 2 if abs(ia["hue"] - ib["hue"]) < 0.5 else (ia["hue"] + ib["hue"] + 1) / 2 % 1
-            self.add(pos, perp * SPEED, self.t, hue)
+            pos = self.free_spot(mid, perp)
+            out = pos - mid
+            vel = out.normalized() * SPEED if out.length > 1e-6 else perp * SPEED
+            self.add(pos, vel, self.t, None)
             self.events.append(("born", self.t, (pos.x, pos.y, len(self.objs))))
         self.pairs = []
         for b in self.walls:
@@ -195,7 +208,7 @@ def simulate(seed, record=False):
                            "objs": [(b.position.x, b.position.y, i["id"], i["born"], i["hue"], g.t >= i["ready"])
                                     for b, i in g.objs.items()]})
         if g.result is not None:
-            extra = OUTRO + SCARE_DUR if g.result == "fail" else 8.5
+            extra = FAIL_SHOW + OUTRO + SCARE_DUR if g.result == "fail" else 8.5
             if not record or g.t > g.result_t + extra:
                 break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "n": g.final_n}
@@ -288,6 +301,8 @@ def render(seed):
         angels = AngelShow(W, H, seed)
     rng = np.random.default_rng(seed + 3)
     rings = []   # 生まれた瞬間の光の輪 [x, y, t0]
+    t_goal = next((e[1] for e in events if e[0] == "born" and e[2][2] >= TARGET), None)
+    late = (t_goal - end_t) if (fail and t_goal is not None and t_goal <= end_t + FAIL_SHOW) else None
     ev_i = 0
     prev_n = 2
     for fi, fr in enumerate(frames):
@@ -298,11 +313,12 @@ def render(seed):
                 rings.append([data[0], data[1], et])
             ev_i += 1
         over = end_t is not None and t >= end_t
-        if ghost is not None and over and t - end_t < SCARE_DUR:
-            ghost.draw(surf, t - end_t)
+        g0 = end_t + FAIL_SHOW if fail else None   # 幽霊が出る時刻
+        if ghost is not None and t >= g0 and t - g0 < SCARE_DUR:
+            ghost.draw(surf, t - g0)
             ff.stdin.write(surf.get_data())
             continue
-        after = (t - end_t - SCARE_DUR) if over else 0
+        after = (t - g0 - SCARE_DUR) if (fail and t >= g0) else 0
         g = cairo.LinearGradient(0, 0, 0, H)
         g.add_color_stop_rgb(0, 0.12, 0.1, 0.22)
         g.add_color_stop_rgb(1, 0.05, 0.04, 0.1)
@@ -339,17 +355,24 @@ def render(seed):
             angels.draw(ctx, t - end_t)
         text(ctx, "ボールを", W / 2, 150, 80, sw=12)
         text(ctx, f"{TARGET}個に増やせる？", W / 2, 280, 108, rgb=GOLD, sw=16)
-        n = min(fr["n"], TARGET) if not over else min(res["n"], TARGET)
+        n = min(fr["n"], TARGET)   # 時間切れのあとも、そのまま数え続ける
         bump = 1.0 + (0.15 if n > prev_n else 0)
         prev_n = n
         text(ctx, f"{n}", W / 2 - 90, 500, 110 * bump, rgb=(1, 1, 1), sw=12)
         text(ctx, f"/ {TARGET} 個", W / 2 + 170, 500, 50, rgb=(0.85, 0.85, 0.9), sw=6)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, 1760, 64, rgb=(1, 0.4, 0.4) if left < 8 else (0.95, 0.95, 0.95), sw=10)
-        if over and fail:
+        if over and fail and t < g0:   # 時間切れの直後:物理はそのまま。何秒おそかったかを見せる
+            k = min(1.0, (t - end_t) / 0.15)
+            text(ctx, "時間切れ!!", W / 2, 680, 120 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, f"(時間切れのときは {res['n']}個)", W / 2, 790, 54, sw=10)
+            if late is not None and t >= end_t + late:
+                text(ctx, f"{TARGET}個まで、あと{late:.1f}秒だった…", W / 2, 1720 - 120, 64, rgb=(1, 0.85, 0.3), sw=12)
+        elif over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "時間切れ…", W / 2, 1000, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
-            text(ctx, f"あと{TARGET - res['n']}個だったのに…", W / 2, 1130, 72, sw=12)
+            text(ctx, f"あと{late:.1f}秒だったのに…" if late is not None else f"あと{TARGET - res['n']}個だったのに…",
+                 W / 2, 1130, 72, sw=12)
         elif over:
             text(ctx, f"{TARGET}個達成!!", W / 2, 700, 120, rgb=GOLD, sw=18)
         ff.stdin.write(surf.get_data())
@@ -438,7 +461,7 @@ def synth_audio(res, duration, path):
     last_w = -1.0
     recent = []
     for kind, t, data in events:
-        if end_t is not None and t > end_t + 0.01:
+        if end_t is not None and t > end_t + (FAIL_SHOW if fail else 0.01):
             continue
         if kind == "born":
             # 数が少ないうちは1回ずつはっきり。多くなったら、たくさん重なって「ピヨピヨピヨ…」の大合唱
@@ -452,11 +475,11 @@ def synth_audio(res, duration, path):
                 last_w = t
     if fail:
         sig = scream(SR)
-        i0 = int(end_t * SR)
+        i0 = int((end_t + FAIL_SHOW) * SR)
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += sig[:m]
         sig = fail_music(SR, OUTRO)
-        i0 = int((end_t + SCARE_DUR) * SR)
+        i0 = int((end_t + FAIL_SHOW + SCARE_DUR) * SR)
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += 0.6 * sig[:m]
     else:
