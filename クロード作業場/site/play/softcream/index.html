@@ -306,7 +306,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   // (すぐ反映すると、次のクリームがその上に乗って縦に積み上がってしまうため。下の段にだけ乗るようにする)
   const pending = [];
   function flushPending(force) {
-    while (pending.length && (force || gameT - pending[0].t > 0.45)) { const q = pending.shift(); stamp(q.x, q.z, q.y, ROPE * 1.05); }
+    while (pending.length && (force || gameT - pending[0].t > 0.45)) { const q = pending.shift(); stamp(q.x, q.z, q.y, ROPE * 1.05 * (q.w || 1)); }
   }
 
   // ---------- クリームの形(星形の口金で絞った、すじ入りの太いひも) ----------
@@ -380,9 +380,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   // ---------- ゲームの状態 ----------
   let state = 'title';    // title / order / play / judge / result / fall
   let gameT = 0, flowAcc = 0, ropeIndex = 0, tipBase = null;
+  // 強さ:左のバーで調整。上=太く・たっぷり、下=細く・少しずつ(最後のツノを細くとがらせる)
+  const POWER_MIN = 0.3, POWER_MAX = 1.0;
+  let power = 0.85, creamUsed = 0;
   let order, coneX, coneTargetX, spin, ropes, cur, pts, spills, deposits, Hmax, coneY, com, lean, fallT, judgeT, holdOn, result, newBest, stateT, blink = 0, auto = false;
   const blobs = [];
-  const pointer = { down: false, x: 0, lastX: 0 };
+  const pointer = { down: false, x: 0, lastX: 0, pourId: null, sliderId: null };
   const keys = {};
 
   function newOrder() {
@@ -395,7 +398,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     blobs.length = 0;
     creamGroup.position.set(0, 0, 0); creamGroup.quaternion.identity();
     resetHeight();
-    pending.length = 0; flowAcc = 0; ropeIndex = 0; tipBase = null;
+    pending.length = 0; flowAcc = 0; ropeIndex = 0; tipBase = null; creamUsed = 0; power = 0.85;
     coneX = START_X; coneTargetX = START_X; spin = 0;
     ropes = []; cur = null; pts = 0; spills = 0; deposits = []; Hmax = 0; coneY = 0.2; com = new THREE.Vector3(); lean = 0; fallT = 0; judgeT = 0; holdOn = false; result = null; newBest = false;
   }
@@ -409,6 +412,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
   // ---------- 入力 ----------
   function toLogical(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
+  const SLIDER = { x: 36, top: 180, bottom: 440 };
+  const inSlider = p => p.x < 74 && p.y > SLIDER.top - 40 && p.y < SLIDER.bottom + 30;
+  function setPowerFromY(y) {
+    const t = 1 - (Math.max(SLIDER.top, Math.min(SLIDER.bottom, y)) - SLIDER.top) / (SLIDER.bottom - SLIDER.top);
+    power = POWER_MIN + (POWER_MAX - POWER_MIN) * t;
+  }
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
     audio();
@@ -417,29 +426,37 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     if (state === 'order' && stateT > 0.4) { state = 'play'; stateT = 0; }
     if (state !== 'play') return;
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    if (inSlider(p) && pointer.sliderId == null) { pointer.sliderId = e.pointerId; setPowerFromY(p.y); return; }
+    if (pointer.pourId != null) return;
+    pointer.pourId = e.pointerId;
     pointer.down = true; pointer.x = pointer.lastX = p.x;
     sfx.lever();
   });
   cv.addEventListener('pointermove', e => {
-    if (!pointer.down) return;
     const p = toLogical(e);
+    if (e.pointerId === pointer.sliderId) { setPowerFromY(p.y); return; }
+    if (!pointer.down || e.pointerId !== pointer.pourId) return;
     pointer.lastX = pointer.x; pointer.x = p.x;
     if (state === 'play') coneTargetX = Math.max(-1.8, Math.min(1.8, coneTargetX + (pointer.x - pointer.lastX) / pxPerUnit()));
   });
-  const up = () => { pointer.down = false; };
+  const up = e => {
+    if (e && e.pointerId === pointer.sliderId) { pointer.sliderId = null; return; }
+    if (!e || e.pointerId === pointer.pourId) { pointer.down = false; pointer.pourId = null; }
+  };
   cv.addEventListener('pointerup', up);
   cv.addEventListener('pointercancel', up);
   addEventListener('keydown', e => {
     if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) return;
     keys[e.code] = true;
-    if (e.code === 'Space') e.preventDefault();
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') e.preventDefault();
     if (e.repeat) return;
     if ((e.code === 'Enter' || e.code === 'Space') && state === 'title') startGame();
     else if ((e.code === 'Enter' || e.code === 'Space') && state === 'order') { state = 'play'; stateT = 0; }
     if (e.code === 'KeyM') toggleMute();
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
-  const holding = () => state === 'play' && (pointer.down || keys.Space);
+  // 必ず true / false を返す(未定義だと、3D側が「表示する」と扱ってしまう)
+  const holding = () => state === 'play' && !!(pointer.down || keys.Space);
   // 画面の1px が、3D で何ユニットぶんか(コーンの高さで測る)
   function pxPerUnit() {
     const a = project(new THREE.Vector3(0, coneY, 0)), b = project(new THREE.Vector3(1, coneY, 0));
@@ -460,22 +477,23 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     let y;
     if (r < 0.22) {
       // ほぼ中心:その場に少しずつ盛り上がって「ツノ」になる
-      y = sup + 0.006;
-      stamp(local.x, local.z, y, ROPE * 0.9, 0.03);
+      y = sup + 0.006 * power;
+      stamp(local.x, local.z, y, ROPE * 0.9 * power, 0.03);
       if (tipBase == null) tipBase = y;
     } else {
-      y = sup + ROPE * 0.5;
-      pending.push({ x: local.x, z: local.z, y, t: gameT });
+      y = sup + ROPE * 0.5 * power;
+      pending.push({ x: local.x, z: local.z, y, t: gameT, w: power });
     }
     const p = new THREE.Vector3(local.x, y, local.z);
     // ツノ:中心で盛り上がるほど細くなる
-    if (r < 0.22) p.w = Math.max(0.28, 0.75 - (y - (tipBase ?? y)) * 1.1); else tipBase = null;
+    if (r < 0.22) p.w = Math.max(0.2, 0.75 - (y - (tipBase ?? y)) * 1.1) * power; else { tipBase = null; p.w = power; }
+    creamUsed += power * power;
     if (!cur) { cur = { pts: [], mesh: null, start: true, offset: ropeIndex }; ropes.push(cur); }
     ropeIndex++;
     cur.pts.push(p);
-    deposits.push({ r: Math.hypot(local.x, local.z), y });
+    deposits.push({ r: Math.hypot(local.x, local.z), y, w: p.w });
     com.x += local.x; com.z += local.z;
-    Hmax = Math.max(Hmax, y + ROPE * 0.8);
+    Hmax = Math.max(Hmax, y + ROPE * 0.8 * p.w);
     rebuildCur(false);
     if (cur.pts.length > 44) {   // 長くなったら確定して、続きを新しいかたまりにする
       rebuildCur(false, true);
@@ -524,7 +542,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     const sSpill = Math.max(0, 1 - spills / Math.max(1, n + spills) * 5);
     const lastN = deposits.slice(-Math.max(6, Math.floor(n * 0.08)));
     const tipR = lastN.reduce((s, d) => s + d.r, 0) / Math.max(1, lastN.length);
-    const sTip = Math.max(0, Math.min(1, 1 - (tipR - 0.15) / 0.5));
+    const tipW = lastN.reduce((s, d) => s + (d.w == null ? 1 : d.w), 0) / Math.max(1, lastN.length);
+    const tipCenter = Math.max(0, Math.min(1, 1 - (tipR - 0.15) / 0.5));
+    const tipThin = Math.max(0, Math.min(1, (0.85 - tipW) / 0.45));
+    const sTip = 0.55 * tipCenter + 0.45 * tipThin;
     let total = Math.round(100 * (0.3 * sHeight + 0.3 * sShape + 0.15 * sCenter + 0.1 * sSpill + 0.15 * sTip));
     if (fell) total = Math.round(total * 0.4);
     if (n < 30) total = Math.min(total, 10);
@@ -558,6 +579,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     const goal = order.cm / UNIT_CM;
     const k = Math.min(1, Hmax / (goal * 0.95));
     coneTargetX = START_X * Math.pow(1 - k, 1.05);
+    power = k < 0.8 ? 0.9 : Math.max(0.35, 0.9 - (k - 0.8) / 0.2 * 0.55);
     return Hmax < goal - 0.03;
   }
 
@@ -568,7 +590,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       if (state === 'title' && !order) { newOrder(); resetCone(); }
       const pour = autopilot();
       if (state === 'title') {
-        if (pour && deposits.length < MAX_POINTS) { holdOn = true; }
+        if (pour && creamUsed < MAX_POINTS) { holdOn = true; }
         else { holdOn = false; endRope(); if (stateT > 0 && Hmax > 0 && !pour) { stateT = -2.5; } }
         if (stateT < -0.01 && stateT > -0.05) { newOrder(); resetCone(); stateT = 0; }
       } else {
@@ -576,10 +598,13 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         if (!pour) finishBuild();
       }
     }
-    const pouring = (state === 'play' && (auto ? holdOn : holding()) && deposits.length < MAX_POINTS) || (state === 'title' && holdOn);
+    const pouring = (state === 'play' && (auto ? holdOn : holding()) && creamUsed < MAX_POINTS) || (state === 'title' && holdOn);
     // コーンを回す・動かす
     if (state === 'play' || state === 'title') {
-      if (!auto && state === 'play') coneTargetX = Math.max(-1.8, Math.min(1.8, coneTargetX + ((keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0)) * 1.4 * dt));
+      if (!auto && state === 'play') {
+        coneTargetX = Math.max(-1.8, Math.min(1.8, coneTargetX + ((keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0)) * 1.4 * dt));
+        power = Math.max(POWER_MIN, Math.min(POWER_MAX, power + ((keys.ArrowUp || keys.KeyW ? 1 : 0) - (keys.ArrowDown || keys.KeyS ? 1 : 0)) * 0.8 * dt));
+      }
       coneX += (coneTargetX - coneX) * Math.min(1, dt * 14);
       gameT += dt;
       flushPending(false);
@@ -587,7 +612,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         // 1秒に60回ぶん、時間で決まった量を出す(画面の更新が遅い端末でも同じ量)
         flowAcc += dt * 60;
         const steps = Math.floor(flowAcc);
-        for (let i = 0; i < steps; i++) { if (deposits.length >= MAX_POINTS) break; deposit(spin + SPIN * dt * (i + 1) / steps); }
+        for (let i = 0; i < steps; i++) { if (creamUsed >= MAX_POINTS) break; deposit(spin + SPIN * dt * (i + 1) / steps); }
         flowAcc -= steps;
       } else if (cur) endRope();
       spin += SPIN * dt;
@@ -601,9 +626,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       if (state === 'play' && lean > 0.9 && deposits.length > 40) { endRope(); state = 'fall'; fallT = 0; sfx.fall(); doneBtn.hidden = true; setLoop(squeeze, 0); }
     }
     if (state === 'play') {
-      setLoop(squeeze, pouring ? 0.12 : 0);
+      setLoop(squeeze, pouring ? 0.05 + 0.1 * power : 0);
       doneBtn.hidden = !(deposits.length > 20 && !pouring && !auto);
-      if (deposits.length >= MAX_POINTS && !pouring) toast('クリームがなくなりました');
+      if (creamUsed >= MAX_POINTS && !pouring) toast('クリームがなくなりました');
     } else if (state !== 'play') setLoop(squeeze, 0);
 
     if (state === 'judge') {
@@ -650,7 +675,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     coneSpin.rotation.y = state === 'fall' ? coneSpin.rotation.y : spin;
     const pouring = state === 'title' ? holdOn : (state === 'play' && (auto ? holdOn : holding()));
     lever.rotation.z = pouring ? -0.5 : 0;
-    stream.visible = pouring;
+    stream.visible = !!pouring;
     if (pouring) {
       // 口金から落ちるクリーム:真下に落ちてから、巻いている途中のひもの流れに沿って曲がり、
       // ひもの先端になめらかにつながる(着地部分に平らな断面を作らない)
@@ -679,10 +704,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
           sp.push(O.clone().addScaledVector(dir, r * Math.cos(th)).add(new THREE.Vector3(0, -r * Math.sin(th), 0)));
         }
         // 落ちるところは少し細く、ひもに合流するにつれて同じ太さへ
-        sp.forEach((q, k) => { q.w = 0.82 + 0.18 * Math.min(1, Math.max(0, (k - 10) / 12)); });
+        sp.forEach((q, k) => { q.w = (0.82 + 0.18 * Math.min(1, Math.max(0, (k - 10) / 12))) * power; });
         sp.pop();   // L は次で足すので重複させない
         for (let k = cur.pts.length - 1; k >= Math.max(0, cur.pts.length - 3); k--) {
-          const q = coneSpin.localToWorld(cur.pts[k].clone()); q.w = 1; sp.push(q);
+          const q = coneSpin.localToWorld(cur.pts[k].clone()); q.w = cur.pts[k].w == null ? power : cur.pts[k].w; sp.push(q);
         }
         // ひも側(横向き)から口金側へ逆順に組み立てると、断面の向きが曲がり角でねじれず、
         // ひじの部分がつぶれたり折れたりしない
@@ -692,7 +717,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         const bottom = deposits.length ? coneY + supportUnderNozzle() : coneY + 0.1;
         const len = Math.max(0.05, top - bottom);
         sp = [];
-        for (let k = 0; k <= 8; k++) { const q = new THREE.Vector3(0, top - len * k / 8, 0); q.w = 0.82 + 0.25 * Math.max(0, (k - 5) / 3); sp.push(q); }
+        for (let k = 0; k <= 8; k++) { const q = new THREE.Vector3(0, top - len * k / 8, 0); q.w = (0.82 + 0.25 * Math.max(0, (k - 5) / 3)) * power; sp.push(q); }
       }
       stream.geometry.dispose();
       stream.geometry = ropeGeometry(sp, f.a, f.b, false, !(cur && cur.pts.length >= 3), ropeIndex);
@@ -759,6 +784,22 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     ctx.fillStyle = C.pink; ctx.beginPath(); ctx.moveTo(x - 4, hy); ctx.lineTo(x - 14, hy - 6); ctx.lineTo(x - 14, hy + 6); ctx.fill();
     text((Hmax * UNIT_CM).toFixed(1) + 'cm', x + 14, Math.min(y0, y1) - 22, 12, C.ink, '700 ' + FB);
   }
+  function powerSlider() {
+    const { x, top, bottom } = SLIDER, t = (power - POWER_MIN) / (POWER_MAX - POWER_MIN), ky = bottom - (bottom - top) * t;
+    ctx.fillStyle = 'rgba(255,248,236,0.88)'; roundRect(x - 26, top - 46, 52, bottom - top + 84, 14); ctx.fill();
+    text('強さ', x, top - 32, 12, C.ink, '700 ' + FB);
+    text('太い', x, top - 14, 10, C.ink, '700 ' + FB, 'center', 0.7);
+    text('細い', x, bottom + 22, 10, C.ink, '700 ' + FB, 'center', 0.7);
+    // 下ほど細い、くさび形の目盛り
+    ctx.fillStyle = 'rgba(59,42,36,0.12)';
+    ctx.beginPath(); ctx.moveTo(x - 9, top); ctx.lineTo(x + 9, top); ctx.lineTo(x + 3, bottom); ctx.lineTo(x - 3, bottom); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = C.pink;
+    const wAt = yy => 3 + 6 * (1 - (yy - top) / (bottom - top));
+    ctx.beginPath(); ctx.moveTo(x - wAt(ky), ky); ctx.lineTo(x + wAt(ky), ky); ctx.lineTo(x + 3, bottom); ctx.lineTo(x - 3, bottom); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = C.cream; ctx.strokeStyle = C.ink; ctx.lineWidth = 2;
+    roundRect(x - 18, ky - 9, 36, 18, 9); ctx.fill(); ctx.stroke();
+    text(Math.round(power * 100) + '', x, ky + 1, 10, C.ink, '700 ' + FB);
+  }
   function meters() {
     // かたむき
     const x = 18, y = 600, w = 130;
@@ -767,7 +808,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     const l = Math.min(1, lean / 0.9);
     ctx.fillStyle = l > 0.75 ? C.red : l > 0.45 ? C.gold : C.mint; roundRect(x, y, Math.max(9, w * l), 9, 4.5); ctx.fill();
     // クリームの残り
-    const x2 = 170, w2 = 100, rem = 1 - deposits.length / MAX_POINTS;
+    const x2 = 170, w2 = 100, rem = Math.max(0, 1 - creamUsed / MAX_POINTS);
     text('クリーム', x2, y - 12, 11, C.ink, '700 ' + FB, 'left');
     ctx.fillStyle = 'rgba(59,42,36,0.15)'; roundRect(x2, y, w2, 9, 4.5); ctx.fill();
     ctx.fillStyle = C.pink; roundRect(x2, y, Math.max(9, w2 * rem), 9, 4.5); ctx.fill();
@@ -786,8 +827,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       outlined('ソフトクリーム', W / 2, 98, 30, C.ink);
       outlined('巻き', W / 2, 140, 46, C.pink, FD, C.ink);
       text('長押しで しぼって、左右にずらして', W / 2, 186, 13, C.ink, '700 ' + FB);
-      text('外側から 少しずつ真ん中へ。注文の高さで ツノを立てる。', W / 2, 206, 11.5, C.ink, '700 ' + FB);
-      text('ハイスコア ' + best + '点 / 作った数 ' + served, W / 2, 232, 11, C.ink, FB, 'center', 0.7);
+      text('外側から 少しずつ真ん中へ。最後は強さを下げて', W / 2, 206, 11.5, C.ink, '700 ' + FB);
+      text('細いツノを立てる。', W / 2, 222, 11.5, C.ink, '700 ' + FB);
+      text('ハイスコア ' + best + '点 / 作った数 ' + served, W / 2, 240, 11, C.ink, FB, 'center', 0.7);
       ctx.fillStyle = 'rgba(255,248,236,0.85)'; roundRect(60, 520, W - 120, 46, 23); ctx.fill();
       text('タップでスタート', W / 2, 543, 18, C.ink, FD, 'center', 0.6 + Math.sin(blink * 4) * 0.4);
       return;
@@ -805,10 +847,11 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
       ruler();
       if (state === 'play') {
         meters();
+        powerSlider();
         if (!deposits.length) {
           ctx.fillStyle = 'rgba(255,248,236,0.88)'; roundRect(40, 470, W - 80, 50, 12); ctx.fill();
           text('長押しで しぼる', W / 2, 486, 14, C.ink, '700 ' + FB);
-          text('そのまま 指を左にずらして 真ん中へ', W / 2, 505, 12, C.ink, '700 ' + FB, 'center', 0.8);
+          text('左にずらして真ん中へ・左のバーで強さ', W / 2, 505, 12, C.ink, '700 ' + FB, 'center', 0.8);
         }
       }
       if (state === 'fall') outlined('倒れた…!', W / 2, 300, 40, C.red);
@@ -839,12 +882,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     draw();
     requestAnimationFrame(frame);
   }
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { setLoop(squeeze, 0); pointer.down = false; } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { setLoop(squeeze, 0); pointer.down = false; pointer.pourId = null; pointer.sliderId = null; } });
   // テスト・撮影用(URL に ?capture を付けたときだけ)
   if (/[?&]capture\b/.test(location.search)) {
     window.__capture = {
       state: () => state,
-      info: () => ({ H: Hmax * UNIT_CM, lean, coneX, n: deposits.length, spills, order, result }),
+      info: () => ({ H: Hmax * UNIT_CM, lean, coneX, n: deposits.length, spills, order, result, power, creamUsed, down: pointer.down, pourId: pointer.pourId, sliderId: pointer.sliderId, streamVisible: stream.visible, holdOn }),
       play(autoplay) { startGame(); state = 'play'; stateT = 0; auto = !!autoplay; },
       project: (x, y) => project(new THREE.Vector3(x, y, 0)),
     };

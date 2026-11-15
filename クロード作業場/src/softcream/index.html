@@ -445,7 +445,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     if (e.code === 'KeyM') toggleMute();
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
-  const holding = () => state === 'play' && (pointer.down || keys.Space);
+  // 必ず true / false を返す(未定義だと、3D側が「表示する」と扱ってしまう)
+  const holding = () => state === 'play' && !!(pointer.down || keys.Space);
   // 画面の1px が、3D で何ユニットぶんか(コーンの高さで測る)
   function pxPerUnit() {
     const a = project(new THREE.Vector3(0, coneY, 0)), b = project(new THREE.Vector3(1, coneY, 0));
@@ -664,7 +665,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     coneSpin.rotation.y = state === 'fall' ? coneSpin.rotation.y : spin;
     const pouring = state === 'title' ? holdOn : (state === 'play' && (auto ? holdOn : holding()));
     lever.rotation.z = pouring ? -0.5 : 0;
-    stream.visible = pouring;
+    stream.visible = !!pouring;
     if (pouring) {
       // 口金から落ちるクリーム:真下に落ちてから、巻いている途中のひもの流れに沿って曲がり、
       // ひもの先端になめらかにつながる(着地部分に平らな断面を作らない)
@@ -876,7 +877,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   if (/[?&]capture\b/.test(location.search)) {
     window.__capture = {
       state: () => state,
-      info: () => ({ H: Hmax * UNIT_CM, lean, coneX, n: deposits.length, spills, order, result, power, creamUsed }),
+      info: () => ({ H: Hmax * UNIT_CM, lean, coneX, n: deposits.length, spills, order, result, power, creamUsed, down: pointer.down, pourId: pointer.pourId, sliderId: pointer.sliderId, streamVisible: stream.visible, holdOn }),
       play(autoplay) { startGame(); state = 'play'; stateT = 0; auto = !!autoplay; },
       project: (x, y) => project(new THREE.Vector3(x, y, 0)),
     };
