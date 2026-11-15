@@ -1,6 +1,6 @@
 """「ボールを1000個に増やせる?」丸いわくの中で、ボールが当たるたびに1個ずつ増えていく物理ショート。
 
-- 丸いわくの中を、はじめは1個の小さなボールが、ゆっくり跳ね返りながら軌道どおりに動く(重力・摩擦なし。いつも同じ速さ)。
+- 丸いわくの中を、はじめは2個の小さなボールが、ゆっくり跳ね返りながら軌道どおりに動く(重力・摩擦なし。いつも同じ速さ)。
 - ボールが当たったら必ず1個増える:わくに当たったら、わくの内側に1個生まれる。ボール同士が当たったら、そのあいだから1個生まれる。
   (生まれた瞬間に親と重なって「当たった」と数えないよう、生まれてから0.15秒だけは数えない)
 - ボールの大きさはずっと同じ。1個ずつちがう、あざやかな色。ねらって近づけることはしない(補正なし)。
@@ -37,13 +37,13 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 28.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 16.8))
 CX, CY, R = 540.0, 1130.0, 460.0
 R0 = float(os.environ.get("R0", 9.0))                                            # はじめのボールの大きさ(半径)
-SPEED = float(os.environ.get("SPEED", 120.0))       # ゆっくり
+SPEED = float(os.environ.get("SPEED", 170.0))       # ゆっくり
 MATURE = float(os.environ.get("MATURE", 0.15))      # 生まれた瞬間に親と重なって「当たった」と数えないための、ごく短い時間
 N_FULL = 30.0
-N_START = int(os.environ.get("N_START", 1))          # はじめのボールの数
+N_START = int(os.environ.get("N_START", 2))          # はじめのボールの数
 MIN_R = 6.0
 MAX_OBJ = TARGET + 40
 OUTRO = 4.2
