@@ -34,3 +34,5 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - ネタ1 構図変更(ユーザー指定): 森の広場、分身数百人が輪になって広場を埋める+木の上にも、全員正面向き、文字なし
 - 開始画像: gpt_image_2 / medium / 2k / 9:16、job `030fa170-5834-49cb-88f9-2a67a89883ab`(`bit1-start.png`)
 - 終了画像: 同上、job `e9583ac7-570f-4be1-abc5-8ad222439691`(`bit1-end.png`)。手前の分身の額当てに木ノ葉風マークが出ている
+- 終了画像 v2(ユーザー指定: 本物の慶太は印のポーズのまま残る): gpt_image_2 / medium / 2k、終了画像+開始画像を参照、job `88bdccc5-cc6f-4e75-9328-b4cdb7866ff8`。本物は左上の枝で印のまま呆然
+- v3: 手前5人の額当てのマークをローカルで渦巻きに描き直し(`bit1-end-v3.png`、採用候補)
