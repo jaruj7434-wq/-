@@ -103,15 +103,20 @@ class Game:
         return b
 
     def free_spot(self, mid, perp):
-        """生まれる場所:2つのボールのあいだの近くで、ほかのボールと重ならない空いている所(重なると、生まれた瞬間に「触れた」ことになるため)。"""
+        """生まれる場所:当たった所(2つのボールのあいだ)のすぐ横で、ほかのボールと重ならない所。
+        重なると、生まれた瞬間に「当たった」ことになるため、重ならないぎりぎりの所から順にさがす。"""
+        base = math.atan2(perp.y, perp.x)
+        offs = [0.0, math.pi]
+        for k in range(1, 6):
+            for sgn in (1, -1):
+                offs += [sgn * k * math.pi / 8, math.pi + sgn * k * math.pi / 8]
         best, best_d = None, -1e9
-        for dist in (1.2, 2.2, 3.0, 4.0, 5.5, 7.0, 9.0):
-            for k in range(12):
-                ang = math.atan2(perp.y, perp.x) + (k // 2) * (math.pi / 6) * (1 if k % 2 == 0 else -1)
-                p = mid + pymunk.Vec2d(math.cos(ang), math.sin(ang)) * self.r * dist
-                if (p - (CX, CY)).length > R - self.r - 3:
+        for dist in (1.75, 1.9, 2.1, 2.4, 2.8, 3.3, 4.0, 5.0, 6.5, 8.5):
+            for o in offs:
+                p = mid + pymunk.Vec2d(math.cos(base + o), math.sin(base + o)) * self.r * dist
+                if (p - (CX, CY)).length > R - self.r - 1:
                     continue
-                q = self.space.point_query_nearest(p, 2 * self.r + 6, pymunk.ShapeFilter())
+                q = self.space.point_query_nearest(p, self.r + 0.3, pymunk.ShapeFilter())   # ふちまでの距離が半径より近いと重なる
                 if q is None or q.shape is None or q.shape.collision_type != 1:
                     return p
                 if q.distance > best_d:
@@ -344,7 +349,7 @@ def render(seed):
         eyes = False   # 顔はなし(シンプルに)
         for x, y, oid, born, hue, ready in fr["objs"]:
             a = t - born
-            k = 1.0 if a > 0.18 else 0.4 + 0.6 * a / 0.18 + 0.3 * math.sin(math.pi * a / 0.18)   # ぽこっと生まれる
+            k = 1.0   # 当たった瞬間に、最初から同じ大きさで出る
             draw_ball(ctx, x, y, r * 0.93 * k, hue, ready, eyes)   # 当たり判定より少しだけ小さく描く(画面で触れて見えたら、必ず本当に当たっている)
         keep = []
         for rg in rings:
