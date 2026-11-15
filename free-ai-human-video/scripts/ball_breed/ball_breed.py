@@ -499,8 +499,7 @@ def synth_audio(res, duration, path):
     agc = np.clip(0.08 / np.sqrt(pw + 1e-8), 0.6, 9.0)
     agc = np.convolve(agc, np.ones(win) / win, "same")
     out = out * agc
-    # かわいいオルゴールのBGM(このプログラムで作ったオリジナル)を小さく
-    out[: n_out] += 0.05 * music_box_bgm(end_t + 0.3, n_out)
+    # (プレイ中のBGMはなし。効果音だけ)
     wet = out.copy()
     for dd, g in ((0.043, 0.22), (0.071, 0.15)):
         k = int(dd * SR)
