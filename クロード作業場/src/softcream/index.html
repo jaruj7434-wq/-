@@ -653,18 +653,23 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         const dir = L.clone().sub(P); dir.y = 0;
         if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0);
         dir.normalize();
-        const drop = Math.max(0.6, top - L.y);
-        const curve = new THREE.CatmullRomCurve3([
+        // コーンが回るので、落ちたクリームは後ろ(古いひもの方)へ引っぱられて、丸いひじの形で寝る
+        // ひじ:中心 O = L の真上 r、そこから「真下向き」→「ひもの向き」へ四分円でつなぐ
+        const r = 0.45, O = L.clone(); O.y += r;
+        const S = O.clone().addScaledVector(dir, r);
+        const column = new THREE.CatmullRomCurve3([
           new THREE.Vector3(0, top, 0),
-          new THREE.Vector3(L.x * 0.5, L.y + drop * 0.45, L.z * 0.5),
-          // 少し先から、ひもの流れ(古い方)へ向かって合流する
-          new THREE.Vector3(L.x + dir.x * 0.38, L.y + Math.min(0.45, drop * 0.18), L.z + dir.z * 0.38),
-          L.clone(),
-        ], false, 'centripetal');
-        sp = curve.getPoints(22);
+          new THREE.Vector3(S.x * 0.5, (top + S.y) / 2, S.z * 0.5),
+          new THREE.Vector3(S.x, S.y + 0.15, S.z),
+          S.clone(),
+        ], false, 'centripetal').getPoints(14);
+        sp = column;
+        for (let k = 1; k <= 10; k++) {
+          const th = (k / 10) * Math.PI / 2;
+          sp.push(O.clone().addScaledVector(dir, r * Math.cos(th)).add(new THREE.Vector3(0, -r * Math.sin(th), 0)));
+        }
         // 落ちるところは少し細く、ひもに合流するにつれて同じ太さへ
-        sp.forEach((q, k) => { q.w = 0.82 + 0.18 * (k / (sp.length - 1)); });
-        // ひもの最後の数点もなぞって、継ぎ目を完全に隠す
+        sp.forEach((q, k) => { q.w = 0.82 + 0.18 * Math.min(1, Math.max(0, (k - 10) / 12)); });
         sp.pop();   // L は次で足すので重複させない
         for (let k = cur.pts.length - 1; k >= Math.max(0, cur.pts.length - 3); k--) {
           const q = coneSpin.localToWorld(cur.pts[k].clone()); q.w = 1; sp.push(q);
