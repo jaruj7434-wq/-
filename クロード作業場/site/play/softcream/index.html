@@ -366,8 +366,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         if (outwardSign < 0) idx.push(vi, a1, a0); else idx.push(vi, a0, a1);
       }
     };
-    capVert(n * RS, 0, tangents[0], -1);
-    capVert(n * RS + 1, n - 1, tangents[n - 1], 1);
+    if (capStart) capVert(n * RS, 0, tangents[0], -1);
+    if (capEnd) capVert(n * RS + 1, n - 1, tangents[n - 1], 1);
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
@@ -652,12 +652,50 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
     lever.rotation.z = pouring ? -0.5 : 0;
     stream.visible = pouring;
     if (pouring) {
-      const bottom = deposits.length ? coneY + supportUnderNozzle() + ROPE * 0.3 : coneY;
-      const top = NOZZLE_Y + 0.05, len = Math.max(0.05, top - bottom);
-      const f = FLAVORS[order.flavor], sp = [];
-      for (let k = 0; k <= 6; k++) { const q = new THREE.Vector3(0, top - len * k / 6, 0); q.w = 0.85; sp.push(q); }
+      // 口金から落ちるクリーム:真下に落ちてから、巻いている途中のひもの流れに沿って曲がり、
+      // ひもの先端になめらかにつながる(着地部分に平らな断面を作らない)
+      const f = FLAVORS[order.flavor], top = NOZZLE_Y + 0.05;
+      coneHolder.updateMatrixWorld(true);
+      let sp;
+      if (cur && cur.pts.length >= 3) {
+        const L = coneSpin.localToWorld(cur.pts[cur.pts.length - 1].clone());
+        const P = coneSpin.localToWorld(cur.pts[Math.max(0, cur.pts.length - 4)].clone());
+        const dir = L.clone().sub(P); dir.y = 0;
+        if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0);
+        dir.normalize();
+        // コーンが回るので、落ちたクリームは後ろ(古いひもの方)へ引っぱられて、丸いひじの形で寝る
+        // ひじ:中心 O = L の真上 r、そこから「真下向き」→「ひもの向き」へ四分円でつなぐ
+        const r = 0.45, O = L.clone(); O.y += r;
+        const S = O.clone().addScaledVector(dir, r);
+        const column = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, top, 0),
+          new THREE.Vector3(S.x * 0.5, (top + S.y) / 2, S.z * 0.5),
+          new THREE.Vector3(S.x, S.y + 0.15, S.z),
+          S.clone(),
+        ], false, 'centripetal').getPoints(14);
+        sp = column;
+        for (let k = 1; k <= 10; k++) {
+          const th = (k / 10) * Math.PI / 2;
+          sp.push(O.clone().addScaledVector(dir, r * Math.cos(th)).add(new THREE.Vector3(0, -r * Math.sin(th), 0)));
+        }
+        // 落ちるところは少し細く、ひもに合流するにつれて同じ太さへ
+        sp.forEach((q, k) => { q.w = 0.82 + 0.18 * Math.min(1, Math.max(0, (k - 10) / 12)); });
+        sp.pop();   // L は次で足すので重複させない
+        for (let k = cur.pts.length - 1; k >= Math.max(0, cur.pts.length - 3); k--) {
+          const q = coneSpin.localToWorld(cur.pts[k].clone()); q.w = 1; sp.push(q);
+        }
+        // ひも側(横向き)から口金側へ逆順に組み立てると、断面の向きが曲がり角でねじれず、
+        // ひじの部分がつぶれたり折れたりしない
+        sp.reverse();
+      } else {
+        // まだ巻き始め:コーン(またはクリーム)の上に、丸く盛り上がって着地する
+        const bottom = deposits.length ? coneY + supportUnderNozzle() : coneY + 0.1;
+        const len = Math.max(0.05, top - bottom);
+        sp = [];
+        for (let k = 0; k <= 8; k++) { const q = new THREE.Vector3(0, top - len * k / 8, 0); q.w = 0.82 + 0.25 * Math.max(0, (k - 5) / 3); sp.push(q); }
+      }
       stream.geometry.dispose();
-      stream.geometry = ropeGeometry(sp, f.a, f.b, false, false, ropeIndex);
+      stream.geometry = ropeGeometry(sp, f.a, f.b, false, !(cur && cur.pts.length >= 3), ropeIndex);
     }
     renderer.render(scene, camera);
   }
