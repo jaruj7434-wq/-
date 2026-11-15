@@ -36,18 +36,18 @@ SUBSTEPS = 4
 SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
-TARGET = int(os.environ.get("TARGET", 500))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 47.0))
-CX, CY, R = 540.0, 1130.0, float(os.environ.get("ARENA_R", 400.0))
-R0 = float(os.environ.get("R0", 12.0))                                            # はじめのボールの大きさ(半径)
-SPEED = float(os.environ.get("SPEED", 300.0))       # ボールの速さ(いつも同じ)
+TARGET = int(os.environ.get("TARGET", 1000))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 52.3))
+CX, CY, R = 540.0, 1130.0, float(os.environ.get("ARENA_R", 460.0))
+R0 = float(os.environ.get("R0", 10.0))                                            # はじめのボールの大きさ(半径)
+SPEED = float(os.environ.get("SPEED", 400.0))       # ボールの速さ(いつも同じ)
 MATURE = 0.0                                         # (数えない時間はなし。触れたら必ず増える)
 N_FULL = 30.0
 N_START = int(os.environ.get("N_START", 2))          # はじめのボールの数
 MIN_R = 6.0
 MAX_OBJ = TARGET + 40
 OUTRO = 4.2
-FAIL_SHOW = 2.6   # 時間切れのあとも物理はそのまま動き続ける。何秒おそかったかを見せてから幽霊
+FAIL_SHOW = 0.0   # 時間切れになった瞬間に幽霊が出る
 
 
 def size_for(n):
@@ -301,6 +301,7 @@ def render(seed):
         angels = AngelShow(W, H, seed)
     rng = np.random.default_rng(seed + 3)
     rings = []   # 生まれた瞬間の光の輪 [x, y, t0]
+    frozen = None
     t_goal = next((e[1] for e in events if e[0] == "born" and e[2][2] >= TARGET), None)
     late = (t_goal - end_t) if (fail and t_goal is not None and t_goal <= end_t + FAIL_SHOW) else None
     ev_i = 0
@@ -313,6 +314,10 @@ def render(seed):
                 rings.append([data[0], data[1], et])
             ev_i += 1
         over = end_t is not None and t >= end_t
+        if fail and over and FAIL_SHOW == 0:   # 失敗したら、時間切れの瞬間の画面のまま止める
+            if frozen is None:
+                frozen = fr
+            fr = frozen
         g0 = end_t + FAIL_SHOW if fail else None   # 幽霊が出る時刻
         if ghost is not None and t >= g0 and t - g0 < SCARE_DUR:
             ghost.draw(surf, t - g0)
