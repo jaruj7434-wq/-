@@ -75,16 +75,17 @@ class Game:
         self.events = []
         self.pairs = []
         self.result, self.result_t = None, None
-        placed = []
-        while len(placed) < N_START:   # はじめのボール(重ならないように、わくの中にばらばらに置く)
-            a = rng.uniform(0, 2 * math.pi)
-            d = (R - 40) * math.sqrt(rng.uniform(0, 1))
-            p = (CX + d * math.cos(a), CY + d * math.sin(a))
-            if all(math.hypot(p[0] - q[0], p[1] - q[1]) > 6 * R0 for q in placed):
-                placed.append(p)
-        for p in placed:
-            v = rng.uniform(0, 2 * math.pi)
-            self.add(p, (SPEED * math.cos(v), SPEED * math.sin(v)), born=-MATURE, parent_col=None)
+        # スタート:2個を向かい合わせに置く(始まってすぐ当たって3個になる)。少しだけずらすので、当たり方は毎回ちがう
+        y0 = CY + rng.uniform(-120, 120)
+        off = rng.uniform(-0.8, 0.8) * R0            # 正面からのずれ(2個の半径より小さいので必ず当たる)
+        d0 = rng.uniform(150, 220)
+        tilt = rng.uniform(-0.25, 0.25)
+        ca, sa = math.cos(tilt), math.sin(tilt)
+        for sgn in (-1, 1):
+            px, py = sgn * d0, (off / 2) * sgn
+            pos = (CX + px * ca - py * sa, y0 + px * sa + py * ca)
+            vel = (-sgn * SPEED * ca, -sgn * SPEED * sa)
+            self.add(pos, vel, born=-MATURE, parent_col=None)
         sp.on_collision(1, 1, begin=self._touch)
         sp.on_collision(1, 2, post_solve=self._wall)
         self.walls = []
