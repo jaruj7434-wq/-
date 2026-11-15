@@ -37,7 +37,7 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 52.3))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 60.0))
 CX, CY, R = 540.0, 1130.0, float(os.environ.get("ARENA_R", 460.0))
 R0 = float(os.environ.get("R0", 10.0))                                            # はじめのボールの大きさ(半径)
 SPEED = float(os.environ.get("SPEED", 400.0))       # ボールの速さ(いつも同じ)
