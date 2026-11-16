@@ -140,3 +140,8 @@ handle at the bottom front, a blank nameplate, no text, no logo
   - スタジオ c:61011d96-c94c-4fe5-af84-6a931aa74ed9 / d:d9f30e65-accf-41b1-965d-765bc5e9a293(スタジオaから洗濯機を消したもの)
 - 動画の料金見込み(4秒・480p・音なし):Wan 3.0 4/Seedance 2.0 fast 4/Seedance 2.5 12 クレジット
   - 最終的に 720x540 の白黒に加工するので、480p で足りる
+- 2026-11-16 各カットの最初のコマ 10枚(白黒、2.5クレジット)→ assets/source/showa_pr/ep01/frames/
+  - c01 c7bc40e9-d8c1-4b6d-bdfe-c53cd1787efa / c02 2ca7ab5d-f6f8-4b9a-bfad-07732e317892 / c03 5d577944-a728-422b-b4f3-39601726f58b
+  - c04 9f9d2cb9-8e55-4d27-a989-7e8329eeb715 / c05 d70aa68b-2f14-4a87-81da-1fe398cd67c6 / c06 ca88e877-2f1b-4ce6-83d0-244a3b7b87dd
+  - c07 694ee65c-b8ca-416c-97c8-8037e3f36fd3 / c08 ee645d6f-cdee-4d87-85ad-cda5911e3231 / c09 9719e497-57e8-496c-a1aa-5eefc6a00f9c
+  - c10 644f6c72-72df-4ee0-88d3-c7ac70491fda
