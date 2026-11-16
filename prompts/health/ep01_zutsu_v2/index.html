@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:NJ;font-weight:900;src:url(../zutsu/node_modules/@fontsource/noto-sans-jp/files/noto-sans-jp-japanese-900-normal.woff2)}
+@font-face{font-family:NJ;font-weight:700;src:url(../zutsu/node_modules/@fontsource/noto-sans-jp/files/noto-sans-jp-japanese-700-normal.woff2)}
+html,body{margin:0;width:720px;height:1280px;overflow:hidden;background:#000;font-family:NJ,sans-serif;color:#fff}
+#bgwrap{position:absolute;inset:0;overflow:hidden}
+#bg{position:absolute;inset:0;width:720px;height:1280px;object-fit:cover;transform-origin:50% 50%}
+#tint{position:absolute;inset:0;mix-blend-mode:color;opacity:0}
+#glow{position:absolute;inset:0;mix-blend-mode:screen;opacity:0}
+#shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.15) 28%,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 100%)}
+#fx{position:absolute;inset:0}
+.L{position:absolute;left:0;right:0;opacity:0;text-align:center}
+.stroke{text-shadow:0 0 6px #000,0 4px 0 #000,0 -2px 0 #000,3px 0 0 #000,-3px 0 0 #000,0 0 24px rgba(0,0,0,.8)}
+#title{top:470px;font-weight:900;font-size:230px;letter-spacing:12px;line-height:1}
+#title small{display:block;font-size:54px;letter-spacing:4px;margin-top:30px;color:#ffe066}
+#series{top:90px;font-weight:700;font-size:30px;letter-spacing:6px;color:#9fd8ff}
+.cap{top:150px;font-weight:900;font-size:64px;line-height:1.25;padding:0 30px}
+.cap .y{color:#ffe066}.cap .r{color:#ff6b6b}.cap .b{color:#7cc8ff}.cap .o{color:#ffa94d}
+.sub{font-size:34px;font-weight:700;display:block;margin-top:14px;color:#e8f1ff}
+.list{position:absolute;left:60px;right:60px;top:860px;opacity:0}
+.item{font-weight:900;font-size:44px;margin:0 0 20px;padding:16px 26px;border-radius:22px;background:rgba(8,16,36,.8);border:3px solid rgba(255,255,255,.25);opacity:0}
+.item.warm{border-color:#ffa94d}.item.cool{border-color:#7cc8ff}.item.red{border-color:#ff6b6b;background:rgba(60,6,10,.85)}
+#hot,#cold{position:absolute;top:880px;width:220px;height:220px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:110px;opacity:0}
+#hot{left:70px;background:radial-gradient(circle,#ff9a3c 0%,rgba(255,80,20,.3) 70%)}
+#cold{right:70px;background:radial-gradient(circle,#59b6ff 0%,rgba(30,90,255,.3) 70%)}
+#vs{position:absolute;top:930px;left:0;right:0;text-align:center;font-weight:900;font-size:90px;opacity:0}
+#cal{position:absolute;left:90px;right:90px;top:430px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;opacity:0}
+#cal div{height:62px;border-radius:12px;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.25)}
+#cnt{position:absolute;top:780px;left:0;right:0;text-align:center;font-weight:900;font-size:120px;opacity:0;color:#fff}
+#warn{position:absolute;inset:0;opacity:0;box-shadow:inset 0 0 160px 40px rgba(255,30,30,.85)}
+#end{top:200px;font-weight:900;font-size:62px;line-height:1.35}
+#end .big{font-size:58px;color:#ffe066;display:block;margin:26px 0}
+#foot{position:absolute;left:0;right:0;bottom:60px;text-align:center;font-weight:700;font-size:21px;color:rgba(255,255,255,.8);line-height:1.5;text-shadow:0 0 6px #000}
+#flash{position:absolute;inset:0;background:#fff;opacity:0}
+</style></head><body>
+<div id="bgwrap"><img id="bg"></div>
+<div id="tint"></div><div id="glow"></div><div id="shade"></div>
+<canvas id="fx" width="720" height="1280"></canvas>
+<div id="warn"></div>
+<div id="series" class="L stroke">体のサイン図鑑 #01</div>
+<div id="title" class="L stroke">頭痛<small>温める?冷やす?</small></div>
+<div id="hot">温</div><div id="cold">冷</div><div id="vs" class="stroke">?</div>
+<div id="c1" class="L cap stroke">タイプによって<br><span class="y">対策が逆!</span></div>
+<div id="c2" class="L cap stroke"><span class="o">緊張型頭痛</span><span class="sub">頭全体が締めつけられる痛み<br>首・肩のこわばり → 血の巡りが悪く</span></div>
+<div id="l2" class="list"><div class="item warm">✅ 温める</div><div class="item warm">✅ 軽くストレッチ</div><div class="item warm">✅ 同じ姿勢を続けない</div></div>
+<div id="c3a" class="L cap stroke" style="font-size:52px">ズキンズキン脈打つ<span class="sub">動くと悪化・光や音がつらい</span></div>
+<div id="c3" class="L cap stroke"><span class="b">片頭痛</span>かも?<span class="sub">脳の血管が広がり、神経が刺激される</span></div>
+<div id="l3" class="list"><div class="item cool">✅ 冷やす</div><div class="item cool">✅ 暗く静かな場所で休む</div></div>
+<div id="c4" class="L cap stroke">意外な<span class="r">落とし穴</span><span class="sub">頭痛薬を月10日以上飲んでいると<br>かえって頭痛が増えることも</span></div>
+<div id="cal"></div><div id="cnt" class="stroke">10日+</div>
+<div id="c4b" class="L cap stroke" style="top:1060px;font-size:40px">思い当たる人は<span class="y">医師・薬剤師に相談</span></div>
+<div id="c5" class="L cap stroke"><span class="r">すぐ救急へ</span><span class="sub">こんな頭痛は危険なサイン</span></div>
+<div id="l5" class="list" style="top:690px"><div class="item red">⚠ 突然の激しい頭痛</div><div class="item red">⚠ 手足のしびれ・ろれつが回らない</div><div class="item red">⚠ 発熱+首のこわばり</div></div>
+<div id="end" class="L stroke">体は、ちゃんと<br>サインを出している<span class="big">あなたはどっちのタイプ?</span><span style="font-size:42px">コメントで教えてください</span></div>
+<div id="foot">参考:日本頭痛学会/厚生労働省 e-ヘルスネット<br>※画像はAIイメージ。症状が強い・続くときは医療機関へ</div>
+<div id="flash"></div>
+<script>
+const C={"s1": 1.2, "s2": 7.21, "s3": 22.73, "s4": 39.04, "s5": 49.54, "s6": 58.38, "fin": 65.56, "ten": 9.98, "warm": 17.92, "str": 18.77, "pos": 19.98, "migName": 28.3, "cool": 36.04, "rest": 36.77, "pill": 40.47, "ask": 45.96, "d1": 49.89, "d2": 51.55, "d3": 53.93, "d4": 56.21};const HEADN=239,VESN=239;
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x*x*(3-2*x)};
+const win=(t,a,b,f=.35)=>ease((t-a)/f)*(1-ease((t-(b-f))/f));
+const $=id=>document.getElementById(id);
+function show(id,t,a,b,dy=40){const e=$(id);e.style.opacity=win(t,a,b);e.style.transform=`translateY(${(1-ease((t-a)/.35))*dy}px)`;}
+function items(id,t,starts,end){const e=$(id);e.style.opacity=(t>=starts[0]-.01&&t<end)?1:0;[...e.children].forEach((c,i)=>{c.style.opacity=win(t,starts[i],end,.3);c.style.transform=`translateX(${(1-ease((t-starts[i])/.3))*-60}px)`;});}
+const cal=$('cal');for(let i=0;i<28;i++)cal.appendChild(document.createElement('div'));
+const fps=30;
+function frame(dir,n,u){const i=Math.min(n,Math.max(1,1+Math.floor(u*n)));return `${dir}/f${String(i).padStart(4,'0')}.jpg`;}
+// background source + ken burns per scene
+function bgAt(t){
+ if(t<C.s2){return {src:frame('headv',HEADN,t/C.s2),s:1.0,x:0,y:0};}
+ if(t<C.s3){const k=(t-C.s2)/(C.s3-C.s2);return {src:'neck.png',s:1.05+.12*k,x:0,y:-20*k};}
+ if(t<C.s4){const L=8.5;const lt=t-C.s3; if(lt<L) return {src:frame('vesselv',VESN,lt/L),s:1.0,x:0,y:0};
+  const k=(lt-L)/(C.s4-C.s3-L);return {src:frame('vesselv',VESN,1),s:1+.1*k,x:0,y:0};}
+ if(t<C.s5){const k=(t-C.s4)/(C.s5-C.s4);return {src:'pills.png',s:1.08+.1*k,x:-10*k,y:10*k};}
+ if(t<C.s6){const k=(t-C.s5)/(C.s6-C.s5);return {src:'danger.png',s:1.0+.14*k,x:0,y:10*k};}
+ const k=(t-C.s6)/(C.fin-C.s6);return {src:'end.png',s:1.0+.08*k,x:0,y:0};
+}
+// particles
+let seed=11;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const P=[...Array(120)].map(()=>({x:rnd()*720,y:rnd()*1280,r:.6+rnd()*2.2,v:8+rnd()*25,p:rnd()*6}));
+const fx=$('fx').getContext('2d');
+function particles(t,col,alpha){fx.clearRect(0,0,720,1280);if(alpha<=0)return;
+ for(const q of P){const y=(q.y-t*q.v+1280*10)%1280;const a=alpha*(.35+.65*Math.abs(Math.sin(t*.8+q.p)));
+  fx.fillStyle=`rgba(${col},${a})`;fx.beginPath();fx.arc(q.x+Math.sin(t*.5+q.p)*8,y,q.r,0,7);fx.fill();}}
+let lastSrc='';
+window.renderAt=async function(t){
+ const b=bgAt(t);const img=$('bg');
+ if(b.src!==lastSrc){img.src=b.src;lastSrc=b.src;await img.decode().catch(()=>{});}
+ img.style.transform=`translate(${b.x}px,${b.y}px) scale(${b.s})`;
+ // tints
+ const tint=$('tint'),glow=$('glow');
+ const inTen=t>=C.s2&&t<C.s3,inMig=t>=C.s3&&t<C.s4,inDan=t>=C.s5&&t<C.s6;
+ if(inTen){const w=ease((t-C.warm)/1.2);tint.style.background='#ff8a2a';tint.style.opacity=.55*w;
+  glow.style.background='radial-gradient(ellipse at 50% 70%,rgba(255,120,40,.55),rgba(0,0,0,0) 60%)';glow.style.opacity=w*(.6+.25*Math.sin(t*2));}
+ else if(inMig){const c=ease((t-C.cool)/1.2);const beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*2*1.1)),6)*(1-c);
+  tint.style.background='#2f8cff';tint.style.opacity=.7*c;
+  glow.style.background='radial-gradient(ellipse at 50% 55%,rgba(255,60,60,.6),rgba(0,0,0,0) 65%)';glow.style.opacity=.55*beat;}
+ else if(inDan){tint.style.opacity=0;glow.style.background='radial-gradient(ellipse at 50% 35%,rgba(255,40,40,.6),rgba(0,0,0,0) 60%)';glow.style.opacity=.35+.35*Math.sin(t*7);}
+ else{tint.style.opacity=0;glow.style.opacity=0;}
+ const pc=inTen?(t>C.warm?'255,190,120':'255,110,110'):inMig?(t>C.cool?'150,210,255':'255,220,150'):inDan?'255,90,90':'160,210,255';
+ particles(t,pc,t<C.s4||t>=C.s5?.8:.25);
+ // flash on cuts
+ $('flash').style.opacity=[0,C.s2,C.s3,C.s4,C.s5,C.s6].reduce((a,c)=>a+(t>=c?Math.max(0,.55-(t-c)*3):0),0);
+ const tt=$('title');tt.style.opacity=win(t,0,C.s1+1.3,.15);tt.style.transform=`scale(${Math.max(1,1.6-2.4*t)})`;
+ $('series').style.opacity=t<C.s6?win(t,0,C.s6,.3):0;
+ ['hot','cold'].forEach((id,i)=>{const e=$(id);e.style.opacity=win(t,C.s1+1.0+i*.9,C.s2);e.style.transform=`scale(${.8+.2*ease((t-C.s1-1-i*.9)/.4)+.04*Math.sin(t*5+i)})`;});
+ $('vs').style.opacity=win(t,C.s1+2.2,C.s2);
+ show('c1',t,C.s1+3.0,C.s2);
+ show('c2',t,C.s2+.1,C.s3);items('l2',t,[C.warm,C.str,C.pos],C.s3);
+ show('c3a',t,C.s3+.1,C.migName-.1);show('c3',t,C.migName,C.s4);items('l3',t,[C.cool,C.rest],C.s4);
+ show('c4',t,C.s4+.1,C.s5);
+ const ce=$('cal');ce.style.opacity=win(t,C.pill,C.s5);[...ce.children].forEach((d,i)=>{const on=i<Math.floor(cl((t-C.pill-.3)/2.6)*12);d.style.background=on?'rgba(255,80,90,.55)':'rgba(0,0,0,.45)';d.style.borderColor=on?'#ff6b6b':'rgba(255,255,255,.25)';d.style.boxShadow=on?'inset 0 0 0 14px rgba(255,255,255,.9)':'none';});
+ $('cnt').style.opacity=win(t,C.pill+2.9,C.s5);show('c4b',t,C.ask,C.s5,20);
+ $('warn').style.opacity=inDan?ease((t-C.s5)/.4)*(.55+.45*Math.sin(t*7)):0;
+ show('c5',t,C.s5+.1,C.s6);items('l5',t,[C.d1,C.d2,C.d3],C.s6);
+ show('end',t,C.s6+.1,C.fin+1,30);
+};
+document.fonts.load('900 40px NJ','頭痛').then(()=>document.fonts.load('700 40px NJ','参考')).then(()=>window.ready=true);
+</script></body></html>
