@@ -56,7 +56,7 @@ html,body{margin:0;width:720px;height:1280px;overflow:hidden;background:#000;fon
 <div id="foot">参考:日本頭痛学会/厚生労働省 e-ヘルスネット<br>※画像はAIイメージ。症状が強い・続くときは医療機関へ</div>
 <div id="flash"></div>
 <script>
-const C={"s1": 1.2, "s2": 7.21, "s3": 22.73, "s4": 39.04, "s5": 49.54, "s6": 58.38, "fin": 65.56, "ten": 9.98, "warm": 17.92, "str": 18.77, "pos": 19.98, "migName": 28.3, "cool": 36.04, "rest": 36.77, "pill": 40.47, "ask": 45.96, "d1": 49.89, "d2": 51.55, "d3": 53.93, "d4": 56.21};const HEADN=239,VESN=239;
+const C={"s1": 1.2, "s2": 7.21, "s3": 22.73, "s4": 39.7, "s5": 50.2, "s6": 59.04, "fin": 66.22, "ten": 9.98, "warm": 17.92, "str": 18.77, "pos": 19.98, "migName": 28.53, "cool": 36.62, "rest": 37.38, "pill": 41.13, "ask": 46.62, "d1": 50.55, "d2": 52.21, "d3": 54.59, "d4": 56.87};const HEADN=239,VESN=239;
 const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x*x*(3-2*x)};
 const win=(t,a,b,f=.35)=>ease((t-a)/f)*(1-ease((t-(b-f))/f));
 const $=id=>document.getElementById(id);
