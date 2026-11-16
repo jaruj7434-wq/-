@@ -69,3 +69,6 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - 作り直し(ユーザー指定: 合成ではなく画像ごと): gpt_image_2 / medium / 2k / 9:16 / 2クレジット、`e4862c7d` と慶太キャラ `13c30c66` を参照、job `feff1111-880c-4a6a-a5a3-f7833139d205`(`bit2-ichiraku-regen.png`)
   - のれんに赤字「ラーメン一楽」が正しく出た。親父は糸目に
   - 慶太とイルカ先生役の額当てに木ノ葉マークが出たので、ローカルで渦巻きに修正 → `bit2-ichiraku-regen-v2.png`(採用候補)
+- 動画化: アップロード media `f4528471-4795-481f-8b09-35cbf7866884`(md5 一致)を開始画像に、Cinema Studio Video 2 / pro / 5秒 / 10クレジット、job `a7f01af5-7840-4fed-9d3a-3d1c9546e057`(`bit2-pasta.mp4`)
+  - 慶太がパスタを食べ、イルカ先生役と親父が顔を見合わせ、最後に慶太がナプキンで口元を押さえて口をすぼめる。のれんの文字と額当ての渦巻きは最後まで保たれた
+- 「ボーノ!」: elevenlabs_v4 / 慶太-1、job `f05c9bc1-135b-4bb4-b87b-1569d489860f`。ささやき気味で「ボーナー」寄りに聞こえる → 4.25秒に配置(`bit2-pasta-bono.mp4`)
