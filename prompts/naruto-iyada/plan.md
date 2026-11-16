@@ -65,3 +65,4 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - のれんは無地(文字は未定)。親父の目は糸目になっていない
 - v2: イルカ先生役の額当てのマークを渦巻きに修正(`bit2-ichiraku-v2.png`)
 - v3: のれんの中央2枚に「一」「楽」をローカル合成(Noto Serif CJK Black、黒、布の陰影に合わせて乗算)→ `bit2-ichiraku-v3.png`
+- v4(ユーザー指定: 赤い文字で「ラーメン一楽」): のれん6枚に1文字ずつ「ラ・ー・メ・ン・一・楽」を朱赤で合成(「一楽」は大きめ)→ `bit2-ichiraku-v4.png`。ウェブ検索では元ネタののれんの正確なデザインは確認できなかった
