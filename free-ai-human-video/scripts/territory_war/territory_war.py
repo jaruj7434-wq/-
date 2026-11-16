@@ -52,9 +52,10 @@ TERR = ((1.0, 0.72, 0.84), (0.66, 0.94, 0.86))     # 陣地の色(うすい)
 BALLC = ((0.85, 0.08, 0.45), (0.0, 0.55, 0.45))    # ボールの色(こい)
 ITEMS = ["dash", "big", "split", "bomb"]
 ITEM_NAMES = {"dash": "ダッシュ", "big": "巨大化", "split": "分身", "bomb": "バクダン"}
+BOMB_R = 6.0   # バクダンの範囲(マス)
 ITEM_EVERY = float(os.environ.get("ITEM_EVERY", 2.6))
 ITEM_MAX = 3
-ITEM_R = 28.0
+ITEM_R = 44.0
 OUTRO = 4.2
 
 
@@ -152,7 +153,7 @@ class Game:
             if rc is not None:
                 for r in range(ROWS):
                     for c in range(COLS):
-                        if (r - rc[0]) ** 2 + (c - rc[1]) ** 2 <= 3.3 ** 2:
+                        if (r - rc[0]) ** 2 + (c - rc[1]) ** 2 <= BOMB_R ** 2:
                             self.flip(r, c, b.team)
 
     def step(self, dt):
@@ -223,58 +224,90 @@ BG = (0.07, 0.06, 0.1)
 
 
 def draw_icon(ctx, kind, x, y, s, t):
-    """アイテムのアイコン(角の丸い四角+しるし)。"""
-    p = 1 + 0.08 * math.sin(t * 6)
-    s *= p
+    """アイテムの絵。中身がひと目でわかる絵+下に名前。"""
+    if s <= 0.5:
+        return
+    s *= 1 + 0.06 * math.sin(t * 6)
+    u = s / 2
     ctx.save()
     ctx.translate(x, y)
-    r_ = s * 0.3
-    w = s
-    ctx.new_path()
-    ctx.arc(-w / 2 + r_, -w / 2 + r_, r_, math.pi, 1.5 * math.pi)
-    ctx.arc(w / 2 - r_, -w / 2 + r_, r_, 1.5 * math.pi, 2 * math.pi)
-    ctx.arc(w / 2 - r_, w / 2 - r_, r_, 0, 0.5 * math.pi)
-    ctx.arc(-w / 2 + r_, w / 2 - r_, r_, 0.5 * math.pi, math.pi)
-    ctx.close_path()
-    col = {"dash": (1.0, 0.75, 0.1), "big": (0.55, 0.35, 1.0), "split": (0.2, 0.7, 1.0), "bomb": (1.0, 0.35, 0.2)}[kind]
-    ctx.set_source_rgb(*col)
+    # 下地の白い丸(盤の色と区別するため)
+    ctx.arc(0, 0, u * 1.25, 0, 2 * math.pi)
+    ctx.set_source_rgba(1, 1, 1, 0.92)
     ctx.fill_preserve()
-    ctx.set_source_rgb(1, 1, 1)
-    ctx.set_line_width(2.5)
+    ctx.set_source_rgb(0.15, 0.15, 0.2)
+    ctx.set_line_width(3)
     ctx.stroke()
-    ctx.set_source_rgb(1, 1, 1)
-    u = s / 2
-    if kind == "dash":   # いなずま
-        ctx.move_to(0.15 * u, -0.7 * u)
-        ctx.line_to(-0.35 * u, 0.1 * u)
-        ctx.line_to(0.0, 0.1 * u)
-        ctx.line_to(-0.15 * u, 0.7 * u)
-        ctx.line_to(0.35 * u, -0.1 * u)
-        ctx.line_to(0.0, -0.1 * u)
-        ctx.close_path()
+    dark = (0.15, 0.15, 0.2)
+    if kind == "dash":   # 走るボール+うしろに速さの線+前向きの矢印
+        ctx.set_source_rgb(1.0, 0.6, 0.0)
+        ctx.arc(0.3 * u, 0, 0.42 * u, 0, 2 * math.pi)
         ctx.fill()
-    elif kind == "big":  # 大きい丸と小さい丸
-        ctx.arc(0.15 * u, 0.1 * u, 0.5 * u, 0, 2 * math.pi)
+        ctx.set_source_rgb(*dark)
+        ctx.set_line_width(max(2.0, 0.12 * u))
+        ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+        for dy, l in ((-0.32, 0.55), (0, 0.75), (0.32, 0.55)):
+            ctx.move_to(-0.25 * u, dy * u)
+            ctx.line_to(-(0.25 + l) * u, dy * u)
+            ctx.stroke()
+    elif kind == "big":  # 小さいボール→大きいボール(外向きの矢印)
+        ctx.set_source_rgb(0.55, 0.35, 1.0)
+        ctx.arc(0, 0, 0.5 * u, 0, 2 * math.pi)
         ctx.fill()
-        ctx.arc(-0.5 * u, -0.45 * u, 0.18 * u, 0, 2 * math.pi)
+        ctx.set_source_rgb(*dark)
+        ctx.set_line_width(max(2.0, 0.1 * u))
+        ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+        for k in range(4):
+            a = math.pi / 4 + k * math.pi / 2
+            cx_, cy_ = math.cos(a), math.sin(a)
+            ctx.move_to(0.62 * u * cx_, 0.62 * u * cy_)
+            ctx.line_to(1.02 * u * cx_, 1.02 * u * cy_)
+            ctx.stroke()
+            for da in (-0.5, 0.5):   # 矢印の先
+                ctx.move_to(1.02 * u * cx_, 1.02 * u * cy_)
+                ctx.line_to(1.02 * u * cx_ - 0.22 * u * math.cos(a + da), 1.02 * u * cy_ - 0.22 * u * math.sin(a + da))
+                ctx.stroke()
+    elif kind == "split":  # 1個のボールから2個の分身(うすい色)
+        ctx.set_source_rgba(0.2, 0.6, 1.0, 0.45)
+        ctx.arc(-0.5 * u, -0.38 * u, 0.3 * u, 0, 2 * math.pi)
         ctx.fill()
-    elif kind == "split":  # 3つの丸
-        for a in (-math.pi / 2, math.pi / 6, 5 * math.pi / 6):
-            ctx.arc(0.4 * u * math.cos(a), 0.4 * u * math.sin(a), 0.22 * u, 0, 2 * math.pi)
-            ctx.fill()
-    else:  # バクダン
-        ctx.arc(0, 0.15 * u, 0.45 * u, 0, 2 * math.pi)
-        ctx.set_source_rgb(0.1, 0.1, 0.12)
+        ctx.arc(-0.5 * u, 0.38 * u, 0.3 * u, 0, 2 * math.pi)
         ctx.fill()
-        ctx.set_source_rgb(1, 1, 1)
-        ctx.set_line_width(2.5)
-        ctx.move_to(0.25 * u, -0.25 * u)
-        ctx.curve_to(0.4 * u, -0.6 * u, 0.6 * u, -0.5 * u, 0.55 * u, -0.75 * u)
+        ctx.set_source_rgb(0.2, 0.6, 1.0)
+        ctx.arc(0.35 * u, 0, 0.38 * u, 0, 2 * math.pi)
+        ctx.fill()
+        ctx.set_source_rgb(*dark)
+        ctx.set_line_width(max(2.0, 0.08 * u))
+        ctx.set_dash([0.12 * u, 0.1 * u])
+        ctx.move_to(0.0, -0.1 * u)
+        ctx.line_to(-0.3 * u, -0.3 * u)
+        ctx.move_to(0.0, 0.1 * u)
+        ctx.line_to(-0.3 * u, 0.3 * u)
         ctx.stroke()
-        ctx.arc(0.55 * u, -0.78 * u, 0.12 * u * (1 + 0.5 * abs(math.sin(t * 15))), 0, 2 * math.pi)
-        ctx.set_source_rgb(1, 0.85, 0.2)
+        ctx.set_dash([])
+    else:  # バクダン(黒い玉+導火線+火花)
+        ctx.set_source_rgb(0.08, 0.08, 0.1)
+        ctx.arc(-0.08 * u, 0.15 * u, 0.6 * u, 0, 2 * math.pi)
+        ctx.fill()
+        ctx.rectangle(0.12 * u, -0.6 * u, 0.3 * u, 0.25 * u)
+        ctx.fill()
+        ctx.set_source_rgba(1, 1, 1, 0.6)
+        ctx.arc(-0.3 * u, -0.05 * u, 0.13 * u, 0, 2 * math.pi)
+        ctx.fill()
+        ctx.set_source_rgb(0.55, 0.4, 0.2)
+        ctx.set_line_width(max(2.0, 0.09 * u))
+        ctx.move_to(0.27 * u, -0.6 * u)
+        ctx.curve_to(0.35 * u, -0.95 * u, 0.7 * u, -0.8 * u, 0.7 * u, -1.0 * u)
+        ctx.stroke()
+        f = 1 + 0.5 * abs(math.sin(t * 15))
+        ctx.set_source_rgb(1, 0.5, 0.1)
+        ctx.arc(0.7 * u, -1.02 * u, 0.2 * u * f, 0, 2 * math.pi)
+        ctx.fill()
+        ctx.set_source_rgb(1, 0.95, 0.3)
+        ctx.arc(0.7 * u, -1.02 * u, 0.1 * u * f, 0, 2 * math.pi)
         ctx.fill()
     ctx.restore()
+    text(ctx, ITEM_NAMES[kind], x, y + u * 1.25 + 26, 36, rgb=(1, 1, 1), sw=7)
 
 
 def render(seed):
@@ -361,12 +394,12 @@ def render(seed):
         ctx.set_line_width(4)
         ctx.stroke()
         for kind, x, y, t0 in fr["items"]:
-            draw_icon(ctx, kind, BX0 + x, BY0 + y, 2 * ITEM_R * min(1.0, (t - t0) / 0.2), t)
+            draw_icon(ctx, kind, BX0 + x, BY0 + y, 2 * ITEM_R / 1.25 * min(1.0, (t - t0) / 0.2), t)
         keep = []
         for x, y, t0 in booms:
             a = t - t0
             if a < 0.5:
-                ctx.arc(BX0 + x, BY0 + y, 30 + 260 * a, 0, 2 * math.pi)
+                ctx.arc(BX0 + x, BY0 + y, 30 + (BOMB_R * CELL - 30) * min(1.0, a / 0.3), 0, 2 * math.pi)
                 ctx.set_source_rgba(1, 0.6, 0.2, 0.8 * (1 - a / 0.5))
                 ctx.set_line_width(12)
                 ctx.stroke()
