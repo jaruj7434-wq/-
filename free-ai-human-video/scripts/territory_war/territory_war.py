@@ -448,8 +448,8 @@ def render(seed):
         ctx.move_to(bx + bw / 2, by - 8)
         ctx.line_to(bx + bw / 2, by + bh + 8)
         ctx.stroke()
-        text(ctx, f"{100 * pink / tot:.0f}%", bx + 70, by + bh + 52, 46, rgb=BALLC[0], sw=8)
-        text(ctx, f"{100 * (tot - pink) / tot:.0f}%", bx + bw - 70, by + bh + 52, 46, rgb=BALLC[1], sw=8)
+        text(ctx, f"{100 * pink / tot:.1f}%", bx + 85, by + bh + 52, 46, rgb=BALLC[0], sw=8)
+        text(ctx, f"{100 * (tot - pink) / tot:.1f}%", bx + bw - 85, by + bh + 52, 46, rgb=BALLC[1], sw=8)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, by + bh + 52, 50, rgb=(1, 0.4, 0.4) if left < 10 else (0.95, 0.95, 0.95), sw=8)
         if over:   # 結果の文字のうしろに暗い帯
@@ -459,7 +459,7 @@ def render(seed):
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "ミントの勝ち…", W / 2, 900, 110 * (1.3 - 0.3 * k), rgb=BALLC[1], sw=18)
-            text(ctx, f"ピンク {100 * pink_final / tot:.0f}% ・ ミント {100 * mint_final / tot:.0f}%", W / 2, 1030, 56, sw=10)
+            text(ctx, f"ピンク {pink_final}マス ・ ミント {mint_final}マス", W / 2, 1030, 56, sw=10)
         elif over:
             text(ctx, "ピンクの勝ち!!", W / 2, 760, 120, rgb=BALLC[0], sw=18)
             text(ctx, "成功!!", W / 2, 900, 110, rgb=GOLD, sw=18)
