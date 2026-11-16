@@ -117,3 +117,5 @@ handle at the bottom front, a blank nameplate, no text, no logo
     → 尺・案の数ではなく、「歌詞あり」の指定か日本語の歌詞そのものではじかれている可能性が高い
   - 4回目:842c2090-73ed-44ff-89a7-98cef7970fd9(旧版 ElevenLabs Music v2、30秒・1案、同じ歌詞)も数秒で失敗、返金済み
     → 両モデルで歌詞ありが失敗。音楽生成そのものが止まっている可能性もある
+  - 5回目(動作確認):8ae0d989-d8e4-4f44-8bb1-ce3925aaf439(Music v2、10秒、歌なし)も数秒で失敗、返金済み
+    → 歌詞の問題ではなく、Higgsfield 経由の ElevenLabs 音楽生成そのものが失敗している(2026-11-16 08:27 UTC 時点)
