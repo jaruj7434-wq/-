@@ -123,3 +123,7 @@ handle at the bottom front, a blank nameplate, no text, no logo
   - cf04c20b-a45b-48cb-8131-50b7f6ca18a5(Gemini Omni Flash 1.2、360p、15秒、11.25 クレジット)→ 成功
   - 歌詞は4行に短縮(ユメミ×3/まわる まわるよ ユメミのドラム/ぐるぐる ぐるりん おせんたく/ゆめみがおか でんきー)
   - 保存先:assets/source/showa_pr/ep01/jingle_take1.wav(git 管理外)
+- 2026-11-16 CMソング第1案を採用。切り出し(音量の切れ目から推定。耳での確認待ち)
+  - 冒頭ジングル:0.15〜5.2秒(前奏+1行目)→ jingle_head_retro.wav
+  - しめ:12.6〜15.04秒(4行目)→ jingle_tail_retro.wav。原曲は15秒で終わりきらずに切れるため、最後0.44秒をフェードアウト
+  - 加工:160Hz〜4.8kHz に帯域を絞り、ゆれを付け、22kHz に落として戻す(film.py の RETRO_MUSIC と同じ)
