@@ -219,7 +219,7 @@ def search(n):
 
 # ---------------------------------------------------------------- 描画
 GOLD = (1, 0.86, 0.2)
-VIEW_S = 0.86
+VIEW_S = 0.82
 BG = (0.07, 0.06, 0.1)
 
 
@@ -307,7 +307,6 @@ def draw_icon(ctx, kind, x, y, s, t):
         ctx.arc(0.7 * u, -1.02 * u, 0.1 * u * f, 0, 2 * math.pi)
         ctx.fill()
     ctx.restore()
-    text(ctx, ITEM_NAMES[kind], x, y + u * 1.25 + 26, 36, rgb=(1, 1, 1), sw=7)
 
 
 def render(seed):
@@ -464,6 +463,7 @@ def render(seed):
         elif over:
             text(ctx, "ピンクの勝ち!!", W / 2, 760, 120, rgb=BALLC[0], sw=18)
             text(ctx, "成功!!", W / 2, 900, 110, rgb=GOLD, sw=18)
+        text(ctx, "ピンクが負けたら・・・", W / 2, 1530, 64, rgb=(1, 1, 1), sw=12)
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
             print(f"  描画 {fi}/{len(frames)}", file=sys.stderr)
