@@ -12,3 +12,6 @@ assets/source/
 
 # OS / エディタ
 .DS_Store
+
+# フィルム加工ツールのフォント(fetch_fonts.sh で取得)
+tools/showa_film/fonts/

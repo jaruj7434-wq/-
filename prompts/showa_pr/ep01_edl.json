@@ -1,0 +1,61 @@
+{
+  "_memo": "第1話 おそうじ円盤 の編集表。src は base_dir からの相対パス。素材が届いたら in(使い始め秒)を調整する",
+  "base_dir": "../../assets/source/showa_pr/ep01",
+  "out_dir": "../../output/showa_pr/ep01",
+  "fps": 24,
+  "look": { "mode": "color", "seed": 1962 },
+  "cuts": [
+    { "src": "c01_enban_floor.mp4", "in": 0.3, "dur": 3.5 },
+    { "dur": 3.0, "card": { "emblem": { "y": 120, "r": 34 }, "lines": [
+      { "text": "夢見ヶ丘電機 提供", "y": 175, "size": 30, "font": "mincho", "spacing": 6 },
+      { "text": "あしたの暮らし", "y": 232, "size": 70, "font": "gothic", "spacing": 10, "rule": true },
+      { "text": "第一回", "y": 345, "size": 30, "font": "mincho", "spacing": 8 },
+      { "text": "自走式 床掃除機", "y": 395, "size": 48, "font": "mincho", "spacing": 6 }
+    ] } },
+    { "src": "c03_family_watch.mp4", "in": 0.0, "dur": 6.0 },
+    { "src": "c04_fusuma_turn.mp4", "in": 0.0, "dur": 5.0 },
+    { "src": "c05_laboratory.mp4", "in": 0.0, "dur": 5.0 },
+    { "src": "c06_under_sofa.mp4", "in": 0.0, "dur": 5.0 },
+    { "src": "c07_cat_ride.mp4", "in": 0.0, "dur": 4.5 },
+    { "src": "c08_dock_return.mp4", "in": 0.0, "dur": 6.0 },
+    { "src": "c09_father_bow.mp4", "in": 0.0, "dur": 3.0 },
+    { "dur": 4.6, "card": { "emblem": { "y": 150, "r": 40 }, "lines": [
+      { "text": "明日を、今日に。", "y": 215, "size": 54, "font": "mincho", "spacing": 8 },
+      { "text": "夢見ヶ丘電機工業", "y": 305, "size": 56, "font": "gothic", "spacing": 6, "rule": true },
+      { "text": "この映画は 人工知能 によって作られました", "y": 430, "size": 22, "font": "mincho", "spacing": 3 }
+    ] } },
+    { "dur": 0.4, "color": [235, 228, 210] }
+  ],
+  "telops": [
+    { "text": "電子頭脳", "start": 14.5, "end": 17.5, "size": 46 },
+    { "text": "夢見ヶ丘電機 中央研究所", "start": 17.6, "end": 20.5, "size": 30, "pos": "upper" }
+  ],
+  "subtitles": [
+    { "text": "ご覧ください。\nこの円盤、誰も押しておりません。", "start": 0.2, "end": 3.5 },
+    { "text": "ここは、ごく普通のお茶の間。", "start": 6.6, "end": 9.0 },
+    { "text": "近い将来、床のお掃除は\n機械の仕事となるのです。", "start": 9.0, "end": 12.5 },
+    { "text": "壁にぶつかれば、自ら考え\n向きを変える。", "start": 12.6, "end": 15.3 },
+    { "text": "まさに、電子頭脳であります。", "start": 15.3, "end": 17.5 },
+    { "text": "開発したのは、わが社の若き技術陣。", "start": 17.6, "end": 20.3 },
+    { "text": "三年の歳月を、かけました。", "start": 20.3, "end": 22.5 },
+    { "text": "人の入れぬ長椅子の下へも\n勇敢に、進んでまいります。", "start": 22.6, "end": 27.5 },
+    { "text": "ご家庭の猫も、この通り……", "start": 27.6, "end": 30.0 },
+    { "text": "ご満悦。", "start": 30.0, "end": 32.0 },
+    { "text": "そして、仕事を終えると……\n自分で、おうちへ帰る。", "start": 32.1, "end": 35.4 },
+    { "text": "なんと健気な機械で\nありましょう。", "start": 35.4, "end": 38.0 },
+    { "text": "お父さんも、思わず、最敬礼。", "start": 38.1, "end": 41.0 },
+    { "text": "明るい未来を、あなたのお茶の間へ。\n夢見ヶ丘電機。", "start": 41.1, "end": 45.6 }
+  ],
+  "vertical": {
+    "top_small": "夢見ヶ丘電機 PR映画",
+    "top_title": "あしたの暮らし",
+    "bottom_note": "架空の会社・製品です ／ この映像はAIで制作しています"
+  },
+  "audio": {
+    "projector_gain": 0.55,
+    "tracks": [
+      { "src": "narration.wav", "kind": "voice", "start": 0.2, "gain": 1.0 },
+      { "src": "bgm.wav", "kind": "music", "start": 3.4, "gain": 0.35 }
+    ]
+  }
+}
