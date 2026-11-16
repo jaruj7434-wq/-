@@ -185,3 +185,11 @@ handle at the bottom front, a blank nameplate, no text, no logo
 ## 声の割り当て(案)
 - CMガール:Vesper / 奥さま:Sloane / 坊や:Pixie(必要なら高くする)/ ナレーター:Barrett
 - 奥さまのブチギレは、ふだんの上品な声との落差が笑いどころ。思いきり荒く、早口で
+- 2026-11-16 改訂版の段階A(約3.5クレジット)
+  - 画像:c03b abea9066-f987-4e9a-a43a-ecacdfa2cda5 / c06b f26f39fb-001d-4548-982a-ee8817f3acc0 / c06c(図解)449644bc-7b95-4128-b51f-f40459b7159a
+  - 声(ElevenLabs v4、assets/source/showa_pr/ep01/voice/):
+    02 62c9fa58-9cd1-426e-9cc6-4ea02d756921(3.6秒)/ 03 8e39e39b-e2dd-4890-ba86-71a5c632b380(4.4)/ 03b cfb9f0c6-7acd-49ab-9ee8-af33d0fb6ebc(2.8)
+    04 334e6a84-2225-4f30-9d21-771a1f1d39ad(3.0)/ 05 91915f24-379f-417b-bfb5-92e50574854b(4.2)/ 06 bca72223-e67a-48c3-9c62-0c70c7bac6c7(4.7)
+    06b 66386140-bf9a-442d-a497-10920a3b172a(4.4)/ 06c 866e0f50-0a31-40b1-aec5-7128168cd858(8.1)/ 07 969eff02-5866-41be-8959-08664b0c45e7(2.4)
+    08 80e72786-3d82-4796-b8f9-44d2626dc0c4(3.3)/ 09 ffefef5b-6ec8-4fba-a12c-9eefe80b1b07(2.1)/ 10 8b217b00-fc72-45be-a487-afc1024048a0(2.3)
+  - 一度に12本送ると ElevenLabs が混み合いで4本受け付けなかった(429)。2本ずつ送り直して成功
