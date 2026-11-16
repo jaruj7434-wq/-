@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:NJ;font-weight:900;src:url(node_modules/@fontsource/noto-sans-jp/files/noto-sans-jp-japanese-900-normal.woff2)}
+@font-face{font-family:NJ;font-weight:700;src:url(node_modules/@fontsource/noto-sans-jp/files/noto-sans-jp-japanese-700-normal.woff2)}
+html,body{margin:0;width:720px;height:1280px;overflow:hidden;background:#040812;font-family:NJ,sans-serif;color:#fff}
+#c{position:absolute;inset:0}
+.L{position:absolute;left:0;right:0;opacity:0;text-align:center}
+.stroke{text-shadow:0 0 6px #000,0 4px 0 #000,0 -2px 0 #000,3px 0 0 #000,-3px 0 0 #000,0 0 24px rgba(0,0,0,.8)}
+#title{top:420px;font-weight:900;font-size:230px;letter-spacing:12px;line-height:1}
+#title small{display:block;font-size:54px;letter-spacing:4px;margin-top:30px;color:#ffe066}
+#series{top:90px;font-weight:700;font-size:30px;letter-spacing:6px;color:#9fd8ff}
+.cap{top:150px;font-weight:900;font-size:64px;line-height:1.25;padding:0 40px}
+.cap .y{color:#ffe066}.cap .r{color:#ff6b6b}.cap .b{color:#7cc8ff}.cap .o{color:#ffa94d}
+.sub{font-size:34px;font-weight:700;display:block;margin-top:14px;color:#e8f1ff}
+.list{position:absolute;left:60px;right:60px;top:820px;opacity:0}
+.item{font-weight:900;font-size:46px;margin:0 0 22px;padding:18px 26px;border-radius:22px;background:rgba(8,16,36,.78);border:3px solid rgba(255,255,255,.25);opacity:0}
+.item.warm{border-color:#ffa94d}.item.cool{border-color:#7cc8ff}.item.red{border-color:#ff6b6b;background:rgba(60,6,10,.82)}
+#hot,#cold{position:absolute;top:560px;width:260px;height:260px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:120px;opacity:0}
+#hot{left:60px;background:radial-gradient(circle,#ff9a3c 0%,rgba(255,80,20,.25) 70%);}
+#cold{right:60px;background:radial-gradient(circle,#59b6ff 0%,rgba(30,90,255,.25) 70%);}
+#vs{position:absolute;top:640px;left:0;right:0;text-align:center;font-weight:900;font-size:90px;opacity:0}
+#cal{position:absolute;left:90px;right:90px;top:560px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;opacity:0}
+#cal div{height:62px;border-radius:12px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:36px}
+#cnt{position:absolute;top:1000px;left:0;right:0;text-align:center;font-weight:900;font-size:110px;opacity:0}
+#warn{position:absolute;inset:0;opacity:0;box-shadow:inset 0 0 160px 40px rgba(255,30,30,.85)}
+#end{top:380px;font-weight:900;font-size:66px;line-height:1.35}
+#end .big{font-size:70px;color:#ffe066;display:block;margin:30px 0}
+#foot{position:absolute;left:0;right:0;bottom:70px;text-align:center;font-weight:700;font-size:22px;color:rgba(255,255,255,.75);line-height:1.5}
+#flash{position:absolute;inset:0;background:#fff;opacity:0}
+</style></head><body>
+<canvas id="c" width="720" height="1280"></canvas>
+<div id="warn"></div>
+<div id="series" class="L stroke">体のサイン図鑑 #01</div>
+<div id="title" class="L stroke">頭痛<small>温める?冷やす?</small></div>
+<div id="hot">温</div><div id="cold">冷</div><div id="vs" class="stroke">?</div>
+<div id="c1" class="L cap stroke">タイプによって<br><span class="y">対策が逆!</span></div>
+<div id="c2" class="L cap stroke"><span class="o">緊張型頭痛</span><span class="sub">頭全体が締めつけられる痛み<br>首・肩のこわばり → 血の巡りが悪く</span></div>
+<div id="l2" class="list"><div class="item warm">✅ 温める</div><div class="item warm">✅ 軽くストレッチ</div><div class="item warm">✅ 同じ姿勢を続けない</div></div>
+<div id="c3" class="L cap stroke"><span class="b">片頭痛</span>かも?<span class="sub">ズキンズキン脈打つ・動くと悪化<br>光や音がつらい</span></div>
+<div id="l3" class="list"><div class="item cool">✅ 冷やす</div><div class="item cool">✅ 暗く静かな場所で休む</div></div>
+<div id="c4" class="L cap stroke">意外な<span class="r">落とし穴</span><span class="sub">頭痛薬を月10日以上飲んでいると<br>かえって頭痛が増えることも</span></div>
+<div id="cal"></div><div id="cnt" class="stroke">10日+</div>
+<div id="c4b" class="L cap stroke" style="top:1110px;font-size:40px">思い当たる人は<span class="y">医師・薬剤師に相談</span></div>
+<div id="c5" class="L cap stroke"><span class="r">すぐ救急へ</span><span class="sub">こんな頭痛は危険なサイン</span></div>
+<div id="l5" class="list" style="top:760px"><div class="item red">⚠ 突然の激しい頭痛</div><div class="item red">⚠ 手足のしびれ・ろれつが回らない</div><div class="item red">⚠ 発熱+首のこわばり</div></div>
+<div id="end" class="L stroke">体は、ちゃんと<br>サインを出している<span class="big">あなたはどっちのタイプ?</span><span style="font-size:44px">コメントで教えてください</span></div>
+<div id="foot">参考:日本頭痛学会/厚生労働省 e-ヘルスネット<br>※一般的な情報です。症状が続く・強いときは医療機関へ</div>
+<div id="flash"></div>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const R=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:true});
+R.setSize(720,1280,false);R.setClearColor(0x040812);
+const S=new THREE.Scene();S.fog=new THREE.FogExp2(0x040812,0.06);
+const cam=new THREE.PerspectiveCamera(40,720/1280,0.1,100);
+S.add(new THREE.AmbientLight(0x6688aa,0.6));
+const kl=new THREE.PointLight(0xffffff,40,30);kl.position.set(3,4,5);S.add(kl);
+const rl=new THREE.PointLight(0x55aaff,25,30);rl.position.set(-4,1,-3);S.add(rl);
+// fresnel shell material
+function shell(col){return new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+ uniforms:{c:{value:new THREE.Color(col)},a:{value:1}},
+ vertexShader:`varying vec3 n;varying vec3 v;void main(){vec4 p=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);v=normalize(-p.xyz);gl_Position=projectionMatrix*p;}`,
+ fragmentShader:`uniform vec3 c;uniform float a;varying vec3 n;varying vec3 v;void main(){float f=pow(1.-abs(dot(n,v)),2.2);gl_FragColor=vec4(c*(f*1.4+.04),1.)*a;}`});}
+const body=new THREE.Group();S.add(body);
+const shellM=shell(0x58c8ff);
+const head=new THREE.Mesh(new THREE.SphereGeometry(1,64,64),shellM);head.scale.set(.82,1,.92);head.position.y=1.0;body.add(head);
+const neck=new THREE.Mesh(new THREE.CylinderGeometry(.33,.38,.9,40,1,true),shellM);neck.position.y=-.15;body.add(neck);
+const sh=new THREE.Mesh(new THREE.CapsuleGeometry(.5,2.0,16,32),shellM);sh.rotation.z=Math.PI/2;sh.scale.set(1,1,.6);sh.position.y=-.75;body.add(sh);
+// brain
+const bg=new THREE.SphereGeometry(.62,160,120);const p=bg.attributes.position;const vv=new THREE.Vector3();
+for(let i=0;i<p.count;i++){vv.fromBufferAttribute(p,i);const d=vv.clone().normalize();
+ let f=.035*Math.sin(d.x*17+Math.sin(d.y*9)*2)+.03*Math.sin(d.y*21+d.z*13)+.025*Math.sin(d.z*25+d.x*7);
+ f-=.06*Math.exp(-Math.pow(d.x*9,2))*(d.y>-.2?1:0); vv.copy(d).multiplyScalar(.62+f);vv.x*=1.0;vv.y*=.82;vv.z*=1.15;p.setXYZ(i,vv.x,vv.y,vv.z);}
+bg.computeVertexNormals();
+const brainM=new THREE.MeshStandardMaterial({color:0xf2a0b4,emissive:0x8a2040,emissiveIntensity:.5,roughness:.45,metalness:.05,transparent:true,opacity:.92});
+const brain=new THREE.Mesh(bg,brainM);brain.position.set(0,1.18,0);body.add(brain);
+// muscles (trapezius-ish tubes)
+const glowTube=(col)=>new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+ uniforms:{c:{value:new THREE.Color(col)},t:{value:0},a:{value:0},k:{value:1}},
+ vertexShader:`varying vec2 u;void main(){u=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+ fragmentShader:`uniform vec3 c;uniform float t,a,k;varying vec2 u;void main(){float s=.55+.45*sin(u.x*60.-t*k*6.);float r=.6+.4*sin(u.y*40.);gl_FragColor=vec4(c*s*r*1.3,1.)*a;}`});
+const musM=glowTube(0xff4040);const muscles=[];
+for(const sx of [-1,1]){for(const off of [0,.12,-.12]){
+ const cv=new THREE.CatmullRomCurve3([new THREE.Vector3(sx*.12,.55,-.25+off*.3),new THREE.Vector3(sx*.28,.0,-.28),new THREE.Vector3(sx*.7,-.55,-.2+off),new THREE.Vector3(sx*1.35,-.7,0+off)]);
+ const m=new THREE.Mesh(new THREE.TubeGeometry(cv,80,.06,12,false),musM);body.add(m);muscles.push(cv);}}
+// blood particles along muscles
+const NP=900;const bpG=new THREE.BufferGeometry();const bpPos=new Float32Array(NP*3);bpG.setAttribute('position',new THREE.BufferAttribute(bpPos,3));
+const bpSeed=[...Array(NP)].map((_,i)=>({c:i%muscles.length,o:Math.random(),j:new THREE.Vector3((Math.random()-.5)*.12,(Math.random()-.5)*.12,(Math.random()-.5)*.12)}));
+const bpM=new THREE.PointsMaterial({color:0xff7070,size:.035,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+body.add(new THREE.Points(bpG,bpM));
+// brain vessels
+const vesM=glowTube(0x66b8ff);const vessels=[];let rs=7;const rnd=()=>(rs=(rs*16807)%2147483647)/2147483647;
+for(let i=0;i<14;i++){const pts=[];let th=rnd()*Math.PI*2,ph=.3+rnd()*1.6;for(let k=0;k<6;k++){th+=(rnd()-.5)*.7;ph+=(rnd()-.5)*.5;
+ const d=new THREE.Vector3(Math.sin(ph)*Math.cos(th),Math.cos(ph),Math.sin(ph)*Math.sin(th));pts.push(new THREE.Vector3(d.x*.66,d.y*.56+1.18,d.z*.74));}
+ const cv=new THREE.CatmullRomCurve3(pts);vessels.push(cv);body.add(new THREE.Mesh(new THREE.TubeGeometry(cv,60,.032,8,false),vesM));}
+const NS=300;const spG=new THREE.BufferGeometry();const spPos=new Float32Array(NS*3);spG.setAttribute('position',new THREE.BufferAttribute(spPos,3));
+const spM=new THREE.PointsMaterial({color:0xfff2a0,size:.05,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});body.add(new THREE.Points(spG,spM));
+// dust
+const ND=500;const dG=new THREE.BufferGeometry();const dP=new Float32Array(ND*3);for(let i=0;i<ND*3;i++)dP[i]=(rnd()-.5)*14;dG.setAttribute('position',new THREE.BufferAttribute(dP.slice(),3));
+const dust=new THREE.Points(dG,new THREE.PointsMaterial({color:0x6fa8ff,size:.03,transparent:true,opacity:.5,depthWrite:false}));S.add(dust);
+// pills
+const pillM=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x333344,roughness:.3});const pillM2=new THREE.MeshStandardMaterial({color:0xff5a6a,emissive:0x441015,roughness:.3});
+const pills=new THREE.Group();S.add(pills);
+for(let i=0;i<12;i++){const g=new THREE.Group();const a=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.18,8,16),pillM);const b=new THREE.Mesh(new THREE.CylinderGeometry(.121,.121,.1,16),pillM2);g.add(a,b);g.userData={x:(rnd()-.5)*2.4,s:rnd()*.6,r:rnd()*6};pills.add(g);}
+
+// ---------- timeline ----------
+const T={hook:1.58,ten:5.47,warmOn:12.2,str:13.06,pos:14.1,mig:15.46,migName:18.78,cool:23.2,rest:23.82,med:25.1,medAsk:30.13,dan:32.23,d2:35.02,d3:36.8,d4:38.4,end:39.3,fin:44.3};
+const cl=(x)=>Math.min(1,Math.max(0,x));const ease=x=>{x=cl(x);return x*x*(3-2*x)};
+const win=(t,a,b,f=.35)=>ease((t-a)/f)*(1-ease((t-(b-f))/f));
+const $=id=>document.getElementById(id);
+function show(id,t,a,b,dy=40){const e=$(id);const o=win(t,a,b);e.style.opacity=o;e.style.transform=`translateY(${(1-ease((t-a)/.35))*dy}px)`;}
+function items(id,t,starts,end){const e=$(id);e.style.opacity=t>=starts[0]-.01&&t<end?1:0;[...e.children].forEach((c,i)=>{const o=win(t,starts[i],end,.3);c.style.opacity=o;c.style.transform=`translateX(${(1-ease((t-starts[i])/.3))*-60}px)`;});}
+const cal=$('cal');for(let i=0;i<28;i++)cal.appendChild(document.createElement('div'));
+// [start,end,posFrom,posTo,lookFrom,lookTo] — hard cut between segments
+const shots=[[0,T.ten,[0,1.1,7.8],[0,1.0,5.6],[0,1.0,0],[0,.9,0]],
+ [T.ten,T.mig,[3.0,.1,5.4],[1.8,-.2,4.4],[0,-.45,0],[0,-.55,0]],
+ [T.mig,T.med,[.6,1.7,3.4],[-.7,1.5,2.5],[0,1.15,0],[0,1.15,0]],
+ [T.med,T.dan,[0,1,8],[0,1,7.5],[0,.8,0],[0,.8,0]],
+ [T.dan,T.end,[0,1.4,4.6],[0,1.25,3.4],[0,1.1,0],[0,1.1,0]],
+ [T.end,99,[0,1.0,8.5],[0,1.0,10],[0,.6,0],[0,.6,0]]];
+function camAt(t){const s=shots.find(s=>t>=s[0]&&t<s[1])||shots[shots.length-1];const k=ease((t-s[0])/Math.min(20,s[1]-s[0]));
+ const L=(a,b)=>a.map((v,j)=>v+(b[j]-v)*k);return [L(s[2],s[3]),L(s[4],s[5])];}
+const tmp=new THREE.Vector3();
+window.renderAt=function(t){
+ const [P,La]=camAt(t);cam.position.set(...P);cam.lookAt(...La);
+ body.rotation.y=Math.sin(t*.25)*.35+(t<T.ten?t*.15:0);
+ const inTen=t>=T.ten&&t<T.mig, inMig=t>=T.mig&&t<T.med, inMed=t>=T.med&&t<T.dan, inDan=t>=T.dan&&t<T.end;
+ body.visible=!inMed;
+ // muscles
+ musM.uniforms.t.value=t;const warm=ease((t-T.warmOn)/1.2);
+ musM.uniforms.a.value=inTen?ease((t-T.ten)/.8)*(.9):0;musM.uniforms.c.value.setRGB(1,.25+.45*warm,.2+.1*warm);musM.uniforms.k.value=.4+1.6*warm;
+ const speed=.04+.35*warm;bpM.opacity=inTen?.9*ease((t-T.ten-.4)/.6):0;
+ bpSeed.forEach((s,i)=>{const u=(s.o+t*speed)%1;muscles[s.c].getPointAt(u,tmp);tmp.add(s.j);bpPos.set([tmp.x,tmp.y,tmp.z],i*3)});bpG.attributes.position.needsUpdate=true;
+ // migraine
+ const beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*2*1.15)),6);
+ vesM.uniforms.t.value=t;vesM.uniforms.k.value=1;const migA=inMig?ease((t-T.mig)/.6):0;const coolK=ease((t-T.cool)/1.0);
+ vesM.uniforms.a.value=migA*(.5+.9*beat*(1-.7*coolK));vesM.uniforms.c.value.setRGB(1-.6*coolK,.35+.4*coolK,.3+.7*coolK);
+ brain.scale.setScalar(1+(inMig?.025*beat*(1-coolK):0));
+ spM.opacity=migA*(1-.8*coolK);
+ for(let i=0;i<NS;i++){const cv=vessels[i%vessels.length];const u=((i*.137)+t*.5)%1;cv.getPointAt(u,tmp);spPos.set([tmp.x,tmp.y,tmp.z],i*3)}spG.attributes.position.needsUpdate=true;
+ // brain color: danger red
+ const dr=inDan?ease((t-T.dan)/.5)*(.6+.4*Math.sin(t*8)):0;brainM.emissive.setRGB(.54+.4*dr,.12-.1*dr,.25-.2*dr);brainM.emissiveIntensity=.5+dr;
+ shellM.uniforms.c.value.setRGB(.35+.65*dr,.78-.5*dr,1-.75*dr);
+ shellM.uniforms.a.value=inMig?.35:1;
+ // pills
+ pills.visible=inMed;pills.children.forEach((g,i)=>{const lt=t-T.med-i*.25;g.visible=lt>0;g.position.set(g.userData.x,3.5-Math.min(4.2,lt*lt*3)+(lt>1.2?0:0),-1);g.rotation.set(lt*2+g.userData.r,lt*1.5,lt);});
+ dust.rotation.y=t*.02;dust.position.y=Math.sin(t*.3)*.2;
+ R.render(S,cam);
+ // ---- DOM ----
+ const fl=$('flash');fl.style.opacity=Math.max(0,.85-t*3)*(t<.3?1:0)+ [T.ten,T.mig,T.med,T.dan].reduce((a,c)=>a+Math.max(0,.5-(t-c)*3)*(t>=c?1:0),0);
+ const tt=$('title');tt.style.opacity=win(t,0,T.hook+.3,.15);const sc=t<.25?1.6-2.4*t:1;tt.style.transform=`scale(${Math.max(1,sc)})`;
+ $('series').style.opacity=win(t,0,T.end,.3)*(t<T.end?1:0);
+ ['hot','cold'].forEach((id,i)=>{const e=$(id);e.style.opacity=win(t,T.hook+.2+i*.5,T.ten);e.style.transform=`scale(${.8+.2*ease((t-T.hook-i*.5)/.4)+.04*Math.sin(t*5+i)})`;});
+ $('vs').style.opacity=win(t,T.hook+1.0,T.ten);
+ show('c1',t,T.hook+1.6,T.ten);
+ show('c2',t,T.ten+.1,T.mig);items('l2',t,[T.warmOn-.6,T.str,T.pos],T.mig);
+ show('c3',t,T.mig+.1,T.med);items('l3',t,[T.cool-.4,T.rest],T.med);
+ show('c4',t,T.med+.1,T.dan);
+ const ce=$('cal');ce.style.opacity=win(t,T.med+.8,T.dan);[...ce.children].forEach((d,i)=>{const on=i<Math.floor(cl((t-T.med-1.2)/2.6)*12);d.textContent='';d.style.boxShadow=on?'inset 0 0 0 14px rgba(255,255,255,.9)':'none';d.style.background=on?'rgba(255,80,90,.35)':'rgba(255,255,255,.08)';d.style.borderColor=on?'#ff6b6b':'rgba(255,255,255,.15)';});
+ $('cnt').style.opacity=win(t,T.med+3.6,T.dan);show('c4b',t,T.medAsk,T.dan,20);
+ $('warn').style.opacity=inDan?ease((t-T.dan)/.4)*(.55+.45*Math.sin(t*7)):0;
+ show('c5',t,T.dan+.1,T.end);items('l5',t,[T.dan+.4,T.d2,T.d3],T.end);
+ show('end',t,T.end+.1,T.fin+1,30);
+};
+await document.fonts.load('900 40px NJ','頭痛温冷');await document.fonts.load('700 40px NJ','参考');
+window.ready=true;
+</script></body></html>
