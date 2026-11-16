@@ -127,3 +127,11 @@ handle at the bottom front, a blank nameplate, no text, no logo
   - 冒頭ジングル:0.15〜5.2秒(前奏+1行目)→ jingle_head_retro.wav
   - しめ:12.6〜15.04秒(4行目)→ jingle_tail_retro.wav。原曲は15秒で終わりきらずに切れるため、最後0.44秒をフェードアウト
   - 加工:160Hz〜4.8kHz に帯域を絞り、ゆれを付け、22kHz に落として戻す(film.py の RETRO_MUSIC と同じ)
+- 2026-11-16 参照画像 12枚(GPT Image 2.6、4:3、各2案、計3クレジット)→ assets/source/showa_pr/ep01/refs/
+  - CMガール a:fb30e7f2-b607-4ffc-9bf3-73504c56c1f1 / b:06e046d8-0aa0-49bb-88af-81834efef585
+  - 奥さま a:42410b4a-ec74-47d7-aaf4-27f3678494c9 / b:608ee768-a1a4-4347-a17e-95c33e1df1a5
+  - ご主人と坊や a:851fa9c3-0970-47df-8d42-539a91d6819f / b:5eba0376-b92a-480c-856b-a19a1767c31c
+  - 洗濯機 a(斜め):42646839-7de6-4a05-89ba-ffbaed6bdc7b / b(正面):80d0f2eb-ada5-4b5a-b563-bda7e0220c78
+  - スタジオ a:3aa13bed-67f7-4947-9cc7-d6c306115701 / b:c6dd7428-cd85-4df6-9d5a-5fee7cff47d8
+  - 井戸端 a:dd70cd41-7ff7-438b-947c-5afe6cb663e1 / b:8e076077-d589-4a0b-a95a-52de06d385a7
+  - 気づいた点:CMガールと奥さまの顔がほぼ同じ/スタジオに当時の円筒形の洗濯機(と冷蔵庫)が写っている
