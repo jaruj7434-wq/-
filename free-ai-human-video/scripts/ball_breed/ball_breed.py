@@ -373,6 +373,8 @@ def render(seed):
         text(ctx, f"/ {TARGET} 個", W / 2 + 170, 500, 50, rgb=(0.85, 0.85, 0.9), sw=6)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, 1760, 64, rgb=(1, 0.4, 0.4) if left < 8 else (0.95, 0.95, 0.95), sw=10)
+        if not over:   # 画面の下のテキスト(ユーザー指定)
+            text(ctx, "失敗したら・・・", W / 2, 1862, 60, rgb=(1, 0.45, 0.45), sw=10)
         if over and fail and t < g0:   # 時間切れの直後:物理はそのまま。何秒おそかったかを見せる
             k = min(1.0, (t - end_t) / 0.15)
             text(ctx, "時間切れ!!", W / 2, 680, 120 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
