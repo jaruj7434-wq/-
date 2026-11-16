@@ -361,33 +361,53 @@ RETRO_MUSIC = ("highpass=f=160,lowpass=f=4800,equalizer=f=2500:t=q:w=1:g=3,"
                "vibrato=f=0.5:d=0.02,vibrato=f=8:d=0.008,asoftclip=type=tanh")
 
 
+def _read_mono(path, sr=48000):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", str(sr), "-f", "f32le", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.float32)
+
+
+def _write_wav(path, y, sr=48000):
+    import wave
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes((np.clip(y, -1, 1) * 32767).astype(np.int16).tobytes())
+
+
 def build_audio(edl, total, tmp, base):
+    """音を1本ずつ加工してから numpy で足し合わせる。
+    (ffmpeg の amix で十数本を一度に重ねると、途中から無音になることがあったため)"""
+    sr = 48000
+    total = round(total, 3)
+    n = int(total * sr)
     A = edl.get("audio", {})
-    inputs, chains, labels = [], [], []
     noise = os.path.join(tmp, "projector.wav")
     projector_noise(noise, total + 1)
-    inputs += ["-i", noise]
-    chains.append(f"[0:a]volume={A.get('projector_gain', 0.55)}[pj]")
-    labels.append("[pj]")
-    idx = 1
-    for item in A.get("tracks", []):
+    mix = np.zeros(n, np.float32)
+    pj = _read_mono(noise)[:n]
+    mix[:len(pj)] += pj * A.get("projector_gain", 0.55)
+    for k, item in enumerate(A.get("tracks", [])):
         p = os.path.join(base, item["src"])
-        inputs += ["-i", p]
-        delay = int(item.get("start", 0) * 1000)
         chain = RETRO_VOICE if item.get("kind") == "voice" else RETRO_MUSIC
         end = f":duration={item['dur']}" if item.get("dur") else ""
-        chains.append(f"[{idx}:a]aformat=channel_layouts=mono,atrim=start={item.get('in', 0)}{end},"
-                      f"asetpts=PTS-STARTPTS,{chain},volume={item.get('gain', 1.0)},"
-                      f"adelay={delay}|{delay}[a{idx}]")
-        labels.append(f"[a{idx}]")
-        idx += 1
-    total = round(total, 3)  # 足し算の誤差(59.30000000000001 等)で afade が全体を消すのを防ぐ
-    chains.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0:duration=longest,"
-                  f"atrim=0:{total},afade=t=out:st={max(round(total - 0.4, 3), 0)}:d=0.4,"
-                  "aresample=22050,aresample=48000,loudnorm=I=-15:TP=-1.5[out]")
+        out = os.path.join(tmp, f"trk{k:02d}.wav")
+        run(["ffmpeg", "-y", "-v", "error", "-i", p, "-af",
+             f"aformat=channel_layouts=mono,atrim=start={item.get('in', 0)}{end},asetpts=PTS-STARTPTS,"
+             f"{chain},volume={item.get('gain', 1.0)}", "-ac", "1", "-ar", str(sr), out])
+        y = _read_mono(out)
+        st = int(item.get("start", 0) * sr)
+        if st >= n:
+            continue
+        y = y[:n - st]
+        mix[st:st + len(y)] += y
+    raw = os.path.join(tmp, "mix_raw.wav")
+    _write_wav(raw, mix * 0.8)
     out = os.path.join(tmp, "mix.wav")
-    run(["ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex", ";".join(chains),
-         "-map", "[out]", "-ac", "1", "-ar", "48000", out])
+    run(["ffmpeg", "-y", "-v", "error", "-i", raw, "-af",
+         f"afade=t=out:st={max(round(total - 0.4, 3), 0)}:d=0.4,aresample=22050,aresample=48000,"
+         "loudnorm=I=-15:TP=-1.5", "-ac", "1", "-ar", str(sr), out])
     return out
 
 
@@ -522,10 +542,10 @@ def main():
     edl.setdefault("audio", {}).setdefault("tracks", [])
     edl["audio"]["tracks"] = edl["audio"]["tracks"] + clip_audio
     mix = build_audio(edl, total, tmp, base)
-    vd = subprocess.run(["ffmpeg", "-v", "info", "-i", mix, "-af", "volumedetect", "-f", "null", "-"],
-                        capture_output=True, text=True).stderr
-    if "max_volume: -9" in vd or "max_volume: -inf" in vd:  # 無音(-90dB台)なら止める
-        sys.exit(f"音声が無音になっています。作業フォルダを確認してください: {tmp}")
+    y = _read_mono(mix)
+    dead = [k for k in range(int(len(y) / 48000)) if np.abs(y[k * 48000:(k + 1) * 48000]).max() < 1e-4]
+    if dead:  # 1秒まるごと無音の区間があれば止める(映写機の音があるので、本来は無音にならない)
+        sys.exit(f"音声が無音の秒があります {dead[:10]}… 作業フォルダ: {tmp}")
     master = os.path.join(out_dir, "master_4x3.mp4")
     run(["ffmpeg", "-y", "-v", "error", "-i", silent, "-i", mix, "-map", "0:v", "-map", "1:a",
          "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", master])

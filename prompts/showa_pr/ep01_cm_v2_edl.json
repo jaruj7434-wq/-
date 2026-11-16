@@ -301,7 +301,61 @@
    "stroke": "soft"
   }
  ],
- "subtitles": [
+ "vertical": {
+  "top_small": "あの頃、こんなCMがあった……?",
+  "top_title": "昭和のまぼろしCM",
+  "bottom_note": "架空の会社・製品です / この映像はAIで制作しています"
+ },
+ "audio": {
+  "projector_gain": 0.3,
+  "tracks": [
+   {
+    "src": "sfx/jan.wav",
+    "kind": "music",
+    "start": 2.5,
+    "gain": 0.8
+   },
+   {
+    "src": "jingle_take1.wav",
+    "kind": "music",
+    "start": 17.6,
+    "in": 1.85,
+    "dur": 3.3,
+    "gain": 0.9
+   },
+   {
+    "src": "voice/05_narr.mp3",
+    "kind": "voice",
+    "start": 21.0,
+    "gain": 1.0
+   },
+   {
+    "src": "sfx/chin.wav",
+    "kind": "music",
+    "start": 42.3,
+    "gain": 0.7
+   },
+   {
+    "src": "sfx/chin.wav",
+    "kind": "music",
+    "start": 46.0,
+    "gain": 0.7
+   },
+   {
+    "src": "sfx/kiran.wav",
+    "kind": "music",
+    "start": 51.6,
+    "gain": 0.6
+   },
+   {
+    "src": "jingle_tail_clean.wav",
+    "kind": "music",
+    "start": 56.8,
+    "gain": 0.9
+   }
+  ]
+ },
+ "_subtitles_removed": [
   {
    "text": "あら奥さま、まだそんなので\n洗ってらっしゃるの?",
    "start": 2.5,
@@ -378,58 +432,5 @@
    "end": 59.3
   }
  ],
- "vertical": {
-  "top_small": "あの頃、こんなCMがあった……?",
-  "top_title": "昭和のまぼろしCM",
-  "bottom_note": "架空の会社・製品です / この映像はAIで制作しています"
- },
- "audio": {
-  "projector_gain": 0.3,
-  "tracks": [
-   {
-    "src": "sfx/jan.wav",
-    "kind": "music",
-    "start": 2.5,
-    "gain": 0.8
-   },
-   {
-    "src": "jingle_take1.wav",
-    "kind": "music",
-    "start": 17.6,
-    "in": 1.85,
-    "dur": 3.3,
-    "gain": 0.9
-   },
-   {
-    "src": "voice/05_narr.mp3",
-    "kind": "voice",
-    "start": 21.0,
-    "gain": 1.0
-   },
-   {
-    "src": "sfx/chin.wav",
-    "kind": "music",
-    "start": 42.3,
-    "gain": 0.7
-   },
-   {
-    "src": "sfx/chin.wav",
-    "kind": "music",
-    "start": 46.0,
-    "gain": 0.7
-   },
-   {
-    "src": "sfx/kiran.wav",
-    "kind": "music",
-    "start": 51.6,
-    "gain": 0.6
-   },
-   {
-    "src": "jingle_tail_clean.wav",
-    "kind": "music",
-    "start": 56.8,
-    "gain": 0.9
-   }
-  ]
- }
+ "subtitles": []
 }
