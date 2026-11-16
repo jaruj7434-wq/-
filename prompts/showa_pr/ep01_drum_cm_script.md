@@ -119,3 +119,7 @@ handle at the bottom front, a blank nameplate, no text, no logo
     → 両モデルで歌詞ありが失敗。音楽生成そのものが止まっている可能性もある
   - 5回目(動作確認):8ae0d989-d8e4-4f44-8bb1-ce3925aaf439(Music v2、10秒、歌なし)も数秒で失敗、返金済み
     → 歌詞の問題ではなく、Higgsfield 経由の ElevenLabs 音楽生成そのものが失敗している(2026-11-16 08:27 UTC 時点)
+- 2026-11-16 CMソングを動画モデルで生成し、音だけを取り出す方式に変更
+  - cf04c20b-a45b-48cb-8131-50b7f6ca18a5(Gemini Omni Flash 1.2、360p、15秒、11.25 クレジット)→ 成功
+  - 歌詞は4行に短縮(ユメミ×3/まわる まわるよ ユメミのドラム/ぐるぐる ぐるりん おせんたく/ゆめみがおか でんきー)
+  - 保存先:assets/source/showa_pr/ep01/jingle_take1.wav(git 管理外)
