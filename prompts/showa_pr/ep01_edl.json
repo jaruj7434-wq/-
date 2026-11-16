@@ -1,7 +1,7 @@
 {
   "_memo": "第1話 おそうじ円盤 の編集表。src は base_dir からの相対パス。素材が届いたら in(使い始め秒)を調整する",
   "base_dir": "../../assets/source/showa_pr/ep01",
-  "out_dir": "../../output/showa_pr/ep01",
+  "out_dir": "../../../output/showa_pr/ep01",
   "fps": 24,
   "look": { "mode": "color", "seed": 1962 },
   "cuts": [

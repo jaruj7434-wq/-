@@ -150,3 +150,7 @@ handle at the bottom front, a blank nameplate, no text, no logo
   - v04 7730230d-c4d3-41c7-a8d7-9a6afedbe8df / v05 f57b9915-7007-46cf-9aeb-d85c834087b8 / v06 8180885c-3cb0-4adf-b091-15c811d0c8af
   - v07 0ec032a4-6981-44a9-ba05-6d1a555fcde5 / v08 cef42157-3d3e-473d-8a96-b1e9f2a9ae65 / v09 f0b8d4c3-bd9e-4bd0-aa1a-0b7a1cd62a45
   - v10 3e3e3b9c-6550-41f2-9db6-064788b0c115
+- 2026-11-16 動画10本すべて成功 → assets/source/showa_pr/ep01/clips/v01〜v10.mp4(752x560、約4秒)
+  - v04:布を取る動きはとても速い(1コマ目でもう洗濯機が見えている)。洗濯機のデザインは参照どおり
+- 荒編集:prompts/showa_pr/ep01_cm_edl.json → assets/output/showa_pr/ep01_cm/(白黒、30.3秒)
+  - まだ:ナレーション/CMガールの声、効果音、封筒の「へそくり」・銘板の文字、シリーズ名(仮「昭和のまぼろしCM」)

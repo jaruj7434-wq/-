@@ -124,18 +124,35 @@ def draw_emblem(d, cx, cy, r):
                fill=CREAM, width=3)
 
 
-def render_telop(text, size=40, pos="lower"):
-    """画面内テロップ(RGBA, 作業解像度)。昭和の映画字幕風:クリーム色の明朝+影"""
-    img = Image.new("RGBA", (PAD_W, PAD_H), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    fnt = font("mincho", size)
+def render_telop(text, size=40, pos="lower", fnt_name="mincho", color=None, xy=None,
+                 stroke=True, angle=0):
+    """画面内テロップ(RGBA, 作業解像度)
+    - 既定:クリーム色の明朝+黒い縁取り(昭和の映画字幕風)
+    - fnt_name: mincho / gothic、color: [R,G,B]
+    - xy: [x, y] を画面の割合(0〜1)で指定すると、その位置を中心に置く(フリップや封筒の文字用)
+    - stroke=False で縁取りなし(紙に書いた文字用)、angle で傾ける
+    """
+    fill = tuple(color) if color else CREAM
+    layer = Image.new("RGBA", (PAD_W, PAD_H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    fnt = font(fnt_name, size)
     lines = text.split("\n")
     line_h = size * 1.35
-    y0 = PAD_H - 78 - line_h * len(lines) if pos == "lower" else 70
+    if xy:
+        y0 = xy[1] * PAD_H - line_h * len(lines) / 2
+        cx = xy[0] * PAD_W
+    else:
+        y0 = PAD_H - 78 - line_h * len(lines) if pos == "lower" else 70
+        cx = PAD_W / 2
     for i, ln in enumerate(lines):
-        draw_text_center(d, PAD_W / 2, y0 + i * line_h, ln, fnt, CREAM + (255,),
-                         shadow=INK + (235,), spacing=3, stroke=2)
-    return img
+        if stroke:
+            draw_text_center(d, cx, y0 + i * line_h, ln, fnt, fill + (255,),
+                             shadow=INK + (235,), spacing=3, stroke=2)
+        else:
+            draw_text_center(d, cx, y0 + i * line_h, ln, fnt, fill + (235,), spacing=2)
+    if angle:
+        layer = layer.rotate(angle, resample=Image.BICUBIC, center=(cx, y0 + line_h * len(lines) / 2))
+    return layer
 
 
 # ---------------------------------------------------------------- 素材の正規化
@@ -409,7 +426,8 @@ def main():
 
     with open(a.edl, encoding="utf-8") as fh:
         edl = json.load(fh)
-    base = os.path.abspath(edl.get("base_dir", os.path.dirname(os.path.abspath(a.edl))))
+    edl_dir = os.path.dirname(os.path.abspath(a.edl))
+    base = os.path.abspath(os.path.join(edl_dir, edl.get("base_dir", ".")))  # EDL の置き場所から見た相対パス
     out_dir = os.path.join(base, edl.get("out_dir", "out"))
     os.makedirs(out_dir, exist_ok=True)
     fps = edl.get("fps", 24)
@@ -436,7 +454,9 @@ def main():
     run(["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", joined])
 
     # 2) テロップを用意
-    telops = [(render_telop(x["text"], x.get("size", 40), x.get("pos", "lower")), x["start"], x["end"])
+    telops = [(render_telop(x["text"], x.get("size", 40), x.get("pos", "lower"), x.get("font", "mincho"),
+                            x.get("color"), x.get("xy"), x.get("stroke", True), x.get("angle", 0)),
+               x["start"], x["end"])
               for x in edl.get("telops", [])]
 
     # 3) 1コマずつフィルム加工

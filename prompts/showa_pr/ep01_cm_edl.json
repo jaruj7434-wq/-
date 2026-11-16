@@ -1,0 +1,59 @@
+{
+  "_memo": "第1話 CM「おてんき号」の編集表(荒編集版。ナレーション・効果音・封筒と銘板の文字はまだ)",
+  "base_dir": "../../assets/source/showa_pr/ep01",
+  "out_dir": "../../../output/showa_pr/ep01_cm",
+  "fps": 24,
+  "look": { "mode": "mono", "seed": 1957 },
+  "cuts": [
+    { "src": "clips/v01.mp4", "in": 0.5, "dur": 3.0 },
+    { "src": "clips/v02.mp4", "in": 1.2, "dur": 2.0 },
+    { "src": "clips/v03.mp4", "in": 1.6, "dur": 2.0 },
+    { "src": "clips/v04.mp4", "in": 0.0, "dur": 3.0 },
+    { "src": "clips/v05.mp4", "in": 0.3, "dur": 3.0 },
+    { "src": "clips/v06.mp4", "in": 0.5, "dur": 3.0 },
+    { "src": "clips/v07.mp4", "in": 0.8, "dur": 3.0 },
+    { "src": "clips/v08.mp4", "in": 0.4, "dur": 4.0 },
+    { "src": "clips/v09.mp4", "in": 0.8, "dur": 3.0 },
+    { "src": "clips/v10.mp4", "in": 1.0, "dur": 2.0 },
+    { "dur": 2.5, "card": { "bg": [16, 16, 16], "emblem": { "y": 170, "r": 44 }, "lines": [
+      { "text": "ユメミ", "y": 240, "size": 76, "font": "gothic", "spacing": 14 },
+      { "text": "夢見ヶ丘電機", "y": 345, "size": 40, "font": "mincho", "spacing": 8, "rule": true },
+      { "text": "架空の会社・製品です/AIで制作しています", "y": 455, "size": 18, "font": "mincho", "spacing": 2 }
+    ] } }
+  ],
+  "telops": [
+    { "text": "まだ 洗濯板?", "start": 3.1, "end": 5.0, "font": "gothic", "size": 44, "color": [255, 255, 255], "angle": 3 },
+    { "text": "一年で\n三百時間!", "start": 5.0, "end": 7.0, "font": "gothic", "size": 34, "color": [30, 28, 26], "xy": [0.363, 0.355], "stroke": false },
+    { "text": "電気洗濯乾燥機\nおてんき号", "start": 7.6, "end": 10.0, "font": "gothic", "size": 42, "color": [255, 255, 255], "angle": -2 },
+    { "text": "ボタン ひとつ", "start": 10.2, "end": 13.0, "font": "gothic", "size": 46, "color": [255, 255, 255], "angle": 2 },
+    { "text": "雨の日も 乾燥まで", "start": 13.2, "end": 16.0, "font": "gothic", "size": 42, "color": [255, 255, 255], "angle": -2 },
+    { "text": "新案 ポケット点検機能", "start": 16.2, "end": 19.0, "font": "gothic", "size": 40, "color": [255, 255, 255], "angle": 2 },
+    { "text": "ご主人の へそくりも", "start": 20.0, "end": 23.0, "font": "gothic", "size": 42, "color": [255, 255, 255], "angle": -2 },
+    { "text": "家計も すっきり", "start": 23.2, "end": 26.0, "font": "gothic", "size": 46, "color": [255, 255, 255], "angle": 2 },
+    { "text": "月賦販売 承ります", "start": 26.0, "end": 28.0, "font": "gothic", "size": 40, "color": [255, 255, 255], "angle": -2 }
+  ],
+  "subtitles": [
+    { "text": "あら奥さま、まだそんなので\n洗ってらっしゃるの?", "start": 3.0, "end": 5.0 },
+    { "text": "一年でお洗濯にかける時間\nなんと三百時間!", "start": 5.0, "end": 7.0 },
+    { "text": "そこで!ユメミの\nおてんき号!", "start": 7.0, "end": 10.0 },
+    { "text": "ボタンひとつで、洗って\nすすいで、しぼって……", "start": 10.0, "end": 13.0 },
+    { "text": "乾かすまで全自動。\n雨の日だって、おてんき号!", "start": 13.0, "end": 16.0 },
+    { "text": "さらに!ポケットの忘れ物は\nちゃーんと、おとどけ!", "start": 16.0, "end": 19.0 },
+    { "text": "……ご主人の、へそくりも。", "start": 19.0, "end": 23.0 },
+    { "text": "家計も、すっきり!", "start": 23.0, "end": 26.0 },
+    { "text": "お近くの電器店で、どうぞ!", "start": 26.0, "end": 28.0 },
+    { "text": "夢見ヶ丘電機", "start": 28.0, "end": 30.5 }
+  ],
+  "vertical": {
+    "top_small": "あの頃、こんなCMがあった……?",
+    "top_title": "昭和のまぼろしCM",
+    "bottom_note": "架空の会社・製品です / この映像はAIで制作しています"
+  },
+  "audio": {
+    "projector_gain": 0.35,
+    "tracks": [
+      { "src": "jingle_head_clean.wav", "kind": "music", "start": 7.0, "gain": 0.9 },
+      { "src": "jingle_tail_clean.wav", "kind": "music", "start": 28.0, "gain": 0.9 }
+    ]
+  }
+}
