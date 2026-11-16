@@ -47,6 +47,7 @@ N_START = int(os.environ.get("N_START", 2))          # はじめのボールの�
 MIN_R = 6.0
 MAX_OBJ = TARGET + 40
 OUTRO = 4.2
+VIEW_CY, VIEW_S = 985.0, 0.83   # 画面上のわくの中心と大きさ(TikTokなどの文字やボタンに隠れないよう、まん中寄りに)
 FAIL_SHOW = 0.0   # 時間切れになった瞬間に幽霊が出る
 
 
@@ -335,6 +336,10 @@ def render(seed):
         g.add_color_stop_rgb(1, 0.05, 0.04, 0.1)
         ctx.set_source(g)
         ctx.paint()
+        ctx.save()   # わくとボールは、見せ方だけ少し小さく・まん中寄りに描く(物理の計算は同じ)
+        ctx.translate(CX, VIEW_CY)
+        ctx.scale(VIEW_S, VIEW_S)
+        ctx.translate(-CX, -CY)
         g = cairo.RadialGradient(CX, CY, 40, CX, CY, R)
         g.add_color_stop_rgb(0, 0.98, 0.95, 0.88)
         g.add_color_stop_rgb(1, 0.88, 0.84, 0.78)
@@ -362,19 +367,20 @@ def render(seed):
                 ctx.stroke()
                 keep.append(rg)
         rings = keep
+        ctx.restore()
         if angels is not None and over:
             angels.draw(ctx, t - end_t)
-        text(ctx, "ボールを", W / 2, 150, 80, sw=12)
-        text(ctx, f"{TARGET}個に増やせる？", W / 2, 280, 108, rgb=GOLD, sw=16)
+        text(ctx, "ボールを", W / 2, 250, 76, sw=12)
+        text(ctx, f"{TARGET}個に増やせる？", W / 2, 365, 100, rgb=GOLD, sw=16)
         n = min(fr["n"], TARGET)   # 時間切れのあとも、そのまま数え続ける
         bump = 1.0 + (0.15 if n > prev_n else 0)
         prev_n = n
-        text(ctx, f"{n}", W / 2 - 90, 500, 110 * bump, rgb=(1, 1, 1), sw=12)
-        text(ctx, f"/ {TARGET} 個", W / 2 + 170, 500, 50, rgb=(0.85, 0.85, 0.9), sw=6)
+        text(ctx, f"{n}", W / 2 - 90, 500, 100 * bump, rgb=(1, 1, 1), sw=12)
+        text(ctx, f"/ {TARGET} 個", W / 2 + 170, 500, 48, rgb=(0.85, 0.85, 0.9), sw=6)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
-        text(ctx, f"残り {left:4.1f}秒", W / 2, 1760, 64, rgb=(1, 0.4, 0.4) if left < 8 else (0.95, 0.95, 0.95), sw=10)
+        text(ctx, f"残り {left:4.1f}秒", W / 2, 1450, 62, rgb=(1, 0.4, 0.4) if left < 8 else (0.95, 0.95, 0.95), sw=10)
         if not over:   # 画面の下のテキスト(ユーザー指定)
-            text(ctx, "失敗したら・・・", W / 2, 1862, 60, rgb=(1, 0.45, 0.45), sw=10)
+            text(ctx, "失敗したら・・・", W / 2, 1535, 58, rgb=(1, 0.45, 0.45), sw=10)
         if over and fail and t < g0:   # 時間切れの直後:物理はそのまま。何秒おそかったかを見せる
             k = min(1.0, (t - end_t) / 0.15)
             text(ctx, "時間切れ!!", W / 2, 680, 120 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
