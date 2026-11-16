@@ -145,3 +145,8 @@ handle at the bottom front, a blank nameplate, no text, no logo
   - c04 9f9d2cb9-8e55-4d27-a989-7e8329eeb715 / c05 d70aa68b-2f14-4a87-81da-1fe398cd67c6 / c06 ca88e877-2f1b-4ce6-83d0-244a3b7b87dd
   - c07 694ee65c-b8ca-416c-97c8-8037e3f36fd3 / c08 ee645d6f-cdee-4d87-85ad-cda5911e3231 / c09 9719e497-57e8-496c-a1aa-5eefc6a00f9c
   - c10 644f6c72-72df-4ee0-88d3-c7ac70491fda
+- 2026-11-16 動画 10本を投入(Seedance 2.0 fast、480p、音なし、c08のみ5秒・他4秒、41クレジット)
+  - v01 6c31d330-a491-4780-b3da-7bf3b513d73c / v02 0c8f901c-4482-4aa0-a852-22440780d7cd / v03 b8d263e9-7216-4841-b6fb-c72a16c512de
+  - v04 7730230d-c4d3-41c7-a8d7-9a6afedbe8df / v05 f57b9915-7007-46cf-9aeb-d85c834087b8 / v06 8180885c-3cb0-4adf-b091-15c811d0c8af
+  - v07 0ec032a4-6981-44a9-ba05-6d1a555fcde5 / v08 cef42157-3d3e-473d-8a96-b1e9f2a9ae65 / v09 f0b8d4c3-bd9e-4bd0-aa1a-0b7a1cd62a45
+  - v10 3e3e3b9c-6550-41f2-9db6-064788b0c115
