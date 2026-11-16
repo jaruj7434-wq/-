@@ -393,7 +393,7 @@ def render(seed):
         ctx.set_source_rgba(1, 1, 1, 0.8)
         ctx.set_line_width(4)
         ctx.stroke()
-        for kind, x, y, t0 in fr["items"]:
+        for kind, x, y, t0 in ([] if over else fr["items"]):   # 終了後はアイテムを消して結果を読みやすく
             draw_icon(ctx, kind, BX0 + x, BY0 + y, 2 * ITEM_R / 1.25 * min(1.0, (t - t0) / 0.2), t)
         keep = []
         for x, y, t0 in booms:
@@ -453,6 +453,10 @@ def render(seed):
         text(ctx, f"{100 * (tot - pink) / tot:.0f}%", bx + bw - 70, by + bh + 52, 46, rgb=BALLC[1], sw=8)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, by + bh + 52, 50, rgb=(1, 0.4, 0.4) if left < 10 else (0.95, 0.95, 0.95), sw=8)
+        if over:   # 結果の文字のうしろに暗い帯
+            ctx.rectangle(0, 790 if fail else 660, W, 300)
+            ctx.set_source_rgba(0, 0, 0, 0.55)
+            ctx.fill()
         if over and fail:
             k = min(1.0, after / 0.25)
             text(ctx, "ミントの勝ち…", W / 2, 900, 110 * (1.3 - 0.3 * k), rgb=BALLC[1], sw=18)
