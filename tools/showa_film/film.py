@@ -59,6 +59,8 @@ DEFAULT_LOOK = {
 
 def run(cmd, **kw):
     print("+", " ".join(cmd[:6]), "..." if len(cmd) > 6 else "", file=sys.stderr)
+    if os.environ.get("SHOWA_DEBUG"):
+        print("FULL:", cmd, file=sys.stderr)
     subprocess.run(cmd, check=True, **kw)
 
 
@@ -355,13 +357,15 @@ def build_audio(edl, total, tmp, base):
         inputs += ["-i", p]
         delay = int(item.get("start", 0) * 1000)
         chain = RETRO_VOICE if item.get("kind") == "voice" else RETRO_MUSIC
-        chains.append(f"[{idx}:a]aformat=channel_layouts=mono,atrim=start={item.get('in', 0)},"
+        end = f":duration={item['dur']}" if item.get("dur") else ""
+        chains.append(f"[{idx}:a]aformat=channel_layouts=mono,atrim=start={item.get('in', 0)}{end},"
                       f"asetpts=PTS-STARTPTS,{chain},volume={item.get('gain', 1.0)},"
                       f"adelay={delay}|{delay}[a{idx}]")
         labels.append(f"[a{idx}]")
         idx += 1
+    total = round(total, 3)  # 足し算の誤差(59.30000000000001 等)で afade が全体を消すのを防ぐ
     chains.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0:duration=longest,"
-                  f"atrim=0:{total},afade=t=out:st={max(total - 0.4, 0)}:d=0.4,"
+                  f"atrim=0:{total},afade=t=out:st={max(round(total - 0.4, 3), 0)}:d=0.4,"
                   "aresample=22050,aresample=48000,loudnorm=I=-15:TP=-1.5[out]")
     out = os.path.join(tmp, "mix.wav")
     run(["ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex", ";".join(chains),
@@ -434,7 +438,7 @@ def main():
     tmp = tempfile.mkdtemp(prefix="showa_")
 
     # 1) カットを 4:3 にそろえてつなぐ
-    clips, t = [], 0.0
+    clips, t, clip_audio = [], 0.0, []
     for k, c in enumerate(edl["cuts"]):
         out = os.path.join(tmp, f"c{k:02d}.mp4")
         if "card" in c:
@@ -444,8 +448,12 @@ def main():
         else:
             normalize_clip(os.path.join(base, c["src"]), c.get("in", 0), c["dur"], out, fps, a.preview)
         clips.append(out)
+        if c.get("audio") and "src" in c:  # カットの動画の音声(セリフなど)をそのまま使う
+            clip_audio.append({"src": os.path.join(base, c["src"]), "kind": c.get("audio_kind", "voice"),
+                               "start": t, "in": c.get("in", 0), "dur": c["dur"],
+                               "gain": c.get("audio_gain", 1.0)})
         t += c["dur"]
-    total = t
+    total = round(t, 3)
     n_frames = int(round(total * fps))
     lst = os.path.join(tmp, "list.txt")
     with open(lst, "w") as fh:
@@ -492,7 +500,13 @@ def main():
     dec.wait()
 
     # 4) 音
+    edl.setdefault("audio", {}).setdefault("tracks", [])
+    edl["audio"]["tracks"] = edl["audio"]["tracks"] + clip_audio
     mix = build_audio(edl, total, tmp, base)
+    vd = subprocess.run(["ffmpeg", "-v", "info", "-i", mix, "-af", "volumedetect", "-f", "null", "-"],
+                        capture_output=True, text=True).stderr
+    if "max_volume: -9" in vd or "max_volume: -inf" in vd:  # 無音(-90dB台)なら止める
+        sys.exit(f"音声が無音になっています。作業フォルダを確認してください: {tmp}")
     master = os.path.join(out_dir, "master_4x3.mp4")
     run(["ffmpeg", "-y", "-v", "error", "-i", silent, "-i", mix, "-map", "0:v", "-map", "1:a",
          "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", master])

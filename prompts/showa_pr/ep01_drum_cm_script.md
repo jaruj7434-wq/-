@@ -198,3 +198,8 @@ handle at the bottom front, a blank nameplate, no text, no logo
   - s04 cdae6f18-24e0-440f-9b60-594d19018e3a / s06 73f77c49-ca24-4d57-b6cd-7c5c1a20ea27 / s06b 57398229-a938-4cf9-b067-d7f7cf2e89d4
   - s06c(図解・8秒)d7a625cb-85aa-4fb1-8315-5fe320f84bf3 / s07 98000361-4e1c-4138-ba46-4c2bebf468c5 / s08 aa768225-b398-4905-af4f-5449f6491281
   - s09 3520f8db-3368-41d2-a22e-2eec6a939889 / s10 ba31346a-8c6d-48fd-bbd8-7a0b5ba15001
+- 2026-11-16 段階B 11本すべて成功 → clips/s02〜s10.mp4。編集表 prompts/showa_pr/ep01_cm_v2_edl.json → assets/output/showa_pr/ep01_cm_v2/(約59秒)
+  - セリフは各動画の音声をそのまま使用(EDL のカットに "audio": true)。c05 のナレーションだけ ElevenLabs の声
+  - 効果音(ジャン・チーン・キラーン)は手元で合成 → assets/source/showa_pr/ep01/sfx/
+  - 不具合メモ:カット長の合計が 59.30000000000001 になると、最後の afade が音声全体を消して無音になっていた → film.py で合計を丸めて修正。無音なら止まるチェックも追加
+  - 未対応:封筒の「へそくり」文字、洗濯機の銘板、図解の「おとどけ箱↓」が管の線と重なって少し読みにくい
