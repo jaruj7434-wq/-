@@ -64,3 +64,4 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - 慶太はカウンターでパスタをフォーク+スプーン、隣でイルカ先生役がラーメンを持ってドン引き、奥で白い調理服の親父が呆れ顔
   - のれんは無地(文字は未定)。親父の目は糸目になっていない
 - v2: イルカ先生役の額当てのマークを渦巻きに修正(`bit2-ichiraku-v2.png`)
+- v3: のれんの中央2枚に「一」「楽」をローカル合成(Noto Serif CJK Black、黒、布の陰影に合わせて乗算)→ `bit2-ichiraku-v3.png`
