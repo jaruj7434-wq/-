@@ -30,6 +30,9 @@ FONTS = {
     "mincho": os.path.join(FONT_DIR, "ShipporiMinchoB1-ExtraBold.ttf"),
     "mincho_regular": os.path.join(FONT_DIR, "ShipporiMinchoB1-Regular.ttf"),
     "gothic": os.path.join(FONT_DIR, "DelaGothicOne-Regular.ttf"),
+    "tokumin": os.path.join(FONT_DIR, "KaiseiTokumin-ExtraBold.ttf"),   # 昭和の広告の特太明朝
+    "antique": os.path.join(FONT_DIR, "ZenAntique-Regular.ttf"),        # 金属活字風
+    "fude": os.path.join(FONT_DIR, "YujiSyuku-Regular.ttf"),            # 筆文字(手書きフリップ等)
 }
 
 # 作業解像度(ゆらぎ用に少し大きく取る) → 中央 720x540 を切り出し → 1440x1080 に拡大
@@ -127,7 +130,7 @@ def draw_emblem(d, cx, cy, r):
 
 
 def render_telop(text, size=40, pos="lower", fnt_name="mincho", color=None, xy=None,
-                 stroke=True, angle=0):
+                 stroke=True, angle=0, box=False):
     """画面内テロップ(RGBA, 作業解像度)
     - 既定:クリーム色の明朝+黒い縁取り(昭和の映画字幕風)
     - fnt_name: mincho / gothic、color: [R,G,B]
@@ -146,12 +149,27 @@ def render_telop(text, size=40, pos="lower", fnt_name="mincho", color=None, xy=N
     else:
         y0 = PAD_H - 78 - line_h * len(lines) if pos == "lower" else 70
         cx = PAD_W / 2
+    if box:  # 図解の札:白い紙に黒い枠(文字の下地)
+        w = max(sum(d.textlength(ch, font=fnt) for ch in ln) + 2 * (len(ln) - 1) for ln in lines)
+        pad = size * 0.35
+        d.rectangle([cx - w / 2 - pad, y0 - pad * 0.6, cx + w / 2 + pad, y0 + line_h * len(lines) - pad * 0.2],
+                    fill=(250, 248, 242, 255), outline=(28, 26, 24, 255), width=3)
     for i, ln in enumerate(lines):
-        if stroke:
+        if stroke == "soft":
+            draw_text_center(d, cx, y0 + i * line_h, ln, fnt, fill + (255,), spacing=4)
+        elif stroke:
             draw_text_center(d, cx, y0 + i * line_h, ln, fnt, fill + (255,),
                              shadow=INK + (235,), spacing=3, stroke=2)
         else:
             draw_text_center(d, cx, y0 + i * line_h, ln, fnt, fill + (235,), spacing=2)
+    if stroke == "soft":
+        # 昭和のテレビのスーパー風:縁取りはせず、ぼんやりした影と、文字のにじみだけ
+        alpha = layer.split()[3]
+        sh = alpha.filter(ImageFilter.GaussianBlur(4)).point(lambda v: int(v * 0.75))
+        shadow = Image.new("RGBA", layer.size, INK + (0,))
+        shadow.putalpha(sh)
+        shadow = shadow.transform(layer.size, Image.AFFINE, (1, 0, -2, 0, 1, -3))
+        layer = Image.alpha_composite(shadow, layer.filter(ImageFilter.GaussianBlur(0.7)))
     if angle:
         layer = layer.rotate(angle, resample=Image.BICUBIC, center=(cx, y0 + line_h * len(lines) / 2))
     return layer
@@ -384,11 +402,11 @@ def vertical_overlays(edl, tmp):
     d = ImageDraw.Draw(band)
     v = edl.get("vertical", {})
     if v.get("top_small"):
-        draw_text_center(d, W / 2, top - 250, v["top_small"], font("mincho", 40), CREAM + (255,), spacing=6)
+        draw_text_center(d, W / 2, top - 250, v["top_small"], font("antique", 40), CREAM + (255,), spacing=6)
     if v.get("top_title"):
-        draw_text_center(d, W / 2, top - 185, v["top_title"], font("gothic", 92), CREAM + (255,), spacing=8)
+        draw_text_center(d, W / 2, top - 190, v["top_title"], font("tokumin", 96), CREAM + (255,), spacing=6)
     if v.get("bottom_note"):
-        draw_text_center(d, W / 2, H - 130, v["bottom_note"], font("mincho_regular", 30),
+        draw_text_center(d, W / 2, H - 130, v["bottom_note"], font("antique", 30),
                          (200, 190, 170, 255), spacing=2)
     p = os.path.join(tmp, "band.png")
     band.save(p)
@@ -397,7 +415,7 @@ def vertical_overlays(edl, tmp):
         im = Image.new("RGBA", (W, 300), (0, 0, 0, 0))
         dd = ImageDraw.Draw(im)
         for j, ln in enumerate(s["text"].split("\n")):
-            draw_text_center(dd, W / 2, 20 + j * 76, ln, font("mincho", 54), CREAM + (255,), spacing=1)
+            draw_text_center(dd, W / 2, 20 + j * 76, ln, font("antique", 54), CREAM + (255,), spacing=1)
         p = os.path.join(tmp, f"sub{k:02d}.png")
         im.save(p)
         items.append((p, s["start"], s["end"]))
@@ -463,7 +481,8 @@ def main():
 
     # 2) テロップを用意
     telops = [(render_telop(x["text"], x.get("size", 40), x.get("pos", "lower"), x.get("font", "mincho"),
-                            x.get("color"), x.get("xy"), x.get("stroke", True), x.get("angle", 0)),
+                            x.get("color"), x.get("xy"), x.get("stroke", True), x.get("angle", 0),
+                            x.get("box", False)),
                x["start"], x["end"])
               for x in edl.get("telops", [])]
 
