@@ -226,6 +226,21 @@ class FilmLook:
         self.gate = (np.asarray(gate.filter(ImageFilter.GaussianBlur(2.2)), np.float32) / 255)[..., None]
         self.scratches = []  # [x, 残りコマ, 濃さ, 太さ, 揺れ速度]
         self.hair = None
+        # 昭和のカラーテレビ/ビデオ風(tv=True):ザザッと乱れる区間を前もって決めておく(音にも使う)
+        self.burst = np.zeros(n, np.float32)
+        self.burst_times = []
+        if L.get("tv"):
+            fps = L.get("fps", 24)
+            k = int(fps * 0.6)
+            while k < n - 4:
+                if rng.random() < L.get("glitch_rate", 0.035):
+                    ln = int(rng.integers(2, 7))
+                    strength = rng.uniform(0.5, 1.0)
+                    self.burst[k:k + ln] = strength * np.linspace(1, 0.4, ln)
+                    self.burst_times.append((k / fps, ln / fps, float(strength)))
+                    k += ln + int(fps * 1.2)
+                k += 1
+            self.track_phase = rng.uniform(0, 100)
 
     def color(self, img):
         L = self.L
@@ -277,8 +292,56 @@ class FilmLook:
         img = img + L["grain"] * g * (0.35 + 2.2 * lum * (1 - lum))
 
         img = self.damage(img)
+        if L.get("tv"):
+            img = self.tv_fx(i, img)
         img = img * self.vig * self.gate
         return (np.clip(img, 0, 1) * 255).astype(np.uint8)
+
+    def tv_fx(self, i, img):
+        """昭和のカラーテレビをビデオで録ったような乱れ:色にじみ・走査線・ザザッ(スノーノイズ+横ずれ)"""
+        L, rng = self.L, self.rng
+        img = np.clip(img, 0, 1)
+        # 色にじみ:輝度はそのまま、色差だけ横にぼかして右にずらす
+        y = img @ np.array([0.299, 0.587, 0.114], np.float32)
+        cb = img[..., 2] - y
+        cr = img[..., 0] - y
+        kw = int(L.get("chroma_blur", 9))
+        sh = int(L.get("chroma_shift", 3))
+        def hblur(c):
+            c = np.cumsum(np.pad(c, ((0, 0), (kw, 0)), mode="edge"), axis=1)
+            c = (c[:, kw:] - c[:, :-kw]) / kw
+            return np.roll(c, sh, axis=1)
+        cb, cr = hblur(cb), hblur(cr)
+        r = y + cr
+        b = y + cb
+        g = (y - 0.299 * r - 0.114 * b) / 0.587
+        img = np.stack([r, g, b], axis=2)
+        # 走査線
+        img[1::2] *= 1 - L.get("scanline", 0.07)
+        # ゆっくり流れる横帯(電波の弱さ)
+        rows = np.arange(WORK_H, dtype=np.float32)
+        band = 0.035 * np.sin((rows / WORK_H * 2 + i * 0.013 + self.track_phase) * 2 * np.pi)
+        img += band[:, None, None]
+        # ヘッド切り替えノイズ(画面最下部の数行が横にずれてざらつく)
+        hs = 7
+        img[-hs:] = np.roll(img[-hs:], int(rng.integers(6, 20)), axis=1) * 0.8 + rng.random((hs, WORK_W, 1)) * 0.25
+        # ザザッ:スノーノイズと、行ごとの横ずれ
+        bst = float(self.burst[i]) if i < len(self.burst) else 0.0
+        if bst > 0:
+            off = (rng.standard_normal(WORK_H) * 14 * bst).astype(int)
+            yband = int(rng.integers(0, WORK_H - 60))
+            off[yband:yband + int(rng.integers(20, 90))] += int(rng.integers(20, 60) * bst)
+            idx = (np.arange(WORK_W)[None, :] - off[:, None]) % WORK_W
+            img = img[np.arange(WORK_H)[:, None], idx]
+            snow = rng.random((WORK_H, WORK_W, 1)).astype(np.float32)
+            img = img * (1 - 0.55 * bst) + snow * 0.55 * bst
+            # 白い横線
+            for _ in range(int(rng.integers(2, 6))):
+                yy = int(rng.integers(0, WORK_H - 2))
+                img[yy:yy + int(rng.integers(1, 3))] = 0.92
+        else:
+            img += (rng.standard_normal((WORK_H, WORK_W, 1)) * L.get("tv_noise", 0.025)).astype(np.float32)
+        return img
 
     def damage(self, img):
         """ゴミ・毛・縦傷"""
@@ -354,6 +417,27 @@ def projector_noise(path, dur, sr=48000, seed=7):
         w.writeframes(y.tobytes())
 
 
+def tv_noise(path, dur, bursts, sr=48000, seed=11):
+    """テレビ/ビデオの音の下地:かすかなヒスノイズ+ハム、ザザッの区間だけ強い砂嵐の音"""
+    rng = np.random.default_rng(seed)
+    n = int(dur * sr)
+    t = np.arange(n) / sr
+    y = rng.standard_normal(n) * 0.006 + 0.004 * np.sin(2 * np.pi * 60 * t)
+    for st, ln, strength in bursts:
+        a, b = int(st * sr), int((st + ln + 0.05) * sr)
+        b = min(b, n)
+        if a >= n:
+            continue
+        env = np.linspace(1, 0.3, b - a)
+        y[a:b] += rng.standard_normal(b - a) * 0.25 * strength * env
+    import wave
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes((np.clip(y, -1, 1) * 32767).astype(np.int16).tobytes())
+
+
 # 昭和の光学録音っぽく:帯域を狭め、中域を持ち上げ、ゆっくりした音程ゆれ(ワウ)と細かいゆれ(フラッター)
 RETRO_VOICE = ("highpass=f=220,lowpass=f=3600,equalizer=f=1600:t=q:w=1.2:g=5,"
                "acompressor=threshold=0.1:ratio=4:attack=5:release=120,"
@@ -385,7 +469,10 @@ def build_audio(edl, total, tmp, base):
     n = int(total * sr)
     A = edl.get("audio", {})
     noise = os.path.join(tmp, "projector.wav")
-    projector_noise(noise, total + 1)
+    if edl.get("look", {}).get("tv"):
+        tv_noise(noise, total + 1, edl.get("_bursts", []))
+    else:
+        projector_noise(noise, total + 1)
     mix = np.zeros(n, np.float32)
     pj = _read_mono(noise)[:n]
     mix[:len(pj)] += pj * A.get("projector_gain", 0.55)
@@ -510,7 +597,8 @@ def main():
               for x in edl.get("telops", [])]
 
     # 3) 1コマずつフィルム加工
-    look = FilmLook(edl.get("look"), n_frames)
+    look = FilmLook(dict(edl.get("look") or {}, fps=fps), n_frames)
+    edl["_bursts"] = look.burst_times
     silent = os.path.join(tmp, "film.mp4")
     dec = subprocess.Popen(["ffmpeg", "-v", "error", "-i", joined, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
                            stdout=subprocess.PIPE)
