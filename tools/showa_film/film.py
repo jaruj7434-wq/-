@@ -227,18 +227,41 @@ class FilmLook:
         self.scratches = []  # [x, 残りコマ, 濃さ, 太さ, 揺れ速度]
         self.hair = None
         # 昭和のカラーテレビ/ビデオ風(tv=True):ザザッと乱れる区間を前もって決めておく(音にも使う)
+        # 乱れの予定表。種類・長さ・強さ・間隔をばらばらにして、一辺倒にならないようにする
+        #  snow  : ザザッと砂嵐(2〜7コマ)        tear : 横に裂けて流れる帯(ビデオのトラッキング乱れ、8〜30コマ)
+        #  roll  : 画面が上下に流れる(3〜10コマ)  chroma: 色が抜ける/色がずれる(4〜16コマ)
+        #  flash : 一瞬白く/黒く飛ぶ(1〜2コマ)   skew : 上の方が横に曲がる(6〜20コマ)
+        #  fade  : 電波が弱くなり暗く粗くなる(12〜36コマ)
+        self.events = [None] * n          # コマごとに (種類, 進み具合0〜1, 強さ, 乱数の種)
         self.burst = np.zeros(n, np.float32)
-        self.burst_times = []
+        self.burst_times = []             # 音用:(開始秒, 長さ秒, 強さ, 種類)
         if L.get("tv"):
             fps = L.get("fps", 24)
-            k = int(fps * 0.6)
-            while k < n - 4:
-                if rng.random() < L.get("glitch_rate", 0.035):
-                    ln = int(rng.integers(2, 7))
-                    strength = rng.uniform(0.5, 1.0)
-                    self.burst[k:k + ln] = strength * np.linspace(1, 0.4, ln)
-                    self.burst_times.append((k / fps, ln / fps, float(strength)))
-                    k += ln + int(fps * 1.2)
+            kinds = [("snow", 2, 7, 0.26), ("tear", 8, 30, 0.18), ("roll", 3, 10, 0.12), ("chroma", 4, 16, 0.14),
+                     ("flash", 1, 2, 0.12), ("skew", 6, 20, 0.10), ("fade", 12, 36, 0.08)]
+            names = [x[0] for x in kinds]
+            probs = np.array([x[3] for x in kinds]); probs /= probs.sum()
+            rate = L.get("glitch_rate", 0.035)
+            k = int(fps * 0.8)
+            while k < n - 3:
+                if rng.random() < rate:
+                    burst_n = 1 if rng.random() < 0.6 else int(rng.integers(2, 4))  # ときどき連続で起きる
+                    for _ in range(burst_n):
+                        j = int(rng.choice(len(kinds), p=probs))
+                        nm, lo, hi, _p = kinds[j]
+                        ln = int(rng.integers(lo, hi + 1))
+                        ln = min(ln, n - k)
+                        strength = float(rng.uniform(0.35, 1.0))
+                        seed = int(rng.integers(0, 1 << 30))
+                        for q in range(ln):
+                            self.events[k + q] = (nm, q / max(ln - 1, 1), strength, seed)
+                        self.burst[k:k + ln] = strength
+                        self.burst_times.append((k / fps, ln / fps, strength, nm))
+                        k += ln + int(rng.integers(1, int(fps * 0.4)))
+                        if k >= n - 3:
+                            break
+                    # 次までの静かな時間も、短い時と長い時がある
+                    k += int(fps * rng.choice([0.6, 1.0, 1.8, 3.0, 4.5]))
                 k += 1
             self.track_phase = rng.uniform(0, 100)
 
@@ -325,22 +348,73 @@ class FilmLook:
         # ヘッド切り替えノイズ(画面最下部の数行が横にずれてざらつく)
         hs = 7
         img[-hs:] = np.roll(img[-hs:], int(rng.integers(6, 20)), axis=1) * 0.8 + rng.random((hs, WORK_W, 1)) * 0.25
-        # ザザッ:スノーノイズと、行ごとの横ずれ
-        bst = float(self.burst[i]) if i < len(self.burst) else 0.0
-        if bst > 0:
-            off = (rng.standard_normal(WORK_H) * 14 * bst).astype(int)
-            yband = int(rng.integers(0, WORK_H - 60))
-            off[yband:yband + int(rng.integers(20, 90))] += int(rng.integers(20, 60) * bst)
-            idx = (np.arange(WORK_W)[None, :] - off[:, None]) % WORK_W
-            img = img[np.arange(WORK_H)[:, None], idx]
-            snow = rng.random((WORK_H, WORK_W, 1)).astype(np.float32)
-            img = img * (1 - 0.55 * bst) + snow * 0.55 * bst
-            # 白い横線
-            for _ in range(int(rng.integers(2, 6))):
-                yy = int(rng.integers(0, WORK_H - 2))
-                img[yy:yy + int(rng.integers(1, 3))] = 0.92
+        ev = self.events[i] if i < len(self.events) else None
+        if ev:
+            img = self.glitch(img, *ev)
         else:
             img += (rng.standard_normal((WORK_H, WORK_W, 1)) * L.get("tv_noise", 0.025)).astype(np.float32)
+        return img
+
+    def glitch(self, img, kind, ph, st, seed):
+        """乱れを1種類かける。ph は乱れの中での進み具合(0〜1)、st は強さ"""
+        rng = self.rng
+        H, W = WORK_H, WORK_W
+        rows = np.arange(H)
+        env = np.sin(np.pi * min(max(ph, 0.0), 1.0)) * 0.7 + 0.3   # 始まりと終わりは弱く
+        if kind == "snow":
+            off = (rng.standard_normal(H) * 14 * st).astype(int)
+            yb = int(rng.integers(0, H - 60))
+            off[yb:yb + int(rng.integers(20, 90))] += int(rng.integers(20, 60) * st)
+            img = img[rows[:, None], (np.arange(W)[None, :] - off[:, None]) % W]
+            snow = rng.random((H, W, 1)).astype(np.float32)
+            img = img * (1 - 0.55 * st) + snow * 0.55 * st
+            for _ in range(int(rng.integers(2, 6))):
+                yy = int(rng.integers(0, H - 2))
+                img[yy:yy + int(rng.integers(1, 3))] = 0.92
+        elif kind == "tear":
+            # 横に裂けた帯が、上から下(または下から上)へ流れていく
+            r = np.random.default_rng(seed)
+            down = r.random() < 0.6
+            center = (ph if down else 1 - ph) * (H + 120) - 60
+            width = 30 + 50 * st
+            w = np.clip(1 - np.abs(rows - center) / width, 0, 1)
+            off = (w * (40 + 60 * st) * env + rng.standard_normal(H) * 3 * w).astype(int)
+            img = img[rows[:, None], (np.arange(W)[None, :] - off[:, None]) % W]
+            noise = rng.random((H, W, 1)).astype(np.float32)
+            img = img * (1 - 0.6 * w[:, None, None]) + noise * 0.6 * w[:, None, None]
+            img += (w[:, None, None] * 0.12)
+        elif kind == "roll":
+            # 画面が上下に流れる(垂直同期の乱れ)。境目に黒い帯
+            shift = int((ph * H * (0.4 + 0.6 * st)) % H)
+            img = np.roll(img, shift, axis=0)
+            bar = (shift + np.arange(14)) % H
+            img[bar] *= 0.08
+        elif kind == "chroma":
+            # 色が抜けたり、赤と青が左右にずれたりする
+            r = np.random.default_rng(seed)
+            y = img.mean(axis=2, keepdims=True)
+            if r.random() < 0.5:
+                img = y + (img - y) * (1 - 0.95 * st * env)
+            else:
+                d = int(4 + 10 * st * env)
+                img = np.stack([np.roll(img[..., 0], d, axis=1), img[..., 1], np.roll(img[..., 2], -d, axis=1)], axis=2)
+                img = img * np.array([1.05, 0.95, 1.08], np.float32)
+        elif kind == "flash":
+            v = 0.95 if (seed & 1) else 0.04
+            img = img * (1 - 0.8 * st) + v * 0.8 * st
+        elif kind == "skew":
+            # 画面の上の方だけ横に曲がる(ビデオの上端のゆがみ)
+            top = int(H * (0.25 + 0.3 * st))
+            curve = np.clip(1 - rows / top, 0, 1) ** 2
+            wob = 1 + 0.5 * np.sin(ph * 12 + seed % 7)
+            off = (curve * (25 + 45 * st) * env * wob).astype(int)
+            img = img[rows[:, None], (np.arange(W)[None, :] - off[:, None]) % W]
+        elif kind == "fade":
+            # 電波が弱くなる:暗く、色が薄く、細かいノイズが増える
+            y = img.mean(axis=2, keepdims=True)
+            k = st * env
+            img = (y + (img - y) * (1 - 0.6 * k)) * (1 - 0.35 * k)
+            img += rng.standard_normal((H, W, 1)).astype(np.float32) * 0.09 * k
         return img
 
     def damage(self, img):
@@ -423,13 +497,33 @@ def tv_noise(path, dur, bursts, sr=48000, seed=11):
     n = int(dur * sr)
     t = np.arange(n) / sr
     y = rng.standard_normal(n) * 0.006 + 0.004 * np.sin(2 * np.pi * 60 * t)
-    for st, ln, strength in bursts:
-        a, b = int(st * sr), int((st + ln + 0.05) * sr)
-        b = min(b, n)
-        if a >= n:
+    for ev in bursts:
+        st, ln, strength = ev[0], ev[1], ev[2]
+        kind = ev[3] if len(ev) > 3 else "snow"
+        a, b = int(st * sr), min(int((st + ln + 0.05) * sr), n)
+        if a >= n or b <= a:
             continue
-        env = np.linspace(1, 0.3, b - a)
-        y[a:b] += rng.standard_normal(b - a) * 0.25 * strength * env
+        m = b - a
+        tt = np.arange(m) / sr
+        if kind == "snow":          # ザーッ
+            y[a:b] += rng.standard_normal(m) * 0.25 * strength * np.linspace(1, 0.3, m)
+        elif kind == "tear":        # ブブブッ(うなるバズ音)
+            buzz = np.sign(np.sin(2 * np.pi * (120 + 80 * strength) * tt)) * 0.06
+            y[a:b] += (buzz + rng.standard_normal(m) * 0.05) * strength * np.sin(np.pi * np.linspace(0, 1, m))
+        elif kind == "roll":        # ボッ、と一瞬こもる
+            y[a:b] *= 0.3
+            y[a:a + min(m, 2400)] += np.sin(2 * np.pi * 70 * tt[:min(m, 2400)]) * 0.15 * strength
+        elif kind == "chroma":      # かすかなヒューン
+            y[a:b] += np.sin(2 * np.pi * (900 + 400 * tt / max(ln, 0.05)) * tt) * 0.02 * strength
+        elif kind == "flash":       # プチッ
+            c = min(m, 600)
+            y[a:a + c] += rng.standard_normal(c) * 0.4 * strength * np.exp(-np.arange(c) / 80)
+        elif kind == "skew":        # パチパチ
+            for p in rng.integers(a, b, max(1, int(ln * 25))):
+                y[p:p + 30] += rng.uniform(-0.3, 0.3) * strength
+        elif kind == "fade":        # 遠くなる(ヒスが増え、ハムが強くなる)
+            env = np.sin(np.pi * np.linspace(0, 1, m))
+            y[a:b] += (rng.standard_normal(m) * 0.05 + 0.03 * np.sin(2 * np.pi * 50 * tt)) * strength * env
     import wave
     with wave.open(path, "wb") as w:
         w.setnchannels(1)

@@ -28,7 +28,7 @@
   "scratch_prob": 0,
   "halation": 0.22,
   "vignette": 0.3,
-  "glitch_rate": 0.03,
+  "glitch_rate": 0.045,
   "seed": 1968
  },
  "vertical": {
