@@ -48,6 +48,10 @@ MIN_R = 6.0
 MAX_OBJ = TARGET + 40
 OUTRO = 4.2
 VIEW_CY, VIEW_S = 985.0, 0.83   # 画面上のわくの中心と大きさ(TikTokなどの文字やボタンに隠れないよう、まん中寄りに)
+COUNT_Y = 500
+if R != 460.0:   # わくを大きくした版:「残り○秒」や上の数字と円が重ならないよう、画面上の円の大きさ(半径408)と位置を合わせる(物理は同じ)
+    VIEW_CY, VIEW_S = 972.0, 408.0 / R
+    COUNT_Y = 478
 FAIL_SHOW = 0.0   # 時間切れになった瞬間に幽霊が出る
 FIX_INDEX = os.environ.get("FIX_INDEX", "0") == "1"   # 1:生まれたボール同士が重なる不具合を直した版(31本目の作り直しから)
 BIRTH_GAP = float(os.environ.get("BIRTH_GAP", 0.3))   # 生まれるボールと、まわりのボールとのすき間(ピクセル)。小さいと生まれた瞬間に次々当たって連鎖する
@@ -404,8 +408,8 @@ def render(seed):
         n = min(fr["n"], TARGET)   # 時間切れのあとも、そのまま数え続ける
         bump = 1.0 + (0.15 if n > prev_n else 0)
         prev_n = n
-        text(ctx, f"{n}", W / 2 - 90, 500, 100 * bump, rgb=(1, 1, 1), sw=12)
-        text(ctx, f"/ {TARGET} 個", W / 2 + 170, 500, 48, rgb=(0.85, 0.85, 0.9), sw=6)
+        text(ctx, f"{n}", W / 2 - 90, COUNT_Y, 100 * bump, rgb=(1, 1, 1), sw=12)
+        text(ctx, f"/ {TARGET} 個", W / 2 + 170, COUNT_Y, 48, rgb=(0.85, 0.85, 0.9), sw=6)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, 1450, 62, rgb=(1, 0.4, 0.4) if left < 8 else (0.95, 0.95, 0.95), sw=10)
         if not over:   # 画面の下のテキスト(ユーザー指定)
