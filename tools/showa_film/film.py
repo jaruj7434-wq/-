@@ -176,11 +176,12 @@ def render_telop(text, size=40, pos="lower", fnt_name="mincho", color=None, xy=N
 
 
 # ---------------------------------------------------------------- 素材の正規化
-def normalize_clip(src, t_in, dur, out, fps, preview):
-    """任意の動画 → 4:3(PAD_W x PAD_H)、指定fps、無音、指定尺"""
-    vf = (f"fps={fps},scale={PAD_W}:{PAD_H}:force_original_aspect_ratio=increase,"
+def normalize_clip(src, t_in, dur, out, fps, preview, speed=1.0):
+    """任意の動画 → 4:3(PAD_W x PAD_H)、指定fps、無音、指定尺
+    speed>1 で早回し(元の動画から dur*speed 秒ぶんを使い、dur 秒に縮める)"""
+    vf = (f"setpts=(PTS-STARTPTS)/{speed},fps={fps},scale={PAD_W}:{PAD_H}:force_original_aspect_ratio=increase,"
           f"crop={PAD_W}:{PAD_H},setsar=1,format=rgb24")
-    cmd = ["ffmpeg", "-y", "-v", "error", "-ss", str(t_in), "-i", src, "-t", str(dur),
+    cmd = ["ffmpeg", "-y", "-v", "error", "-ss", str(t_in), "-i", src, "-t", str(round(dur * speed, 3)),
            "-vf", vf, "-an"]
     cmd += ["-c:v", "libx264", "-crf", "16" if not preview else "26", "-preset", "veryfast",
             "-pix_fmt", "yuv444p", out]
@@ -395,7 +396,8 @@ def build_audio(edl, total, tmp, base):
         out = os.path.join(tmp, f"trk{k:02d}.wav")
         run(["ffmpeg", "-y", "-v", "error", "-i", p, "-af",
              f"aformat=channel_layouts=mono,atrim=start={item.get('in', 0)}{end},asetpts=PTS-STARTPTS,"
-             f"{chain},volume={item.get('gain', 1.0)}", "-ac", "1", "-ar", str(sr), out])
+             f"atempo={item.get('tempo', 1.0)},{chain},volume={item.get('gain', 1.0)}",
+             "-ac", "1", "-ar", str(sr), out])
         y = _read_mono(out)
         st = int(item.get("start", 0) * sr)
         if st >= n:
@@ -484,12 +486,13 @@ def main():
         elif "color" in c:
             still_clip(Image.new("RGB", (PAD_W, PAD_H), tuple(c["color"])), c["dur"], out, fps, a.preview)
         else:
-            normalize_clip(os.path.join(base, c["src"]), c.get("in", 0), c["dur"], out, fps, a.preview)
+            normalize_clip(os.path.join(base, c["src"]), c.get("in", 0), c["dur"], out, fps, a.preview,
+                           c.get("speed", 1.0))
         clips.append(out)
         if c.get("audio") and "src" in c:  # カットの動画の音声(セリフなど)をそのまま使う
             clip_audio.append({"src": os.path.join(base, c["src"]), "kind": c.get("audio_kind", "voice"),
-                               "start": t, "in": c.get("in", 0), "dur": c["dur"],
-                               "gain": c.get("audio_gain", 1.0)})
+                               "start": t, "in": c.get("in", 0), "dur": round(c["dur"] * c.get("speed", 1.0), 3),
+                               "tempo": c.get("speed", 1.0), "gain": c.get("audio_gain", 1.0)})
         t += c["dur"]
     total = round(t, 3)
     n_frames = int(round(total * fps))

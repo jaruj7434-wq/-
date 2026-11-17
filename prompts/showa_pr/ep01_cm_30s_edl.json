@@ -1,0 +1,275 @@
+{
+ "base_dir": "../../assets/source/showa_pr/ep01",
+ "fps": 24,
+ "look": {
+  "mode": "mono",
+  "seed": 1957
+ },
+ "vertical": {
+  "top_small": "あの頃、こんなCMがあった……?",
+  "top_title": "昭和のまぼろしCM",
+  "bottom_note": "架空の会社・製品です / この映像はAIで制作しています"
+ },
+ "_memo": "第1話 CM 30秒版。v2(約55秒)から、乾燥・ポケットの問題提起・電器店のカットを外し、セリフの前後を詰めて1.1倍(図解は1.25倍)に早回し",
+ "out_dir": "../../../output/showa_pr/ep01_cm_30s",
+ "cuts": [
+  {
+   "src": "clips/v01.mp4",
+   "in": 0.5,
+   "dur": 1.5
+  },
+  {
+   "src": "clips/s02.mp4",
+   "in": 0.3,
+   "dur": 3.27,
+   "speed": 1.1,
+   "audio": true
+  },
+  {
+   "src": "clips/s03b.mp4",
+   "in": 0.0,
+   "dur": 3.45,
+   "speed": 1.1,
+   "audio": true,
+   "audio_gain": 1.2
+  },
+  {
+   "src": "clips/s04.mp4",
+   "in": 0.3,
+   "dur": 2.73,
+   "speed": 1.1,
+   "audio": true
+  },
+  {
+   "src": "clips/v05.mp4",
+   "in": 0.0,
+   "dur": 3.0
+  },
+  {
+   "src": "clips/s06c.mp4",
+   "in": 0.0,
+   "dur": 6.5,
+   "speed": 1.25,
+   "audio": true
+  },
+  {
+   "src": "clips/s07.mp4",
+   "in": 0.7,
+   "dur": 2.73,
+   "speed": 1.1,
+   "audio": true
+  },
+  {
+   "src": "clips/s08.mp4",
+   "in": 0.6,
+   "dur": 3.64,
+   "speed": 1.1,
+   "audio": true
+  },
+  {
+   "src": "clips/s09.mp4",
+   "in": 1.1,
+   "dur": 2.0,
+   "speed": 1.1,
+   "audio": true
+  },
+  {
+   "dur": 2.4,
+   "card": {
+    "bg": [
+     16,
+     16,
+     16
+    ],
+    "emblem": {
+     "y": 170,
+     "r": 44
+    },
+    "lines": [
+     {
+      "text": "ユメミ",
+      "y": 240,
+      "size": 76,
+      "font": "tokumin",
+      "spacing": 14
+     },
+     {
+      "text": "夢見ヶ丘電機",
+      "y": 345,
+      "size": 40,
+      "font": "antique",
+      "spacing": 8,
+      "rule": true
+     },
+     {
+      "text": "架空の会社・製品です/AIで制作しています",
+      "y": 455,
+      "size": 18,
+      "font": "antique",
+      "spacing": 2
+     }
+    ]
+   }
+  }
+ ],
+ "telops": [
+  {
+   "text": "まだ 洗濯板?",
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 44,
+   "start": 1.7,
+   "end": 4.77
+  },
+  {
+   "text": "電気洗濯乾燥機\nおてんき号",
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 42,
+   "start": 10.95,
+   "end": 12.45
+  },
+  {
+   "text": "ボタンひとつで\n乾燥まで",
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 42,
+   "start": 12.45,
+   "end": 13.95
+  },
+  {
+   "text": "新案 ポケット点検機能",
+   "font": "tokumin",
+   "size": 34,
+   "color": [
+    28,
+    26,
+    24
+   ],
+   "stroke": false,
+   "box": true,
+   "xy": [
+    0.5,
+    0.09
+   ],
+   "start": 14.15,
+   "end": 20.45
+  },
+  {
+   "text": "おとどけ箱",
+   "font": "tokumin",
+   "size": 26,
+   "color": [
+    28,
+    26,
+    24
+   ],
+   "stroke": false,
+   "box": true,
+   "xy": [
+    0.2,
+    0.74
+   ],
+   "start": 15.95,
+   "end": 20.45
+  },
+  {
+   "text": "忘れ物 おとどけ",
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 44,
+   "start": 20.75,
+   "end": 23.18
+  },
+  {
+   "text": "ご主人の へそくりも",
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 42,
+   "start": 24.08,
+   "end": 26.82
+  },
+  {
+   "text": "家計も すっきり",
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 44,
+   "start": 26.92,
+   "end": 28.82
+  }
+ ],
+ "subtitles": [],
+ "audio": {
+  "projector_gain": 0.3,
+  "tracks": [
+   {
+    "src": "sfx/jan.wav",
+    "kind": "music",
+    "start": 1.5,
+    "gain": 0.8
+   },
+   {
+    "src": "jingle_take1.wav",
+    "kind": "music",
+    "start": 10.95,
+    "gain": 0.9,
+    "in": 1.85,
+    "dur": 3.0
+   },
+   {
+    "src": "sfx/chin.wav",
+    "kind": "music",
+    "start": 20.45,
+    "gain": 0.7
+   },
+   {
+    "src": "sfx/chin.wav",
+    "kind": "music",
+    "start": 23.18,
+    "gain": 0.7
+   },
+   {
+    "src": "sfx/kiran.wav",
+    "kind": "music",
+    "start": 27.42,
+    "gain": 0.6
+   },
+   {
+    "src": "jingle_tail_clean.wav",
+    "kind": "music",
+    "start": 28.82,
+    "gain": 0.9
+   }
+  ]
+ }
+}
