@@ -438,6 +438,25 @@ def tv_noise(path, dur, bursts, sr=48000, seed=11):
         w.writeframes((np.clip(y, -1, 1) * 32767).astype(np.int16).tobytes())
 
 
+# 昭和のテレビの音(tv=True のとき、全体の音にまとめてかける)
+# 当時の音の通り道を順に再現する:
+#  1. 小さなスタジオで録った響き(短い初期反射)
+#  2. フィルム/テープの録音:帯域が狭い(~7kHz)、ダイナミックレンジが狭い(強い圧縮)、ゆっくりした音程ゆれ
+#  3. 小さなテレビのスピーカー:低音が出ない、中域(1〜2kHz)が張り出す、箱鳴り(~400Hz)、少し歪む
+#  4. テレビの前にマイク/ラジカセを置いて録った(エアチェック):部屋の反射で音が二重に重なって聞こえる
+SHOWA_TV_AUDIO = (
+    "aecho=0.9:0.6:11|23:0.35|0.2,"                                         # 1 スタジオの響き
+    "highpass=f=90,lowpass=f=7000,"                                            # 2 録音の帯域
+    "acompressor=threshold=0.08:ratio=5:attack=8:release=150:makeup=2,"
+    "vibrato=f=0.6:d=0.01,vibrato=f=7:d=0.004,"
+    "highpass=f=220,lowpass=f=4800,"                                           # 3 テレビのスピーカー
+    "equalizer=f=420:t=q:w=1.4:g=4,equalizer=f=1700:t=q:w=1.0:g=6,"
+    "asoftclip=type=tanh:param=1.6,"
+    "aecho=0.85:0.75:17|34|58:0.5|0.32|0.18,"                                  # 4 部屋の反射(音が二重に)
+    "lowpass=f=6000"
+)
+
+
 # 昭和の光学録音っぽく:帯域を狭め、中域を持ち上げ、ゆっくりした音程ゆれ(ワウ)と細かいゆれ(フラッター)
 RETRO_VOICE = ("highpass=f=220,lowpass=f=3600,equalizer=f=1600:t=q:w=1.2:g=5,"
                "acompressor=threshold=0.1:ratio=4:attack=5:release=120,"
@@ -468,17 +487,22 @@ def build_audio(edl, total, tmp, base):
     total = round(total, 3)
     n = int(total * sr)
     A = edl.get("audio", {})
+    tv = bool(edl.get("look", {}).get("tv"))
     noise = os.path.join(tmp, "projector.wav")
-    if edl.get("look", {}).get("tv"):
+    if tv:
         tv_noise(noise, total + 1, edl.get("_bursts", []))
     else:
         projector_noise(noise, total + 1)
     mix = np.zeros(n, np.float32)
     pj = _read_mono(noise)[:n]
-    mix[:len(pj)] += pj * A.get("projector_gain", 0.55)
+    pj = np.pad(pj, (0, max(0, n - len(pj))))
+    if not tv:
+        mix += pj * A.get("projector_gain", 0.55)
     for k, item in enumerate(A.get("tracks", [])):
         p = os.path.join(base, item["src"])
         chain = RETRO_VOICE if item.get("kind") == "voice" else RETRO_MUSIC
+        if tv:  # テレビ風のときは、全体にまとめて SHOWA_TV_AUDIO をかけるので、個別には加工しない
+            chain = "anull"
         end = f":duration={item['dur']}" if item.get("dur") else ""
         out = os.path.join(tmp, f"trk{k:02d}.wav")
         run(["ffmpeg", "-y", "-v", "error", "-i", p, "-af",
@@ -491,6 +515,14 @@ def build_audio(edl, total, tmp, base):
             continue
         y = y[:n - st]
         mix[st:st + len(y)] += y
+    if tv:  # 声・音楽・効果音を混ぜたあとで、ヒス/ハム/ザザッを足す前に、まとめてテレビの音にする
+        prog = os.path.join(tmp, "mix_prog.wav")
+        _write_wav(prog, mix * 0.8)
+        progtv = os.path.join(tmp, "mix_prog_tv.wav")
+        run(["ffmpeg", "-y", "-v", "error", "-i", prog, "-af", SHOWA_TV_AUDIO, "-ac", "1", "-ar", str(sr), progtv])
+        mix = _read_mono(progtv)[:n]
+        mix = np.pad(mix, (0, max(0, n - len(mix))))
+        mix = mix + pj * A.get("projector_gain", 0.55)
     raw = os.path.join(tmp, "mix_raw.wav")
     _write_wav(raw, mix * 0.8)
     out = os.path.join(tmp, "mix.wav")
