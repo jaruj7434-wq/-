@@ -52,7 +52,8 @@ FAIL_SHOW = 0.0   # 時間切れになった瞬間に幽霊が出る
 FIX_INDEX = os.environ.get("FIX_INDEX", "0") == "1"   # 1:生まれたボール同士が重なる不具合を直した版(31本目の作り直しから)
 BIRTH_GAP = float(os.environ.get("BIRTH_GAP", 0.3))   # 生まれるボールと、まわりのボールとのすき間(ピクセル)。小さいと生まれた瞬間に次々当たって連鎖する
 SFX = os.environ.get("SFX", "piyo")   # 生まれる瞬間の音:"piyo"(ピヨッ)か "iyan"(女性の声「いやーん」)
-TAG = ("" if SFX == "piyo" else f"{SFX}_") + ("" if BIRTH_GAP == 0.3 else f"gap{BIRTH_GAP:g}_") + ("fix_" if FIX_INDEX else "")
+WIN_FX = os.environ.get("WIN_FX", "angels")   # 成功の演出:"angels"(天使)か "pachinko"(虹色パチンコ演出)
+TAG = ("" if SFX == "piyo" else f"{SFX}_") + ("" if BIRTH_GAP == 0.3 else f"gap{BIRTH_GAP:g}_") + ("fix_" if FIX_INDEX else "") + ("" if (R, SPEED) == (460.0, 400.0) else f"r{R:g}_s{SPEED:g}_") + ("" if WIN_FX == "angels" else f"{WIN_FX}_")
 
 
 def size_for(n):
@@ -323,7 +324,11 @@ def render(seed):
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
     angels = None
-    if not fail:
+    fever = None
+    if not fail and WIN_FX == "pachinko":
+        from pachinko import RainbowFever
+        fever = RainbowFever(W, H, seed)
+    elif not fail:
         from angels import AngelShow
         angels = AngelShow(W, H, seed)
     rng = np.random.default_rng(seed + 3)
@@ -356,6 +361,8 @@ def render(seed):
         g.add_color_stop_rgb(1, 0.05, 0.04, 0.1)
         ctx.set_source(g)
         ctx.paint()
+        if fever is not None and over:
+            fever.draw_back(ctx, t - end_t)
         ctx.save()   # わくとボールは、見せ方だけ少し小さく・まん中寄りに描く(物理の計算は同じ)
         ctx.translate(CX, VIEW_CY)
         ctx.scale(VIEW_S, VIEW_S)
@@ -390,6 +397,8 @@ def render(seed):
         ctx.restore()
         if angels is not None and over:
             angels.draw(ctx, t - end_t)
+        if fever is not None and over:
+            fever.draw_front(ctx, t - end_t, text, "大当たり!!", f"{TARGET}個達成!!")
         text(ctx, "ボールを", W / 2, 250, 76, sw=12)
         text(ctx, f"{TARGET}個に増やせる？", W / 2, 365, 100, rgb=GOLD, sw=16)
         n = min(fr["n"], TARGET)   # 時間切れのあとも、そのまま数え続ける
@@ -412,7 +421,7 @@ def render(seed):
             text(ctx, "時間切れ…", W / 2, 1000, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"あと{late:.1f}秒だったのに…" if late is not None else f"あと{TARGET - res['n']}個だったのに…",
                  W / 2, 1130, 72, sw=12)
-        elif over:
+        elif over and fever is None:
             text(ctx, f"{TARGET}個達成!!", W / 2, 700, 120, rgb=GOLD, sw=18)
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
@@ -526,8 +535,12 @@ def synth_audio(res, duration, path):
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += 0.6 * sig[:m]
     else:
-        from angels import holy_music
-        sig = holy_music(SR, 8.5)
+        if WIN_FX == "pachinko":
+            from pachinko import kyuin_music
+            sig = kyuin_music(SR, 8.5)
+        else:
+            from angels import holy_music
+            sig = holy_music(SR, 8.5)
         i0 = int(end_t * SR) + int(0.5 * SR)
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += 0.85 * sig[:m]
