@@ -81,3 +81,6 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - 動画A(屋根 → 着地 → タクシー、4秒、8クレジット): job `54ece35c-1c9e-4170-a0fe-c1dd8bb970e9`
 - 動画B(車内 → 走り出し、5秒、10クレジット): job `edc100c0-8809-474c-a574-59843cba8167`
 - 注意: 途中で実行環境が入れ替わり、assets/ のローカルファイルが消えた。生成物は Higgs Field の job ID から取り直せる
+- 編集 `bit3-taxi.mp4`(9.08秒): 動画A(4.04秒)+ 動画B(5.04秒)
+  - 動画Bの元の音声に英語のセリフ(0〜2秒)が入っていたので消し、慶太の「一楽まで」を B の0.35秒から重ねた
+  - 動画B の3〜4.5秒で、窓の外を黒装束の忍者が屋根伝いに追い越す
