@@ -5,6 +5,7 @@
   パチンコの保留変化で一般的な「白・青は期待度が低く、緑・赤・金と上がり、虹は大当たり濃厚」という並びにならった
   (紫は緑と赤のあいだ)。色が上がるほど玉が大きくなり、光り方も派手になる。
 - 落ちてくるのはいつも白保留。落ちる間隔はだんだん短くなる。
+- 保留の形は、チャンネルのアイコンの女の子(おかっぱの幽霊)の顔の形(まんまるではない)。当たり判定もこの形。
 - 重力・反発・摩擦のまま自然に落ちて転がる(ねらい・補正なし)。止まったものは眠らせる。
 - 合体は「同じ色どうしが触れたら」必ず起きる(1回の接触で1回)。
 - 音は色ごとにちがい、色が上がるほど豪華な、パチンコらしい気持ちいい音(ピロン → キュイン → ギュイン →
@@ -63,7 +64,7 @@ DROP_END = float(os.environ.get("DROP_END", 0.3))
 DROP_RAMP = 40.0
 BALL_E, BALL_F = 0.35, 0.4
 GLASS_E, GLASS_F = 0.4, 0.4
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 50.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 51.0))
 OUTRO = 4.2
 
 
@@ -119,10 +120,11 @@ class Game:
     def add(self, st, x, y, vx=0.0, vy=0.0, w=0.0):
         r = RADII[st]
         mass = (r / RADII[0]) ** 2
-        b = pymunk.Body(mass, pymunk.moment_for_circle(mass, 0, r))
+        poly = shape_pts(st)   # まんまるではない、女の子の頭の形(当たり判定もこの形)
+        b = pymunk.Body(mass, pymunk.moment_for_poly(mass, poly))
         b.position = (x, y)
         b.velocity, b.angular_velocity = (vx, vy), w
-        s = pymunk.Circle(b, r)
+        s = pymunk.Poly(b, poly, radius=1)
         s.elasticity, s.friction = BALL_E, BALL_F
         s.collision_type = 10 + st
         self.space.add(b, s)
@@ -267,28 +269,93 @@ def _flare(ctx, x, y, s, a, rot=0.0):
     ctx.restore()
 
 
+def head_shape(r, n=10):
+    """保留の形:チャンネルのアイコンの女の子(おかっぱの幽霊)の頭のシルエット。
+    上はまるい髪、横はまっすぐ下りる髪、下は平ら(角だけ丸い)。まんまるではない、ゆがんだ形。重心が(0,0)になるようにずらす。"""
+    pts = []
+    cy = -0.12 * r
+    for k in range(n + 1):   # 上の丸い髪(左→右)
+        a = math.pi + math.pi * k / n
+        pts.append((r * math.cos(a), cy + r * 0.98 * math.sin(a)))
+    cr = 0.28 * r            # 下の角の丸み
+    bot = 0.86 * r
+    for k in range(5):       # 右下の角
+        a = 0 + (math.pi / 2) * k / 4
+        pts.append((r - cr + cr * math.cos(a), bot - cr + cr * math.sin(a)))
+    for k in range(5):       # 左下の角
+        a = math.pi / 2 + (math.pi / 2) * k / 4
+        pts.append((-r + cr + cr * math.cos(a), bot - cr + cr * math.sin(a)))
+    # 重心をまん中に
+    A = cx = cyy = 0.0
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]):
+        c = x0 * y1 - x1 * y0
+        A += c
+        cx += (x0 + x1) * c
+        cyy += (y0 + y1) * c
+    A *= 0.5
+    cx /= 6 * A
+    cyy /= 6 * A
+    return [(x - cx, y - cyy) for x, y in pts]
+
+
+_SHAPES = {}
+
+
+def shape_pts(st):
+    if st not in _SHAPES:
+        _SHAPES[st] = head_shape(RADII[st])
+    return _SHAPES[st]
+
+
+def _hair_grad(r, col, st, t):
+    """髪(保留の本体)のメタリックなグラデーション。色つきの金属に、横じまの映りこみ。"""
+    g = cairo.LinearGradient(-r * 0.4, -r * 1.1, r * 0.4, r * 0.9)
+    if st == 0:
+        stops = [(0, (1, 1, 1)), (0.18, (0.78, 0.8, 0.86)), (0.42, (0.25, 0.26, 0.3)), (0.5, (0.12, 0.12, 0.15)),
+                 (0.62, (0.7, 0.72, 0.78)), (1, (0.2, 0.21, 0.25))]
+    elif st == 5:
+        stops = [(0, (1, 0.98, 0.8)), (0.18, (1, 0.8, 0.25)), (0.42, (0.55, 0.33, 0.02)), (0.5, (0.35, 0.2, 0.0)),
+                 (0.62, (1, 0.85, 0.4)), (1, (0.45, 0.28, 0.02))]
+    else:
+        stops = [(0, mix(col, (1, 1, 1), 0.85)), (0.18, mix(col, (1, 1, 1), 0.3)), (0.42, mix(col, (0, 0, 0), 0.45)),
+                 (0.5, mix(col, (0, 0, 0), 0.7)), (0.62, mix(col, (1, 1, 1), 0.45)), (1, mix(col, (0, 0, 0), 0.6))]
+    for o, c in stops:
+        g.add_color_stop_rgb(o, *c)
+    return g
+
+
+def _path(ctx, pts):
+    ctx.new_path()
+    ctx.move_to(*pts[0])
+    for p in pts[1:]:
+        ctx.line_to(*p)
+    ctx.close_path()
+
+
 def draw_hold(ctx, x, y, r, st, t, ang=0.0, k=1.0):
-    """パチンコの保留玉:メタリックなふち(ベゼル)にはまった、つやのある色ガラスの玉。
-    中心が光り、上に映りこみ(地平線のような明暗の境目)、左上に強いハイライト、下のふちに反射光。
-    色が上がるほど外の光・フレア・光の流れが強くなる。金はふちも玉も金属、虹は虹色に色が回る。"""
-    r *= k
+    """パチンコのキャラ保留:チャンネルのアイコンの女の子(おかっぱの幽霊)の顔の形をした、メタリックな保留。
+    髪の部分が色つきの金属(ツヤ・映りこみ・ハイライト)、前髪の下から白い顔と大きな黒い目がのぞく。
+    色が上がるほど後光・光の流れ・レンズフレアが強くなる。金は金属の金、虹は虹色が回る。"""
     rainbow = COLORS[st] is None
     col = COLORS[st] if not rainbow else hsv(t * 0.5)
     ph = t * 2.2 + x * 0.013
+    s = (r / RADII[st]) * k   # RADII と違う大きさで描くとき(進化表など)の倍率
+    pts = [(px * s, py * s) for px, py in shape_pts(st)]
+    rr = RADII[st] * s
     # 1. 外の光(後光)
     if st >= 1:
-        ar = r * (1.25 + 0.07 * st)
-        g = cairo.RadialGradient(x, y, r * 0.9, x, y, ar)
-        g.add_color_stop_rgba(0, *col, 0.18 + 0.07 * st + 0.05 * math.sin(ph))
+        ar = rr * (1.35 + 0.07 * st)
+        g = cairo.RadialGradient(x, y, rr * 0.9, x, y, ar)
+        g.add_color_stop_rgba(0, *col, 0.2 + 0.07 * st + 0.05 * math.sin(ph))
         g.add_color_stop_rgba(1, *col, 0)
         ctx.arc(x, y, ar, 0, 2 * math.pi)
         ctx.set_source(g)
         ctx.fill()
-    if st >= 5:   # 金・虹:後ろで回る細い光の筋
+    if st >= 5:
         for j in range(16):
             a = 2 * math.pi * j / 16 + t * 0.7
-            ln = r * (1.55 + 0.25 * (j % 2))
-            g = cairo.RadialGradient(x, y, r, x, y, ln)
+            ln = rr * (1.6 + 0.25 * (j % 2))
+            g = cairo.RadialGradient(x, y, rr, x, y, ln)
             c2 = hsv(j / 16 + t * 0.3) if rainbow else (1, 0.9, 0.55)
             g.add_color_stop_rgba(0, *c2, 0.55)
             g.add_color_stop_rgba(1, *c2, 0)
@@ -297,93 +364,139 @@ def draw_hold(ctx, x, y, r, st, t, ang=0.0, k=1.0):
             ctx.close_path()
             ctx.set_source(g)
             ctx.fill()
-    # 2. 金属のふち(ベゼル)
-    ctx.arc(x, y, r, 0, 2 * math.pi)
-    ctx.set_source(_bezel_grad(x, y, r, gold=(st == 5)))
-    ctx.fill()
-    ctx.arc(x, y, r, 0, 2 * math.pi)
-    ctx.set_source_rgba(0, 0, 0, 0.6)
-    ctx.set_line_width(max(1.0, r * 0.03))
-    ctx.stroke()
-    ri = r * 0.84
-    ctx.arc(x, y, ri + max(0.8, r * 0.02), 0, 2 * math.pi)   # ふちの内側の暗い溝
-    ctx.set_source_rgba(0, 0, 0, 0.75)
-    ctx.set_line_width(max(1.2, r * 0.04))
-    ctx.stroke()
-    # 3. 色ガラスの玉
     ctx.save()
-    ctx.arc(x, y, ri, 0, 2 * math.pi)
-    ctx.clip()
+    ctx.translate(x, y)
+    ctx.rotate(ang)
+    # 2. 髪(本体):メタリック
+    _path(ctx, pts)
     if rainbow:
+        ctx.save()
+        ctx.clip()
         for j in range(24):
             a = 2 * math.pi * j / 24 + t * 1.2
-            ctx.move_to(x, y)
-            ctx.arc(x, y, ri, a, a + 2 * math.pi / 24 + 0.01)
+            ctx.move_to(0, 0)
+            ctx.arc(0, 0, rr * 1.6, a, a + 2 * math.pi / 24 + 0.01)
             ctx.close_path()
             ctx.set_source_rgb(*hsv(j / 24 + t * 0.25, 0.85, 1.0))
             ctx.fill()
-        g = cairo.RadialGradient(x, y + ri * 0.15, ri * 0.05, x, y, ri)
+        g = cairo.LinearGradient(0, -rr * 1.1, 0, rr * 0.9)
         g.add_color_stop_rgba(0, 1, 1, 1, 0.55)
         g.add_color_stop_rgba(0.45, 1, 1, 1, 0.0)
-        g.add_color_stop_rgba(1, 0, 0, 0.05, 0.55)
-        ctx.rectangle(x - ri, y - ri, 2 * ri, 2 * ri)
+        g.add_color_stop_rgba(0.5, 0, 0, 0, 0.35)
+        g.add_color_stop_rgba(0.62, 1, 1, 1, 0.2)
+        g.add_color_stop_rgba(1, 0, 0, 0, 0.4)
+        ctx.rectangle(-rr * 2, -rr * 2, rr * 4, rr * 4)
         ctx.set_source(g)
         ctx.fill()
+        ctx.restore()
     else:
-        if st == 0:
-            core, mid, edge = (1, 1, 1), (0.82, 0.84, 0.9), (0.28, 0.3, 0.38)
-        elif st == 5:
-            core, mid, edge = (1, 0.98, 0.8), (0.98, 0.72, 0.12), (0.35, 0.2, 0.0)
-        else:
-            core = mix(col, (1, 1, 1), 0.65)
-            mid = col
-            edge = mix(col, (0, 0, 0), 0.8)
-        g = cairo.RadialGradient(x, y + ri * 0.25, ri * 0.05, x, y, ri * 1.05)   # 中心(少し下)が光る
-        g.add_color_stop_rgb(0, *core)
-        g.add_color_stop_rgb(0.42, *mid)
-        g.add_color_stop_rgb(1, *edge)
-        ctx.rectangle(x - ri, y - ri, 2 * ri, 2 * ri)
-        ctx.set_source(g)
+        ctx.set_source(_hair_grad(rr, col, st, t))
         ctx.fill()
-    # 映りこみ:上半分は空が映ったように明るく、地平線のところでくっきり暗くなる
-    hy = y - ri * 0.08 + ri * 0.04 * math.sin(ph * 0.5)
-    g = cairo.LinearGradient(x, y - ri, x, hy)
-    g.add_color_stop_rgba(0, 1, 1, 1, 0.45 if st != 5 else 0.6)
-    g.add_color_stop_rgba(0.8, 1, 1, 1, 0.08)
-    g.add_color_stop_rgba(1, 1, 1, 1, 0.14)
-    ctx.rectangle(x - ri, y - ri, 2 * ri, hy - (y - ri))
-    ctx.set_source(g)
-    ctx.fill()
-    ctx.rectangle(x - ri, hy, 2 * ri, ri * 0.035)   # 地平線のうすい暗い線
-    ctx.set_source_rgba(0, 0, 0, 0.12)
-    ctx.fill()
-    # 光の流れ(進化が進むほど、ななめの光が玉の上を走る)
+    # 髪の毛すじ(上の丸い部分に、細い光のすじ)
+    ctx.save()
+    _path(ctx, pts)
+    ctx.clip()
+    for j in range(7):
+        a = math.pi * (1.15 + 0.7 * j / 6)
+        ctx.move_to(0.15 * rr * math.cos(a), -0.12 * rr + 0.15 * rr * math.sin(a))
+        ctx.line_to(0.95 * rr * math.cos(a), -0.12 * rr + 0.95 * rr * math.sin(a))
+    ctx.set_source_rgba(1, 1, 1, 0.12)
+    ctx.set_line_width(max(1.0, rr * 0.035))
+    ctx.stroke()
+    # 光の流れ(緑から上)
     if st >= 2:
-        sx = x - ri * 2 + ((t * (0.5 + 0.12 * st) + x * 0.002) % 1.0) * ri * 4
-        g = cairo.LinearGradient(sx - ri * 0.3, 0, sx + ri * 0.3, 0)
+        sx = -rr * 2 + ((t * (0.5 + 0.12 * st) + x * 0.002) % 1.0) * rr * 4
+        g = cairo.LinearGradient(sx - rr * 0.3, 0, sx + rr * 0.3, 0)
         g.add_color_stop_rgba(0, 1, 1, 1, 0)
         g.add_color_stop_rgba(0.5, 1, 1, 1, 0.22 + 0.05 * st)
         g.add_color_stop_rgba(1, 1, 1, 1, 0)
-        ctx.move_to(sx - ri * 0.2, y - ri)
-        ctx.line_to(sx + ri * 0.35, y - ri)
-        ctx.line_to(sx - ri * 0.15, y + ri)
-        ctx.line_to(sx - ri * 0.7, y + ri)
+        ctx.move_to(sx - rr * 0.2, -rr * 1.3)
+        ctx.line_to(sx + rr * 0.35, -rr * 1.3)
+        ctx.line_to(sx - rr * 0.15, rr)
+        ctx.line_to(sx - rr * 0.7, rr)
         ctx.close_path()
         ctx.set_source(g)
         ctx.fill()
-    # 下のふちの反射光(三日月形)
-    g = cairo.RadialGradient(x, y + ri * 0.95, 0, x, y + ri * 0.95, ri * 0.7)
-    g.add_color_stop_rgba(0, *mix(col, (1, 1, 1), 0.6), 0.55)
-    g.add_color_stop_rgba(1, *col, 0)
-    ctx.arc(x, y + ri * 0.95, ri * 0.7, 0, 2 * math.pi)
+    ctx.restore()
+    # 3. 顔(アイコンと同じ:前髪の下から、青白い顔と大きな黒い目がのぞく。下は髪のふちで切れている)
+    fx0, fx1 = -0.56 * rr, 0.56 * rr
+    top = min(py for _, py in pts)
+    bot = max(py for _, py in pts)
+    fy0, fy1 = bot - 0.8 * rr, bot + 2
+    ctx.save()
+    _path(ctx, pts)
+    ctx.clip()
+    fcx, fcy = 0, fy0 + 0.45 * rr
+    g = cairo.RadialGradient(fcx, fcy, rr * 0.05, fcx, fcy, rr * 0.75)
+    g.add_color_stop_rgb(0, 0.86, 0.9, 0.88)
+    g.add_color_stop_rgb(0.55, 0.7, 0.75, 0.73)
+    g.add_color_stop_rgb(1, 0.42, 0.46, 0.46)
+    ctx.rectangle(fx0, fy0, fx1 - fx0, fy1 - fy0)
     ctx.set_source(g)
     ctx.fill()
+    # 顔の両横の髪の毛すじ(たてのしま)
+    hair_dark = (0.06, 0.06, 0.08) if st == 0 else mix(col, (0, 0, 0), 0.75)
+    for side in (-1, 1):
+        x0 = fx0 if side < 0 else fx1
+        for j2 in range(4):
+            xx = x0 - side * (0.03 + 0.035 * j2) * rr * -1
+            ctx.move_to(xx, fy0)
+            ctx.line_to(xx, fy1)
+        ctx.set_source_rgba(1, 1, 1, 0.35)
+        ctx.set_line_width(max(0.6, rr * 0.012))
+        ctx.stroke()
+    # 目(大きな黒い目+まわりのくま)
+    ey = fy0 + 0.42 * rr
+    for ex in (-0.25 * rr, 0.25 * rr):
+        g = cairo.RadialGradient(ex, ey, rr * 0.1, ex, ey, rr * 0.3)
+        g.add_color_stop_rgba(0, 0.2, 0.22, 0.24, 0.6)
+        g.add_color_stop_rgba(1, 0.2, 0.22, 0.24, 0)
+        ctx.arc(ex, ey, rr * 0.3, 0, 2 * math.pi)
+        ctx.set_source(g)
+        ctx.fill()
+        ctx.save()
+        ctx.translate(ex, ey)
+        ctx.scale(0.16 * rr, 0.2 * rr)
+        ctx.arc(0, 0, 1, 0, 2 * math.pi)
+        ctx.restore()
+        ctx.set_source_rgb(0.01, 0.01, 0.02)
+        ctx.fill()
+        ctx.arc(ex + 0.02 * rr, ey + 0.03 * rr, max(0.8, 0.032 * rr), 0, 2 * math.pi)
+        ctx.set_source_rgb(1, 1, 0.88)
+        ctx.fill()
+    # 前髪:まっすぐ切りそろえた前髪+細い毛先がたれる
+    ctx.rectangle(fx0 - 2, fy0 - 3, fx1 - fx0 + 4, 4)   # 前髪のふちの影
+    ctx.set_source_rgba(0, 0, 0, 0.5)
+    ctx.fill()
+    ctx.set_source_rgba(*(hair_dark if not rainbow else mix(hsv(t * 0.4), (0, 0, 0), 0.5)), 0.85)
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    for j2 in range(9):
+        xx = fx0 + (fx1 - fx0) * (j2 + 0.5) / 9
+        ln = (0.07 + 0.05 * ((j2 * 7) % 3)) * rr
+        ctx.move_to(xx, fy0 - 1)
+        ctx.line_to(xx + 0.01 * rr, fy0 + ln)
+    ctx.set_line_width(max(1.0, rr * 0.045))
+    ctx.stroke()
     ctx.restore()
-    # 4. ハイライト(左上の強い光)
+    # 4. ふち(クロームの線)とハイライト
+    _path(ctx, pts)
+    ctx.set_source_rgba(0, 0, 0, 0.7)
+    ctx.set_line_width(max(1.5, rr * 0.09))
+    ctx.stroke()
+    _path(ctx, pts)
+    g = cairo.LinearGradient(0, -rr * 1.1, 0, rr)
+    g.add_color_stop_rgb(0, 1, 1, 1)
+    g.add_color_stop_rgb(0.45, 0.55, 0.57, 0.62)
+    g.add_color_stop_rgb(0.7, 0.95, 0.96, 1)
+    g.add_color_stop_rgb(1, 0.35, 0.36, 0.4)
+    ctx.set_source(g)
+    ctx.set_line_width(max(1.0, rr * 0.045))
+    ctx.stroke()
+    hx, hy = -0.42 * rr, top + 0.32 * rr
     ctx.save()
-    ctx.translate(x - ri * 0.36, y - ri * 0.5)
-    ctx.rotate(-0.5)
-    ctx.scale(ri * 0.34, ri * 0.15)
+    ctx.translate(hx, hy)
+    ctx.rotate(-0.55)
+    ctx.scale(rr * 0.34, rr * 0.12)
     g = cairo.RadialGradient(0, 0, 0, 0, 0, 1)
     g.add_color_stop_rgba(0, 1, 1, 1, 0.95)
     g.add_color_stop_rgba(1, 1, 1, 1, 0)
@@ -391,13 +504,13 @@ def draw_hold(ctx, x, y, r, st, t, ang=0.0, k=1.0):
     ctx.set_source(g)
     ctx.fill()
     ctx.restore()
-    ctx.arc(x - ri * 0.42, y - ri * 0.5, max(1.2, ri * 0.07), 0, 2 * math.pi)
+    ctx.arc(hx - 0.04 * rr, hy, max(1.0, rr * 0.06), 0, 2 * math.pi)
     ctx.set_source_rgba(1, 1, 1, 1)
     ctx.fill()
-    # 5. フレア(紫から上。色が上がるほど大きく・強く)
     if st >= 3:
         a = 0.55 + 0.35 * (0.5 + 0.5 * math.sin(ph * 1.7))
-        _flare(ctx, x - ri * 0.42, y - ri * 0.5, r * (0.6 + 0.18 * (st - 3)), a, rot=t * 0.4 if st >= 5 else 0.0)
+        _flare(ctx, hx - 0.04 * rr, hy, rr * (0.6 + 0.18 * (st - 3)), a, rot=t * 0.4 if st >= 5 else 0.0)
+    ctx.restore()
 
 
 def background():
