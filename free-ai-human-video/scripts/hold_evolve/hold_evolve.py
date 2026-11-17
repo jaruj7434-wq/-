@@ -47,7 +47,7 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 NAMES = ["白", "青", "緑", "紫", "赤", "金", "虹"]
 GOAL = len(NAMES) - 1
-RADII = [22, 30, 40, 53, 70, 93, 124]   # 保留玉の大きさ(半径)。色が上がるほど大きい
+RADII = [22, 31, 44, 61, 82, 108, 140]   # 保留玉の大きさ(半径)。色が上がるほど大きい
 COLORS = [(0.96, 0.96, 1.0), (0.15, 0.45, 1.0), (0.1, 0.85, 0.35), (0.68, 0.22, 0.98),
           (1.0, 0.12, 0.15), (1.0, 0.78, 0.12), None]
 
@@ -64,7 +64,7 @@ DROP_END = float(os.environ.get("DROP_END", 0.3))
 DROP_RAMP = 40.0
 BALL_E, BALL_F = 0.35, 0.4
 GLASS_E, GLASS_F = 0.4, 0.4
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 51.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 46.5))
 OUTRO = 4.2
 
 
@@ -342,15 +342,27 @@ def draw_hold(ctx, x, y, r, st, t, ang=0.0, k=1.0):
     s = (r / RADII[st]) * k   # RADII と違う大きさで描くとき(進化表など)の倍率
     pts = [(px * s, py * s) for px, py in shape_pts(st)]
     rr = RADII[st] * s
-    # 1. 外の光(後光)
+    # 1. 外の光(後光):色が上がるほど大きく・明るく・何重にも
     if st >= 1:
-        ar = rr * (1.35 + 0.07 * st)
-        g = cairo.RadialGradient(x, y, rr * 0.9, x, y, ar)
-        g.add_color_stop_rgba(0, *col, 0.2 + 0.07 * st + 0.05 * math.sin(ph))
-        g.add_color_stop_rgba(1, *col, 0)
-        ctx.arc(x, y, ar, 0, 2 * math.pi)
-        ctx.set_source(g)
-        ctx.fill()
+        for mul, al in ((1.55 + 0.16 * st, 0.10 + 0.04 * st), (1.22 + 0.06 * st, 0.22 + 0.07 * st)):
+            ar = rr * mul
+            g = cairo.RadialGradient(x, y, rr * 0.7, x, y, ar)
+            g.add_color_stop_rgba(0, *mix(col, (1, 1, 1), 0.3), min(0.9, al * (1 + 0.15 * math.sin(ph))))
+            g.add_color_stop_rgba(0.5, *col, al * 0.45)
+            g.add_color_stop_rgba(1, *col, 0)
+            ctx.arc(x, y, ar, 0, 2 * math.pi)
+            ctx.set_source(g)
+            ctx.fill()
+    if st >= 4:   # 赤から上:ゆっくり回る光の輪(ハロー)
+        hr = rr * 1.32
+        for j2 in range(48):
+            a = 2 * math.pi * j2 / 48 + t * 0.9
+            al = 0.5 * (0.5 + 0.5 * math.cos(2 * math.pi * j2 / 48 * 2)) * (0.6 + 0.1 * (st - 4))
+            ctx.arc(x, y, hr, a, a + 2 * math.pi / 48)
+            c2 = hsv(j2 / 48 + t * 0.2) if rainbow else mix(col, (1, 1, 1), 0.55)
+            ctx.set_source_rgba(*c2, al)
+            ctx.set_line_width(max(1.5, rr * 0.025))
+            ctx.stroke()
     if st >= 5:
         for j in range(16):
             a = 2 * math.pi * j / 16 + t * 0.7
@@ -362,6 +374,22 @@ def draw_hold(ctx, x, y, r, st, t, ang=0.0, k=1.0):
             ctx.move_to(x, y)
             ctx.arc(x, y, ln, a - 0.035, a + 0.035)
             ctx.close_path()
+            ctx.set_source(g)
+            ctx.fill()
+    if st >= 3:   # 紫から上:まわりをゆっくり漂う、やわらかい光の粒(上品なきらめき)
+        n = 3 + 2 * st
+        for j2 in range(n):
+            a = 2 * math.pi * j2 / n + t * (0.35 + 0.05 * st) * (1 if j2 % 2 else -1)
+            d = rr * (1.2 + 0.35 * ((j2 * 0.618) % 1))
+            gx, gy = x + d * math.cos(a), y + d * math.sin(a)
+            tw = 0.5 + 0.5 * math.sin(t * 5 + j2 * 2.1)
+            gs = rr * (0.05 + 0.04 * tw)
+            g = cairo.RadialGradient(gx, gy, 0, gx, gy, gs * 3)
+            c2 = hsv(j2 / n + t * 0.3) if rainbow else mix(col, (1, 1, 1), 0.7)
+            g.add_color_stop_rgba(0, 1, 1, 1, 0.9 * tw)
+            g.add_color_stop_rgba(0.3, *c2, 0.5 * tw)
+            g.add_color_stop_rgba(1, *c2, 0)
+            ctx.arc(gx, gy, gs * 3, 0, 2 * math.pi)
             ctx.set_source(g)
             ctx.fill()
     ctx.save()
@@ -392,6 +420,26 @@ def draw_hold(ctx, x, y, r, st, t, ang=0.0, k=1.0):
     else:
         ctx.set_source(_hair_grad(rr, col, st, t))
         ctx.fill()
+    # メタリックの映りこみ(横に走る、明るい帯と暗い帯)と、上半分のクリアコートのツヤ
+    ctx.save()
+    _path(ctx, pts)
+    ctx.clip()
+    for yy, hh, al in ((-0.78, 0.07, 0.35), (-0.5, 0.05, 0.22), (-0.2, 0.1, -0.35), (0.05, 0.04, 0.3)):
+        g = cairo.LinearGradient(0, rr * (yy - hh), 0, rr * (yy + hh))
+        c2 = (1, 1, 1) if al > 0 else (0, 0, 0)
+        g.add_color_stop_rgba(0, *c2, 0)
+        g.add_color_stop_rgba(0.5, *c2, abs(al) * (0.7 + 0.06 * st))
+        g.add_color_stop_rgba(1, *c2, 0)
+        ctx.rectangle(-rr * 1.2, rr * (yy - hh), rr * 2.4, rr * 2 * hh)
+        ctx.set_source(g)
+        ctx.fill()
+    g = cairo.RadialGradient(-rr * 0.15, -rr * 0.95, rr * 0.05, -rr * 0.1, -rr * 0.6, rr * 0.9)
+    g.add_color_stop_rgba(0, 1, 1, 1, 0.5 + 0.04 * st)
+    g.add_color_stop_rgba(1, 1, 1, 1, 0)
+    ctx.rectangle(-rr * 1.2, -rr * 1.4, rr * 2.4, rr * 1.4)
+    ctx.set_source(g)
+    ctx.fill()
+    ctx.restore()
     # 髪の毛すじ(上の丸い部分に、細い光のすじ)
     ctx.save()
     _path(ctx, pts)
@@ -480,18 +528,36 @@ def draw_hold(ctx, x, y, r, st, t, ang=0.0, k=1.0):
     ctx.restore()
     # 4. ふち(クロームの線)とハイライト
     _path(ctx, pts)
-    ctx.set_source_rgba(0, 0, 0, 0.7)
-    ctx.set_line_width(max(1.5, rr * 0.09))
+    ctx.set_source_rgba(0, 0, 0, 0.75)
+    ctx.set_line_width(max(1.5, rr * 0.11))
     ctx.stroke()
-    _path(ctx, pts)
-    g = cairo.LinearGradient(0, -rr * 1.1, 0, rr)
-    g.add_color_stop_rgb(0, 1, 1, 1)
-    g.add_color_stop_rgb(0.45, 0.55, 0.57, 0.62)
-    g.add_color_stop_rgb(0.7, 0.95, 0.96, 1)
-    g.add_color_stop_rgb(1, 0.35, 0.36, 0.4)
+    _path(ctx, pts)   # クロームのふち(上が明るく、まん中で暗く、下でまた光る)
+    g = cairo.LinearGradient(-rr * 0.3, -rr * 1.1, rr * 0.3, rr)
+    gold_rim = st >= 5
+    for o, c2 in ((0, (1, 1, 1)), (0.3, (0.7, 0.72, 0.78) if not gold_rim else (1, 0.82, 0.35)),
+                  (0.5, (0.25, 0.26, 0.3) if not gold_rim else (0.5, 0.32, 0.04)),
+                  (0.72, (0.98, 0.98, 1) if not gold_rim else (1, 0.93, 0.6)), (1, (0.4, 0.41, 0.46) if not gold_rim else (0.6, 0.4, 0.08))):
+        g.add_color_stop_rgb(o, *c2)
     ctx.set_source(g)
-    ctx.set_line_width(max(1.0, rr * 0.045))
+    ctx.set_line_width(max(1.0, rr * 0.065))
     ctx.stroke()
+    if st >= 4:   # 赤から上:内側に細い金のライン(高級感)
+        inner = [(px * 0.9, py * 0.9) for px, py in pts]
+        _path(ctx, inner)
+        ctx.set_source_rgba(1, 0.86, 0.45, 0.85)
+        ctx.set_line_width(max(0.8, rr * 0.018))
+        ctx.stroke()
+    # 右のふちのリムライト(ツヤ)
+    ctx.save()
+    _path(ctx, pts)
+    ctx.clip()
+    g = cairo.LinearGradient(rr * 0.6, 0, rr, 0)
+    g.add_color_stop_rgba(0, 1, 1, 1, 0)
+    g.add_color_stop_rgba(1, 1, 1, 1, 0.45 + 0.04 * st)
+    ctx.rectangle(rr * 0.6, -rr * 1.2, rr * 0.5, rr * 1.6)
+    ctx.set_source(g)
+    ctx.fill()
+    ctx.restore()
     hx, hy = -0.42 * rr, top + 0.32 * rr
     ctx.save()
     ctx.translate(hx, hy)
@@ -784,23 +850,87 @@ def combine(parts):
     return out
 
 
+def pad(root, dur, amp, notes=(0, 4, 7, 12, 16)):
+    """ふわっと広がるストリングス/クワイア風の和音(少しずつずらした音を重ねて厚く)。"""
+    t = _t(dur)
+    y = np.zeros_like(t)
+    for m in notes:
+        f = midi_hz(root + m)
+        for det in (-0.004, 0.0, 0.004):
+            ph = 2 * np.pi * f * (1 + det) * t
+            y += np.sin(ph) + 0.35 * np.sin(2 * ph) + 0.15 * np.sin(3 * ph)
+    env = np.minimum(1, t / 0.12) * np.minimum(1, (dur - t) / 0.5)
+    return amp * y / (len(notes) * 3) * env
+
+
+def glitter(root, n, step, amp, up=True):
+    """キラキラと駆け上がる鐘のアルペジオ。"""
+    seq = [0, 4, 7, 12, 16, 19, 24, 28, 31, 36]
+    parts = []
+    for k in range(n):
+        m = seq[k % len(seq)] + 12 * (k // len(seq))
+        parts.append((k * step, bell(midi_hz(root + (m if up else 36 - m)), 0.9, amp)))
+    return combine(parts)
+
+
+def timpani(amp, dur=1.6):
+    t = _t(dur)
+    return amp * (np.sin(2 * np.pi * 55 * t) + 0.5 * np.sin(2 * np.pi * 82 * t)) * np.exp(-t * 2.2) * np.minimum(1, t / 0.005)
+
+
+def sub_boom(amp, dur=1.8):
+    """お腹にひびく低い「ドーン」。"""
+    t = _t(dur)
+    f = 30 + 60 * np.exp(-t * 6)
+    return amp * np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 1.8) * np.minimum(1, t / 0.004)
+
+
+def reverb(x, wet, length=1.8):
+    """ホールのような残響(くし形フィルタを重ねた簡単なリバーブ)。豪華さ・広がりを出す。"""
+    n = len(x) + int(length * SR)
+    y = np.zeros(n)
+    y[:len(x)] = x
+    out = y.copy()
+    for d, g in ((0.0297, 0.78), (0.0371, 0.76), (0.0411, 0.74), (0.0437, 0.72)):
+        k = int(d * SR)
+        buf = y.copy()
+        for i0 in range(k, n, k):   # くし形フィルタ(ブロックごとに計算して速く)
+            buf[i0:i0 + k] += g * buf[i0 - k:i0 - k + len(buf[i0:i0 + k])]
+        out += wet * 0.25 * buf
+    fade = np.minimum(1, (n - np.arange(n)) / (0.3 * SR))
+    return out * fade
+
+
 def evolve_sound(st):
-    """色ごとにちがう音。色が上がるほど豪華に。"""
-    if st == 1:   # 青:ピロン
-        return combine([(0, bell(1319, 0.5, 0.5)), (0.08, bell(1976, 0.6, 0.5))])
-    if st == 2:   # 緑:キュイン
-        return combine([(0, sweep(700, 2600, 0.3, 0.55, 0.02)), (0.05, bell(2093, 0.7, 0.35))])
-    if st == 3:   # 紫:ギュイン+鐘の和音
-        return combine([(0, sweep(300, 1800, 0.45, 0.6, 0.05, 0.4, 0.1)),
-                        (0.1, bell(1047, 1.0, 0.35)), (0.1, bell(1319, 1.0, 0.3)), (0.1, bell(1568, 1.0, 0.3))])
-    if st == 4:   # 赤:キュインキュイン+ブラス+ドラム
-        return combine([(0, sweep(600, 3000, 0.25, 0.6, 0.03, 0.3)), (0.22, sweep(600, 3000, 0.3, 0.65, 0.03, 0.3)),
-                        (0.45, brass(64, 0.9, 0.6)), (0.45, drum(0.7))])
-    if st == 5:   # 金:ピキーン!+ファンファーレ+シンバル
-        return combine([(0, pikiin(0.6)), (0.15, brass(67, 0.25, 0.45)), (0.3, brass(72, 0.25, 0.5)),
-                        (0.45, brass(76, 1.4, 0.7)), (0.45, cymbal(0.4)), (0.45, drum(0.8, 3))])
-    if st == 6:   # 虹:長いギュイーン
-        return combine([(0, sweep(200, 3200, 1.1, 0.75, 0.04, 0.5, 0.35)), (0, cymbal(0.4, 1.5, 4))])
+    """色ごとにちがう音。色が上がるほど、音が重なって豪華に・残響も深く。"""
+    if st == 1:   # 青:ピロン+小さなキラキラ
+        x = combine([(0, bell(1319, 0.5, 0.5)), (0.08, bell(1976, 0.6, 0.5)), (0.16, glitter(84, 4, 0.04, 0.12))])
+        return reverb(x, 0.25, 1.0)
+    if st == 2:   # 緑:キュイン+駆け上がるキラキラ
+        x = combine([(0, sweep(700, 2600, 0.3, 0.55, 0.02)), (0.05, bell(2093, 0.7, 0.35)),
+                     (0.1, glitter(79, 6, 0.035, 0.15)), (0.05, pad(67, 0.9, 0.25))])
+        return reverb(x, 0.35, 1.3)
+    if st == 3:   # 紫:ギュイン+鐘の和音+ストリングス+キラキラ
+        x = combine([(0, sweep(300, 1800, 0.45, 0.6, 0.05, 0.4, 0.1)),
+                     (0.1, bell(1047, 1.2, 0.35)), (0.1, bell(1319, 1.2, 0.3)), (0.1, bell(1568, 1.2, 0.3)),
+                     (0.1, pad(65, 1.4, 0.4)), (0.15, glitter(77, 8, 0.035, 0.16))])
+        return reverb(x, 0.45, 1.6)
+    if st == 4:   # 赤:キュインキュイン+ブラス+ドラム+ストリングス+キラキラの滝
+        x = combine([(0, sweep(600, 3000, 0.25, 0.6, 0.03, 0.3)), (0.22, sweep(600, 3000, 0.3, 0.65, 0.03, 0.3)),
+                     (0.45, brass(64, 1.1, 0.65)), (0.45, drum(0.75)), (0.45, pad(64, 1.8, 0.5)),
+                     (0.45, glitter(76, 10, 0.03, 0.18)), (0.45, cymbal(0.25, 1.2, 7))])
+        return reverb(x, 0.55, 2.0)
+    if st == 5:   # 金:ピキーン!+3連ファンファーレ+ティンパニ+ストリングス+ハープ風の駆け上がり
+        x = combine([(0, pikiin(0.6)), (0.15, brass(67, 0.22, 0.45)), (0.3, brass(72, 0.22, 0.5)),
+                     (0.45, brass(76, 1.8, 0.75)), (0.45, brass(64, 1.8, 0.45)), (0.45, cymbal(0.45, 1.8)),
+                     (0.45, timpani(0.9)), (0.45, pad(67, 2.4, 0.6)), (0.45, glitter(79, 14, 0.028, 0.2)),
+                     (0.45, sub_boom(0.6))])
+        return reverb(x, 0.65, 2.4)
+    if st == 6:   # 虹:長いギュイーン+低いドーン+全部
+        x = combine([(0, sweep(200, 3200, 1.1, 0.75, 0.04, 0.5, 0.35)), (0, cymbal(0.4, 1.5, 4)),
+                     (1.0, sub_boom(0.9, 2.4)), (1.0, timpani(1.0, 2.0)), (1.0, pad(72, 3.0, 0.6)),
+                     (1.0, glitter(84, 16, 0.025, 0.2))])
+        return reverb(x, 0.7, 2.8)
     return np.zeros(10)
 
 
@@ -863,6 +993,7 @@ def synth_audio(res, duration, path):
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += 0.9 * sig[:m]
         sig = evolve_sound(6)   # 虹のギュイーンは演出と重なっても大きく聞こえるように
+        sig = sig / (np.abs(sig).max() + 1e-9)
         i0 = int(end_t * SR)
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += 0.6 * sig[:m]
