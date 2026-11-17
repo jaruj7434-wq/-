@@ -72,3 +72,12 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - 動画化: アップロード media `f4528471-4795-481f-8b09-35cbf7866884`(md5 一致)を開始画像に、Cinema Studio Video 2 / pro / 5秒 / 10クレジット、job `a7f01af5-7840-4fed-9d3a-3d1c9546e057`(`bit2-pasta.mp4`)
   - 慶太がパスタを食べ、イルカ先生役と親父が顔を見合わせ、最後に慶太がナプキンで口元を押さえて口をすぼめる。のれんの文字と額当ての渦巻きは最後まで保たれた
 - 「ボーノ!」: elevenlabs_v4 / 慶太-1、job `f05c9bc1-135b-4bb4-b87b-1569d489860f`。ささやき気味で「ボーナー」寄りに聞こえる → 4.25秒に配置(`bit2-pasta-bono.mp4`)
+
+## ネタ3: 移動は全部タクシー
+- 流れ: 屋根の上で構える → 跳んで着地 → 手を挙げてタクシーが止まる → 車内で「一楽まで」→ 走り出し、窓の外を忍者たちが屋根伝いに追い越す
+- 屋根の画像: gpt_image_2 / medium / 2k / 9:16、job `06e83618-8df3-41ff-9896-5055e48201fa`(`bit3-rooftop.png`)
+- 車内の画像: 同上、job `d931e485-bca9-4f9f-af6c-818d7350c816`(`bit3-taxi.png`)。タクシーは黒、会社名・ロゴなし
+- 「一楽まで。」: elevenlabs_v4 / 慶太-1、job `35c8c1d0-8e7e-4da4-bb8d-1810d5633385`(0.03〜0.99秒)
+- 動画A(屋根 → 着地 → タクシー、4秒、8クレジット): job `54ece35c-1c9e-4170-a0fe-c1dd8bb970e9`
+- 動画B(車内 → 走り出し、5秒、10クレジット): job `edc100c0-8809-474c-a574-59843cba8167`
+- 注意: 途中で実行環境が入れ替わり、assets/ のローカルファイルが消えた。生成物は Higgs Field の job ID から取り直せる
