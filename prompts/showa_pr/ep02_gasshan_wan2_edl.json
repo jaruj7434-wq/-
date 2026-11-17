@@ -32,17 +32,33 @@
   "seed": 1968
  },
  "vertical": {
-  "top_small": "あの頃、こんなCMがあった……?",
-  "top_title": "昭和のまぼろしCM",
-  "bottom_note": "架空の会社・製品です / この映像はAIで制作しています"
+  "top_title": "昭和のまぼろしCM"
  },
- "_memo": "第2話 ガッシャン号 Wan 3.0 一発撮り 2本目(ちゃぶ台返しを強化)+社名カード",
+ "_memo": "第2話 ガッシャン号 Wan 3.0 一発撮り 2本目(ちゃぶ台返しを強化)+社名カード/冒頭をCMガールの「腰を痛めていませんか?」から始める並びに変更。縦型の上の小見出しと下の注記を削除",
  "out_dir": "../../../output/showa_pr/ep02_gasshan_wan2",
  "cuts": [
   {
    "src": "wan/wan_take2.mp4",
-   "in": 0,
-   "dur": 28.0,
+   "in": 7.95,
+   "dur": 2.5,
+   "audio": true
+  },
+  {
+   "src": "wan/wan_take2.mp4",
+   "in": 0.0,
+   "dur": 7.95,
+   "audio": true
+  },
+  {
+   "src": "wan/wan_take2.mp4",
+   "in": 10.45,
+   "dur": 1.55,
+   "audio": true
+  },
+  {
+   "src": "wan/wan_take2.mp4",
+   "in": 12.0,
+   "dur": 16.0,
    "audio": true
   },
   {
@@ -94,8 +110,8 @@
  "telops": [
   {
    "text": "腰を 痛めていませんか?",
-   "start": 8.3,
-   "end": 10.3,
+   "start": 0.3,
+   "end": 2.5,
    "font": "tokumin",
    "stroke": "soft",
    "color": [
