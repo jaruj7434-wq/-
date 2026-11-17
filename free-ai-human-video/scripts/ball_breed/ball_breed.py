@@ -49,8 +49,10 @@ MAX_OBJ = TARGET + 40
 OUTRO = 4.2
 VIEW_CY, VIEW_S = 985.0, 0.83   # 画面上のわくの中心と大きさ(TikTokなどの文字やボタンに隠れないよう、まん中寄りに)
 FAIL_SHOW = 0.0   # 時間切れになった瞬間に幽霊が出る
+FIX_INDEX = os.environ.get("FIX_INDEX", "0") == "1"   # 1:生まれたボール同士が重なる不具合を直した版(31本目の作り直しから)
+BIRTH_GAP = float(os.environ.get("BIRTH_GAP", 0.3))   # 生まれるボールと、まわりのボールとのすき間(ピクセル)。小さいと生まれた瞬間に次々当たって連鎖する
 SFX = os.environ.get("SFX", "piyo")   # 生まれる瞬間の音:"piyo"(ピヨッ)か "iyan"(女性の声「いやーん」)
-TAG = "" if SFX == "piyo" else f"{SFX}_"
+TAG = ("" if SFX == "piyo" else f"{SFX}_") + ("" if BIRTH_GAP == 0.3 else f"gap{BIRTH_GAP:g}_") + ("fix_" if FIX_INDEX else "")
 
 
 def size_for(n):
@@ -101,6 +103,8 @@ class Game:
         s.elasticity, s.friction = 1.0, 0.0
         s.collision_type = 1
         self.space.add(b, s)
+        if FIX_INDEX:   # 足したボールを、すぐに「空き場所さがし」に見えるようにする(同じ瞬間に生まれた同士が重ならないように)
+            self.space.reindex_shapes_for_body(b)
         hue = self.rng.uniform(0, 1)   # 1個ずつちがう、あざやかな色
         self.objs[b] = {"id": self.next_id, "shape": s, "born": born, "ready": born + MATURE, "hue": hue}
         self.next_id += 1
@@ -120,11 +124,25 @@ class Game:
                 p = mid + pymunk.Vec2d(math.cos(base + o), math.sin(base + o)) * self.r * dist
                 if (p - (CX, CY)).length > R - self.r - 1:
                     continue
-                q = self.space.point_query_nearest(p, self.r + 0.3, pymunk.ShapeFilter())   # ふちまでの距離が半径より近いと重なる
+                q = self.space.point_query_nearest(p, self.r + BIRTH_GAP, pymunk.ShapeFilter())   # ふちまでの距離が半径より近いと重なる
                 if q is None or q.shape is None or q.shape.collision_type != 1:
                     return p
                 if q.distance > best_d:
                     best, best_d = p, q.distance
+        if FIX_INDEX:   # 近くに空きがないときは、重なる所に出さず、当たった所から少しずつ外へ広げて一番近い空き場所に出す
+            step_ = self.r
+            dist = self.r * 9.5
+            while dist < 2 * R:
+                m = max(12, int(2 * math.pi * dist / step_))
+                for k in range(m):
+                    a_ = base + 2 * math.pi * k / m
+                    p = mid + pymunk.Vec2d(math.cos(a_), math.sin(a_)) * dist
+                    if (p - (CX, CY)).length > R - self.r - 1:
+                        continue
+                    q = self.space.point_query_nearest(p, self.r + BIRTH_GAP, pymunk.ShapeFilter())
+                    if q is None or q.shape is None or q.shape.collision_type != 1:
+                        return p
+                dist += step_
         return best if best is not None else mid
 
     def _touch(self, arb, space, data):
@@ -490,7 +508,7 @@ def synth_audio(res, duration, path):
             if len(recent) < 10:
                 if SFX == "iyan":   # 女性の短い声「いやーん」(言い方と高さを少しずつ変える)
                     from iyan import iyan
-                    add(iyan(int(rng.integers(0, 4)), SR, rng.uniform(0.94, 1.12)), t, 1.6 / (1 + 0.15 * len(recent)))
+                    add(iyan(int(rng.integers(0, 4)), SR, rng.uniform(1.05, 1.2)), t, 1.6 / (1 + 0.15 * len(recent)))
                 else:
                     add(piyo(rng), t, 0.9 / (1 + 0.15 * len(recent)))
                 recent.append(t)
