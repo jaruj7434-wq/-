@@ -49,6 +49,8 @@ MAX_OBJ = TARGET + 40
 OUTRO = 4.2
 VIEW_CY, VIEW_S = 985.0, 0.83   # 画面上のわくの中心と大きさ(TikTokなどの文字やボタンに隠れないよう、まん中寄りに)
 FAIL_SHOW = 0.0   # 時間切れになった瞬間に幽霊が出る
+SFX = os.environ.get("SFX", "piyo")   # 生まれる瞬間の音:"piyo"(ピヨッ)か "iyan"(女性の声「いやーん」)
+TAG = "" if SFX == "piyo" else f"{SFX}_"
 
 
 def size_for(n):
@@ -275,9 +277,9 @@ def render(seed):
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
     fail = result == "fail"
     os.makedirs(OUT_DIR, exist_ok=True)
-    silent = os.path.join(OUT_DIR, f"ball_breed_{seed}_video.mp4")
-    wav = os.path.join(OUT_DIR, f"ball_breed_{seed}.wav")
-    final = os.path.join(OUT_DIR, f"ball_breed_{seed}.mp4")
+    silent = os.path.join(OUT_DIR, f"ball_breed_{TAG}{seed}_video.mp4")
+    wav = os.path.join(OUT_DIR, f"ball_breed_{TAG}{seed}.wav")
+    final = os.path.join(OUT_DIR, f"ball_breed_{TAG}{seed}.mp4")
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     ctx = cairo.Context(surf)
     preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
@@ -486,7 +488,11 @@ def synth_audio(res, duration, path):
             # 数が少ないうちは1回ずつはっきり。多くなったら、たくさん重なって「ピヨピヨピヨ…」の大合唱
             recent = [x for x in recent if t - x < 0.25]
             if len(recent) < 10:
-                add(piyo(rng), t, 0.9 / (1 + 0.15 * len(recent)))
+                if SFX == "iyan":   # 女性の短い声「いやーん」(言い方と高さを少しずつ変える)
+                    from iyan import iyan
+                    add(iyan(int(rng.integers(0, 4)), SR, rng.uniform(0.94, 1.12)), t, 1.6 / (1 + 0.15 * len(recent)))
+                else:
+                    add(piyo(rng), t, 0.9 / (1 + 0.15 * len(recent)))
                 recent.append(t)
         elif kind == "wall":
             if t - last_w > 0.08:
