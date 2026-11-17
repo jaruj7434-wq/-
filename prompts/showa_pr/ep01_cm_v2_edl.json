@@ -20,12 +20,6 @@
    "audio": true
   },
   {
-   "src": "clips/s03.mp4",
-   "in": 0.5,
-   "dur": 4.0,
-   "audio": true
-  },
-  {
    "src": "clips/s03b.mp4",
    "in": 0.0,
    "dur": 3.9,
@@ -144,26 +138,9 @@
    "stroke": "soft"
   },
   {
-   "text": "一年で\n三百時間!",
-   "start": 6.2,
-   "end": 10.2,
-   "font": "fude",
-   "size": 38,
-   "color": [
-    30,
-    28,
-    26
-   ],
-   "xy": [
-    0.363,
-    0.355
-   ],
-   "stroke": false
-  },
-  {
    "text": "電気洗濯乾燥機\nおてんき号",
-   "start": 17.0,
-   "end": 20.9,
+   "start": 13.0,
+   "end": 16.9,
    "font": "tokumin",
    "size": 42,
    "color": [
@@ -175,8 +152,8 @@
   },
   {
    "text": "ボタン ひとつ",
-   "start": 21.1,
-   "end": 24.9,
+   "start": 17.1,
+   "end": 20.9,
    "font": "tokumin",
    "size": 44,
    "color": [
@@ -188,8 +165,8 @@
   },
   {
    "text": "雨の日も 乾燥まで",
-   "start": 25.1,
-   "end": 29.2,
+   "start": 21.1,
+   "end": 25.2,
    "font": "tokumin",
    "size": 42,
    "color": [
@@ -201,8 +178,8 @@
   },
   {
    "text": "ポケットに 入れっぱなし?",
-   "start": 29.4,
-   "end": 34.2,
+   "start": 25.4,
+   "end": 30.2,
    "font": "tokumin",
    "size": 40,
    "color": [
@@ -214,8 +191,8 @@
   },
   {
    "text": "新案 ポケット点検機能",
-   "start": 34.4,
-   "end": 42.3,
+   "start": 30.4,
+   "end": 38.3,
    "font": "tokumin",
    "size": 34,
    "color": [
@@ -232,8 +209,8 @@
   },
   {
    "text": "おとどけ箱",
-   "start": 37.0,
-   "end": 42.3,
+   "start": 33.0,
+   "end": 38.3,
    "font": "tokumin",
    "size": 26,
    "color": [
@@ -250,8 +227,8 @@
   },
   {
    "text": "忘れ物 おとどけ",
-   "start": 42.5,
-   "end": 46.0,
+   "start": 38.5,
+   "end": 42.0,
    "font": "tokumin",
    "size": 44,
    "color": [
@@ -263,8 +240,8 @@
   },
   {
    "text": "ご主人の へそくりも",
-   "start": 47.2,
-   "end": 50.7,
+   "start": 43.2,
+   "end": 46.7,
    "font": "tokumin",
    "size": 42,
    "color": [
@@ -276,8 +253,8 @@
   },
   {
    "text": "家計も すっきり",
-   "start": 50.9,
-   "end": 53.8,
+   "start": 46.9,
+   "end": 49.8,
    "font": "tokumin",
    "size": 44,
    "color": [
@@ -289,8 +266,8 @@
   },
   {
    "text": "月賦販売 承ります",
-   "start": 54.0,
-   "end": 56.8,
+   "start": 50.0,
+   "end": 52.8,
    "font": "tokumin",
    "size": 40,
    "color": [
@@ -318,7 +295,7 @@
    {
     "src": "jingle_take1.wav",
     "kind": "music",
-    "start": 17.6,
+    "start": 13.6,
     "in": 1.85,
     "dur": 3.3,
     "gain": 0.9
@@ -326,31 +303,31 @@
    {
     "src": "voice/05_narr.mp3",
     "kind": "voice",
-    "start": 21.0,
+    "start": 17.0,
     "gain": 1.0
    },
    {
     "src": "sfx/chin.wav",
     "kind": "music",
-    "start": 42.3,
+    "start": 38.3,
     "gain": 0.7
    },
    {
     "src": "sfx/chin.wav",
     "kind": "music",
-    "start": 46.0,
+    "start": 42.0,
     "gain": 0.7
    },
    {
     "src": "sfx/kiran.wav",
     "kind": "music",
-    "start": 51.6,
+    "start": 47.6,
     "gain": 0.6
    },
    {
     "src": "jingle_tail_clean.wav",
     "kind": "music",
-    "start": 56.8,
+    "start": 52.8,
     "gain": 0.9
    }
   ]
@@ -362,74 +339,69 @@
    "end": 6.2
   },
   {
-   "text": "一年でお洗濯にかける時間\nなんと三百時間!",
-   "start": 6.2,
-   "end": 10.2
-  },
-  {
    "text": "ウルセェ!\nこれしかねえんだよ!",
-   "start": 10.2,
-   "end": 14.1
+   "start": 6.2,
+   "end": 10.1
   },
   {
    "text": "そこで!ユメミの\nおてんき号!",
-   "start": 14.1,
-   "end": 17.7
+   "start": 10.1,
+   "end": 13.7
   },
   {
    "text": "〜ユメミ ユメミ ユーメーミー〜",
-   "start": 17.7,
-   "end": 20.9
+   "start": 13.7,
+   "end": 16.9
   },
   {
    "text": "ボタンひとつで、洗って\nすすいで、しぼって……",
-   "start": 20.9,
-   "end": 24.9
+   "start": 16.9,
+   "end": 20.9
   },
   {
    "text": "まあ、乾燥まで!\n雨の日だって、おてんき号ね",
-   "start": 24.9,
-   "end": 29.2
+   "start": 20.9,
+   "end": 25.2
   },
   {
    "text": "でも奥さま、ポケットの\n入れっぱなし……ありますでしょ?",
-   "start": 29.2,
-   "end": 34.2
+   "start": 25.2,
+   "end": 30.2
   },
   {
    "text": "ご安心!洗う前に\nポケットを自動で点検",
-   "start": 34.2,
-   "end": 38.3
+   "start": 30.2,
+   "end": 34.3
   },
   {
    "text": "忘れ物を取り出して\nこの、おとどけ箱へ!",
-   "start": 38.3,
-   "end": 42.3
+   "start": 34.3,
+   "end": 38.3
   },
   {
    "text": "わあ!ぼくのビー玉だ!",
-   "start": 42.3,
-   "end": 46.0
+   "start": 38.3,
+   "end": 42.0
   },
   {
    "text": "あら……あなたの、へそくり\n(あっ!)",
-   "start": 46.0,
-   "end": 50.7
+   "start": 42.0,
+   "end": 46.7
   },
   {
    "text": "家計も、すっきり!",
-   "start": 50.7,
-   "end": 53.8
+   "start": 46.7,
+   "end": 49.8
   },
   {
    "text": "お近くの電器店で、どうぞ!",
-   "start": 53.8,
-   "end": 56.8
+   "start": 49.8,
+   "end": 52.8
   },
   {
    "text": "〜ゆめみがおか でんきー〜",
-   "start": 56.8,
-   "end": 59.3
+   "start": 52.8,
+   "end": 55.3
   }
  ],
  "subtitles": []
