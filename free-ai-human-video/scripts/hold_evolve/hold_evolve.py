@@ -228,112 +228,176 @@ def mix(c, d, k):
     return tuple(a + (b - a) * k for a, b in zip(c, d))
 
 
+def _bezel_grad(x, y, r, gold=False):
+    """金属のふち(ベゼル):上が明るく下が暗い、メタリックな縦のグラデーション。"""
+    g = cairo.LinearGradient(x - r * 0.5, y - r, x + r * 0.5, y + r)
+    if gold:
+        stops = [(0, (1.0, 0.97, 0.75)), (0.25, (0.95, 0.72, 0.18)), (0.5, (0.45, 0.28, 0.02)),
+                 (0.7, (0.98, 0.82, 0.35)), (1, (0.5, 0.32, 0.04))]
+    else:
+        stops = [(0, (1, 1, 1)), (0.22, (0.78, 0.8, 0.86)), (0.5, (0.2, 0.21, 0.25)),
+                 (0.72, (0.88, 0.9, 0.95)), (1, (0.3, 0.31, 0.36))]
+    for o, c in stops:
+        g.add_color_stop_rgb(o, *c)
+    return g
+
+
+def _flare(ctx, x, y, s, a, rot=0.0):
+    """レンズフレアのような細い光の十字。"""
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(rot)
+    for ang, ln in ((0, 1.0), (math.pi / 2, 1.0), (math.pi / 4, 0.45), (-math.pi / 4, 0.45)):
+        ctx.save()
+        ctx.rotate(ang)
+        g = cairo.LinearGradient(-s * ln, 0, s * ln, 0)
+        g.add_color_stop_rgba(0, 1, 1, 1, 0)
+        g.add_color_stop_rgba(0.5, 1, 1, 1, a)
+        g.add_color_stop_rgba(1, 1, 1, 1, 0)
+        ctx.rectangle(-s * ln, -max(0.8, s * 0.035), 2 * s * ln, 2 * max(0.8, s * 0.035))
+        ctx.set_source(g)
+        ctx.fill()
+        ctx.restore()
+    g = cairo.RadialGradient(0, 0, 0, 0, 0, s * 0.25)
+    g.add_color_stop_rgba(0, 1, 1, 1, a)
+    g.add_color_stop_rgba(1, 1, 1, 1, 0)
+    ctx.arc(0, 0, s * 0.25, 0, 2 * math.pi)
+    ctx.set_source(g)
+    ctx.fill()
+    ctx.restore()
+
+
 def draw_hold(ctx, x, y, r, st, t, ang=0.0, k=1.0):
-    """パチンコの保留玉:光るツヤツヤの玉。色が上がるほど、オーラ・きらめき・炎・虹の模様で派手になる。"""
+    """パチンコの保留玉:メタリックなふち(ベゼル)にはまった、つやのある色ガラスの玉。
+    中心が光り、上に映りこみ(地平線のような明暗の境目)、左上に強いハイライト、下のふちに反射光。
+    色が上がるほど外の光・フレア・光の流れが強くなる。金はふちも玉も金属、虹は虹色に色が回る。"""
     r *= k
-    col = COLORS[st] if COLORS[st] is not None else hsv(t * 0.6)
-    pulse = 0.5 + 0.5 * math.sin(t * (4 + st) + x * 0.01)
-    # 外側のオーラ(色が上がるほど大きく・強く)
+    rainbow = COLORS[st] is None
+    col = COLORS[st] if not rainbow else hsv(t * 0.5)
+    ph = t * 2.2 + x * 0.013
+    # 1. 外の光(後光)
     if st >= 1:
-        ar = r * (1.35 + 0.08 * st + 0.08 * pulse)
-        g = cairo.RadialGradient(x, y, r * 0.8, x, y, ar)
-        g.add_color_stop_rgba(0, *col, 0.25 + 0.08 * st)
+        ar = r * (1.25 + 0.07 * st)
+        g = cairo.RadialGradient(x, y, r * 0.9, x, y, ar)
+        g.add_color_stop_rgba(0, *col, 0.18 + 0.07 * st + 0.05 * math.sin(ph))
         g.add_color_stop_rgba(1, *col, 0)
         ctx.arc(x, y, ar, 0, 2 * math.pi)
         ctx.set_source(g)
         ctx.fill()
-    if st == 4:   # 赤:ゆらめく炎のオーラ
-        n = 16
-        ctx.new_path()
-        for j in range(n * 2 + 1):
-            a = 2 * math.pi * j / (n * 2) + t * 1.5
-            rr = r * (1.12 + (0.32 + 0.12 * math.sin(t * 9 + j * 1.7)) * (j % 2 == 0))
-            ctx.line_to(x + rr * math.cos(a), y + rr * math.sin(a))
-        ctx.close_path()
-        ctx.set_source_rgba(1, 0.45, 0.05, 0.6)
-        ctx.fill()
-    if st >= 5:   # 金・虹:回る光の筋
-        for j in range(12):
-            a = 2 * math.pi * j / 12 + t * (0.8 if st == 5 else 1.6)
+    if st >= 5:   # 金・虹:後ろで回る細い光の筋
+        for j in range(16):
+            a = 2 * math.pi * j / 16 + t * 0.7
+            ln = r * (1.55 + 0.25 * (j % 2))
+            g = cairo.RadialGradient(x, y, r, x, y, ln)
+            c2 = hsv(j / 16 + t * 0.3) if rainbow else (1, 0.9, 0.55)
+            g.add_color_stop_rgba(0, *c2, 0.55)
+            g.add_color_stop_rgba(1, *c2, 0)
             ctx.move_to(x, y)
-            ctx.arc(x, y, r * 1.9, a, a + 0.12)
+            ctx.arc(x, y, ln, a - 0.035, a + 0.035)
             ctx.close_path()
-            ctx.set_source_rgba(*(hsv(j / 12 + t * 0.5) if st == 6 else (1, 0.92, 0.5)), 0.35)
+            ctx.set_source(g)
             ctx.fill()
-    # 玉の本体(ツヤのあるグラデーション)
-    if st == 6:   # 虹:回る虹色の模様
-        for j in range(12):
-            a = 2 * math.pi * j / 12 + t * 2.0
+    # 2. 金属のふち(ベゼル)
+    ctx.arc(x, y, r, 0, 2 * math.pi)
+    ctx.set_source(_bezel_grad(x, y, r, gold=(st == 5)))
+    ctx.fill()
+    ctx.arc(x, y, r, 0, 2 * math.pi)
+    ctx.set_source_rgba(0, 0, 0, 0.6)
+    ctx.set_line_width(max(1.0, r * 0.03))
+    ctx.stroke()
+    ri = r * 0.84
+    ctx.arc(x, y, ri + max(0.8, r * 0.02), 0, 2 * math.pi)   # ふちの内側の暗い溝
+    ctx.set_source_rgba(0, 0, 0, 0.75)
+    ctx.set_line_width(max(1.2, r * 0.04))
+    ctx.stroke()
+    # 3. 色ガラスの玉
+    ctx.save()
+    ctx.arc(x, y, ri, 0, 2 * math.pi)
+    ctx.clip()
+    if rainbow:
+        for j in range(24):
+            a = 2 * math.pi * j / 24 + t * 1.2
             ctx.move_to(x, y)
-            ctx.arc(x, y, r, a, a + 2 * math.pi / 12 + 0.01)
+            ctx.arc(x, y, ri, a, a + 2 * math.pi / 24 + 0.01)
             ctx.close_path()
-            ctx.set_source_rgb(*hsv(j / 12 + t * 0.3))
+            ctx.set_source_rgb(*hsv(j / 24 + t * 0.25, 0.85, 1.0))
             ctx.fill()
-        g = cairo.RadialGradient(x - r * 0.3, y - r * 0.35, r * 0.05, x, y, r)
-        g.add_color_stop_rgba(0, 1, 1, 1, 0.75)
-        g.add_color_stop_rgba(0.5, 1, 1, 1, 0.1)
-        g.add_color_stop_rgba(1, 0, 0, 0, 0.35)
-        ctx.arc(x, y, r, 0, 2 * math.pi)
+        g = cairo.RadialGradient(x, y + ri * 0.15, ri * 0.05, x, y, ri)
+        g.add_color_stop_rgba(0, 1, 1, 1, 0.55)
+        g.add_color_stop_rgba(0.45, 1, 1, 1, 0.0)
+        g.add_color_stop_rgba(1, 0, 0, 0.05, 0.55)
+        ctx.rectangle(x - ri, y - ri, 2 * ri, 2 * ri)
         ctx.set_source(g)
         ctx.fill()
     else:
-        g = cairo.RadialGradient(x - r * 0.35, y - r * 0.4, r * 0.05, x, y, r)
-        light = mix(col, (1, 1, 1), 0.75)
-        dark = mix(col, (0, 0, 0), 0.55 if st > 0 else 0.3)
-        g.add_color_stop_rgb(0, *light)
-        g.add_color_stop_rgb(0.45, *col)
-        g.add_color_stop_rgb(1, *dark)
-        ctx.arc(x, y, r, 0, 2 * math.pi)
+        if st == 0:
+            core, mid, edge = (1, 1, 1), (0.82, 0.84, 0.9), (0.28, 0.3, 0.38)
+        elif st == 5:
+            core, mid, edge = (1, 0.98, 0.8), (0.98, 0.72, 0.12), (0.35, 0.2, 0.0)
+        else:
+            core = mix(col, (1, 1, 1), 0.65)
+            mid = col
+            edge = mix(col, (0, 0, 0), 0.8)
+        g = cairo.RadialGradient(x, y + ri * 0.25, ri * 0.05, x, y, ri * 1.05)   # 中心(少し下)が光る
+        g.add_color_stop_rgb(0, *core)
+        g.add_color_stop_rgb(0.42, *mid)
+        g.add_color_stop_rgb(1, *edge)
+        ctx.rectangle(x - ri, y - ri, 2 * ri, 2 * ri)
         ctx.set_source(g)
         ctx.fill()
-    if st == 5:   # 金:斜めに走る光のすじ(メタリック)
-        ctx.save()
-        ctx.arc(x, y, r, 0, 2 * math.pi)
-        ctx.clip()
-        sx = x - r * 1.6 + ((t * 0.9 + x * 0.003) % 1.6) * r * 2.0
-        ctx.move_to(sx, y - r)
-        ctx.line_to(sx + r * 0.35, y - r)
-        ctx.line_to(sx - r * 0.25, y + r)
-        ctx.line_to(sx - r * 0.6, y + r)
-        ctx.close_path()
-        ctx.set_source_rgba(1, 1, 0.9, 0.55)
-        ctx.fill()
-        ctx.restore()
-    # 内側の輪(保留アイコンらしい二重のふち)と、ふちの白い線
-    ctx.arc(x, y, r * 0.72, 0, 2 * math.pi)
-    ctx.set_source_rgba(1, 1, 1, 0.35 if st > 0 else 0.5)
-    ctx.set_line_width(max(1.5, r * 0.06))
-    ctx.stroke()
-    ctx.arc(x, y, r - max(1.0, r * 0.03), 0, 2 * math.pi)
-    ctx.set_source_rgba(1, 1, 1, 0.9)
-    ctx.set_line_width(max(1.5, r * 0.06))
-    ctx.stroke()
-    # ツヤ(左上の白いハイライト)
-    ctx.save()
-    ctx.translate(x - r * 0.32, y - r * 0.42)
-    ctx.scale(r * 0.42, r * 0.22)
-    ctx.arc(0, 0, 1, 0, 2 * math.pi)
-    ctx.restore()
-    ctx.set_source_rgba(1, 1, 1, 0.7)
+    # 映りこみ:上半分は空が映ったように明るく、地平線のところでくっきり暗くなる
+    hy = y - ri * 0.08 + ri * 0.04 * math.sin(ph * 0.5)
+    g = cairo.LinearGradient(x, y - ri, x, hy)
+    g.add_color_stop_rgba(0, 1, 1, 1, 0.45 if st != 5 else 0.6)
+    g.add_color_stop_rgba(0.8, 1, 1, 1, 0.08)
+    g.add_color_stop_rgba(1, 1, 1, 1, 0.14)
+    ctx.rectangle(x - ri, y - ri, 2 * ri, hy - (y - ri))
+    ctx.set_source(g)
     ctx.fill()
-    # 紫から上はキラキラが回る
+    ctx.rectangle(x - ri, hy, 2 * ri, ri * 0.035)   # 地平線のうすい暗い線
+    ctx.set_source_rgba(0, 0, 0, 0.12)
+    ctx.fill()
+    # 光の流れ(進化が進むほど、ななめの光が玉の上を走る)
+    if st >= 2:
+        sx = x - ri * 2 + ((t * (0.5 + 0.12 * st) + x * 0.002) % 1.0) * ri * 4
+        g = cairo.LinearGradient(sx - ri * 0.3, 0, sx + ri * 0.3, 0)
+        g.add_color_stop_rgba(0, 1, 1, 1, 0)
+        g.add_color_stop_rgba(0.5, 1, 1, 1, 0.22 + 0.05 * st)
+        g.add_color_stop_rgba(1, 1, 1, 1, 0)
+        ctx.move_to(sx - ri * 0.2, y - ri)
+        ctx.line_to(sx + ri * 0.35, y - ri)
+        ctx.line_to(sx - ri * 0.15, y + ri)
+        ctx.line_to(sx - ri * 0.7, y + ri)
+        ctx.close_path()
+        ctx.set_source(g)
+        ctx.fill()
+    # 下のふちの反射光(三日月形)
+    g = cairo.RadialGradient(x, y + ri * 0.95, 0, x, y + ri * 0.95, ri * 0.7)
+    g.add_color_stop_rgba(0, *mix(col, (1, 1, 1), 0.6), 0.55)
+    g.add_color_stop_rgba(1, *col, 0)
+    ctx.arc(x, y + ri * 0.95, ri * 0.7, 0, 2 * math.pi)
+    ctx.set_source(g)
+    ctx.fill()
+    ctx.restore()
+    # 4. ハイライト(左上の強い光)
+    ctx.save()
+    ctx.translate(x - ri * 0.36, y - ri * 0.5)
+    ctx.rotate(-0.5)
+    ctx.scale(ri * 0.34, ri * 0.15)
+    g = cairo.RadialGradient(0, 0, 0, 0, 0, 1)
+    g.add_color_stop_rgba(0, 1, 1, 1, 0.95)
+    g.add_color_stop_rgba(1, 1, 1, 1, 0)
+    ctx.arc(0, 0, 1, 0, 2 * math.pi)
+    ctx.set_source(g)
+    ctx.fill()
+    ctx.restore()
+    ctx.arc(x - ri * 0.42, y - ri * 0.5, max(1.2, ri * 0.07), 0, 2 * math.pi)
+    ctx.set_source_rgba(1, 1, 1, 1)
+    ctx.fill()
+    # 5. フレア(紫から上。色が上がるほど大きく・強く)
     if st >= 3:
-        n = 2 + st
-        for j in range(n):
-            a = 2 * math.pi * j / n + t * (1.2 + 0.2 * st)
-            sx, sy = x + r * 1.08 * math.cos(a), y + r * 1.08 * math.sin(a)
-            s = r * (0.12 + 0.06 * math.sin(t * 8 + j)) + 2
-            ctx.move_to(sx, sy - s)
-            ctx.line_to(sx + s * 0.25, sy - s * 0.25)
-            ctx.line_to(sx + s, sy)
-            ctx.line_to(sx + s * 0.25, sy + s * 0.25)
-            ctx.line_to(sx, sy + s)
-            ctx.line_to(sx - s * 0.25, sy + s * 0.25)
-            ctx.line_to(sx - s, sy)
-            ctx.line_to(sx - s * 0.25, sy - s * 0.25)
-            ctx.close_path()
-            ctx.set_source_rgba(1, 1, 1, 0.9)
-            ctx.fill()
+        a = 0.55 + 0.35 * (0.5 + 0.5 * math.sin(ph * 1.7))
+        _flare(ctx, x - ri * 0.42, y - ri * 0.5, r * (0.6 + 0.18 * (st - 3)), a, rot=t * 0.4 if st >= 5 else 0.0)
 
 
 def background():
