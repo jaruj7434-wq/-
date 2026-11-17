@@ -319,7 +319,13 @@ def draw_walls(ctx, zoom=1.0):
     ctx.stroke()
 
 
-def draw_planks(ctx, planks, alive, zoom=1.0):
+def rainbow_col(k, t):
+    """ガラスの色:うずまきに沿って虹色(赤→黄→緑→青→紫…を3周)。時間とともにゆっくり色が流れる。"""
+    import colorsys
+    return colorsys.hsv_to_rgb((3.0 * k / N_PLANKS - 0.08 * t) % 1.0, 0.6, 1.0)
+
+
+def draw_planks(ctx, planks, alive, zoom=1.0, t=0.0):
     for p, a in zip(planks, alive):
         if not a:
             continue
@@ -329,10 +335,10 @@ def draw_planks(ctx, planks, alive, zoom=1.0):
         for c in q[1:]:
             ctx.line_to(*c)
         ctx.close_path()
-        tint = p["tint"]
-        ctx.set_source_rgba(0.62 + tint, 0.85 + tint, 1.0, 0.42)   # すき通ったガラス
+        hcol = rainbow_col(p["k"], t)
+        ctx.set_source_rgba(*hcol, 0.55)                            # すき通った虹色のガラス
         ctx.fill_preserve()
-        ctx.set_source_rgba(0.88, 0.97, 1.0, 0.85)                  # 光るふち
+        ctx.set_source_rgba(*(0.55 + 0.45 * c for c in hcol), 0.95)  # 光るふち(明るい同じ色)
         ctx.set_line_width(1.3 / math.sqrt(zoom))
         ctx.stroke()
 
@@ -381,8 +387,9 @@ def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
     planks = res["planks"]
-    for p in planks:
+    for k_, p in enumerate(planks):
         p["quad"] = plank_quad(p["th"])
+        p["k"] = k_
     fail = result == "fail"
     os.makedirs(OUT_DIR, exist_ok=True)
     silent = os.path.join(OUT_DIR, f"icon_spiral_{seed}_video.mp4")
@@ -424,12 +431,12 @@ def render(seed):
                 k, x, y, speed = data
                 q = planks[k]["quad"]
                 mx, my = (q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2
-                for _ in range(6):   # 木くず
+                for _ in range(6):   # ガラスの破片
                     a = rng.uniform(0, 2 * math.pi)
                     v = rng.uniform(60, 260)
                     shards.append([mx + rng.uniform(-14, 14), my + rng.uniform(-14, 14),
                                    math.cos(a) * v, math.sin(a) * v, rng.uniform(0, math.pi),
-                                   rng.uniform(-12, 12), rng.uniform(4, 11), et])
+                                   rng.uniform(-12, 12), rng.uniform(4, 11), et, k])
             elif kind == "die":   # 勢いがなくなった玉は、その場で薄くなって消える
                 bid, x, y, col = data
                 dying.append([et, x, y, col, trails.pop(bid, [])])
@@ -461,8 +468,8 @@ def render(seed):
         ctx.scale(zoom, zoom)
         ctx.translate(-CX, -CY)
         draw_walls(ctx, zoom)
-        draw_planks(ctx, planks, fr["alive"], zoom)
-        # 木くず
+        draw_planks(ctx, planks, fr["alive"], zoom, t)
+        # ガラスの破片
         keep = []
         for sh in shards:
             age = t - sh[7]
@@ -481,7 +488,7 @@ def render(seed):
             ctx.line_to(sz / 2, -sz / 5)
             ctx.line_to(0, sz / 2)
             ctx.close_path()
-            ctx.set_source_rgba(0.7, 0.92, 1.0, 0.5 * (1 - age / 0.8))
+            ctx.set_source_rgba(*rainbow_col(sh[8], t), 0.7 * (1 - age / 0.8))   # 虹色のガラスの破片
             ctx.fill_preserve()
             ctx.set_source_rgba(1, 1, 1, 0.9 * (1 - age / 0.8))
             ctx.set_line_width(1.0)

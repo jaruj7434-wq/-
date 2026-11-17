@@ -1,4 +1,6 @@
-"""チャンネルのサムネ(アイコン)に描いてある「光る白いボール」を、6段階の強さで描く。
+"""チャンネルのサムネ(アイコン)の「光るボール」の光と、サムネの女の子の顔で、6段階の強さのボールを描く。
+
+ボール本体はサムネの女の子(黒いおかっぱ髪から青白い顔と大きな黒い目がのぞく)の顔。
 
 アイコンのボール:まっ白に光る芯 + 色のついた光の輪(何重かのにじむ光)+ 尾を引く光の軌跡。
 6段階(弱い順):ブルー → ピンク → パープル → グリーン → ゴールド → レインボー。強いほど光が大きく・明るく、光のトゲも出る。
@@ -53,14 +55,9 @@ def draw_ball(ctx, kind, x, y, ang, r, t, alpha=1.0, rng=None):
             ctx.close_path()
             ctx.set_source(g)
             ctx.fill()
-    # まっ白に光る芯
-    g = cairo.RadialGradient(-r * 0.2, -r * 0.25, r * 0.05, 0, 0, r)
-    g.add_color_stop_rgba(0, 1, 1, 1, alpha)
-    g.add_color_stop_rgba(0.75, 1, 1, 1, alpha)
-    g.add_color_stop_rgba(1, *(0.75 + 0.25 * c for c in col), alpha)
-    ctx.arc(0, 0, r, 0, 2 * math.pi)
-    ctx.set_source(g)
-    ctx.fill()
+    # ボール本体:サムネの女の子の顔(転がるぶんだけ回る)
+    ctx.rotate(ang)
+    draw_face(ctx, r * 1.15, col, alpha)
     ctx.restore()
 
 
@@ -93,3 +90,84 @@ def drop_sounds(sr, seed=0):
             fx[i:i + m] += b[:m]
         out.append((sw / (np.abs(sw).max() + 1e-9) * 0.5, fx / (np.abs(fx).max() + 1e-9) * 0.4))
     return out
+
+
+# ---------------------------------------------------------------- サムネの女の子の顔のボール
+def _head_path(ctx, r):
+    """おかっぱの頭のシルエット(上は丸い髪、横はまっすぐ、下は平らで角が丸い)。半径 r の円にだいたい収まる大きさ。"""
+    ctx.new_path()
+    cy = -0.18 * r
+    ctx.arc(0, cy, 0.92 * r, math.pi, 2 * math.pi)
+    bot = 0.78 * r
+    cr = 0.25 * r
+    ctx.line_to(0.92 * r, bot - cr)
+    ctx.arc(0.92 * r - cr, bot - cr, cr, 0, math.pi / 2)
+    ctx.line_to(-0.92 * r + cr, bot)
+    ctx.arc(-0.92 * r + cr, bot - cr, cr, math.pi / 2, math.pi)
+    ctx.close_path()
+
+
+def draw_face(ctx, r, col, alpha=1.0):
+    """チャンネルのサムネ(アイコン)の女の子:黒いつやつやのおかっぱ髪の下から、青白い顔と大きな黒い目がのぞく。
+    髪のふちに、ボールの色の光(リムライト)。"""
+    ctx.push_group()
+    _head_path(ctx, r)
+    g = cairo.LinearGradient(-r * 0.3, -r * 1.1, r * 0.3, r * 0.8)   # 黒い髪(上にツヤ)
+    g.add_color_stop_rgb(0, 0.35, 0.36, 0.42)
+    g.add_color_stop_rgb(0.25, 0.08, 0.08, 0.1)
+    g.add_color_stop_rgb(1, 0.02, 0.02, 0.03)
+    ctx.set_source(g)
+    ctx.fill_preserve()
+    ctx.set_source_rgba(*col, 0.95)   # ボールの色のふち
+    ctx.set_line_width(max(1.5, r * 0.09))
+    ctx.stroke()
+    ctx.save()
+    _head_path(ctx, r)
+    ctx.clip()
+    ctx.save()   # 髪のツヤ(天使の輪のような光の帯)
+    ctx.translate(-0.05 * r, -0.62 * r)
+    ctx.scale(0.62 * r, 0.14 * r)
+    ctx.arc(0, 0, 1, math.pi * 1.05, math.pi * 1.95)
+    ctx.restore()
+    ctx.set_source_rgba(1, 1, 1, 0.5)
+    ctx.set_line_width(max(1.0, r * 0.07))
+    ctx.stroke()
+    # 顔(下の方の窓):青白い肌
+    fx, fy0, fy1 = 0.64 * r, -0.1 * r, 0.8 * r
+    g = cairo.RadialGradient(0, 0.38 * r, r * 0.05, 0, 0.38 * r, r * 0.7)
+    g.add_color_stop_rgb(0, 0.9, 0.94, 0.92)
+    g.add_color_stop_rgb(1, 0.5, 0.55, 0.55)
+    ctx.rectangle(-fx, fy0, 2 * fx, fy1 - fy0)
+    ctx.set_source(g)
+    ctx.fill()
+    for side in (-1, 1):   # 顔の横の髪の毛すじ
+        for j in range(2):
+            xx = side * (fx - 0.05 * r * j)
+            ctx.move_to(xx, fy0)
+            ctx.line_to(xx, fy1)
+        ctx.set_source_rgba(0.05, 0.05, 0.06, 0.8)
+        ctx.set_line_width(max(0.6, r * 0.025))
+        ctx.stroke()
+    ctx.set_source_rgb(0.02, 0.02, 0.03)   # 前髪の毛先
+    for j in range(6):
+        xx = -fx + 2 * fx * (j + 0.5) / 6
+        ctx.move_to(xx, fy0 - 1)
+        ctx.line_to(xx, fy0 + (0.05 + 0.04 * (j % 3)) * r)
+    ctx.set_line_width(max(1.0, r * 0.05))
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.stroke()
+    ey = 0.32 * r   # 大きな黒い目
+    for ex in (-0.28 * r, 0.28 * r):
+        ctx.save()
+        ctx.translate(ex, ey)
+        ctx.scale(0.18 * r, 0.23 * r)
+        ctx.arc(0, 0, 1, 0, 2 * math.pi)
+        ctx.restore()
+        ctx.set_source_rgb(0, 0, 0)
+        ctx.fill()
+        ctx.arc(ex + 0.03 * r, ey + 0.05 * r, max(0.8, 0.04 * r), 0, 2 * math.pi)
+        ctx.set_source_rgb(1, 1, 0.88)
+        ctx.fill()
+    ctx.restore()
+    ctx.pop_group_to_source()
+    ctx.paint_with_alpha(alpha)
