@@ -3,7 +3,7 @@
 ボール本体はサムネの女の子(黒いおかっぱ髪から青白い顔と大きな黒い目がのぞく)の顔。
 
 アイコンのボール:まっ白に光る芯 + 色のついた光の輪(何重かのにじむ光)+ 尾を引く光の軌跡。
-6段階(弱い順):ブルー → ピンク → パープル → グリーン → ゴールド → レインボー。強いほど光が大きく・明るく、光のトゲも出る。
+7段階(弱い順):ホワイト → ブルー → パープル → グリーン → レッド → ゴールド → レインボー。強いほど光が大きく・明るく、光のトゲも出る。
 draw_ball(ctx, kind, x, y, ang, r, t, alpha, rng) は glass_drum.draw_ball と同じ引数(うずまき・大当たり演出からそのまま呼べる)。
 drop_sounds(sr) は、ボールが落ちてくる瞬間の音(段階ごとに高く・豪華な「キュイン」)を返す(声は使わない)。
 """
@@ -14,12 +14,15 @@ import cairo
 import numpy as np
 
 # (名前, -, -, -, -, 光の色)  ※ glass_drum.BALLS と同じ並び(名前と色だけ使う)
-BALLS = [("ブルー", 0, 0, 0, 0, (0.2, 0.6, 1.0)),
-         ("ピンク", 0, 0, 0, 0, (1.0, 0.3, 0.62)),
+BALLS = [("ホワイト", 0, 0, 0, 0, (0.92, 0.95, 1.0)),
+         ("ブルー", 0, 0, 0, 0, (0.2, 0.6, 1.0)),
          ("パープル", 0, 0, 0, 0, (0.7, 0.35, 1.0)),
          ("グリーン", 0, 0, 0, 0, (0.25, 1.0, 0.5)),
+         ("レッド", 0, 0, 0, 0, (1.0, 0.18, 0.18)),
          ("ゴールド", 0, 0, 0, 0, (1.0, 0.8, 0.2)),
          ("レインボー", 0, 0, 0, 0, None)]
+N = len(BALLS)
+RAINBOW = N - 1
 
 
 def color(kind, t):
@@ -34,19 +37,19 @@ def draw_ball(ctx, kind, x, y, ang, r, t, alpha=1.0, rng=None):
     ctx.save()
     ctx.translate(x, y)
     # 光の輪(アイコンと同じ:外側ほど薄い、何重かの色の輪)
-    for mul, a in ((3.4 + 0.25 * kind, 0.18), (2.3 + 0.12 * kind, 0.32), (1.55, 0.55)):
+    for mul, a in ((3.2 + 0.25 * kind, 0.18), (2.2 + 0.12 * kind, 0.32), (1.55, 0.55)):
         g = cairo.RadialGradient(0, 0, r * 0.8, 0, 0, r * mul)
         g.add_color_stop_rgba(0, *col, a * alpha)
         g.add_color_stop_rgba(1, *col, 0)
         ctx.arc(0, 0, r * mul, 0, 2 * math.pi)
         ctx.set_source(g)
         ctx.fill()
-    if kind >= 3:   # 強いボールは光のトゲ(ゆっくり回る)
+    if kind >= 3:   # グリーンから上は光のトゲ(ゆっくり回る)
         n = 8 + 2 * kind
         for j in range(n):
             a = 2 * math.pi * j / n + t * 1.5
             ln = r * (2.2 + 0.5 * (j % 2) + 0.2 * kind)
-            c2 = colorsys.hsv_to_rgb((j / n + t * 0.4) % 1, 0.7, 1) if kind == 5 else col
+            c2 = colorsys.hsv_to_rgb((j / n + t * 0.4) % 1, 0.7, 1) if kind == RAINBOW else col
             g = cairo.RadialGradient(0, 0, r, 0, 0, ln)
             g.add_color_stop_rgba(0, *c2, 0.6 * alpha)
             g.add_color_stop_rgba(1, *c2, 0)
@@ -75,11 +78,36 @@ def _bell(sr, f, dur, amp):
     return amp * (np.sin(2 * np.pi * f * t) + 0.4 * np.sin(2 * np.pi * 2.76 * f * t) * np.exp(-t * 6)) * np.exp(-t * 3)
 
 
+WORDS = ["ホワイト!", "ブルー!", "パープル!", "グリーン!", "レッド!", "ゴールド!!", "レインボー!!"]
+_VOICE = {}
+
+
+def voice(k, sr):
+    """ボールが落ちるときの掛け声:色の名前(ホワイト!/ブルー!/…/レインボー!!)。
+    無料のオープンソース音声合成 pyopenjtalk(Open JTalk)+音声「Mei」(CC BY 3.0)。強いボールほど高く・元気に。"""
+    if (k, sr) not in _VOICE:
+        import pyopenjtalk
+        x, vsr = pyopenjtalk.tts(WORDS[k], half_tone=1.0 + 0.8 * k, speed=1.05 + 0.03 * k)
+        x = x.astype(float)
+        e = np.abs(x)
+        idx = np.where(e > 0.04 * e.max())[0]
+        x = x[max(0, idx[0] - 100): idx[-1] + 400]
+        n = int(len(x) * sr / vsr)
+        y = np.interp(np.linspace(0, len(x) - 1, n), np.arange(len(x)), x)
+        if k >= 4:   # レッドから上は、こだまをつけて迫力を出す
+            for d, g in ((0.09, 0.35), (0.18, 0.18)):
+                m = int(d * sr)
+                y = np.concatenate([y, np.zeros(m)])
+                y[m:] += g * y[:-m]
+        _VOICE[(k, sr)] = y / (np.abs(y).max() + 1e-9)
+    return _VOICE[(k, sr)]
+
+
 def drop_sounds(sr, seed=0):
-    """段階ごとに (落ちる瞬間の「キュイン」, キラキラ) を返す。強いボールほど高く・長く・音が多い。"""
+    """段階ごとに (色の名前の掛け声, 「キュイン」+キラキラ) を返す。強いボールほど高く・長く・音が多い。"""
     out = []
-    for k in range(6):
-        sw = _kyuin(sr, 400 + 80 * k, 1800 + 300 * k, 0.3 + 0.08 * k, 0.5)
+    for k in range(N):
+        sw = _kyuin(sr, 400 + 70 * k, 1800 + 260 * k, 0.3 + 0.07 * k, 0.5)
         n = int((0.8 + 0.1 * k) * sr)
         fx = np.zeros(n)
         for j in range(2 + k):
@@ -88,9 +116,11 @@ def drop_sounds(sr, seed=0):
             i = int(j * 0.05 * sr)
             m = min(len(b), n - i)
             fx[i:i + m] += b[:m]
-        out.append((sw / (np.abs(sw).max() + 1e-9) * 0.5, fx / (np.abs(fx).max() + 1e-9) * 0.4))
+        sfx = np.zeros(max(len(sw), len(fx)))
+        sfx[:len(sw)] += sw / (np.abs(sw).max() + 1e-9) * 0.5
+        sfx[:len(fx)] += fx / (np.abs(fx).max() + 1e-9) * 0.4
+        out.append((voice(k, sr) * 0.9, sfx))
     return out
-
 
 # ---------------------------------------------------------------- サムネの女の子の顔のボール
 def _head_path(ctx, r):

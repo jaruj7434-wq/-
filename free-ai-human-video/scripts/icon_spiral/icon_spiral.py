@@ -52,9 +52,9 @@ TH_WOOD0 = 2 * math.pi * 0.35          # 板を並べ始める位置(中心の�
 TH_WOOD1 = TH_END - 2 * math.pi - 0.35  # 板を並べ終える位置(入口は少し空ける)
 
 # ボールの種類ごとに、ガラスを1枚割ったあとに残る速さの割合(強いボールほど減りにくい)
-KEEP = [float(x) for x in os.environ.get("KEEP", "0.968,0.973,0.978,0.983,0.987,0.98888").split(",")]
+KEEP = [float(x) for x in os.environ.get("KEEP", "0.931,0.949,0.961,0.971,0.9795,0.9865,0.9918").split(",")]
 # ボールの種類ごとに、落とすときに下向きに足す速さ(px/秒)。後のボールほど速く打ち出される
-V0 = [float(x) for x in os.environ.get("V0", "0,250,500,800,1100,1450").split(",")]
+V0 = [float(x) for x in os.environ.get("V0", "0,100,250,450,700,1000,1450").split(",")]
 AIR_DAMP = 0.7832                      # 盤面で1秒あたりに残る速さの割合(転がり抵抗)
 V_DIE = 200.0                          # これより遅くなった玉は消えていく
 FADE = 0.5                             # 消えていく時間(秒)
@@ -63,7 +63,7 @@ BALL_R = 19
 GRAVITY = 2600.0
 DROP_X = CX + R_OUT - LANE / 2         # 玉はうずまきの外側の口の真上から落ちてくる
 DROP_Y = CY - 600
-WAVES = [(1, k) for k in range(6)]   # 前のボールが消えたら次のボール(弱い順に1個ずつ)
+WAVES = [(1, k) for k in range(GD.N)]   # 前のボールが消えたら次のボール(弱い順に1個ずつ)
 N_BALLS = sum(n for n, _ in WAVES)
 WAVE_GAP = 0.6                         # 前の玉が消えてから次の玉が落ちてくるまで
 DROP_EVERY = 0.35                      # 同じ波の玉どうしの間隔
@@ -273,7 +273,7 @@ OFFSET_Y = 80                          # 物理の座標を画面上で少し下
 BG = (0.02, 0.027, 0.047)
 STEEL = (0.62, 0.72, 0.88)
 WOOD = (0.75, 0.9, 1.0)   # ガラスの色(名前は9本目のまま)
-BALL_COL = {k: GD.BALLS[k][5] for k in range(6)}
+JP.WIN = GD.RAINBOW   # 大当たりのリールで揃うのはレインボー
 GOLD = (1, 0.86, 0.2)
 MONO = "JetBrains Mono"
 HUB_R = 46                             # 中心の小部屋(消えた玉が小さくなって集まる)
@@ -416,7 +416,7 @@ def render(seed):
          "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
         stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    ending = None if fail else JP.Jackpot(W, H, seed, CX, CY + OFFSET_Y, GD.draw_ball)
+    ending = None if fail else JP.Jackpot(W, H, seed, CX, CY + OFFSET_Y, GD.draw_ball, n_kinds=GD.N)
     shards, trails, dying, hub = [], {}, [], []
     spin, embers = {}, []
     ev_i = 0
@@ -530,10 +530,10 @@ def render(seed):
                 ctx.set_source_rgba(*GD.color(col, t - 0.02 * (len(pts_) - j)), 0.55 * a)
                 ctx.set_line_width(BALL_R * (0.5 + 1.3 * a))
                 ctx.stroke()
-            if col >= 4:   # 強いボールは光の粒を散らす
-                for _ in range(2 if col == 4 else 4):
-                    embers.append([x, y, rng.uniform(-80, 80), rng.uniform(-80, 80), t, rng.uniform(5, 10) * (1.3 if col == 5 else 1), col])
-            GD.draw_ball(ctx, col, x, y, spin.get(bid, 0.0), BALL_R * (1.15 if col < 5 else 1.4), t, 1.0, rng)
+            if col >= 5:   # ゴールドとレインボーは光の粒を散らす
+                for _ in range(2 if col == 5 else 4):
+                    embers.append([x, y, rng.uniform(-80, 80), rng.uniform(-80, 80), t, rng.uniform(5, 10) * (1.3 if col == GD.RAINBOW else 1), col])
+            GD.draw_ball(ctx, col, x, y, spin.get(bid, 0.0), BALL_R * (1.15 if col < GD.RAINBOW else 1.4), t, 1.0, rng)
             tr.append((x, y))
             del tr[:-22]
         keep = []
@@ -566,7 +566,7 @@ def render(seed):
         # ボールの順番(今のボールは明るく、使ったボールはうすく)
         cur = fr["dropped"] - 1
         for k in range(len(WAVES)):
-            x = W / 2 + (k - (len(WAVES) - 1) / 2) * 150
+            x = W / 2 + (k - (len(WAVES) - 1) / 2) * 146
             a = 1.0 if k == cur and fr["balls"] else (0.28 if k <= cur else 0.7)
             GD.draw_ball(ctx, k, x, 452, 0.0, 17, t, a, None)
             text(ctx, GD.BALLS[k][0], x, 500, 24, rgb=(1, 1, 1), sw=6, alpha=a)
