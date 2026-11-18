@@ -168,3 +168,8 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - 仮歌 → voice_change(Hana、preset `c25f78a0-714e-42af-8da3-a399cef94968`)job `31030e5c-1824-4f23-be8b-5b05eb5c2aa5`、3クレジット
   - `tools/fit_guide.py`: 6フレーズを元の歌の位置・長さに合わせ、元の歌の高さ(約380Hz)のオクターブへ移調(+13.6〜+14.6半音、声質は保持)、音の中心をメロディへ寄せる、女性向けのすっきりした EQ → `audio/song-hana-with-inst.mp3` / `song-hana-vocal-only.mp3`(仕上がりの音程中央値 393Hz)
   - テロップ「こんなナルトは まじでやだ〜」→ `naruto-iyada-v6.mp4`(最終版も v6 に更新)
+- 完成版 v7(ユーザー指定: 参考動画のテンポ感で、AI で曲を1から作り直す):
+  - ElevenLabs Music v2.5、22秒、3.2クレジット、job `c4b48431-dc81-4e4a-8bf3-d6d9ca718356`(`audio/song-ai.mp3`)。プロンプト: 80〜90年代の日本のガールズバンド風ポップ、117 BPM、ギターのカッティング、澄んだ若い女性ボーカルが半分しゃべるように歌う羅列ソング。歌詞は発音どおり「こんなナルトわ」と書いた
+  - 結果: テンポ 117 BPM。ただし2セット目に「ラーメン嫌いでドーパガキ」という混ざった歌詞のセットが入り、計4セットになっていた → 2セット目(4.917〜9.024秒、ちょうど8拍)を拍の位置で切り取り、30msでつないだ → `audio/song-ai-edit.mp3`(17.9秒、3セット)
+  - 歌の位置: サビ 1.08 / 5.07 / 9.15秒、ネタの行 3.22 / 7.21 / 11.43秒、最後は約4.7秒の後奏
+  - `stylish_edit2.py` に区間を指定できるようにした(環境変数 LAYOUT)→ `naruto-iyada-v7.mp4`(17.9秒、最終版も v7 に更新)

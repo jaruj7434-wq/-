@@ -24,6 +24,11 @@ BITS = ['bit1-sing.mp4', 'bit2-pasta-bono.mp4', 'bit3-taxi.mp4']
 # 歌っている時間(歌ファイル基準): サビ, ネタの行
 SUNG = [((0.52, 3.11), (3.22, 5.68)), ((5.85, 8.59), (8.72, 11.16)), ((11.45, 14.05), (14.16, 16.63))]
 HOOK = ['こんなナルトは', 'まじでやだ〜']
+if os.environ.get('LAYOUT'):  # 例: '{"SEG": [[0,5],[5,9.1],[9.1,null]], "SUNG": [[[1.08,3.0],[3.22,4.9]], ...]}'
+    import json
+    _L = json.loads(os.environ['LAYOUT'])
+    SEG = [(a, b if b is not None else T_END) for a, b in _L['SEG']]
+    SUNG = [tuple(tuple(x) for x in p_) for p_ in _L['SUNG']]
 ITEMS = [['影分身全員', 'ドーパガキ〜'], ['ラーメン嫌いで', 'パスタ食う〜'], ['移動は走らず', 'ヘイタクシー']]
 ORANGE, YELLOW, WHITE, NAVY = (255, 138, 0), (255, 225, 77), (255, 255, 255), (20, 24, 48)
 
