@@ -53,7 +53,19 @@ def main(src, voc, t0, t1, out, shift=-12.0):
     for i in range(k, n - k):
         if vs[i - k:i + k + 1].all():
             f02s[i] = np.exp(np.log(f02[i - k:i + k + 1]).mean())
-    y = pw.synthesize(f02s, sp[idx], ap[idx], SR, FP)
+    # 人の声らしい細かな揺れ: 素材の音程の細かい動き(±40セントまで)を足す
+    fs = f0s[idx]
+    lf = np.where(fs > 0, np.log(np.maximum(fs, 1)), np.nan)
+    sm = np.copy(lf)
+    ok = ~np.isnan(lf)
+    if ok.sum() > 30:
+        from scipy.ndimage import uniform_filter1d
+        tmp = np.interp(np.arange(n), np.where(ok)[0], lf[ok])
+        dev = np.clip(tmp - uniform_filter1d(tmp, 40), -0.023, 0.023)
+        f02s = np.where(f02s > 0, f02s * np.exp(dev), 0.0)
+    apx = ap[idx].copy()
+    apx[vs] = np.minimum(apx[vs], 0.6)   # 有声部分のガサつき(ノイズ成分)を抑える
+    y = pw.synthesize(f02s, sp[idx], apx, SR, FP)
     y = y / (np.abs(y).max() + 1e-9) * 0.9
     sf.write(out, y.astype(np.float32), SR)
 
