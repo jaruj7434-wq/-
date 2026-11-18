@@ -15,7 +15,7 @@ def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-sh
 
 # 歌の中の時刻(歌ファイルの先頭からの秒): 区間の開始, 項目の頭, 区間の終わり
 SEG = [(0.00, 3.22, 5.85), (5.85, 8.72, 11.45), (11.45, 14.16, dur(SONG))]
-BITS = ['bit1-kagebunshin.mp4', 'bit2-pasta-bono.mp4', 'bit3-taxi.mp4']
+BITS = ['bit1-sing.mp4', 'bit2-pasta-bono.mp4', 'bit3-taxi.mp4']
 HOOK = 'こんななるとわ\nまじでやだ〜'
 ITEMS = ['影分身全員\nドーパガキ〜', 'ラーメン嫌いで\nパスタ食う〜', '移動は走らず\nヘイタクシー']
 
