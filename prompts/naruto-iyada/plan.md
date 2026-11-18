@@ -99,3 +99,10 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 移動は走らずヘイタクシー     → ネタ3
 ```
 - 構成: 各2行を歌うパート(テロップ付き)→ そのネタの映像、を3回くり返す
+- 歌の作り方(ユーザーがアップロードした「プレゼント」の動画 media `d4de4130-4eee-406d-b5cd-11466693d59f`):
+  - Higgs Field サンドボックスでボーカル分離(htdemucs、two)→ vocals / no_vocals を mp3 にして media `36a3bbfb-70e2-4cd4-8e0c-b9247706c04d`(歌)/ `00154b56-673c-4f28-92ab-171c40eb7cca`(伴奏)
+  - 使う区間: 55.16〜71.66 秒の3セット(サビ頭 55.16 / 60.82 / 66.16、項目の頭 57.90 / 63.48 / 68.90、終わり 60.82 / 66.16 / 71.66)。テンポ約117 BPM
+  - 慶太の話し声(elevenlabs_v4、sim 1 / stab 0.6): 「こんななるとは、まじでやだ。」job `acf25b6f`、「かげぶんしん、ぜんいんドーパガキ。」job `eacc2538`、「ラーメンきらいで、パスタくう。」job `0db04411`、「いどうははしらず、ヘイタクシー。」job `570ddce6`
+  - `tools/sing.py`: WORLD(pyworld)で話し声を区間の長さに伸縮し、音程を元の歌の音程(1オクターブ下)に置き換える
+  - `tools/rebuild_bits.py`: 環境リセットで消えたネタ1・2の編集を再現
+  - `tools/assemble_song.py`: 歌パート(伴奏+慶太の歌+歌詞テロップ、背景は次のネタの最初のフレームをぼかしたもの)→ ネタ(伴奏を -14dB で流し、最後にフェードアウト)を3回 → `naruto-iyada-v1.mp4`(39.4秒)
