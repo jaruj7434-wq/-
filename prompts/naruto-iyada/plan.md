@@ -164,3 +164,7 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
     - ネタ1: サビ y=940 / 行 y=1750、ネタ2: 1100 / 1590、ネタ3: 1220 / 1590
   - 歌詞の後ろには、全幅の固定グラデーションの代わりに、テロップの位置だけにぼかした暗い帯を敷く
   - サビの表記: 「こんなナルトわ まじでやだ〜」
+- 完成版 v6(ユーザー指定: 慶太の声でなくてよいので綺麗な女性の声に/テロップは「は」、発音は「わ」):
+  - 仮歌 → voice_change(Hana、preset `c25f78a0-714e-42af-8da3-a399cef94968`)job `31030e5c-1824-4f23-be8b-5b05eb5c2aa5`、3クレジット
+  - `tools/fit_guide.py`: 6フレーズを元の歌の位置・長さに合わせ、元の歌の高さ(約380Hz)のオクターブへ移調(+13.6〜+14.6半音、声質は保持)、音の中心をメロディへ寄せる、女性向けのすっきりした EQ → `audio/song-hana-with-inst.mp3` / `song-hana-vocal-only.mp3`(仕上がりの音程中央値 393Hz)
+  - テロップ「こんなナルトは まじでやだ〜」→ `naruto-iyada-v6.mp4`(最終版も v6 に更新)
