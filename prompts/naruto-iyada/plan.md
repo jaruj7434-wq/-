@@ -152,3 +152,9 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 ## 完成
 - 最終版: `assets/output/naruto-iyada/naruto-iyada-final.mp4`(= v3、17.2秒、9:16)
 - 投稿用の文面: `post.md`
+- 完成版 v4(ユーザー指摘: 編集が雑 → テキストを見やすく、おしゃれに): `tools/stylish_edit.py` → `naruto-iyada-v4.mp4`(最終版 `naruto-iyada-final.mp4` も v4 に更新)
+  - 歌詞はカラオケ風: 歌っている所から色が変わる(サビ=オレンジ、ネタの行=黄色)。紺の太い縁取りと影
+  - 出るときにポンと弾むアニメーション
+  - 上下に暗いグラデーションを敷いて、背景に負けず読みやすく
+  - 左上に「その1/2/3」のバッジ(なるとの渦巻きマーク付き)
+  - ネタの切り替わりで白いフラッシュ
