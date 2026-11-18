@@ -126,3 +126,6 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
     - サビ「こんななるとわ まじでやだ」: ラ(長く)→ ソ → ファ → ミ → ファ → ソ
     - 項目: ソ(長く)→ ラ → ソ → ファ → ミ → ファ → ソ
   - 出力 `audio/song-keita-with-inst-v5.mp3` / `song-keita-vocal-only-v5.mp3`。歌声の音程は音階から中央値5セント以内
+- v5 も機械的で不自然(ユーザー評価)→ 話し声をプログラムで歌にする方法は打ち切り。
+  ユーザーが仮歌を録る方針に決定: 伴奏に合わせて替え歌を歌った動画をアップロード → voice_change で慶太の声に変換
+  - 仮歌用: `audio/karaoke-with-guide.mp3`(元の歌を -12dB で薄く入れた練習用)/ `audio/karaoke-inst-only.mp3`(伴奏のみ)。元の曲の 50.9〜72.6 秒、最初の約4.5秒が前奏
