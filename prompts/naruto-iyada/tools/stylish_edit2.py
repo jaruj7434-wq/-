@@ -29,7 +29,7 @@ if os.environ.get('LAYOUT'):  # 例: '{"SEG": [[0,5],[5,9.1],[9.1,null]], "SUNG"
     _L = json.loads(os.environ['LAYOUT'])
     SEG = [(a, b if b is not None else T_END) for a, b in _L['SEG']]
     SUNG = [tuple(tuple(x) for x in p_) for p_ in _L['SUNG']]
-ITEMS = [['影分身全員', 'ドーパガキ〜'], ['ラーメン嫌いで', 'パスタ食う〜'], ['移動は走らず', 'ヘイタクシー']]
+ITEMS = [['分身全員', 'ドパガキ〜'], ['ラーメン嫌いで', 'パスタ食う〜'], ['移動は走らず', 'ヘイタクシー']]
 ORANGE, YELLOW, WHITE, NAVY = (255, 138, 0), (255, 225, 77), (255, 255, 255), (20, 24, 48)
 
 # 1) 下地の映像(テロップなし)
