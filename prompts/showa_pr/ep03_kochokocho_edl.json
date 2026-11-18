@@ -1,0 +1,171 @@
+{
+ "fps": 24,
+ "look": {
+  "mode": "color",
+  "tv": true,
+  "saturation": 0.9,
+  "lift": [
+   0.05,
+   0.035,
+   0.05
+  ],
+  "gain": [
+   1.0,
+   0.94,
+   0.84
+  ],
+  "gamma": [
+   0.95,
+   1.0,
+   1.05
+  ],
+  "grain": 0.035,
+  "flicker": 0.02,
+  "weave": 0.4,
+  "dust_per_frame": 0.2,
+  "hair_prob": 0,
+  "scratch_prob": 0,
+  "halation": 0.22,
+  "vignette": 0.3,
+  "glitch_rate": 0.045,
+  "seed": 1969
+ },
+ "vertical": {
+  "top_title": "昭和のまぼろしCM"
+ },
+ "base_dir": "../../assets/source/showa_pr/ep03",
+ "out_dir": "../../../output/showa_pr/ep03_kochokocho",
+ "_memo": "第3話 親父機嫌直しスーツ こちょこちょ号(Wan 3.0 一発撮り 28秒+社名カード)",
+ "cuts": [
+  {
+   "src": "wan/take1.mp4",
+   "in": 0,
+   "dur": 28.0,
+   "audio": true
+  },
+  {
+   "dur": 2.4,
+   "card": {
+    "bg": [
+     180,
+     92,
+     30
+    ],
+    "emblem": {
+     "y": 150,
+     "r": 40
+    },
+    "lines": [
+     {
+      "text": "親父機嫌直しスーツ",
+      "y": 215,
+      "size": 34,
+      "font": "antique",
+      "spacing": 4
+     },
+     {
+      "text": "こちょこちょ号",
+      "y": 262,
+      "size": 56,
+      "font": "tokumin",
+      "spacing": 8,
+      "rule": true
+     },
+     {
+      "text": "ユメミ 夢見ヶ丘電機",
+      "y": 372,
+      "size": 34,
+      "font": "tokumin",
+      "spacing": 6
+     },
+     {
+      "text": "架空の会社・製品です/AIで制作しています",
+      "y": 460,
+      "size": 18,
+      "font": "antique",
+      "spacing": 2
+     }
+    ]
+   }
+  }
+ ],
+ "telops": [
+  {
+   "text": "いつも 怒っていませんか?",
+   "start": 0.3,
+   "end": 3.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 40
+  },
+  {
+   "text": "親父機嫌直しスーツ\nこちょこちょ号",
+   "start": 9.0,
+   "end": 12.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 40
+  },
+  {
+   "text": "ボタン ひとつで ご機嫌",
+   "start": 13.5,
+   "end": 17.5,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 38
+  },
+  {
+   "text": "そよそよ・こちょこちょ・大爆笑",
+   "start": 18.2,
+   "end": 21.5,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 34
+  },
+  {
+   "text": "家庭円満",
+   "start": 26.0,
+   "end": 28.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 44
+  }
+ ],
+ "subtitles": [],
+ "audio": {
+  "projector_gain": 0.35,
+  "tracks": [
+   {
+    "src": "../ep01/jingle_tail_clean.wav",
+    "kind": "music",
+    "start": 28.0,
+    "gain": 0.9
+   }
+  ]
+ }
+}

@@ -29,3 +29,6 @@
 
 ## 生成の記録
 - 2026-11-18 Wan 3.0(テキストから動画、28秒、480p、4:3、音声入り、enable_thinking)28クレジット:0e4bd4df-d42d-4ad7-b9ce-0c263a617380
+- 2026-11-18 完成 → assets/source/showa_pr/ep03/wan/take1.mp4。台本の流れどおり(問いかけ→新聞で怒鳴る→羽根がびっしりのスーツ→笑い転げる→ダイヤル→ふすまの奥へ→家族がリモコンで交渉→にっこり)
+  - 仕上げ:prompts/showa_pr/ep03_kochokocho_edl.json → assets/output/showa_pr/ep03_kochokocho/(28秒+社名カード)
+  - Kaisei Tokumin に「→」の字形がないので、区切りは「・」を使う
