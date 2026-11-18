@@ -148,3 +148,7 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - Cinema Studio Video 2 / pro / 4秒 / 8クレジット、job `bdb8c352-80f6-484a-9c25-18575976413a`(`bit1-C-closeup.mp4`)。分身たちの顔とスマホに寄っていく。最後の約1秒は手前の手が画面をふさぐので 0〜2.9秒を使用
   - ネタ1の歌区間(5.85秒)= 印→煙→分身登場(動画A 0〜2.8秒を1.3倍速)+ 寄り(0〜2.9秒を0.785倍速)→ `bit1-sing.mp4`。本物のため息は時間の都合で外した
   - `naruto-iyada-v3.mp4`(17.2秒)
+
+## 完成
+- 最終版: `assets/output/naruto-iyada/naruto-iyada-final.mp4`(= v3、17.2秒、9:16)
+- 投稿用の文面: `post.md`
