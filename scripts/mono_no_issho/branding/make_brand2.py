@@ -159,51 +159,30 @@ def icon_pop():
 
 # ---------------- ヘッダー ----------------
 def header(w, h, sw, sh, style, cx=None):
-    """sw, sh = 安全範囲。中身はすべて安全範囲の中に置く。"""
+    """文字だけのヘッダー（動画の内容は入れない）。sw, sh = 安全範囲。文字はすべて安全範囲の中。"""
     S = 2
     W, H, SW, SH = w * S, h * S, sw * S, sh * S
     if style == "edit":
         im = Image.new("RGB", (W, H), PAPER)
-        ink, ink2, acc, cardline = INK, INK2, TERRA, (220, 212, 200)
+        ink, ink2, acc = INK, INK2, TERRA
     else:
         im = gradient((W, H), POP_A, POP_B, POP_C, angle=20)
-        ink, ink2, acc, cardline = (255, 255, 255), (255, 236, 230), (255, 255, 255), (255, 255, 255)
+        ink, ink2, acc = (255, 255, 255), (255, 236, 230), (255, 255, 255)
     d = ImageDraw.Draw(im)
-    x0, y0 = ((cx * S if cx else W / 2) - SW / 2), (H - SH) / 2
-    # 背景の大きな軌道（安全範囲の外にはみ出してよい飾り）
-    orbit(d, x0 + SW * 0.16, H / 2, SH * 1.25, 3 * S, acc if style == "edit" else (255, 255, 255, ), dot_deg=-50,
-          dot_r=10 * S)
-    # 左：タイトル
-    tx = x0 + SW * 0.02
-    title = F(SERIF if style == "edit" else SANS, SH * 0.30)
-    d.text((tx, y0 + SH * 0.36), "モノの一生", font=title, fill=ink, anchor="lm")
-    tw = d.textlength("モノの一生", font=title)
-    spaced(d, (tx + 4 * S, y0 + SH * 0.62), "LIFE OF THINGS", F(SANS_R, SH * 0.065), ink2, SH * 0.025)
-    d.line([(tx, y0 + SH * 0.73), (tx + SH * 0.18, y0 + SH * 0.73)], fill=acc, width=3 * S)
-    d.text((tx, y0 + SH * 0.84), "身近なモノは、どこから来て、どこへ行く？",
-           font=F(SERIF_R if style == "edit" else SANS_R, SH * 0.075), fill=ink, anchor="lm")
-    # 右：各話のカード
-    n = len(CARDS)
-    area_x0 = tx + max(tw, SH * 1.55) + SH * 0.18
-    area_x1 = x0 + SW
-    gap = SH * 0.06
-    cw = int((area_x1 - area_x0 - gap * (n - 1)) / n)
-    ch = int(SH * 0.62)
-    cy0 = int(y0 + SH * 0.08)
-    rad = int(SH * 0.05)
-    for i, (no, name, p) in enumerate(CARDS):
-        cx0 = int(area_x0 + i * (cw + gap))
-        box = (cx0, cy0, cx0 + cw, cy0 + ch)
-        shadow(im, box, rad, 14 * S, alpha=55 if style == "edit" else 70, off=(0, 6 * S))
-        ph, m = rounded_photo(SRC / p / "still_0060.png", cw, ch, rad)
-        im.paste(ph, (cx0, cy0), m)
-        d = ImageDraw.Draw(im)
-        d.rounded_rectangle(box, rad, outline=cardline, width=2 * S)
-        ly = cy0 + ch + SH * 0.09
-        d.text((cx0, ly), f"#{no}", font=F(SANS, SH * 0.05), fill=acc if style == "edit" else ink2, anchor="lm")
-        if cw >= SH * 0.32:   # カードが細い時（X用）は名前を省いて番号だけ
-          d.text((cx0, ly + SH * 0.1), name, font=F(SERIF if style == "edit" else SANS, SH * 0.065), fill=ink,
-                 anchor="lm")
+    mx = cx * S if cx else W / 2          # 文字の中心
+    x0 = mx - SW / 2
+    my = H / 2
+    # 飾り：左右の軌道（はみ出してよい。文字には重ねない）
+    orbit(d, x0 - SW * 0.04, my, SW * 0.2, 3 * S, acc, dot_deg=-40, dot_r=9 * S)
+    orbit(d, x0 + SW * 1.04, my + SH * 0.3, SW * 0.16, 2 * S, acc, dot_deg=200, dot_r=7 * S)
+    # 文字
+    tp = min(SH * 0.34, SW * 0.1)
+    title = F(SERIF if style == "edit" else SANS, tp)
+    d.text((mx, my - tp * 0.55), "モノの一生", font=title, fill=ink, anchor="mm")
+    spaced(d, (mx, my + tp * 0.38), "LIFE OF THINGS", F(SANS_R, tp * 0.2), ink2, tp * 0.09, anchor="m")
+    d.line([(mx - tp * 0.3, my + tp * 0.7), (mx + tp * 0.3, my + tp * 0.7)], fill=acc, width=3 * S)
+    d.text((mx, my + tp * 1.02), "身近なモノは、どこから来て、どこへ行く？",
+           font=F(SERIF_R if style == "edit" else SANS_R, tp * 0.26), fill=ink, anchor="mm")
     im = grain(im, 6 if style == "edit" else 7)
     return im.resize((w, h), Image.LANCZOS)
 
