@@ -65,3 +65,13 @@
 
 - アイコンはどのSNSでも丸く切り抜かれるので、文字と矢印は円の内側に収めてある
 - ヘッダーの背景は第1〜4話の3D（貯金箱・電車の座席・ボトルの棚・クローゼット）。新しい話が増えたら `STILLS` を差し替える
+
+## 画像 第2版（おしゃれ版）`scripts/mono_no_issho/branding/make_brand2.py` → `brand/v2/`
+
+| 方向性 | アイコン | YouTube | X |
+|---|---|---|---|
+| エディトリアル（生成り色の紙・明朝の縦書き・細い軌道線・写真カード） | `icon_edit.png` | `header_youtube_edit.png` | `header_x_edit.png` |
+| ポップ（夕焼けグラデーション・太いゴシック・白い軌道線） | `icon_pop.png` | `header_youtube_pop.png` | `header_x_pop.png` |
+
+- X のヘッダーは左下にアイコンが重なるので、中身を右に寄せてある
+- カードの写真は各話の3D（1円玉・傘立て・キャップの外れるボトル・クローゼット）。`CARDS` で差し替え
