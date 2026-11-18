@@ -115,3 +115,7 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - 素材: elevenlabs_v4 / 慶太-1、`[singing]` タグ、句読点なしで母音を伸ばす、sim 1 / stab 0.4。job `e66f53f3`(こんななるとはぁまじでやだぁ〜)/ `0ca7592b`(かげぶんしんぜんいんドーパガキ〜)/ `dac3c3eb`(ラーメンきらいでパスタくう〜)/ `422e6cd9`(いどうははしらずヘイタクシー〜)。4本とも途切れない1つの声
   - `tools/sing3.py`: 元の歌の音程を半音に丸め、65ms の中央値で揺れ(しゃくり)を消し、60ms 未満の短い音符はまとめて、音符ごとにまっすぐな音に。無声の所も直前の音符を保って声を切らない
   - 出力 `audio/song-keita-with-inst-v3.mp3` / `song-keita-vocal-only-v3.mp3`。聞き取りでは「ドーパガキ」以外の歌詞が正しく出た
+- 歌 v4(ユーザー指摘: 「は」ではなく「わ」と発音、声が二重・ハウリングのよう):
+  - サビの素材を作り直し: 「[singing] こんななるとわぁまじでやだぁ〜」job `6caa81df-12e9-4065-a80e-2096b69d0267`
+  - 二重に聞こえる原因だった短い残響(aecho)と輪郭強調(aexciter)を外し、EQ を控えめに。sing3.py で有声部分の雑音成分を抑え、素材の細かな音程の揺れ(±40セント)を足して人の声らしく
+  - 出力 `audio/song-keita-with-inst-v4.mp3` / `song-keita-vocal-only-v4.mp3`。聞き取りで歌詞すべて正しく出た(ドーパガキも)
