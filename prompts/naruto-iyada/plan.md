@@ -106,3 +106,8 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - `tools/sing.py`: WORLD(pyworld)で話し声を区間の長さに伸縮し、音程を元の歌の音程(1オクターブ下)に置き換える
   - `tools/rebuild_bits.py`: 環境リセットで消えたネタ1・2の編集を再現
   - `tools/assemble_song.py`: 歌パート(伴奏+慶太の歌+歌詞テロップ、背景は次のネタの最初のフレームをぼかしたもの)→ ネタ(伴奏を -14dB で流し、最後にフェードアウト)を3回 → `naruto-iyada-v1.mp4`(39.4秒)
+- 歌 v2(ユーザー指摘: 間が空きすぎ、声がこもって小さい):
+  - `tools/sing2.py`: 話し声の途中の無音をすべて詰め、元の歌が声を伸ばしている所は直前の母音を伸ばしてつなぐ(LEGATO=0.35秒)。時間合わせは線形(W_DTW=0。DTW を混ぜると聞き取りが崩れた)
+  - 区間を元の歌の実際の声の区間に合わせた: 55.42–58.01 / 58.12–60.58 / 60.75–63.49 / 63.62–66.06 / 66.35–68.95 / 69.06–71.53
+  - 声の処理: 低音を削り、2.8k/5k を持ち上げ、エキサイター、強めのコンプ。伴奏より +6dB、伴奏は -2dB
+  - 出力 `audio/song-keita-with-inst-v2.mp3` / `song-keita-vocal-only-v2.mp3`。声の切れ目は元の歌とほぼ同じ位置になった
