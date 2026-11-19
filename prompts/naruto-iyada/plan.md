@@ -209,3 +209,4 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - アニメ版 v2(ユーザー指摘: フォントが動画に合っていない): 候補4つ(Dela Gothic One / M PLUS Rounded 1c ExtraBold / RocknRoll One / Reggae One、いずれも Google Fonts の OFL、github.com/google/fonts から取得)を映像に重ねて比較 → `font-candidates.png`
   - アニメのテロップらしい極太ゴシックの Dela Gothic One を採用。`stylish_edit2.py` にフォント指定を追加(TELOP_FONT / TELOP_TRACK=0.97 / TELOP_FATTEN=0 / TELOP_FALLBACK=' ')。バッジ「その1〜3」も同じフォントに
   - → `naruto-iyada-anime-v2.mp4`(最終版も更新)
+- アニメ版 v3(ユーザー指定: 歌も「影分身」ではなく「分身全員」に): Hana の歌声から「影」(3.20〜3.535秒、か・げ)を消し、ぶ の直前の無音(b の閉鎖)で切って「(休符)ぶんしん ぜんいん ドパガキ」に。ドーパはもともと短く「ドパ」に近かったのでそのまま → `audio/song-hana-v2-with-inst.mp3` → `naruto-iyada-anime-v3.mp4`(最終版も更新)
