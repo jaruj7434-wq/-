@@ -198,3 +198,7 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - その2 一楽: job `3de14ebe-9590-4509-be2f-7d173d6cd413`(`anime/b2-ichiraku.png`)、のれん「ラーメン一楽」も正しい
   - その3 屋根: job `e55dd230-7ded-4d09-82c5-4b95eee24d5a`、車内: job `b1637b3f-505a-41ae-b1ee-98640325b0b7`(運転手もアニメ調)
   - 額当ての木ノ葉マークは `tools/fix_plate_near.py`(おおよその位置の近くでマークを自動検出して渦巻きに描き直す)で修正 → `*-fix.png`
+- 分身の画像を作り直し(ユーザー承認、2クレジット): 構図の参考を使わず文章で指示、job `aed9acd6-2cac-4780-ab2b-8123b864baf2`。全員アニメ顔・メガネなし、本物は左上の枝で印のまま
+- 額当ての修正は Higgs Field サンドボックスで行い、そのままアップロード: その1 印 `f9fd4015` / 分身 `5081a183` / 寄り用の切り出し(x560–1320, y1337–2688)`62986e89`、その2 一楽 `55731fb4`、その3 屋根 `7811b7a1` / 車内 `ed00fa52`
+- 動画5本(Cinema Studio Video 2 / pro): その1 煙→分身 4秒 `7fa54842` / 分身に寄る 4秒 `b37de8d7`、その2 一楽 5秒 `61bd209c`、その3 屋根→タクシー 4秒 `af8554a8` / 車内 5秒 `3e6ce047`(計44クレジット)
+- 曲: ユーザー指定で「参考動画のテンポで作った替え歌」= Hana 版 `audio/song-hana-with-inst.mp3`(元の伴奏、約89 BPM)を使う
