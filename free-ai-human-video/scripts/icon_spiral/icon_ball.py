@@ -9,6 +9,7 @@ drop_sounds(sr) は、ボールが落ちてくる瞬間の音(段階ごとに高
 """
 import colorsys
 import math
+import os
 
 import cairo
 import numpy as np
@@ -78,27 +79,52 @@ def _bell(sr, f, dur, amp):
     return amp * (np.sin(2 * np.pi * f * t) + 0.4 * np.sin(2 * np.pi * 2.76 * f * t) * np.exp(-t * 6)) * np.exp(-t * 3)
 
 
-WORDS = ["ホワイト!", "ブルー!", "パープル!", "グリーン!", "レッド!", "ゴールド!!", "レインボー!!"]
+WORDS = ["White!", "Blue!", "Purple!", "Green!", "Red!", "Gold!", "Rainbow!"]
+PIPER_MODEL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "source",
+                           "icon_spiral", "piper", "en_US-norman-medium.onnx")
 _VOICE = {}
 
 
 def voice(k, sr):
-    """ボールが落ちるときの掛け声:色の名前(ホワイト!/ブルー!/…/レインボー!!)。
-    無料のオープンソース音声合成 pyopenjtalk(Open JTalk)+音声「Mei」(CC BY 3.0)。強いボールほど高く・元気に。"""
+    """ボールが落ちるときの掛け声:色の名前を英語で(White! / Blue! / … / Rainbow!)。
+    大人の男性の低くて渋い声。無料のオープンソース音声合成 Piper(MIT)の英語の声「Norman」
+    (元の録音は LibriVox のパブリックドメイン)。モデルは assets/source/icon_spiral/piper/(git 管理外)に置く。
+    少しだけ低くして(約 -1.5 半音)渋さを足し、強いボールほどゆっくり重く・こだまも深く。"""
     if (k, sr) not in _VOICE:
-        import pyopenjtalk
-        x, vsr = pyopenjtalk.tts(WORDS[k], half_tone=1.0 + 0.8 * k, speed=1.05 + 0.03 * k)
-        x = x.astype(float)
-        e = np.abs(x)
-        idx = np.where(e > 0.04 * e.max())[0]
-        x = x[max(0, idx[0] - 100): idx[-1] + 400]
-        n = int(len(x) * sr / vsr)
+        import io
+        import wave
+        from piper import PiperVoice, SynthesisConfig
+        v = PiperVoice.load(PIPER_MODEL)
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as wf:
+            v.synthesize_wav(WORDS[k], wf, syn_config=SynthesisConfig(length_scale=1.0 + 0.04 * k, noise_scale=0.5))
+        buf.seek(0)
+        with wave.open(buf) as wf:
+            vsr = wf.getframerate()
+            x = np.frombuffer(wf.readframes(wf.getnframes()), np.int16).astype(float)
+        # 最初のひと声だけ使う(この声は単語のあとに余計な音が続くことがあるので、0.12秒以上の無音で切る)
+        e = np.convolve(np.abs(x), np.ones(200) / 200, "same")
+        on = e > 0.05 * e.max()
+        i0 = int(np.argmax(on))
+        gap = int(0.12 * vsr)
+        i1 = len(x)
+        quiet = 0
+        for i in range(i0, len(x)):
+            quiet = quiet + 1 if not on[i] else 0
+            if quiet >= gap:
+                i1 = i - gap
+                break
+        x = x[max(0, i0 - 200): i1 + int(0.06 * vsr)]
+        x = x * np.minimum(1, (len(x) - np.arange(len(x))) / (0.05 * vsr))
+        low = 2 ** (-1.5 / 12)   # 少し低く(ゆっくり再生)
+        n = int(len(x) / low * sr / vsr)
         y = np.interp(np.linspace(0, len(x) - 1, n), np.arange(len(x)), x)
-        if k >= 4:   # レッドから上は、こだまをつけて迫力を出す
-            for d, g in ((0.09, 0.35), (0.18, 0.18)):
-                m = int(d * sr)
-                y = np.concatenate([y, np.zeros(m)])
-                y[m:] += g * y[:-m]
+        y = y / (np.abs(y).max() + 1e-9)
+        y = np.tanh(1.6 * y) / np.tanh(1.6)   # 少し太く
+        for d, g in ((0.11, 0.18 + 0.04 * k), (0.23, 0.08 + 0.03 * k)):   # 会場に響くようなこだま
+            m = int(d * sr)
+            y = np.concatenate([y, np.zeros(m)])
+            y[m:] += g * y[:-m]
         _VOICE[(k, sr)] = y / (np.abs(y).max() + 1e-9)
     return _VOICE[(k, sr)]
 
