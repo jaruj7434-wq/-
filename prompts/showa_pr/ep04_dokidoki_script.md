@@ -32,3 +32,5 @@
 
 ## 生成の記録
 - 2026-11-19 Wan 3.0(テキストから動画、28秒、480p、4:3、音声入り、enable_thinking)28クレジット:780d9bb0-a898-4211-aa90-c8966cb58a44
+- 2026-11-19 完成 → assets/source/showa_pr/ep04/wan/take1.mp4。商品はふんどしではなく白いブリーフ型の下着として描かれた(台に飾った状態のみ、人は着けていない)
+  - 仕上げ:prompts/showa_pr/ep04_muramura_edl.json → assets/output/showa_pr/ep04_muramura/(28秒+社名カード)
