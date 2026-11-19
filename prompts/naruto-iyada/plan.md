@@ -184,3 +184,5 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 ## 実写版ナルトの顔で作り直し(ユーザー指定: 慶太の顔ではなく実写化の顔に)
 - キャラ画像: gpt_image_2 / medium / 2k / 9:16 / 2クレジット、job `78ffb6c9-c21a-4ab8-873b-f124b354889f`(`naruto-live-character.png`)。慶太キャラ画像は服装・ポーズ・場所の参照のみ、顔は新しい架空の人物(青い瞳、頬のヒゲ線、金髪、メガネなし)
 - 額当てに木ノ葉マークが出たので渦巻きに修正 → `naruto-live-character-v2.png`
+- 作り直し(ユーザー指摘: 眉毛は金髪、もっとアニメの顔に忠実に): 1枚目を参照に顔だけ作り変え、job `2208f2e7-289e-4d31-9659-b118795693d0`、2クレジット(`naruto-live-character-b.png`)。15〜16歳の少年らしい顔、金色の眉、大きな青い目、頬に3本ずつ太めの線、ニカッと笑う
+- 額当ての木ノ葉マークを渦巻きに修正 → `naruto-live-character-b2.png`(採用候補)
