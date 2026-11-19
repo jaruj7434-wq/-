@@ -180,3 +180,7 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
     - B `999ec742-3610-48c6-a693-5a4a07fc6bc6`: 3セット正しい+途中に余計な1小節(「こんななるとはパスタ食う」)→ 拍の位置で1小節切り、前奏を1小節に詰めた → `audio/song-ai3-edit.mp3`(18.2秒)
   - 歌の位置: サビ 2.36 / 6.38 / 10.50秒、ネタの行 4.50 / 8.62 / 12.74秒
   - テロップのネタ1を「分身全員 / ドパガキ〜」に → `naruto-iyada-v8.mp4`(最終版も v8 に更新)
+
+## 実写版ナルトの顔で作り直し(ユーザー指定: 慶太の顔ではなく実写化の顔に)
+- キャラ画像: gpt_image_2 / medium / 2k / 9:16 / 2クレジット、job `78ffb6c9-c21a-4ab8-873b-f124b354889f`(`naruto-live-character.png`)。慶太キャラ画像は服装・ポーズ・場所の参照のみ、顔は新しい架空の人物(青い瞳、頬のヒゲ線、金髪、メガネなし)
+- 額当てに木ノ葉マークが出たので渦巻きに修正 → `naruto-live-character-v2.png`
