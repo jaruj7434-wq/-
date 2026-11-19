@@ -13,7 +13,10 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 SONG, OUT = sys.argv[1], sys.argv[2]
 W, H, FPS = 1080, 1920, 24
 FONT = '/usr/share/fonts/opentype/noto/NotoSansCJK-Black.ttc'
-BRUSH = '/usr/share/fonts/truetype/kouzan-mouhitsu/kouzan-mouhitsu.ttf'  # 衡山毛筆フォント(apt: fonts-kouzan-mouhitsu)
+BRUSH = os.environ.get('TELOP_FONT', '/usr/share/fonts/truetype/kouzan-mouhitsu/kouzan-mouhitsu.ttf')  # 既定は衡山毛筆。例: Dela Gothic One(github.com/google/fonts ofl/delagothicone)
+TRACK = float(os.environ.get('TELOP_TRACK', '0.86'))
+FATTEN = int(os.environ.get('TELOP_FATTEN', '3'))
+FALLBACK = os.environ.get('TELOP_FALLBACK', '〜')
 YUNET = os.environ.get('YUNET', 'yunet.onnx')  # 顔検出モデル(Hugging Face: opencv/face_detection_yunet)
 def ff(*a): subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', *a], check=True)
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]))
@@ -53,7 +56,6 @@ def bfont(sz):
     if sz not in bfonts: bfonts[sz] = ImageFont.truetype(BRUSH, sz)
     return bfonts[sz]
 
-FALLBACK = '〜'  # 毛筆フォントでは空の字形なので、ゴシック体で描く
 def draw_brush(d, ox, oy, text, f, fill, stroke, sfill, track):
     for pas in (0, 1):
         x = ox
@@ -63,10 +65,11 @@ def draw_brush(d, ox, oy, text, f, fill, stroke, sfill, track):
             if pas == 0:
                 d.text((x, yy), ch, font=ff_, fill=sfill, stroke_width=stroke, stroke_fill=sfill)
             else:
-                d.text((x, yy), ch, font=ff_, fill=fill, stroke_width=3, stroke_fill=fill)  # 少し太らせる
+                d.text((x, yy), ch, font=ff_, fill=fill, stroke_width=FATTEN, stroke_fill=fill)  # 少し太らせる
             x += f.getlength(ch) * track
 
-def karaoke_line(img, text, cx, cy, size, prog, col, stroke=11, track=0.86):
+def karaoke_line(img, text, cx, cy, size, prog, col, stroke=11, track=None):
+    track = TRACK if track is None else track
     """prog(0〜1)の所まで col、残りは白。毛筆フォント、縁取り+影つき"""
     f = bfont(size)
     tw = int(sum(f.getlength(ch) for ch in text[:-1]) * track + f.getlength(text[-1]) + size * 0.25)
@@ -112,7 +115,7 @@ def badge(n):
     im = Image.new('RGBA', (300, 120), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     d.rounded_rectangle([0, 0, 299, 119], radius=60, fill=ORANGE + (235,), outline=WHITE + (255,), width=5)
     im.alpha_composite(spiral(92), (14, 14))
-    d.text((200, 60), f'その{n}', font=font(56), fill=WHITE, anchor='mm', stroke_width=4, stroke_fill=NAVY)
+    d.text((200, 60), f'その{n}', font=bfont(54), fill=WHITE, anchor='mm', stroke_width=4, stroke_fill=NAVY)
     return im
 
 import cv2

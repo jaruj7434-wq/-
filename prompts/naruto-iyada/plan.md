@@ -206,3 +206,6 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - その1 = 煙→分身(0〜3.0秒)+ 分身に寄る(0〜3.9秒)、その2 = 一楽(5秒)、その3 = 屋根→タクシー(4秒)+ 車内(5秒)
   - 歌は Hana 版(参考の曲の伴奏・テンポ)。テロップは毛筆、顔を避けた配置、「こんなナルトは」「分身全員 ドパガキ〜」
   - 動画5本 44クレジット + 画像(キャラ3枚・場面5枚・分身の作り直し1枚)18クレジット
+- アニメ版 v2(ユーザー指摘: フォントが動画に合っていない): 候補4つ(Dela Gothic One / M PLUS Rounded 1c ExtraBold / RocknRoll One / Reggae One、いずれも Google Fonts の OFL、github.com/google/fonts から取得)を映像に重ねて比較 → `font-candidates.png`
+  - アニメのテロップらしい極太ゴシックの Dela Gothic One を採用。`stylish_edit2.py` にフォント指定を追加(TELOP_FONT / TELOP_TRACK=0.97 / TELOP_FATTEN=0 / TELOP_FALLBACK=' ')。バッジ「その1〜3」も同じフォントに
+  - → `naruto-iyada-anime-v2.mp4`(最終版も更新)
