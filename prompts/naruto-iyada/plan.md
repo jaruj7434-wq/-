@@ -189,3 +189,6 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - アニメ顔版(ユーザー指定: 完全アニメでなくてよいが、顔はアニメの感じ): 実写版 `2208f2e7` を参照に、2.5D アニメ調の CG キャラとして生成、job `ac7bdd8c-bade-4dbb-991f-23b0c86b4d5e`、2クレジット(`naruto-anime-face.png`)。背景の屋上は実写のまま
   - 想定より元ネタのアニメデザインにかなり近い仕上がりになった(権利面の注意をユーザーに伝える)
   - 額当ての木ノ葉マークを渦巻きに修正 → `naruto-anime-face-v2.png`
+- ほかのキャラもアニメ調(2.5D)に(ユーザー指定)。主人公アニメ顔 `ac7bdd8c` を画風の参照に、各 2クレジット:
+  - イルカ先生役 job `4fca3671-bf25-4492-9288-794558f8dc5f`(`iruka-anime.png`)→ 額当てを渦巻きに修正 `iruka-anime-v2.png`
+  - 一楽の親父 job `0662492a-40d8-4378-8892-676103823d89`(`teuchi-anime.png`)。糸目、白い調理帽と調理服、おたま
