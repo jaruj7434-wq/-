@@ -186,3 +186,6 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - 額当てに木ノ葉マークが出たので渦巻きに修正 → `naruto-live-character-v2.png`
 - 作り直し(ユーザー指摘: 眉毛は金髪、もっとアニメの顔に忠実に): 1枚目を参照に顔だけ作り変え、job `2208f2e7-289e-4d31-9659-b118795693d0`、2クレジット(`naruto-live-character-b.png`)。15〜16歳の少年らしい顔、金色の眉、大きな青い目、頬に3本ずつ太めの線、ニカッと笑う
 - 額当ての木ノ葉マークを渦巻きに修正 → `naruto-live-character-b2.png`(採用候補)
+- アニメ顔版(ユーザー指定: 完全アニメでなくてよいが、顔はアニメの感じ): 実写版 `2208f2e7` を参照に、2.5D アニメ調の CG キャラとして生成、job `ac7bdd8c-bade-4dbb-991f-23b0c86b4d5e`、2クレジット(`naruto-anime-face.png`)。背景の屋上は実写のまま
+  - 想定より元ネタのアニメデザインにかなり近い仕上がりになった(権利面の注意をユーザーに伝える)
+  - 額当ての木ノ葉マークを渦巻きに修正 → `naruto-anime-face-v2.png`
