@@ -192,3 +192,9 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - ほかのキャラもアニメ調(2.5D)に(ユーザー指定)。主人公アニメ顔 `ac7bdd8c` を画風の参照に、各 2クレジット:
   - イルカ先生役 job `4fca3671-bf25-4492-9288-794558f8dc5f`(`iruka-anime.png`)→ 額当てを渦巻きに修正 `iruka-anime-v2.png`
   - 一楽の親父 job `0662492a-40d8-4378-8892-676103823d89`(`teuchi-anime.png`)。糸目、白い調理帽と調理服、おたま
+- アニメ調で全シーン作り直し(ユーザー承認、見積もり約56クレジット)。画像5枚(各2クレジット):
+  - その1 印: job `558a1e8c-2a5c-47bb-82cd-e9f5648c5304`(`anime/b1-start.png`)
+  - その1 分身: job `5ee62dab-9318-48c2-99f3-b16810b2f821`(`anime/b1-end.png`)→ 分身の顔がメガネの慶太寄りになってしまった(前の画像を参照した影響)。作り直しを提案中
+  - その2 一楽: job `3de14ebe-9590-4509-be2f-7d173d6cd413`(`anime/b2-ichiraku.png`)、のれん「ラーメン一楽」も正しい
+  - その3 屋根: job `e55dd230-7ded-4d09-82c5-4b95eee24d5a`、車内: job `b1637b3f-505a-41ae-b1ee-98640325b0b7`(運転手もアニメ調)
+  - 額当ての木ノ葉マークは `tools/fix_plate_near.py`(おおよその位置の近くでマークを自動検出して渦巻きに描き直す)で修正 → `*-fix.png`
