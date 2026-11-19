@@ -1,0 +1,628 @@
+"""「つぶすと増えるボール、1000個いける?」丸いわくの左右に歯車つきの「つかみ腕」があり、
+開いたり閉じたりしながら首をふる。腕にはさまれてつぶされたボールは、次の色のボール3個に分かれる物理ショート。
+
+- 参考:ユーザーから受け取った「Satisfying ball crusher」(左右の歯車の腕がボールをはさんでつぶすと増える)の形式。
+  絵・色・音・ルールの数字はすべて自作(参考動画のロゴやデザインは使っていない)。
+- はじめはわくの中に白いボールが1個。重力なし、ボールはいつも同じ速さでまっすぐ進み、わく・ほかのボール・腕で跳ね返る(ねらい・補正なし)。
+- つかみ腕:歯車を支点に、L字に曲がった2本の腕。首をふりながら(左右に約50度)、あごを開いたり閉じたりする(決まったリズム)。
+  閉じきると、2本の腕の先が合わさって四角い「かご」になる。
+- 1個のボールが、同じつかみ腕の上の腕と下の腕の両方に同時にふれて、しかも腕が閉じようとしているとき = はさまれて「つぶれる」。
+  つぶれたボールは消えて、腕のすぐ外の空いている所に、次の色のボール3個が生まれる(重なって生まれることはない。腕のあいだには生まれないので、生まれた瞬間にまたつぶれる連鎖は起きない)。
+  色の順番:白 → 青 → 紫 → 緑 → 赤 → 金 → 虹(虹はそれ以上変わらない)。
+- 制限時間内に1000個になれば成功(虹色パチンコ演出)、ならなければ失敗(幽霊)。
+
+使い方:
+    python claw_crush.py search [-n 40]
+    python claw_crush.py render --seed N
+"""
+
+import argparse
+import colorsys
+import math
+import os
+import subprocess
+import sys
+import wave
+from multiprocessing import Pool
+
+import cairo
+import numpy as np
+import pymunk
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, "..", "ball_escape"))
+from ball_escape import midi_hz, text  # noqa: E402
+sys.path.insert(0, os.path.join(HERE, "..", "common"))
+from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
+from fail_bgm import fail_music  # noqa: E402
+from pachinko import DURATION as FEVER_DUR, RainbowFever, kyuin_music  # noqa: E402
+
+W, H = 1080, 1920
+FPS = 60
+SUBSTEPS = 4
+SR = 48000
+OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
+
+CX, CY, R = 540.0, 1000.0, 430.0          # 丸いわく
+BALL_R = 8.0
+SPEED = float(os.environ.get("SPEED", 160.0))     # ボールの速さ(いつも同じ)
+SPLIT = int(os.environ.get("SPLIT", 3))                                         # つぶれると何個に分かれるか
+TARGET = int(os.environ.get("TARGET", 1000))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 34.2))
+BIRTH_GAP = 3.0                                   # 生まれるボールと、まわりとのすき間(px)
+OUTRO = 4.2
+
+# つかみ腕
+L1, L2 = float(os.environ.get("L1", 380.0)), float(os.environ.get("L2", 210.0))                    # 腕の長さ、先の曲がった部分の長さ
+ARM_W = 7.0                              # 腕の太さ(半分)
+TH_OPEN = math.radians(68)               # あごを開いたときの、片方の腕の角度
+TH_CLOSE = math.asin(L2 / L1) + math.radians(1.5)   # 閉じたとき(腕の先どうしがほぼ合わさる)
+JAW_T = float(os.environ.get("JAW_T", 1.7))         # 開いて閉じる1回の時間(秒)
+SWAY = math.radians(float(os.environ.get("SWAY", 60)))                  # 首ふりの大きさ
+SWAY_T = 5.3                             # 首ふり1往復の時間
+GEARS = [(CX - R, CY, 0.0, 0.0), (CX + R, CY, math.pi, 0.5)]   # (x, y, まっすぐ内向きの角度, リズムのずれ)
+
+NAMES = ["白", "青", "紫", "緑", "赤", "金", "虹"]
+COLORS = [(0.95, 0.96, 1.0), (0.2, 0.55, 1.0), (0.68, 0.3, 1.0), (0.2, 0.95, 0.4),
+          (1.0, 0.2, 0.2), (1.0, 0.8, 0.15), None]
+TOP = len(NAMES) - 1
+
+
+def jaw(t, ph):
+    """あごの開き(片方の腕の角度)。ゆっくり開いて、ぐっと閉じて、少し閉じたまま止まる。"""
+    u = ((t / JAW_T) + ph) % 1.0
+    if u < 0.45:                      # 開く
+        k = 0.5 - 0.5 * math.cos(math.pi * u / 0.45)
+        return TH_CLOSE + (TH_OPEN - TH_CLOSE) * k
+    if u < 0.75:                      # 閉じる
+        k = 0.5 - 0.5 * math.cos(math.pi * (u - 0.45) / 0.3)
+        return TH_OPEN - (TH_OPEN - TH_CLOSE) * k
+    return TH_CLOSE                   # 閉じたまま
+
+
+SPIN_T = float(os.environ.get("SPIN_T", 3.4))   # 腕が歯車のまわりを1周する時間(秒)
+
+
+def sway(t, base, ph):
+    """腕の向き:歯車のまわりを一定の速さでぐるぐる回る(左右で逆回り)。わくの外を向いているあいだは、わくの外を通る。"""
+    d = 1 if base == 0.0 else -1
+    return base + d * 2 * math.pi * (t / SPIN_T + ph)
+
+
+def arm_local(sign):
+    """腕の形(歯車が原点、腕は +x 方向)。sign=-1 が上の腕(先は +y へ曲がる)、+1 が下の腕。"""
+    return [(0, 0), (L1, 0), (L1, -sign * L2)]
+
+
+# ---------------------------------------------------------------- シミュレーション
+class Game:
+    def __init__(self, seed):
+        self.rng = rng = np.random.default_rng(seed)
+        sp = pymunk.Space()
+        sp.gravity = (0, 0)
+        sp.iterations = 20
+        self.space = sp
+        n = 120
+        pts = [(CX + (R + 10) * math.cos(2 * math.pi * k / n), CY + (R + 10) * math.sin(2 * math.pi * k / n)) for k in range(n + 1)]
+        for a, b in zip(pts, pts[1:]):
+            s = pymunk.Segment(sp.static_body, a, b, 10)
+            s.elasticity, s.friction = 1.0, 0.0
+            s.collision_type = 3
+            sp.add(s)
+        self.t = 0.0
+        # つかみ腕(動きが決まっている「キネマティック」な物体。ボールを押したり、はさんだりする)
+        self.claws = []
+        for gi, (gx, gy, base, ph) in enumerate(GEARS):
+            arms = []
+            for sign in (-1, 1):
+                b = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+                b.position = (gx, gy)
+                b.angle = sway(0, base, ph * 0.37) + sign * jaw(0, ph)
+                p = arm_local(sign)
+                shapes = []
+                for a_, c_ in zip(p, p[1:]):
+                    s = pymunk.Segment(b, a_, c_, ARM_W)
+                    s.elasticity, s.friction = 0.9, 0.0
+                    s.collision_type = 2
+                    shapes.append(s)
+                sp.add(b, *shapes)
+                arms.append((b, shapes, sign))
+            self.claws.append({"gear": (gx, gy), "base": base, "ph": ph, "arms": arms})
+        self.balls = {}
+        self.next_id = 0
+        self.events = []
+        self.result, self.result_t = None, None
+        a = rng.uniform(0, 2 * math.pi)
+        self.add((CX + rng.uniform(-40, 40), CY + rng.uniform(-40, 40)), 0, a)
+
+    def add(self, pos, tier, ang):
+        b = pymunk.Body(1.0, pymunk.moment_for_circle(1.0, 0, BALL_R))
+        b.position = pos
+        b.velocity = (SPEED * math.cos(ang), SPEED * math.sin(ang))
+        s = pymunk.Circle(b, BALL_R)
+        s.elasticity, s.friction = 1.0, 0.0
+        s.collision_type = 1
+        self.space.add(b, s)
+        self.space.reindex_shapes_for_body(b)
+        self.balls[b] = {"id": self.next_id, "tier": tier, "shape": s, "born": self.t}
+        self.next_id += 1
+        return b
+
+    def angles(self, c, t):
+        th = jaw(t, c["ph"])
+        ph = sway(t, c["base"], c["ph"] * 0.37)
+        return ph, th
+
+    def in_jaw(self, p, margin=BALL_R * 1.5):
+        """その場所が、どれかのつかみ腕の2本のあいだ(かごの中)か。"""
+        for c in self.claws:
+            ph_, th_ = self.angles(c, self.t)
+            gx, gy = c["gear"]
+            ca, sa = math.cos(-ph_), math.sin(-ph_)
+            dx, dy = p.x - gx, p.y - gy
+            u, v = dx * ca - dy * sa, dx * sa + dy * ca
+            if -margin < u < L1 * math.cos(th_) + margin and abs(v) < u * math.tan(th_) + margin:
+                return True
+        return False
+
+    def free(self, p):
+        if (p - (CX, CY)).length > R - BALL_R - 2:
+            return False
+        if self.in_jaw(p):   # 生まれたボールが、すぐ同じ腕にまたつぶされないよう、腕のあいだには生まれない
+            return False
+        q = self.space.point_query_nearest(p, BALL_R + BIRTH_GAP, pymunk.ShapeFilter())
+        return q is None or q.shape is None
+
+    def free_spot(self, mid):
+        """つぶれた場所のすぐ近くで、ほかのボール・腕・わくと重ならない所(近い順にさがす)。"""
+        base = self.rng.uniform(0, 2 * math.pi)
+        dist = BALL_R * 1.0
+        while dist < 2 * R:
+            m = max(6, int(2 * math.pi * dist / (BALL_R * 1.2)))
+            for k in range(m):
+                a = base + 2 * math.pi * k / m
+                p = mid + pymunk.Vec2d(math.cos(a), math.sin(a)) * dist
+                if self.free(p):
+                    return p
+            dist += BALL_R * 0.8
+        return None
+
+    def step(self, dt):
+        t1 = self.t + dt
+        for c in self.claws:   # 腕を、決まった動きのとおりに動かす(角速度をあたえてボールを正しく押す)
+            ph1, th1 = self.angles(c, t1)
+            for b, _, sign in c["arms"]:
+                target = ph1 + sign * th1
+                b.angular_velocity = (target - b.angle) / dt
+        self.space.step(dt)
+        self.t = t1
+        for b in self.balls:   # ボールはいつも同じ速さ(ぶつかって変わっても、ゆっくりもどる)
+            v = b.velocity
+            n = v.length
+            k = 1 - math.exp(-dt / 0.5)
+            if n > 1e-6:
+                b.velocity = v * ((n + (SPEED - n) * k) / n)
+            else:
+                a = self.rng.uniform(0, 2 * math.pi)
+                b.velocity = (SPEED * math.cos(a), SPEED * math.sin(a))
+            d = b.position - (CX, CY)
+            if d.length > R - BALL_R:   # (めったにないが)わくの外へ押し出されたらもどす
+                b.position = pymunk.Vec2d(CX, CY) + d.normalized() * (R - BALL_R - 1)
+                b.velocity = -d.normalized() * SPEED
+        # はさまれたボール:つかみ腕が閉じようとしているとき、2本の腕のあいだ(内側)にいて、腕の内側に押されているボールがつぶれる。
+        # さらに、閉じきった瞬間に「かご」の中にいるボールもつぶれる
+        crushed = []
+        for ci, c in enumerate(self.claws):
+            th0 = jaw(self.t - dt, c["ph"])
+            th1 = jaw(self.t, c["ph"])
+            closing = th1 < th0 - 1e-9
+            closed_now = th0 > TH_CLOSE + 1e-9 and th1 <= TH_CLOSE + 1e-9
+            if not closing and not closed_now:
+                continue
+            ph_, th_ = self.angles(c, self.t)
+            gx, gy = c["gear"]
+            ca, sa = math.cos(-ph_), math.sin(-ph_)
+            ex = L1 * math.cos(th_)
+            tan_ = math.tan(th_)
+            touching = set()
+            if closing:
+                for b, shapes, sign in c["arms"]:
+                    for s_ in shapes:
+                        for q in self.space.shape_query(s_):
+                            if q.shape is not None and q.shape.collision_type == 1:
+                                touching.add(q.shape.body)
+            for bb in list(self.balls):
+                dx, dy = bb.position.x - gx, bb.position.y - gy
+                u, v = dx * ca - dy * sa, dx * sa + dy * ca   # 腕の向きを x にした座標
+                inside = 25 < u < ex and abs(v) < u * tan_   # 2本の腕のあいだ(内側)
+                # その腕が閉じ始めたあとに生まれたボールは、その回にはつぶれない(生まれてすぐまたつぶれる連鎖をふせぐ)
+                u_ = ((self.t / JAW_T) + c["ph"]) % 1.0
+                close_start = self.t - max(0.0, u_ - 0.45) * JAW_T
+                if inside and (closed_now or bb in touching) and self.balls[bb]["born"] < close_start - 1e-6:
+                    crushed.append((bb, ci))
+        for bb, ci in crushed:
+            if bb not in self.balls:
+                continue
+            info = self.balls.pop(bb)
+            pos = bb.position
+            self.space.remove(bb, info["shape"])
+            nt = min(TOP, info["tier"] + 1)
+            out = []
+            for _ in range(SPLIT):
+                p = self.free_spot(pos)
+                if p is None:
+                    break
+                d = p - pos
+                a = math.atan2(d.y, d.x) if d.length > 1e-6 else self.rng.uniform(0, 2 * math.pi)
+                nb = self.add(p, nt, a)
+                out.append((p.x, p.y))
+            self.events.append(("crush", self.t, (pos.x, pos.y, info["tier"], nt, out, len(self.balls), ci)))
+        if self.result is None:
+            if len(self.balls) >= TARGET:
+                self.result, self.result_t = "success", self.t
+                self.events.append(("success", self.t, None))
+            elif self.t >= TIME_LIMIT:
+                self.result, self.result_t = "fail", self.t
+                self.events.append(("fail", self.t, None))
+            if self.result is not None:
+                self.final_n = len(self.balls)
+
+
+def simulate(seed, record=False):
+    g = Game(seed)
+    frames = []
+    dt = 1 / FPS / SUBSTEPS
+    while True:
+        for _ in range(SUBSTEPS):
+            g.step(dt)
+        if record:
+            frames.append({"t": g.t, "n": len(g.balls),
+                           "balls": [(b.position.x, b.position.y, i["tier"], i["id"]) for b, i in g.balls.items()],
+                           "arms": [[(b.position.x, b.position.y, b.angle, sign) for b, _, sign in c["arms"]] for c in g.claws]})
+        if g.result is not None:
+            extra = OUTRO + SCARE_DUR if g.result == "fail" else FEVER_DUR
+            if not record or g.t > g.result_t + extra:
+                break
+    return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "n": g.final_n}
+
+
+def score(seed):
+    r = simulate(seed)
+    cr = [e for e in r["events"] if e[0] == "crush"]
+    t100 = next((e[1] for e in cr if e[2][5] >= 100), None)
+    return seed, r["result"], round(r["result_t"], 1), r["n"], len(cr), t100 and round(t100, 1)
+
+
+def search(n):
+    with Pool(os.cpu_count()) as p:
+        rs = p.map(score, range(n))
+    print(f"{n} シード中 成功 {sum(r[1] == 'success' for r in rs)} 件")
+    for r in rs:
+        print(r)
+
+
+# ---------------------------------------------------------------- 描画
+GOLD = (1, 0.86, 0.2)
+
+
+def tier_col(tier, t, oid=0):
+    c = COLORS[tier]
+    if c is None:
+        return colorsys.hsv_to_rgb((t * 0.5 + oid * 0.137) % 1.0, 0.75, 1.0)
+    return c
+
+
+def draw_gear(ctx, x, y, r, ang):
+    """歯車(銀色の金属)。"""
+    n = 12
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(ang)
+    ctx.new_path()
+    for k in range(n * 2):
+        a0 = 2 * math.pi * k / (n * 2)
+        rr = r if k % 2 == 0 else r * 0.78
+        ctx.arc(0, 0, rr, a0, a0 + 2 * math.pi / (n * 2))
+    ctx.close_path()
+    g = cairo.LinearGradient(-r, -r, r, r)
+    g.add_color_stop_rgb(0, 0.95, 0.96, 1.0)
+    g.add_color_stop_rgb(0.5, 0.55, 0.57, 0.62)
+    g.add_color_stop_rgb(1, 0.85, 0.86, 0.9)
+    ctx.set_source(g)
+    ctx.fill()
+    ctx.arc(0, 0, r * 0.38, 0, 2 * math.pi)
+    ctx.set_source_rgb(0.25, 0.26, 0.3)
+    ctx.fill()
+    ctx.arc(0, 0, r * 0.18, 0, 2 * math.pi)
+    ctx.set_source_rgb(0.85, 0.86, 0.9)
+    ctx.fill()
+    ctx.restore()
+
+
+def draw_arm(ctx, x, y, ang, sign):
+    """L字の腕(メタリックな灰色の太い棒)。"""
+    p = arm_local(sign)
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(ang)
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    ctx.new_path()
+    ctx.move_to(*p[0])
+    for q in p[1:]:
+        ctx.line_to(*q)
+    ctx.set_source_rgb(0.25, 0.26, 0.3)
+    ctx.set_line_width(ARM_W * 2 + 4)
+    ctx.stroke_preserve()
+    g = cairo.LinearGradient(0, -ARM_W, 0, ARM_W)
+    g.add_color_stop_rgb(0, 0.92, 0.93, 0.96)
+    g.add_color_stop_rgb(0.5, 0.6, 0.62, 0.68)
+    g.add_color_stop_rgb(1, 0.75, 0.76, 0.8)
+    ctx.set_source(g)
+    ctx.set_line_width(ARM_W * 2)
+    ctx.stroke()
+    ctx.restore()
+
+
+def draw_ball(ctx, x, y, col, r=BALL_R):
+    g = cairo.RadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r)
+    g.add_color_stop_rgb(0, *(min(1, c + 0.5) for c in col))
+    g.add_color_stop_rgb(0.5, *col)
+    g.add_color_stop_rgb(1, *(c * 0.55 for c in col))
+    ctx.arc(x, y, r, 0, 2 * math.pi)
+    ctx.set_source(g)
+    ctx.fill()
+
+
+def render(seed):
+    res = simulate(seed, record=True)
+    events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
+    fail = result == "fail"
+    os.makedirs(OUT_DIR, exist_ok=True)
+    silent = os.path.join(OUT_DIR, f"claw_crush_{seed}_video.mp4")
+    wav = os.path.join(OUT_DIR, f"claw_crush_{seed}.wav")
+    final = os.path.join(OUT_DIR, f"claw_crush_{seed}.mp4")
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
+    if preview:
+        class _P:
+            def __init__(self):
+                self.stdin = self
+                self.fi = 0
+
+            def write(self, _):
+                t_ = (self.fi + 1) / FPS
+                for pt in preview:
+                    if abs(t_ - pt) < 0.5 / FPS:
+                        surf.write_to_png(os.path.join(OUT_DIR, f"cc_preview_{pt:.1f}.png"))
+                self.fi += 1
+        ff = _P()
+        frames = [f for f in frames if f["t"] <= max(preview) + 0.05]
+    else:
+        ff = subprocess.Popen(
+            ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgra",
+             "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-c:v", "libx264",
+             "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
+            stdin=subprocess.PIPE)
+    ghost = GhostScare(W, H, seed) if fail else None
+    fever = RainbowFever(W, H, seed) if not fail else None
+    pops = []
+    ev_i = 0
+    best = 0
+    frozen = None
+    prev_n = 1
+    for fi, fr in enumerate(frames):
+        t = fr["t"]
+        while ev_i < len(events) and events[ev_i][1] <= t:
+            kind, et, data = events[ev_i]
+            if kind == "crush":
+                x, y, t0, nt, out, n, ci = data
+                if len(pops) < 80:
+                    pops.append((x, y, nt, et))
+                best = max(best, nt)
+            ev_i += 1
+        over = end_t is not None and t >= end_t
+        if ghost is not None and over and t - end_t < SCARE_DUR:
+            ghost.draw(surf, t - end_t)
+            ff.stdin.write(surf.get_data())
+            continue
+        if fail and over:
+            if frozen is None:
+                frozen = fr
+            fr = frozen
+        after = (t - end_t - SCARE_DUR) if (fail and over) else 0
+        ctx.set_source_rgb(0, 0, 0)
+        ctx.paint()
+        if fever is not None and over:
+            fever.draw_back(ctx, t - end_t)
+        # わく
+        for wdt, a in ((10, 0.12), (4, 1.0)):
+            ctx.arc(CX, CY, R + 3, 0, 2 * math.pi)
+            ctx.set_source_rgba(1, 1, 1, a)
+            ctx.set_line_width(wdt)
+            ctx.stroke()
+        for x, y, tier, oid in fr["balls"]:
+            draw_ball(ctx, x, y, tier_col(tier, t, oid))
+        keep = []
+        for x, y, nt, t0 in pops:   # つぶれた瞬間の、はじける光
+            a = t - t0
+            if a < 0.3:
+                col = tier_col(nt, t)
+                ctx.arc(x, y, BALL_R * (1.2 + 5 * a), 0, 2 * math.pi)
+                ctx.set_source_rgba(*col, 0.9 * (1 - a / 0.3))
+                ctx.set_line_width(2.5)
+                ctx.stroke()
+                keep.append((x, y, nt, t0))
+        pops = keep
+        for c, (gx, gy, base, ph) in zip(fr["arms"], GEARS):
+            for x, y, ang, sign in c:
+                draw_arm(ctx, x, y, ang, sign)
+            draw_gear(ctx, gx, gy, 34, -t * 2.0 if gx < CX else t * 2.0)
+        # 文字
+        text(ctx, "つぶすと3つに増えるボール", W / 2, 235, 62, sw=12)
+        text(ctx, f"{TARGET}個にできる？", W / 2, 335, 96, rgb=GOLD, sw=16)
+        n = min(fr["n"], TARGET) if not over else res["n"]
+        bump = 1.0 + (0.12 if n > prev_n else 0)
+        prev_n = n
+        text(ctx, f"{n}", W / 2 - 90, 440, 84 * bump, rgb=(1, 1, 1), sw=12)
+        text(ctx, f"/ {TARGET} 個", W / 2 + 160, 440, 44, rgb=(0.85, 0.85, 0.9), sw=6)
+        # 色の進化表(いままでに出た色まで明るく)
+        for k in range(len(NAMES)):
+            x = W / 2 + (k - 3) * 92
+            col = tier_col(k, t)
+            reached = k <= best
+            draw_ball(ctx, x, 1478, col if reached else tuple(c * 0.3 for c in col), 15)
+            text(ctx, NAMES[k], x, 1516, 26, rgb=(1, 1, 1) if reached else (0.5, 0.5, 0.55), sw=5)
+        left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
+        text(ctx, f"残り {left:4.1f}秒", W / 2, 518, 40, rgb=(1, 0.4, 0.4) if left < 10 else (0.95, 0.95, 0.95), sw=8)
+        if over and fail:
+            k = min(1.0, after / 0.25)
+            ctx.rectangle(0, 880, W, 300)
+            ctx.set_source_rgba(0, 0, 0, 0.6)
+            ctx.fill()
+            text(ctx, "時間切れ…", W / 2, 990, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
+            text(ctx, f"{res['n']}個までだった…", W / 2, 1110, 66, sw=12)
+        elif over:
+            fever.draw_front(ctx, t - end_t, text, "大当たり!!", f"{TARGET}個達成!!")
+        ff.stdin.write(surf.get_data())
+        if fi % 300 == 0:
+            print(f"  描画 {fi}/{len(frames)}", file=sys.stderr)
+    if preview:
+        return
+    ff.stdin.close()
+    ff.wait()
+    duration = len(frames) / FPS
+    synth_audio(res, duration, wav)
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", wav,
+         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+         "-shortest", "-movflags", "+faststart", final], check=True)
+    os.remove(silent)
+    os.remove(wav)
+    print(f"完成: {os.path.abspath(final)}  ({'失敗' if fail else '成功'} {res['n']}個 / 長さ {duration:.1f}秒)")
+
+
+# ---------------------------------------------------------------- 音
+def _t(d):
+    return np.arange(int(d * SR)) / SR
+
+
+def crunch(amp, seed, tier):
+    """つぶれる「パキッ」:短いノイズのはじける音+はじける高い音(色が上がるほど高い)。"""
+    t = _t(0.12)
+    n = np.random.default_rng(seed).normal(0, 1, len(t))
+    hp = n - np.convolve(n, np.ones(6) / 6, "same")
+    f = midi_hz(72 + 3 * tier)
+    ton = np.sin(2 * np.pi * f * t * (1 + 2 * t)) * np.exp(-t * 40)
+    return amp * (0.7 * hp * np.exp(-t * 60) + 0.6 * ton)
+
+
+def pops3(tier):
+    """3つに分かれる「ポポポン」(色が上がるほど高い)。"""
+    out = np.zeros(int(0.25 * SR))
+    for k in range(3):
+        t = _t(0.08)
+        f = midi_hz(76 + 3 * tier + 4 * k)
+        s = np.sin(2 * np.pi * f * t) * np.exp(-t * 45)
+        i = int(k * 0.045 * SR)
+        out[i:i + len(s)] += 0.5 * s
+    return out
+
+
+def clank(amp):
+    """腕が閉じきったときの「カシャン」(金属)。"""
+    t = _t(0.25)
+    y = sum(a * np.sin(2 * np.pi * f * t) * np.exp(-t * d) for f, a, d in ((410, 1, 18), (1130, 0.6, 25), (2650, 0.4, 35)))
+    return amp * y
+
+
+def synth_audio(res, duration, path):
+    events, end_t, fail = res["events"], res["result_t"], res["result"] == "fail"
+    n_out = int((duration + 5) * SR)
+    out = np.zeros(n_out)
+    extra = np.zeros(n_out)
+
+    def add(sig, t0, gain=1.0, buf=None):
+        b = out if buf is None else buf
+        i = int(t0 * SR)
+        j = min(n_out, i + len(sig))
+        if i < n_out and j > i:
+            b[i:j] += gain * sig[: j - i]
+    # 腕が閉じきる「カシャン」
+    for gi, (_, _, _, ph) in enumerate(GEARS):
+        k = 0
+        while True:
+            tc = (k + 0.75 - ph) * JAW_T
+            k += 1
+            if tc < 0:
+                continue
+            if tc > (end_t or duration):
+                break
+            add(clank(0.25), tc)
+    cache = {}
+    recent = []
+    for kind, t, data in events:
+        if end_t is not None and t > end_t + 0.01:
+            continue
+        if kind == "crush":
+            recent = [x for x in recent if t - x < 0.2]
+            if len(recent) >= 8:
+                continue
+            recent.append(t)
+            nt = data[3]
+            if nt not in cache:
+                cache[nt] = pops3(nt)
+            add(crunch(0.6, len(recent) + int(t * 100), nt), t, 1 / (1 + 0.15 * len(recent)))
+            add(cache[nt], t + 0.03, 0.8 / (1 + 0.15 * len(recent)))
+    win = int(0.6 * SR)   # 効果音の大きさを時間でならす(はじめの静かなところも聞こえるように)
+    pw = np.convolve(out ** 2, np.ones(win) / win, "same")
+    agc = np.clip(0.08 / np.sqrt(pw + 1e-8), 0.6, 6.0)
+    agc = np.convolve(agc, np.ones(win) / win, "same")
+    out = out * agc
+    wet = out.copy()
+    for dd, g in ((0.043, 0.2), (0.071, 0.13)):
+        kk = int(dd * SR)
+        wet[kk:] += out[:-kk] * g
+    wet = wet[: int(duration * SR)]
+    loud = np.abs(wet[np.abs(wet) > 1e-4])
+    ref = np.percentile(loud, 99.5) if len(loud) else 1.0
+    wet = np.tanh(1.5 * wet / max(1e-9, ref)) / np.tanh(1.5) * 0.7
+    body = wet[: int(end_t * SR)]
+    rms = np.sqrt(np.mean(body ** 2))
+    if rms > 0:
+        wet *= min(6.0, 10 ** (-14.0 / 20) / rms)
+    if fail:
+        sig = scream(SR)
+        i0 = int(end_t * SR)
+        m = min(len(sig), n_out - i0)
+        extra[i0:i0 + m] += sig[:m]
+        sig = fail_music(SR, OUTRO)
+        i0 = int((end_t + SCARE_DUR) * SR)
+        m = min(len(sig), n_out - i0)
+        extra[i0:i0 + m] += 0.6 * sig[:m]
+    else:
+        sig = kyuin_music(SR, FEVER_DUR)
+        i0 = int((end_t + 0.1) * SR)
+        m = min(len(sig), n_out - i0)
+        extra[i0:i0 + m] += 0.95 * sig[:m]
+    wet = wet + 0.95 * extra[: len(wet)]
+    mag = np.abs(wet)
+    wet = np.where(mag < 0.7, wet, np.sign(wet) * (0.7 + 0.2 * np.tanh((mag - 0.7) / 0.2)))
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes((wet * 32767).astype(np.int16).tobytes())
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("mode", choices=["search", "render"])
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("-n", type=int, default=40)
+    a = ap.parse_args()
+    if a.mode == "search":
+        search(a.n)
+    else:
+        render(a.seed)
