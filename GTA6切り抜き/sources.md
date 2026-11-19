@@ -11,8 +11,14 @@
 - 「本物のGTA6か」は判断根拠も簡単に書く(公開日・UI・投稿者の過去動画など)
 - ラジオ曲区間は「避けた/音差し替え」など対応も書く
 
-## 不採用(確認NG)の動画
+## 確認メモ(条件付きで使用OK)
 
-| 元動画タイトル | URL | 投稿者名 | 公開日 | ライセンス | 不採用理由 | 確認日 |
-|---|---|---|---|---|---|---|
-| 🔴 GTA 6 AO VIVO! A AVENTURA CONTINUA EM VICE CITY! 🔥 GTA VI GAMEPLAY PS5 | https://www.youtube.com/watch?v=z6t7KX_lMYw | Tonhão da Silva (@TonhaoDaSilva) | 2026-11-18(ライブ配信アーカイブ、約3時間14分) | Creative Commons Attribution license (reuse allowed) ✅ | 配信日が発売日(2026/11/19)より前。概要欄に「冒険の続き」「これまでにミッションをこなしてきた」とあり、発売前から複数回配信している。流出版・フェイクの可能性を否定できないため素材ルール3に抵触 | 2026-11-19 |
+### z6t7KX_lMYw — Tonhão da Silva「🔴 GTA 6 AO VIVO! A AVENTURA CONTINUA EM VICE CITY!」
+- URL: https://www.youtube.com/watch?v=z6t7KX_lMYw
+- 投稿者: Tonhão da Silva(@TonhaoDaSilva、ブラジル)/ ライブ配信アーカイブ 約3時間14分
+- ライセンス: Creative Commons Attribution license (reuse allowed) ✅(yt-dlp メタデータで確認)
+- 配信日時: YouTube表示「15時間前に配信」(確認時刻 2026-11-19 13:10 UTC)→ 開始は 2026-11-18 22:00 UTC 頃
+  = ブラジル時間 11/18 19:00頃、**日本時間 11/19 7:00頃**。日本・オセアニアではすでに発売日だったため、発売日条件はOKと判断(ユーザー確認済み)
+- 未確認: 映像そのものが本物の GTA6 か(GTA5 MOD・AIフェイクでないか)はダウンロード後に目視で確認する
+- 状態: クラウド環境からは YouTube のボット確認でダウンロード不可 → ユーザーのPC上で作業予定
+- 確認日: 2026-11-19
