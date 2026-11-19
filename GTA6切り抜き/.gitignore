@@ -1,0 +1,12 @@
+# 動画・音声などのバイナリはコミットしない(フォルダ構成は .gitkeep で維持)
+01_download/*
+02_clips/*
+03_edit/*
+04_output/*
+!*/.gitkeep
+*.mkv
+*.webm
+*.m4a
+*.srt
+*.vtt
+*.json
