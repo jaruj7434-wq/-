@@ -210,3 +210,7 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - アニメのテロップらしい極太ゴシックの Dela Gothic One を採用。`stylish_edit2.py` にフォント指定を追加(TELOP_FONT / TELOP_TRACK=0.97 / TELOP_FATTEN=0 / TELOP_FALLBACK=' ')。バッジ「その1〜3」も同じフォントに
   - → `naruto-iyada-anime-v2.mp4`(最終版も更新)
 - アニメ版 v3(ユーザー指定: 歌も「影分身」ではなく「分身全員」に): Hana の歌声から「影」(3.20〜3.535秒、か・げ)を消し、ぶ の直前の無音(b の閉鎖)で切って「(休符)ぶんしん ぜんいん ドパガキ」に。ドーパはもともと短く「ドパ」に近かったのでそのまま → `audio/song-hana-v2-with-inst.mp3` → `naruto-iyada-anime-v3.mp4`(最終版も更新)
+- アニメ版 v4(ユーザー指定: 文字を付けるだけでなくおしゃれに編集、フォントは忍者っぽく): `tools/ninja_edit.py`
+  - フォント: Yuji Boku(毛筆、Google Fonts OFL)、「〜」だけ Zen Antique。候補比較は Yuji Boku / Yuji Syuku / Yuji Mai / Zen Antique
+  - 演出: 墨の筆跡の帯が左→右に引かれて歌詞が出る/カラオケ風に色が変わる(サビ=明るい朱、行=金)/左上に赤い判子「其ノ壱・弐・参」がドンと押される/切り替わりで手裏剣が残像付きで横切り、煙が広がる/周辺減光、フィルム粒子、コントラストと彩度を少し上げる/顔検出で歌詞の高さを決める
+  - → `naruto-iyada-anime-v4.mp4`(最終版も更新)
