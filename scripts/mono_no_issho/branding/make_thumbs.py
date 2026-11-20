@@ -24,9 +24,9 @@ YEL = (255, 214, 64)
 LONG = [
     dict(name="ep01_thumb", ep="#1", bg="ep01/3d/h13_worn_coin/still_0061.png", focus=0.72,
          lines=[[("10年間ほぼ", 0)], [("作られなかった", 0)], [("1円玉", 1)]], badge="11年ぶりに量産"),
-    dict(name="ep02_thumb", ep="#2", bg="ep02/3d/k03_train_seat/still_0061.png", focus=0.7,
+    dict(name="ep02_thumb", ep="#2", bg="ep02/3d/k03_train_seat/still_0061.png", focus=0.57, zoom=1.25, fy=0.62,
          lines=[[("なくした", 0), ("傘", 1), ("は", 0)], [("どこへ行く？", 0)]], badge="東京だけで年28万本"),
-    dict(name="ep03_thumb", ep="#3", bg="ep03/3d/p03_cap_label/still_0061.png", focus=0.7,
+    dict(name="ep03_thumb", ep="#3", bg="ep03/3d/p03_cap_label/still_0061.png", focus=0.55, zoom=1.3, fy=0.56,
          lines=[[("ペットボトルは", 0)], [("何に", 0)], [("生まれ変わる？", 1)]], badge="リサイクル率85%"),
     dict(name="ep04_thumb", ep="#4", bg="ep04/3d/c01_closet/still_0100.png", focus=0.72,
          lines=[[("一度も着ない服", 0)], [("平均", 0), ("25枚", 1)]], badge="手放した服のゆくえ"),
@@ -45,9 +45,9 @@ def F(size, bold=True):
     return ImageFont.truetype(BOLD if bold else REG, int(size), index=0)
 
 
-def cover(im, w, h, fx=0.5, fy=0.5):
+def cover(im, w, h, fx=0.5, fy=0.5, zoom=1.0):
     """画面いっぱいに拡大して切り抜く。fx, fy = 残す中心（0〜1）。"""
-    sc = max(w / im.width, h / im.height)
+    sc = max(w / im.width, h / im.height) * zoom
     im = im.resize((round(im.width * sc), round(im.height * sc)), Image.LANCZOS)
     l = min(max(0, im.width * fx - w / 2), im.width - w)
     t = min(max(0, im.height * fy - h / 2), im.height - h)
@@ -59,7 +59,7 @@ def shade(im, side="left", strength=0.8):
     w, h = im.size
     g = Image.linear_gradient("L")   # 256x256 上→下 0→255
     if side == "left":
-        g = g.rotate(90, expand=True)      # 左が明るい(255)
+        g = g.rotate(-90, expand=True)     # 左ほど255（暗くする量が多い）
         g = g.resize((w, h))
         g = g.point(lambda v: int(min(255, max(0, (v - 70) * 1.6)) * strength))
     elif side == "top":
@@ -136,7 +136,10 @@ def badge(im, x, y, s, size):
 
 def long_thumb(c):
     W, H = 1280, 720
-    im = cover(Image.open(SRC / c["bg"]).convert("RGB"), W, H, fx=c.get("focus", 0.7) - 0.2)
+    src = Image.open(SRC / c["bg"]).convert("RGB")
+    if c.get("flip"):   # 被写体を文字と反対側（右）へ
+        src = src.transpose(Image.FLIP_LEFT_RIGHT)
+    im = cover(src, W, H, fx=c.get("focus", 0.7) - 0.2, fy=c.get("fy", 0.5), zoom=c.get("zoom", 1.0))
     im = shade(im, "left", 0.92)
     tag(im, 44, 40, c["ep"], 30)
     n = len(c["lines"])
