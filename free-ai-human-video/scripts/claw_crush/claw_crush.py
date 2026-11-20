@@ -258,6 +258,8 @@ class Game:
 
 
 def simulate(seed, record=False):
+    import gc
+    gc.disable()   # 大量の小さなデータで、ごみ集めが何度も走って遅くなるのをふせぐ
     g = Game(seed)
     frames = []
     dt = 1 / FPS / SUBSTEPS
@@ -266,7 +268,9 @@ def simulate(seed, record=False):
             g.step(dt)
         if record:
             frames.append({"t": g.t, "n": len(g.balls),
-                           "balls": [(b.position.x, b.position.y, i["tier"], i["id"]) for b, i in g.balls.items()],
+                           # 記録は小さな数値の表(numpy)にまとめる(数千個×数千コマでもメモリと時間を使いすぎないように)
+                           "balls": np.array([(b.position.x, b.position.y, i["tier"], i["id"]) for b, i in g.balls.items()],
+                                             dtype=np.float32).reshape(-1, 4),
                            "arms": [[(b.position.x, b.position.y, b.angle, sign) for b, _, sign in c["arms"]] for c in g.claws]})
         if g.result is not None:
             extra = OUTRO + SCARE_DUR if g.result == "fail" else FEVER_DUR
@@ -449,7 +453,8 @@ def render(seed):
             ctx.set_source_rgba(1, 1, 1, a)
             ctx.set_line_width(wdt)
             ctx.stroke()
-        for x, y, tier, oid in fr["balls"]:
+        for x, y, tier, oid in fr["balls"].tolist():
+            tier, oid = int(tier), int(oid)
             fast_ball(ctx, x, y, tier_col(tier, t, oid))
         keep = []
         for x, y, nt, t0 in pops:   # つぶれた瞬間の、はじける光
