@@ -217,3 +217,9 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
 - Suno 版(ユーザーが Suno の Cover で作成、media `673b51d4-f5b1-47a7-a8ab-bba37b6f9c24` → `audio/song-suno.mp3`、23.7秒、約86 BPM)
   - 歌の位置: サビ 1.22 / 6.48 / 12.06秒、行 3.70 / 9.24 / 14.70秒、18.6秒以降は後奏
   - `ninja_edit.py` に LAYOUT(区間指定)を追加 → `naruto-iyada-suno-v1.mp4`(23.7秒、最終版も更新)。ネタ区間 0〜6.4 / 6.4〜12.0 / 12.0〜23.7
+- Suno 版 v2(ユーザー指定: イントロを切って「こんなナルトは」から始める/いい感じのフォント/最後はフェードアウト):
+  - 曲の頭 1.12秒を切った(`anime/song-suno-cut.mp3`、20msフェードイン)。歌の位置は全部 -1.12秒
+  - フォント: Reggae One(Google Fonts OFL、筆の勢いがあるポップ体。「〜」も収録)
+  - 最後の1.5秒で映像と音をフェードアウト
+  - 注意: ninja_edit.py は終了時に「_」で始まるファイルを消すので、一時ファイル名に「_」を使わない
+  - → `naruto-iyada-suno-v2.mp4`(22.6秒、最終版も更新)
