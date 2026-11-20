@@ -51,13 +51,13 @@ KICK = float(os.environ.get("KICK", 180.0))       # はさまれて分かれた�
 PINCH_MARGIN = BALL_R * 0.9 + 2.0                 # 刃からこの距離までのボールは「刃にかかっている」とみなす
 SPLIT = int(os.environ.get("SPLIT", 2))           # はさまれると何個に分かれるか(はさまった数の2倍になる)
 TARGET = int(os.environ.get("TARGET", 5000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 36.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 57.0))
 OUTRO = 4.2
 
 # つかみ腕(参考動画と同じ:V字に開く → [字 → ひし形のかご → 腕どうしが重なる「T」字まで閉じきる)
 L1, L2 = float(os.environ.get("L1", 225.0)), float(os.environ.get("L2", 225.0))   # 刃の根元側と、先の曲がった部分(参考動画と同じでほぼ同じ長さ)
 ARM_W = 8.0                              # 刃の太さ(半分)
-BLADE_T = float(os.environ.get("BLADE_T", 4.0))     # 刃が1周する時間(秒)。2本の刃はハサミのように逆向きに一定の速さで回り続ける
+BLADE_T = float(os.environ.get("BLADE_T", 3.0))     # 刃が1周する時間(秒)。2本の刃はハサミのように逆向きに一定の速さで回り続ける
 TH0 = math.radians(150)                  # はじめの刃の角度(外向きに開いたV字)
 GEARS = [(CX - R, CY, 0.0, 0.0), (CX + R, CY, math.pi, 0.0)]   # (x, y, まっすぐ内向きの角度, -)。左右の役物は同じ動き
 
