@@ -479,13 +479,6 @@ def render(seed):
         prev_n = n
         text(ctx, f"{n}", W / 2 - 90, 440, 84 * bump, rgb=(1, 1, 1), sw=12)
         text(ctx, f"/ {TARGET} 個", W / 2 + 160, 440, 44, rgb=(0.85, 0.85, 0.9), sw=6)
-        # 色の進化表(いままでに出た色まで明るく)
-        for k in range(len(NAMES)):
-            x = W / 2 + (k - 3) * 92
-            col = tier_col(k, t)
-            reached = k <= best
-            draw_ball(ctx, x, 1478, col if reached else tuple(c * 0.3 for c in col), 15)
-            text(ctx, NAMES[k], x, 1516, 26, rgb=(1, 1, 1) if reached else (0.5, 0.5, 0.55), sw=5)
         left = max(0.0, TIME_LIMIT - min(t, end_t if end_t is not None else t))
         text(ctx, f"残り {left:4.1f}秒", W / 2, 518, 40, rgb=(1, 0.4, 0.4) if left < 10 else (0.95, 0.95, 0.95), sw=8)
         if over and fail:
