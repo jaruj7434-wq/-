@@ -46,7 +46,9 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 CX, CY, R = 540.0, 1000.0, 430.0          # 丸いわく
 BALL_R = float(os.environ.get("BALL_R", 6.0))
 V_START = float(os.environ.get("V_START", 260.0))                                   # はじめのボールの速さ(px/秒)
-DAMP = float(os.environ.get("DAMP", 0.995))       # 1秒あたりに残る速さ(ほとんど減らない、ふわふわ漂う)
+DAMP = float(os.environ.get("DAMP", 0.999))       # 1秒あたりに残る速さ(ほとんど減らない、軽く漂う)
+KICK = float(os.environ.get("KICK", 180.0))       # はさまれて分かれたボールが飛び出す速さ
+PINCH_MARGIN = BALL_R * 0.9 + 2.0                 # 刃からこの距離までのボールは「刃にかかっている」とみなす
 SPLIT = 4                                         # はさまれると何個に分かれるか(参考動画と同じ4個)
 TARGET = int(os.environ.get("TARGET", 3000))
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 36.0))
@@ -139,11 +141,18 @@ class Game:
                 shapes = []
                 for a_, c_ in zip(p, p[1:]):
                     s = pymunk.Segment(b, a_, c_, ARM_W)
-                    s.elasticity, s.friction = float(os.environ.get("ARM_E", 0.8)), 0.2
+                    s.elasticity, s.friction = float(os.environ.get("ARM_E", 0.5)), 0.2
                     s.collision_type = 2
                     shapes.append(s)
-                sp.add(b, *shapes)
-                arms.append((b, shapes, sign))
+                # はさみ判定用の、刃より少し太い「感じとる範囲」(ぶつからない。刃にほぼふれているボールを見つける)
+                sensors = []
+                for a_, c_ in zip(p, p[1:]):
+                    s = pymunk.Segment(b, a_, c_, ARM_W + PINCH_MARGIN)
+                    s.sensor = True
+                    s.collision_type = 4
+                    sensors.append(s)
+                sp.add(b, *shapes, *sensors)
+                arms.append((b, sensors, sign))
             self.claws.append({"gear": (gx, gy), "base": base, "ph": ph, "arms": arms, "caught": set()})
         self.balls = {}
         self.next_id = 0
@@ -158,7 +167,7 @@ class Game:
         b.position = pos
         b.velocity = vel
         s = pymunk.Circle(b, BALL_R)
-        s.elasticity, s.friction = float(os.environ.get("BALL_E", 0.8)), 0.1
+        s.elasticity, s.friction = float(os.environ.get("BALL_E", 0.95)), 0.1
         s.collision_type = 1
         self.space.add(b, s)
         self.balls[b] = {"id": self.next_id, "tier": tier, "shape": s, "born": self.t}
@@ -213,10 +222,9 @@ class Game:
             touch = []
             for b, shapes, sign in c["arms"]:
                 got = set()
-                for s_ in shapes:
+                for s_ in shapes:   # (shapes はここでは「感じとる範囲」)
                     for q in self.space.shape_query(s_):
-                        if q.shape is not None and q.shape.collision_type == 1 and q.contact_point_set.points and \
-                                q.contact_point_set.points[0].distance < 1.5:
+                        if q.shape is not None and q.shape.collision_type == 1:
                             got.add(q.shape.body)
                 touch.append(got)
             for bb in touch[0] & touch[1]:          # 閉じていく2本の腕の両方に同時にふれた = はさまれた
@@ -236,7 +244,7 @@ class Game:
             for k in range(SPLIT):
                 a = a0 + 2 * math.pi * k / SPLIT
                 off = pymunk.Vec2d(math.cos(a), math.sin(a)) * BALL_R * 1.05
-                self.add(pos + off, nt, vel + off.normalized() * 25)
+                self.add(pos + off, nt, vel * 0.5 + off.normalized() * KICK)   # 軽く、ぱっとはじけて飛び出す
             self.events.append(("crush", self.t, (pos.x, pos.y, info["tier"], nt, len(self.balls), ci)))
         if self.result is None:
             if len(self.balls) >= TARGET:
@@ -529,11 +537,27 @@ def pops3(tier):
     return out
 
 
+def pop1(tier, v):
+    """増えたボール1個ぶんの「ポン」(色が上がるほど高く、6とおりの高さ)。"""
+    t = _t(0.09)
+    f = midi_hz(74 + 3 * tier + [0, 2, 4, 7, 9, 12][v])
+    return np.sin(2 * np.pi * f * t * (1 + 0.6 * t)) * np.exp(-t * 40) * np.minimum(1, t / 0.002)
+
+
 def clank(amp):
     """腕が閉じきったときの「カシャン」(金属)。"""
     t = _t(0.25)
     y = sum(a * np.sin(2 * np.pi * f * t) * np.exp(-t * d) for f, a, d in ((410, 1, 18), (1130, 0.6, 25), (2650, 0.4, 35)))
     return amp * y
+
+
+def kyuin_one(up=1.0):
+    """「キュイン!」:低いところから一気に高く上がる音(パチンコの当たり風)。"""
+    t = _t(0.28)
+    f = up * (500 + 2900 * (1 - np.exp(-t / 0.06))) * (1 + 0.03 * np.sin(2 * np.pi * 32 * t))
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    y = np.sin(ph) + 0.35 * np.sign(np.sin(ph)) + 0.3 * np.sin(2 * ph)
+    return y * np.minimum(1, t / 0.01) * np.exp(-np.maximum(0, t - 0.16) / 0.05)
 
 
 def synth_audio(res, duration, path):
@@ -553,21 +577,25 @@ def synth_audio(res, duration, path):
     while tc <= (end_t or duration):
         add(clank(0.4), tc)
         tc += BLADE_T
-    cache = {}
+    # 増えたボール1個ごとに「ポン」(増えた数だけ鳴る。たくさん増えると「ポポポポ…」の大合唱)+ はさまれた「パキッ」
+    rng = np.random.default_rng(11)
+    pops = {}
     recent = []
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.01:
             continue
         if kind == "crush":
-            recent = [x for x in recent if t - x < 0.2]
-            if len(recent) >= 8:
-                continue
-            recent.append(t)
             nt = data[3]
-            if nt not in cache:
-                cache[nt] = pops3(nt)
-            add(crunch(0.6, len(recent) + int(t * 100), nt), t, 1 / (1 + 0.15 * len(recent)))
-            add(cache[nt], t + 0.03, 0.8 / (1 + 0.15 * len(recent)))
+            recent = [x for x in recent if t - x < 0.1]
+            if len(recent) < 6:
+                add(crunch(0.6, len(recent) + int(t * 100), nt), t, 1 / (1 + 0.2 * len(recent)))
+            recent.append(t)
+            for k in range(SPLIT):
+                v = int(rng.integers(0, 6))
+                key = (nt, v)
+                if key not in pops:
+                    pops[key] = pop1(nt, v)
+                add(pops[key], t + 0.02 + k * 0.035 + rng.uniform(0, 0.03), 0.55)
     win = int(0.6 * SR)   # 効果音の大きさを時間でならす(はじめの静かなところも聞こえるように)
     pw = np.convolve(out ** 2, np.ones(win) / win, "same")
     agc = np.clip(0.08 / np.sqrt(pw + 1e-8), 0.6, 6.0)
@@ -595,10 +623,29 @@ def synth_audio(res, duration, path):
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += 0.6 * sig[:m]
     else:
-        sig = kyuin_music(SR, FEVER_DUR)
-        i0 = int((end_t + 0.1) * SR)
-        m = min(len(sig), n_out - i0)
-        extra[i0:i0 + m] += 0.95 * sig[:m]
+        # 虹色パチンコ演出の音:キュインキュインの連打+ファンファーレ+ジャラジャラ(pachinko.py)に、
+        # 大当たりのファンファーレ連打+キュイン+チャリンチャリン(glass_spiral/jackpot_end.py)を重ね、演出のあいだずっと「キュイン!」を鳴らし続ける
+        sys.path.insert(0, os.path.join(HERE, "..", "glass_spiral"))
+        import jackpot_end as JP
+        a_ = kyuin_music(SR, FEVER_DUR)
+        b_ = JP.music(SR, 3)
+        b_ = b_.mean(axis=1) if b_.ndim == 2 else b_
+        n = int(FEVER_DUR * SR)
+        mus = np.zeros(n)
+        mus[:min(n, len(a_))] += a_[:n]
+        mus[:min(n, len(b_))] += 0.8 * b_[:n] / (np.abs(b_).max() + 1e-9)
+        tt = 0.0
+        while tt < FEVER_DUR - 0.5:   # キュイン!キュイン!を最後まで連打
+            ky = kyuin_one(1.0 + 0.15 * ((int(tt / 0.3)) % 3))
+            i = int(tt * SR)
+            m = min(len(ky), n - i)
+            mus[i:i + m] += 0.45 * ky[:m]
+            tt += 0.3
+        mus *= np.minimum(1, (FEVER_DUR - np.arange(n) / SR) / 0.6)
+        mus = np.tanh(1.6 * mus / (np.abs(mus).max() + 1e-9)) / np.tanh(1.6)
+        i0 = int((end_t + 0.05) * SR)
+        m = min(len(mus), n_out - i0)
+        extra[i0:i0 + m] += 1.05 * mus[:m]
     wet = wet + 0.95 * extra[: len(wet)]
     mag = np.abs(wet)
     wet = np.where(mag < 0.7, wet, np.sign(wet) * (0.7 + 0.2 * np.tanh((mag - 0.7) / 0.2)))
