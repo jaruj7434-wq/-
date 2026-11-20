@@ -214,3 +214,6 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - フォント: Yuji Boku(毛筆、Google Fonts OFL)、「〜」だけ Zen Antique。候補比較は Yuji Boku / Yuji Syuku / Yuji Mai / Zen Antique
   - 演出: 墨の筆跡の帯が左→右に引かれて歌詞が出る/カラオケ風に色が変わる(サビ=明るい朱、行=金)/左上に赤い判子「其ノ壱・弐・参」がドンと押される/切り替わりで手裏剣が残像付きで横切り、煙が広がる/周辺減光、フィルム粒子、コントラストと彩度を少し上げる/顔検出で歌詞の高さを決める
   - → `naruto-iyada-anime-v4.mp4`(最終版も更新)
+- Suno 版(ユーザーが Suno の Cover で作成、media `673b51d4-f5b1-47a7-a8ab-bba37b6f9c24` → `audio/song-suno.mp3`、23.7秒、約86 BPM)
+  - 歌の位置: サビ 1.22 / 6.48 / 12.06秒、行 3.70 / 9.24 / 14.70秒、18.6秒以降は後奏
+  - `ninja_edit.py` に LAYOUT(区間指定)を追加 → `naruto-iyada-suno-v1.mp4`(23.7秒、最終版も更新)。ネタ区間 0〜6.4 / 6.4〜12.0 / 12.0〜23.7

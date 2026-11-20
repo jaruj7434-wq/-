@@ -28,6 +28,10 @@ def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-sh
 T_END = dur(SONG)
 SEG = [(0.00, 5.85), (5.85, 11.45), (11.45, T_END)]
 SUNG = [((0.52, 3.11), (3.22, 5.68)), ((5.85, 8.59), (8.72, 11.16)), ((11.45, 14.05), (14.16, 16.63))]
+if os.environ.get('LAYOUT'):
+    _L = json.loads(os.environ['LAYOUT'])
+    SEG = [(a, b if b is not None else T_END) for a, b in _L['SEG']]
+    SUNG = [tuple(tuple(x) for x in p_) for p_ in _L['SUNG']]
 BITS = ['bit1-sing.mp4', 'bit2-pasta-bono.mp4', 'bit3-taxi.mp4']
 HOOK = ['こんなナルトは', 'まじでやだ〜']
 ITEMS = [['分身全員', 'ドパガキ〜'], ['ラーメン嫌いで', 'パスタ食う〜'], ['移動は走らず', 'ヘイタクシー']]
