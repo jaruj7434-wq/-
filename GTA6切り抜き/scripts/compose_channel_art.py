@@ -70,5 +70,50 @@ def main(base):
     logo.save(os.path.join(base, "logo_gta6_metal.png"))
 
 
+
+
+# --- コラージュ版(オリジナルイラストのパネル構成) ---------------------------
+def fit_cover(im, W, H):
+    s = max(W / im.width, H / im.height)
+    im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
+    x, y = (im.width - W) // 2, (im.height - H) // 2
+    return im.crop((x, y, x + W, y + H))
+
+
+def collage_header(bg_path, logo, out_path, cx):
+    """cx: 中央の空きパネルの中心 x(2560幅基準)"""
+    W, H = 2560, 1440
+    bg = fit_cover(Image.open(bg_path).convert("RGB"), W, H).filter(ImageFilter.UnsharpMask(2, 60, 2)).convert("RGBA")
+    lh = 170
+    lg = logo.resize((round(logo.width * lh / logo.height), lh), Image.LANCZOS)
+    bg.alpha_composite(lg, (round(cx - lg.width / 2), 520))
+    d = ImageDraw.Draw(bg)
+    text(d, (cx, 670), "バイス切り抜き部", 130, "white", (224, 19, 122), 11)
+    text(d, (cx, 855), "GTA6の神シーン&攻略小ネタを毎日お届け", 46, (255, 225, 77), "black", 6)
+    bg.convert("RGB").save(out_path, optimize=True)
+
+
+def collage_icon(src, logo, out_path, logo_w, logo_cy, sub=None, sub_y=None, sub_size=70):
+    S = 800
+    im = fit_cover(Image.open(src).convert("RGB"), S, S).convert("RGBA")
+    lg = logo.resize((logo_w, round(logo.height * logo_w / logo.width)), Image.LANCZOS)
+    im.alpha_composite(lg, ((S - lg.width) // 2, round(logo_cy - lg.height / 2)))
+    if sub:
+        d = ImageDraw.Draw(im)
+        text(d, (S / 2, sub_y), sub, sub_size, "white", (224, 19, 122), 8)
+    im.convert("RGB").save(out_path, optimize=True)
+
+
+def main_collage(base):
+    raw = os.path.join(base, "raw")
+    logo = key_black(Image.open(os.path.join(raw, "logo_gta6_a.png")))
+    collage_header(os.path.join(raw, "collage_header_a.png"), logo, os.path.join(base, "header_c_collage.png"), 1250)
+    collage_header(os.path.join(raw, "collage_header_b.png"), logo, os.path.join(base, "header_d_collage.png"), 1350)
+    collage_icon(os.path.join(raw, "collage_icon_a.png"), logo, os.path.join(base, "icon_e_collage.png"),
+                 300, 375, "切り抜き部", 412, 46)
+    collage_icon(os.path.join(raw, "collage_icon_b.png"), logo, os.path.join(base, "icon_f_bike.png"),
+                 520, 630)
+
+
 if __name__ == "__main__":
-    main(os.path.abspath(sys.argv[1]))
+    (main_collage if len(sys.argv) > 2 and sys.argv[2] == "collage" else main)(os.path.abspath(sys.argv[1]))
