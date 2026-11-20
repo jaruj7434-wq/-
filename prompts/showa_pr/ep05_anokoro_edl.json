@@ -1,0 +1,151 @@
+{
+ "fps": 24,
+ "look": {
+  "mode": "color",
+  "tv": true,
+  "saturation": 0.9,
+  "lift": [
+   0.05,
+   0.035,
+   0.05
+  ],
+  "gain": [
+   1.0,
+   0.94,
+   0.84
+  ],
+  "gamma": [
+   0.95,
+   1.0,
+   1.05
+  ],
+  "grain": 0.035,
+  "flicker": 0.02,
+  "weave": 0.4,
+  "dust_per_frame": 0.2,
+  "hair_prob": 0,
+  "scratch_prob": 0,
+  "halation": 0.22,
+  "vignette": 0.3,
+  "glitch_rate": 0.045,
+  "seed": 1971
+ },
+ "vertical": {
+  "top_title": "昭和のまぼろしCM"
+ },
+ "base_dir": "../../assets/source/showa_pr/ep05",
+ "out_dir": "../../../output/showa_pr/ep05_anokoro",
+ "_memo": "第5話 若返り電子レンジ あの頃チン(Wan 3.0 28秒+商品カット2秒+社名カード)",
+ "cuts": [
+  {
+   "src": "wan/take1.mp4",
+   "in": 0,
+   "dur": 28.0,
+   "audio": true
+  },
+  {
+   "src": "wan/take1.mp4",
+   "in": 8.0,
+   "dur": 2.0
+  },
+  {
+   "dur": 2.4,
+   "card": {
+    "bg": [
+     30,
+     90,
+     110
+    ],
+    "emblem": {
+     "y": 150,
+     "r": 40
+    },
+    "lines": [
+     {
+      "text": "若返り電子レンジ",
+      "y": 215,
+      "size": 34,
+      "font": "antique",
+      "spacing": 4
+     },
+     {
+      "text": "あの頃チン",
+      "y": 262,
+      "size": 60,
+      "font": "tokumin",
+      "spacing": 8,
+      "rule": true
+     },
+     {
+      "text": "あの頃電機",
+      "y": 372,
+      "size": 34,
+      "font": "tokumin",
+      "spacing": 6
+     },
+     {
+      "text": "架空の会社・製品です/AIで制作しています",
+      "y": 460,
+      "size": 18,
+      "font": "antique",
+      "spacing": 2
+     }
+    ]
+   }
+  }
+ ],
+ "telops": [
+  {
+   "text": "チン!で あの頃に",
+   "start": 7.3,
+   "end": 11.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 42
+  },
+  {
+   "text": "※チンのしすぎに ご注意ください",
+   "start": 21.5,
+   "end": 25.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 30
+  },
+  {
+   "text": "若返り電子レンジ あの頃チン\n※チンのしすぎに ご注意ください",
+   "start": 28.1,
+   "end": 30.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 30,
+   "pos": "upper"
+  }
+ ],
+ "subtitles": [],
+ "audio": {
+  "projector_gain": 0.35,
+  "tracks": [
+   {
+    "src": "../ep01/jingle_tail_clean.wav",
+    "kind": "music",
+    "start": 28.0,
+    "gain": 0.9
+   }
+  ]
+ }
+}
