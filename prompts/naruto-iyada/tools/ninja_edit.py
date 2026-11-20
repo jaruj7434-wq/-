@@ -170,6 +170,10 @@ BANDS = {}
 for k in range(3):
     BANDS[(k, 'h')] = ink_band(1040, 360); BANDS[(k, 'i')] = ink_band(1040, 380)
 HANKO = [hanko(c) for c in KANJI]
+# 最後の呼びかけテロップ(後奏の間)
+END_AT = float(os.environ.get('END_AT', SUNG[2][1][1] + 0.35))
+END_LINES = [(text_layers('あなたが思う', 104, WHITE), WHITE), (text_layers('嫌なナルトは？', 118, SHU), SHU), (text_layers('コメントで教えてね！', 92, GOLD, 9), GOLD)]
+END_BAND = ink_band(1060, 560)
 SHURI = shuriken()
 
 def ease(u): u = min(max(u, 0), 1); return 1 - (1 - u) ** 3
@@ -181,11 +185,32 @@ for fi in range(N):
     k = 0 if t < SEG[1][0] else (1 if t < SEG[2][0] else 2)
     s0 = SEG[k][0]; (h0, h1), (i0, i1) = SUNG[k]; hy, iy = POS[k]
     cv = VIG.copy()
+    ending = t >= END_AT
+    if ending:
+        cy0 = POS[2][0] + 40
+        u = ease((t - END_AT) / 0.3); w = int(END_BAND.size[0] * u)
+        if w > 2: cv.alpha_composite(END_BAND.crop((0, 0, w, END_BAND.size[1])), (W // 2 - END_BAND.size[0] // 2, int(cy0 - END_BAND.size[1] / 2)))
+        for j, ((base, hi, sh, pad, tw), col) in enumerate(END_LINES):
+            ap = END_AT + 0.15 + j * 0.25
+            if t < ap: continue
+            uu = ease((t - ap) / 0.25); sc = 0.7 + 0.3 * uu
+            lay = (base if col == WHITE else hi).copy()
+            img = lay.resize((max(1, int(lay.size[0] * sc)), max(1, int(lay.size[1] * sc))), Image.LANCZOS)
+            img.putalpha(img.split()[3].point(lambda v, uu=uu: int(v * uu)))
+            shd = sh.resize(img.size, Image.LANCZOS)
+            cy = cy0 - 150 + j * 140
+            pos = (int(W / 2 - img.size[0] / 2), int(cy - img.size[1] / 2))
+            cv.alpha_composite(shd, pos); cv.alpha_composite(img, pos)
+        if t >= END_AT + 0.9:  # はねる下向き矢印
+            by = int(cy0 + 230 + 14 * abs(math.sin((t - END_AT) * 6)))
+            d = ImageDraw.Draw(cv)
+            d.polygon([(W / 2 - 42, by), (W / 2 + 42, by), (W / 2, by + 50)], fill=GOLD + (255,), outline=INK + (255,), width=6)
     # 墨の帯(左から引かれる)
     for kind, cy, start in (('h', hy, s0 + 0.05), ('i', hy if SAME_POS else iy, i0 - 0.12)):
         u = ease((t - start) / 0.28)
         if u <= 0: continue
         if SAME_POS and kind == 'h' and t >= i0 - 0.12: continue
+        if ending: continue
         b = BANDS[(k, kind)]; w = int(b.size[0] * u)
         if w > 2: cv.alpha_composite(b.crop((0, 0, w, b.size[1])), (W // 2 - b.size[0] // 2, int(cy - b.size[1] / 2)))
     # 歌詞(カラオケ)
@@ -193,7 +218,7 @@ for fi in range(N):
         if kk != k: continue
         a0, a1 = (h0, h1) if kind == 'h' else (i0, i1)
         appear = (s0 + 0.15 if kind == 'h' else i0 - 0.05) + j * 0.06
-        if t < appear: continue
+        if t < appear or ending: continue
         if SAME_POS and kind == 'h' and t >= i0 - 0.12: continue  # ネタの行が出たらサビは消す
         prog = (t - a0) / (a1 - a0) * 2 - j
         x0, y0 = int(W / 2 - base.size[0] / 2), int(cy - base.size[1] / 2)

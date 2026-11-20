@@ -224,3 +224,4 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - 注意: ninja_edit.py は終了時に「_」で始まるファイルを消すので、一時ファイル名に「_」を使わない
   - → `naruto-iyada-suno-v2.mp4`(22.6秒、最終版も更新)
 - Suno 版 v3(ユーザー指定: ネタの行をサビと同じ位置に出し、ネタの行が出たらサビは消す): `ninja_edit.py` に SAME_POS(既定オン)を追加 → `naruto-iyada-suno-v3.mp4`(最終版も更新)
+- Suno 版 v4(ユーザー指定: 最後に「あなたが思う嫌なナルトは？コメントしてね」的なテロップ): 後奏(17.6秒〜)で歌詞テロップを消し、墨の帯の上に「あなたが思う / 嫌なナルトは？ / コメントで教えてね！」を順にポンと出し、下ではねる▼を表示(END_AT で開始時刻を変更可)→ `naruto-iyada-suno-v4.mp4`(最終版も更新)
