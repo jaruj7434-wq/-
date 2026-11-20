@@ -24,33 +24,87 @@ def run(cmd):
     return subprocess.run(cmd, check=True, capture_output=True, text=True)
 
 
+class Envelope:
+    """元動画の音量エンベロープ(10ms 単位)。カット点を無音の瞬間に寄せるのに使う。"""
+
+    def __init__(self, src, sr=16000):
+        import numpy as np
+        raw = subprocess.run(["ffmpeg", "-v", "error", "-i", src, "-ac", "1", "-ar", str(sr), "-f", "s16le", "-"],
+                             check=True, capture_output=True).stdout
+        x = np.frombuffer(raw, np.int16).astype(np.float32) / 32768
+        hop = sr // 100
+        n = len(x) // hop
+        rms = np.sqrt((x[:n * hop].reshape(n, hop) ** 2).mean(axis=1)) + 1e-6
+        self.db = 20 * np.log10(rms)
+        self.np = np
+
+    def _quiet(self, t0, t1, need=0.12):
+        """[t0,t1] 内で need 秒以上続く静かな区間の候補(中心時刻)を返す。"""
+        np = self.np
+        i0, i1 = max(0, int(t0 * 100)), min(len(self.db), int(t1 * 100))
+        seg = self.db[i0:i1]
+        if len(seg) == 0:
+            return []
+        thr = max(np.percentile(self.db[max(0, i0 - 300):i1 + 300], 20) + 6, -50)
+        q = seg < thr
+        k = int(need * 100)
+        out, run_start = [], None
+        for j, v in enumerate(list(q) + [False]):
+            if v and run_start is None:
+                run_start = j
+            elif not v and run_start is not None:
+                if j - run_start >= k:
+                    out.append((i0 + run_start, i0 + j))
+                run_start = None
+        return out
+
+    def snap_start(self, t, back=0.6, fwd=0.15):
+        c = self._quiet(t - back, t + fwd)
+        if not c:
+            return max(0.0, t - 0.1)
+        s, e = c[-1]  # 開始点より前で一番近い無音
+        return max(s / 100, e / 100 - 0.08)  # 語頭の直前(少し余白を残す)
+
+    def snap_end(self, t, back=0.1, fwd=1.0):
+        c = self._quiet(t - back, t + fwd, need=0.3)  # 「ください」の「さい」など弱い語尾で切らない
+        if not c:
+            return t + 0.3
+        s, e = c[0]  # 終了点より後で最初の無音
+        return min(e / 100, s / 100 + 0.25)  # 語尾の直後(余韻を残す)
+
+
 def build(cfg, src, outdir):
     tmp = tempfile.mkdtemp()
     sw, sh = map(int, run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
                             "stream=width,height", "-of", "csv=p=0", src]).stdout.strip().split(","))
     ch = cfg.get("crop_h", sh)  # 下部の元テロップを除くための高さ
+    env = Envelope(src) if cfg.get("snap", True) else None
     parts, times, t = [], [], 0.0
     for i, s in enumerate(cfg["segments"]):
-        a, b = s["v"]
-        d = b - a
-        p = os.path.join(tmp, f"seg{i:02d}.mp4")
-        cmd = ["ffmpeg", "-v", "error", "-y", "-ss", str(a), "-t", str(d), "-i", src]
-        amap = "0:a"
-        if "a" in s:
-            cmd += ["-ss", str(s["a"]), "-t", str(d), "-i", src]
-            amap = "1:a"
-        cmd += ["-map", "0:v", "-map", amap, "-vf", "fps=30,format=yuv420p",
-                "-af", f"afade=t=in:d=0.04,afade=t=out:st={d-0.06:.3f}:d=0.06,aresample=48000",
-                "-c:v", "libx264", "-crf", "16", "-preset", "fast", "-c:a", "aac", "-b:a", "192k", p]
+        v0, v1 = s["v"]
+        a0 = s.get("a", v0)
+        a1 = a0 + (v1 - v0)
+        if env:  # セリフの語頭・語尾を切らないよう、無音の瞬間に合わせて区間を調整
+            n0, n1 = env.snap_start(a0), env.snap_end(a1)
+            v0, v1 = v0 + (n0 - a0), v1 + (n1 - a1)
+            a0, a1 = n0, n1
+        d = round((v1 - v0) * 30) / 30  # フレーム境界に揃える(映像と音声の長さを一致させる)
+        p = os.path.join(tmp, f"seg{i:02d}.mkv")
+        cmd = ["ffmpeg", "-v", "error", "-y", "-ss", f"{v0:.3f}", "-t", f"{d:.4f}", "-i", src,
+               "-ss", f"{a0:.3f}", "-t", f"{d:.4f}", "-i", src,
+               "-map", "0:v", "-map", "1:a", "-vf", "fps=30,format=yuv420p",
+               "-af", f"aresample=48000,apad,atrim=0:{d:.4f},afade=t=in:d=0.03,afade=t=out:st={d-0.05:.4f}:d=0.05",
+               "-c:v", "libx264", "-crf", "16", "-preset", "fast", "-c:a", "pcm_s16le", p]
         run(cmd)
         parts.append(p)
         times.append((t, t + d, s.get("x", 0.5)))
+        print(f"seg{i:02d}: v {v0:.2f}-{v0+d:.2f}  a {a0:.2f}  ({d:.2f}s)")
         t += d
     total = t
     lst = os.path.join(tmp, "list.txt")
     with open(lst, "w") as f:
         f.writelines(f"file '{p}'\n" for p in parts)
-    master = os.path.join(tmp, "master.mp4")
+    master = os.path.join(tmp, "master.mkv")  # 音声は PCM のままつなぐ(AAC のつなぎ目の隙間を防ぐ)
     run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", master])
 
     # ラウドネス -14 LUFS(コンプ → 2パス loudnorm)
