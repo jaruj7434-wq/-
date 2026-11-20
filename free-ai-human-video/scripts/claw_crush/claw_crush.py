@@ -192,7 +192,7 @@ class Game:
                 b.velocity = -d.normalized() * 60
         # はさまれた瞬間:閉じていく2本の腕のあいだで、すき間がボールより細くなった(=両側の腕にはさまれた)ボール
         pinched = []
-        for ci, c in enumerate(self.claws):
+        for ci, c in enumerate(self.claws if self.result is None else []):   # 成功・失敗が決まったあとは、もう増えない
             w0, w1 = inner(self.t - dt), inner(self.t)
             gx, gy = c["gear"]
             if w0 > 0 >= w1 or (w0 > 0 and w1 > w0):   # 刃がT字に重なった瞬間:ひし形に囲まれていたボールは、ここで必ずはさまれる
