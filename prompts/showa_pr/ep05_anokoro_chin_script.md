@@ -34,3 +34,4 @@
 ## 生成の記録
 - 2026-11-20 Wan 3.0(28秒、480p、4:3、音声入り)28クレジット:7b250ed0-a41c-4606-8793-85e486fe4956
 - 完成 → wan/take1.mp4。仕上げ:prompts/showa_pr/ep05_anokoro_edl.json → assets/output/showa_pr/ep05_anokoro/(本編28秒+商品カット2秒〈元の8–10秒〉+社名カード)
+- 2026-11-20 最後のセリフを「チンしすぎると、元には戻りません」に変更+人のいない商品カット:Wan 3.0 8秒(本編を video_references に渡す)8クレジット:5c8bd4b2-18f0-482d-800a-16be54d6a6d3
