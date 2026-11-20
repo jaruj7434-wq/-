@@ -35,18 +35,25 @@
  },
  "base_dir": "../../assets/source/showa_pr/ep05",
  "out_dir": "../../../output/showa_pr/ep05_anokoro",
- "_memo": "第5話 若返り電子レンジ あの頃チン(Wan 3.0 28秒+商品カット2秒+社名カード)",
+ "_memo": "第5話 若返り電子レンジ あの頃チン:本編 take1 0–25秒+差し替え ending(セリフ3秒+人のいない商品カット3.6秒)+社名カード",
  "cuts": [
   {
    "src": "wan/take1.mp4",
    "in": 0,
-   "dur": 28.0,
+   "dur": 25.0,
    "audio": true
   },
   {
-   "src": "wan/take1.mp4",
-   "in": 8.0,
-   "dur": 2.0
+   "src": "wan/ending.mp4",
+   "in": 0.0,
+   "dur": 3.0,
+   "audio": true
+  },
+  {
+   "src": "wan/ending.mp4",
+   "in": 4.4,
+   "dur": 3.6,
+   "audio": true
   },
   {
    "dur": 2.4,
@@ -109,7 +116,7 @@
    "size": 42
   },
   {
-   "text": "※チンのしすぎに ご注意ください",
+   "text": "(注)チンのしすぎに ご注意ください",
    "start": 21.5,
    "end": 25.0,
    "font": "tokumin",
@@ -122,18 +129,22 @@
    "size": 30
   },
   {
-   "text": "若返り電子レンジ あの頃チン\n※チンのしすぎに ご注意ください",
-   "start": 28.1,
-   "end": 30.0,
+   "text": "若返り電子レンジ あの頃チン\n(注)チンのしすぎに ご注意ください",
+   "start": 28.2,
+   "end": 31.6,
    "font": "tokumin",
-   "stroke": "soft",
+   "stroke": false,
    "color": [
-    246,
-    243,
-    236
+    28,
+    26,
+    24
    ],
-   "size": 30,
-   "pos": "upper"
+   "size": 28,
+   "box": true,
+   "xy": [
+    0.5,
+    0.12
+   ]
   }
  ],
  "subtitles": [],
@@ -143,7 +154,7 @@
    {
     "src": "../ep01/jingle_tail_clean.wav",
     "kind": "music",
-    "start": 28.0,
+    "start": 30.2,
     "gain": 0.9
    }
   ]
