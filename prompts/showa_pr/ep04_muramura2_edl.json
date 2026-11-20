@@ -35,13 +35,18 @@
  },
  "base_dir": "../../assets/source/showa_pr/ep04",
  "out_dir": "../../../output/showa_pr/ep04_muramura2",
- "_memo": "第4話 ムラムラ番 改訂版(電話でブチギレ・ドレスのお姉さん・玄関で色っぽく出迎え)",
+ "_memo": "第4話 ムラムラ番 改訂版(電話でブチギレ・ドレスのお姉さん・玄関で色っぽく出迎え)/最後(社名カードの前)に商品カット2秒を追加",
  "cuts": [
   {
    "src": "wan/take2.mp4",
    "in": 0,
    "dur": 28.0,
    "audio": true
+  },
+  {
+   "src": "wan/take2.mp4",
+   "in": 6.0,
+   "dur": 2.0
   },
   {
    "dur": 2.4,
@@ -128,6 +133,20 @@
     236
    ],
    "size": 30
+  },
+  {
+   "text": "浮気防止 あそこ温度計 ムラムラ番\n好評発売中",
+   "start": 28.1,
+   "end": 30.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 32,
+   "pos": "upper"
   }
  ],
  "subtitles": [],
