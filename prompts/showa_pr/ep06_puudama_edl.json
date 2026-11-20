@@ -1,0 +1,150 @@
+{
+ "fps": 24,
+ "look": {
+  "mode": "color",
+  "tv": true,
+  "saturation": 0.9,
+  "lift": [
+   0.05,
+   0.035,
+   0.05
+  ],
+  "gain": [
+   1.0,
+   0.94,
+   0.84
+  ],
+  "gamma": [
+   0.95,
+   1.0,
+   1.05
+  ],
+  "grain": 0.035,
+  "flicker": 0.02,
+  "weave": 0.4,
+  "dust_per_frame": 0.2,
+  "hair_prob": 0,
+  "scratch_prob": 0,
+  "halation": 0.22,
+  "vignette": 0.3,
+  "glitch_rate": 0.045,
+  "seed": 1972
+ },
+ "vertical": {
+  "top_title": "昭和のまぼろしCM"
+ },
+ "base_dir": "../../assets/source/showa_pr/ep06",
+ "out_dir": "../../../output/showa_pr/ep06_puudama",
+ "_memo": "第6話 仕返しボール ぷぅ玉(Wan 3.0 28秒、最後の2秒が商品カット+社名カード)",
+ "cuts": [
+  {
+   "src": "wan/take1.mp4",
+   "in": 0,
+   "dur": 28.0,
+   "audio": true
+  },
+  {
+   "dur": 2.4,
+   "card": {
+    "bg": [
+     150,
+     110,
+     30
+    ],
+    "emblem": {
+     "y": 150,
+     "r": 40
+    },
+    "lines": [
+     {
+      "text": "仕返しボール",
+      "y": 215,
+      "size": 34,
+      "font": "antique",
+      "spacing": 4
+     },
+     {
+      "text": "ぷぅ玉",
+      "y": 262,
+      "size": 64,
+      "font": "tokumin",
+      "spacing": 8,
+      "rule": true
+     },
+     {
+      "text": "へっぴりゴム工業",
+      "y": 372,
+      "size": 34,
+      "font": "tokumin",
+      "spacing": 6
+     },
+     {
+      "text": "架空の会社・製品です/AIで制作しています",
+      "y": 460,
+      "size": 18,
+      "font": "antique",
+      "spacing": 2
+     }
+    ]
+   }
+  }
+ ],
+ "telops": [
+  {
+   "text": "ムカつく上司に お困りですか",
+   "start": 3.2,
+   "end": 6.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 36
+  },
+  {
+   "text": "ためて 投げるだけ",
+   "start": 6.5,
+   "end": 11.0,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 42
+  },
+  {
+   "text": "仕返しボール ぷぅ玉\n(注)人に向けて投げないでください",
+   "start": 26.1,
+   "end": 28.0,
+   "font": "tokumin",
+   "color": [
+    28,
+    26,
+    24
+   ],
+   "stroke": false,
+   "box": true,
+   "size": 28,
+   "xy": [
+    0.5,
+    0.12
+   ]
+  }
+ ],
+ "subtitles": [],
+ "audio": {
+  "projector_gain": 0.35,
+  "tracks": [
+   {
+    "src": "../ep01/jingle_tail_clean.wav",
+    "kind": "music",
+    "start": 28.0,
+    "gain": 0.9
+   }
+  ]
+ }
+}

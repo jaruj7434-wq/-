@@ -30,3 +30,4 @@
 
 ## 生成の記録
 - 2026-11-20 Wan 3.0(28秒、480p、4:3、音声入り、最後の2秒は人のいない商品カット)28クレジット:18ae1b19-d4d9-4c1b-a377-3113eaadbedc
+- 完成 → wan/take1.mp4。仕上げ:prompts/showa_pr/ep06_puudama_edl.json → assets/output/showa_pr/ep06_puudama/(28秒+社名カード)
