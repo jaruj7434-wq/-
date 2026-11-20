@@ -32,7 +32,7 @@ LONG = [
          lines=[[("一度も着ない服", 0)], [("平均", 0), ("25枚", 1)]], badge="手放した服のゆくえ"),
 ]
 SHORT = [
-    dict(name="ep01_short_cover", ep="#1", bg="ep01/3d/h10_vending/still_0062.png",
+    dict(name="ep01_short_cover", ep="#1", bg="ep01/3d/h10_vending/still_0024.png",
          lines=[[("1円玉が", 0)], [("自販機で", 0)], [("使えない", 1)], [("理由", 0)]]),
     dict(name="ep02_short_cover", ep="#2", bg="ep02/3d/k03_train_seat/still_0062.png",
          lines=[[("なくした傘", 0)], [("2週間後", 1)], [("どこへ？", 0)]]),
