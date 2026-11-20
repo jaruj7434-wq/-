@@ -138,10 +138,14 @@ def build(cfg, src, outdir):
     hook = [tf(f"hook{j}", l) for j, l in enumerate(cfg["hook"])]
     outro = [tf(f"outro{j}", l) for j, l in enumerate(cfg["outro"])]
     credit = tf("credit", cfg["credit"])
+    def em(text):  # 文字幅の目安(全角=1, 半角=0.55)
+        return sum(0.55 if ord(ch) < 0x2E80 else 1.0 for ch in text) or 1
+
     labels = []
     for i, s in enumerate(cfg["segments"]):
         if s.get("l1") or s.get("l2"):
-            labels.append((times[i][0], times[i][1], tf(f"l1_{i}", s.get("l1", "")), tf(f"l2_{i}", s.get("l2", ""))))
+            labels.append((times[i][0], times[i][1], tf(f"l1_{i}", s.get("l1", "")), tf(f"l2_{i}", s.get("l2", "")),
+                           em(s.get("l2", ""))))
     hook_en = f"between(t,0.1,{times[0][1]:.3f})"
     outro_en = f"between(t,{total - cfg.get('outro_sec', 4):.3f},{total})"
     pink = "0xE0137A"
@@ -158,10 +162,10 @@ def build(cfg, src, outdir):
         o.append(dt(title[2], "(w-tw)/2", 395, 60, "white", 8))
     o.append(dt(hook[0], "(w-tw)/2", 1415, 92, "white", 10, hook_en, F_TITLE))
     o.append(dt(hook[1], "(w-tw)/2", 1540, 110, "yellow", 12, hook_en, F_TITLE, pink))
-    for s0, s1, f1, f2 in labels:
+    for s0, s1, f1, f2, w2 in labels:
         en = f"between(t,{s0:.3f},{s1:.3f})"
         o.append(dt(f1, "(w-tw)/2", 1410, 64, "yellow", 8, en, F_TITLE))
-        o.append(dt(f2, "(w-tw)/2", 1505, 80, "white", 10, en))
+        o.append(dt(f2, "(w-tw)/2", 1505, min(80, int(960 / w2)), "white", 10, en))
     o.append(dt(outro[0], "(w-tw)/2", 1660, 58, "white", 8, outro_en))
     o.append(dt(outro[1], "(w-tw)/2", 1740, 58, "yellow", 8, outro_en))
     o.append(dt(credit, "(w-tw)/2", 1852, 28, "white", 4))
@@ -179,10 +183,10 @@ def build(cfg, src, outdir):
     h.append(dt(title[1], 40, 130, 56, "white", 7, font=F_TITLE, bcolor=pink))
     h.append(dt(hook[0], "(w-tw)/2", 800, 80, "white", 9, hook_en, F_TITLE))
     h.append(dt(hook[1], "(w-tw)/2", 905, 100, "yellow", 10, hook_en, F_TITLE, pink))
-    for s0, s1, f1, f2 in labels:
+    for s0, s1, f1, f2, w2 in labels:
         en = f"between(t,{s0:.3f},{s1:.3f})"
         h.append(dt(f1, "(w-tw)/2", 830, 56, "yellow", 7, en, F_TITLE))
-        h.append(dt(f2, "(w-tw)/2", 915, 76, "white", 9, en))
+        h.append(dt(f2, "(w-tw)/2", 915, min(76, int(1500 / w2)), "white", 9, en))
     h.append(dt(outro[0], "w-tw-50", 860, 50, "white", 7, outro_en))
     h.append(dt(outro[1], "w-tw-50", 930, 50, "yellow", 7, outro_en))
     h.append(dt(credit, "w-tw-30", 30, 26, "white", 4))
