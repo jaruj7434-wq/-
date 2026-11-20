@@ -4,6 +4,8 @@
 - ハンドル: @vice_kirinuki(取得できない場合は @vice_kirinukibu / @vice_clips_jp)
 - アイコン: assets_channel/icon_a.png(ハサミ+フィルム)/ icon_b.png(車+夕日バッジ) 800x800
 - ヘッダー: assets_channel/header_a.png(夕暮れの海岸)/ header_b.png(夜のカーチェイス) 2560x1440
+- ロゴ入り版: header_a_logo.png / header_b_logo.png(メタリック GTA6 文字入り)、icon_c_logo.png(VICE KIRINUKI ロゴ)、icon_d_badge.png(VICE KIRINUKI CLIPS バッジ)、logo_gta6_metal.png(透過ロゴ単体)
+  - 公式ロゴ・その類似デザインは不使用(オリジナル書体のメタリック文字)。合成は scripts/compose_channel_art.py
 - 画像は Higgsfield gpt_image_2_6 で文字なし生成(計4枚・約1クレジット)→ 文字は ffmpeg で合成
 
 ## YouTube チャンネル説明
