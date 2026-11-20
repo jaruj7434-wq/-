@@ -49,7 +49,7 @@ V_START = 110.0                                   # はじめのボールの速�
 DAMP = float(os.environ.get("DAMP", 0.995))       # 1秒あたりに残る速さ(ほとんど減らない、ふわふわ漂う)
 SPLIT = 4                                         # はさまれると何個に分かれるか(参考動画と同じ4個)
 TARGET = int(os.environ.get("TARGET", 3000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 40.5))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 41.1))
 OUTRO = 4.2
 
 # つかみ腕(参考動画と同じ:V字に開く → [字 → ひし形のかご → 腕どうしが重なる「T」字まで閉じきる)
