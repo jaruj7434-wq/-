@@ -50,8 +50,8 @@ DAMP = float(os.environ.get("DAMP", 0.999))       # 1秒あたりに残る速さ
 KICK = float(os.environ.get("KICK", 180.0))       # はさまれて分かれたボールが飛び出す速さ
 PINCH_MARGIN = BALL_R * 0.9 + 2.0                 # 刃からこの距離までのボールは「刃にかかっている」とみなす
 SPLIT = int(os.environ.get("SPLIT", 2))           # はさまれると何個に分かれるか(はさまった数の2倍になる)
-TARGET = int(os.environ.get("TARGET", 5000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 57.0))
+TARGET = int(os.environ.get("TARGET", 3000))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 51.0))
 OUTRO = 4.2
 
 # つかみ腕(参考動画と同じ:V字に開く → [字 → ひし形のかご → 腕どうしが重なる「T」字まで閉じきる)
