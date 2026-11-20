@@ -227,6 +227,7 @@ class Game:
                     u, v = dx * cph - dy * sph, dx * sph + dy * cph
                     if _in_cage(u, v):
                         pinched.append((bb, ci))
+        pinched.sort(key=lambda x: self.balls[x[0]]["id"] if x[0] in self.balls else -1)   # 毎回同じ順番で処理する(同じシードなら必ず同じ結果)
         for bb, ci in pinched:
             if bb not in self.balls:
                 continue
