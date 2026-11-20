@@ -20,6 +20,7 @@ NINJA = os.environ.get('NINJA_FONT', 'YujiBoku-Regular.ttf')  # github.com/googl
 FALLBACK_FONT = os.environ.get('FALLBACK_FONT', 'ZenAntique-Regular.ttf')  # ofl/zenantique(「〜」用)
 GOTH = '/usr/share/fonts/opentype/noto/NotoSansCJK-Black.ttc'
 YUNET = os.environ.get('YUNET', 'yunet.onnx')
+SAME_POS = os.environ.get('SAME_POS', '1') == '1'  # ネタの行をサビと同じ位置に出し、サビは消す
 rng = np.random.default_rng(7)
 
 def ff(*a): subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', *a], check=True)
@@ -164,7 +165,7 @@ LINES = []  # (k, kind, j, layers)
 for k in range(3):
     hy, iy = POS[k]
     for j, t in enumerate(HOOK): LINES.append((k, 'h', j, text_layers(t, 112, SHU), hy - 66 + j * 132))
-    for j, t in enumerate(ITEMS[k]): LINES.append((k, 'i', j, text_layers(t, 124, GOLD, 11), iy - 72 + j * 146))
+    for j, t in enumerate(ITEMS[k]): LINES.append((k, 'i', j, text_layers(t, 124, GOLD, 11), (hy - 72 + j * 146) if SAME_POS else (iy - 72 + j * 146)))
 BANDS = {}
 for k in range(3):
     BANDS[(k, 'h')] = ink_band(1040, 360); BANDS[(k, 'i')] = ink_band(1040, 380)
@@ -181,9 +182,10 @@ for fi in range(N):
     s0 = SEG[k][0]; (h0, h1), (i0, i1) = SUNG[k]; hy, iy = POS[k]
     cv = VIG.copy()
     # 墨の帯(左から引かれる)
-    for kind, cy, start in (('h', hy, s0 + 0.05), ('i', iy, i0 - 0.12)):
+    for kind, cy, start in (('h', hy, s0 + 0.05), ('i', hy if SAME_POS else iy, i0 - 0.12)):
         u = ease((t - start) / 0.28)
         if u <= 0: continue
+        if SAME_POS and kind == 'h' and t >= i0 - 0.12: continue
         b = BANDS[(k, kind)]; w = int(b.size[0] * u)
         if w > 2: cv.alpha_composite(b.crop((0, 0, w, b.size[1])), (W // 2 - b.size[0] // 2, int(cy - b.size[1] / 2)))
     # 歌詞(カラオケ)
@@ -192,6 +194,7 @@ for fi in range(N):
         a0, a1 = (h0, h1) if kind == 'h' else (i0, i1)
         appear = (s0 + 0.15 if kind == 'h' else i0 - 0.05) + j * 0.06
         if t < appear: continue
+        if SAME_POS and kind == 'h' and t >= i0 - 0.12: continue  # ネタの行が出たらサビは消す
         prog = (t - a0) / (a1 - a0) * 2 - j
         x0, y0 = int(W / 2 - base.size[0] / 2), int(cy - base.size[1] / 2)
         u = ease((t - appear) / 0.22); dy = int((1 - u) * 26)

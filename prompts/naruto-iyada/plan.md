@@ -223,3 +223,4 @@ Photorealistic full-body photo, 9:16, of the young Japanese man in the reference
   - 最後の1.5秒で映像と音をフェードアウト
   - 注意: ninja_edit.py は終了時に「_」で始まるファイルを消すので、一時ファイル名に「_」を使わない
   - → `naruto-iyada-suno-v2.mp4`(22.6秒、最終版も更新)
+- Suno 版 v3(ユーザー指定: ネタの行をサビと同じ位置に出し、ネタの行が出たらサビは消す): `ninja_edit.py` に SAME_POS(既定オン)を追加 → `naruto-iyada-suno-v3.mp4`(最終版も更新)
