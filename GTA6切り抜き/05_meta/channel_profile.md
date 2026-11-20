@@ -1,6 +1,6 @@
 # チャンネル情報
 
-- チャンネル名: バイス切り抜き部|GTA6
+- チャンネル名: バイス切り抜き|GTA6(2026-11-20 「部」を外して変更)
 - ハンドル: @vice_kirinuki(取得できない場合は @vice_kirinukibu / @vice_clips_jp)
 - アイコン: assets_channel/icon_a.png(ハサミ+フィルム)/ icon_b.png(車+夕日バッジ) 800x800
 - ヘッダー: assets_channel/header_a.png(夕暮れの海岸)/ header_b.png(夜のカーチェイス) 2560x1440
@@ -28,3 +28,9 @@ GTA6の神シーン&攻略小ネタを毎日切り抜き🌴🚓
 CC素材使用・元動画クレジットは概要欄に
 非公式ファンch
 ```
+
+## 最新版(コラージュ版・2026-11-20)
+- ヘッダー: assets_channel/header_c_collage.png / header_d_collage.png
+- アイコン: assets_channel/icon_e_collage.png / icon_f_bike.png
+- タイトル書体: Dela Gothic One(斜体加工・白→水色グラデ・ピンク縁取り+ネオン光彩)、サブ: RocknRoll One(いずれも SIL OFL、fonts/ に同梱)
+- 文字ブロックは画像の中心(ヘッダー 1280,720)に配置
