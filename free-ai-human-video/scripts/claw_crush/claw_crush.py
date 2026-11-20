@@ -44,13 +44,13 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY, R = 540.0, 1000.0, 430.0          # 丸いわく
-BALL_R = float(os.environ.get("BALL_R", 6.0))
+BALL_R = float(os.environ.get("BALL_R", 4.5))   # 5000個がわくに入るよう小さめ
 V_START = float(os.environ.get("V_START", 260.0))                                   # はじめのボールの速さ(px/秒)
 DAMP = float(os.environ.get("DAMP", 0.999))       # 1秒あたりに残る速さ(ほとんど減らない、軽く漂う)
 KICK = float(os.environ.get("KICK", 180.0))       # はさまれて分かれたボールが飛び出す速さ
 PINCH_MARGIN = BALL_R * 0.9 + 2.0                 # 刃からこの距離までのボールは「刃にかかっている」とみなす
-SPLIT = 4                                         # はさまれると何個に分かれるか(参考動画と同じ4個)
-TARGET = int(os.environ.get("TARGET", 3000))
+SPLIT = int(os.environ.get("SPLIT", 2))           # はさまれると何個に分かれるか(はさまった数の2倍になる)
+TARGET = int(os.environ.get("TARGET", 5000))
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 36.0))
 OUTRO = 4.2
 
@@ -239,7 +239,7 @@ class Game:
             pos, vel = bb.position, bb.velocity
             self.space.remove(bb, info["shape"])
             nt = min(TOP, info["tier"] + 1)
-            # その場で、次の色の4個のかたまりに分かれる(押しつぶされて、まわりへ少し広がる)
+            # その場で、次の色のボール SPLIT 個(2個)に分かれる(押しつぶされて、まわりへ少し広がる)
             a0 = self.rng.uniform(0, 2 * math.pi)
             for k in range(SPLIT):
                 a = a0 + 2 * math.pi * k / SPLIT
@@ -467,7 +467,7 @@ def render(seed):
                 draw_arm(ctx, x, y, ang, sign)
             draw_gear(ctx, gx, gy, 34, -t * 2.0 if gx < CX else t * 2.0)
         # 文字
-        text(ctx, "はさむと4つに増えるボール", W / 2, 235, 62, sw=12)
+        text(ctx, "はさむと2倍に増えるボール", W / 2, 235, 62, sw=12)
         text(ctx, f"{TARGET}個にできる？", W / 2, 335, 96, rgb=GOLD, sw=16)
         n = min(fr["n"], TARGET) if not over else res["n"]
         bump = 1.0 + (0.12 if n > prev_n else 0)
