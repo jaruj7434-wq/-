@@ -80,39 +80,77 @@ def fit_cover(im, W, H):
     return im.crop((x, y, x + W, y + H))
 
 
-def collage_header(bg_path, logo, out_path, cx):
-    """cx: 中央の空きパネルの中心 x(2560幅基準)"""
+FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts")
+TITLE_FONT = os.path.join(FONT_DIR, "DelaGothicOne-Regular.ttf")
+SUB_FONT = os.path.join(FONT_DIR, "RocknRollOne-Regular.ttf")
+
+
+def styled_text(s, size, font=TITLE_FONT, top=(255, 255, 255), bottom=(120, 235, 255),
+                stroke=(224, 19, 122), stroke_w=None, glow=(255, 60, 170), shear=0.18):
+    """グラデーション塗り+縁取り+ネオン光彩+斜体の文字を RGBA で返す(余白は切り詰め済み)。"""
+    f = ImageFont.truetype(font, size)
+    sw = stroke_w if stroke_w is not None else max(2, size // 12)
+    pad = sw * 4 + size // 3
+    l, t, r, b = f.getbbox(s, stroke_width=sw)
+    W, H = r - l + pad * 2, b - t + pad * 2
+    org = (pad - l, pad - t)
+    fill_m = Image.new("L", (W, H)); ImageDraw.Draw(fill_m).text(org, s, font=f, fill=255)
+    out_m = Image.new("L", (W, H)); ImageDraw.Draw(out_m).text(org, s, font=f, fill=255, stroke_width=sw, stroke_fill=255)
+    ys = np.linspace(0, 1, H)[:, None, None]
+    grad = (np.array(top) * (1 - ys) + np.array(bottom) * ys) * np.ones((1, W, 1))
+    canvas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    if glow:
+        g = out_m.filter(ImageFilter.GaussianBlur(sw * 1.6))
+        glow_im = Image.new("RGBA", (W, H), glow + (0,)); glow_im.putalpha(g.point(lambda v: min(255, int(v * 1.4))))
+        canvas.alpha_composite(glow_im)
+    st = Image.new("RGBA", (W, H), stroke + (0,)); st.putalpha(out_m); canvas.alpha_composite(st)
+    fi = Image.fromarray(np.dstack([grad, np.zeros((H, W))]).astype(np.uint8), "RGBA"); fi.putalpha(fill_m)
+    canvas.alpha_composite(fi)
+    if shear:
+        ext = int(H * shear)
+        canvas = canvas.transform((W + ext, H), Image.AFFINE, (1, shear, -ext, 0, 1, 0), Image.BICUBIC)
+    return canvas.crop(canvas.getbbox())
+
+
+def stack_center(base, items, cx, cy, gap):
+    """items(RGBA画像)を縦に並べ、ブロック全体の中心を (cx, cy) にぴったり合わせる。"""
+    total = sum(i.height for i in items) + gap * (len(items) - 1)
+    y = round(cy - total / 2)
+    for i in items:
+        base.alpha_composite(i, (round(cx - i.width / 2), y))
+        y += i.height + gap
+
+
+def collage_header(bg_path, logo, out_path):
     W, H = 2560, 1440
     bg = fit_cover(Image.open(bg_path).convert("RGB"), W, H).filter(ImageFilter.UnsharpMask(2, 60, 2)).convert("RGBA")
-    lh = 170
-    lg = logo.resize((round(logo.width * lh / logo.height), lh), Image.LANCZOS)
-    bg.alpha_composite(lg, (round(cx - lg.width / 2), 520))
-    d = ImageDraw.Draw(bg)
-    text(d, (cx, 670), "バイス切り抜き部", 130, "white", (224, 19, 122), 11)
-    text(d, (cx, 855), "GTA6の神シーン&攻略小ネタを毎日お届け", 46, (255, 225, 77), "black", 6)
+    lg = logo.resize((round(logo.width * 150 / logo.height), 150), Image.LANCZOS)
+    title = styled_text("バイス切り抜き", 150)
+    sub = styled_text("GTA6の神シーン&攻略小ネタを毎日お届け", 40, font=SUB_FONT, top=(255, 236, 120),
+                      bottom=(255, 200, 60), stroke=(0, 0, 0), stroke_w=5, glow=None, shear=0)
+    stack_center(bg, [lg, title, sub], W / 2, H / 2, 12)
     bg.convert("RGB").save(out_path, optimize=True)
 
 
-def collage_icon(src, logo, out_path, logo_w, logo_cy, sub=None, sub_y=None, sub_size=70):
+def collage_icon(src, logo, out_path, logo_w, cy, sub=None, sub_size=60, gap=6):
     S = 800
     im = fit_cover(Image.open(src).convert("RGB"), S, S).convert("RGBA")
-    lg = logo.resize((logo_w, round(logo.height * logo_w / logo.width)), Image.LANCZOS)
-    im.alpha_composite(lg, ((S - lg.width) // 2, round(logo_cy - lg.height / 2)))
+    items = [logo.resize((logo_w, round(logo.height * logo_w / logo.width)), Image.LANCZOS)]
     if sub:
-        d = ImageDraw.Draw(im)
-        text(d, (S / 2, sub_y), sub, sub_size, "white", (224, 19, 122), 8)
+        items.append(styled_text(sub, sub_size))
+    stack_center(im, items, S / 2, cy, gap)
     im.convert("RGB").save(out_path, optimize=True)
 
 
 def main_collage(base):
     raw = os.path.join(base, "raw")
     logo = key_black(Image.open(os.path.join(raw, "logo_gta6_a.png")))
-    collage_header(os.path.join(raw, "collage_header_a.png"), logo, os.path.join(base, "header_c_collage.png"), 1250)
-    collage_header(os.path.join(raw, "collage_header_b.png"), logo, os.path.join(base, "header_d_collage.png"), 1350)
+    collage_header(os.path.join(raw, "collage_header_a.png"), logo, os.path.join(base, "header_c_collage.png"))
+    collage_header(os.path.join(raw, "collage_header_b.png"), logo, os.path.join(base, "header_d_collage.png"))
     collage_icon(os.path.join(raw, "collage_icon_a.png"), logo, os.path.join(base, "icon_e_collage.png"),
-                 300, 375, "切り抜き部", 412, 46)
+                 270, 400, "バイス切り抜き", 40)
     collage_icon(os.path.join(raw, "collage_icon_b.png"), logo, os.path.join(base, "icon_f_bike.png"),
-                 520, 630)
+                 470, 650, "バイス切り抜き", 64)
 
 
 if __name__ == "__main__":
