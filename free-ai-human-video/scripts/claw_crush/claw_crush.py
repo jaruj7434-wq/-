@@ -44,22 +44,21 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY, R = 540.0, 1000.0, 430.0          # 丸いわく
-BALL_R = 8.0
-SPEED = float(os.environ.get("SPEED", 160.0))     # ボールの速さ(いつも同じ)
-SPLIT = int(os.environ.get("SPLIT", 3))                                         # つぶれると何個に分かれるか
-TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 34.2))
-BIRTH_GAP = 3.0                                   # 生まれるボールと、まわりとのすき間(px)
+BALL_R = float(os.environ.get("BALL_R", 6.0))
+V_START = 110.0                                   # はじめのボールの速さ(px/秒)
+DAMP = float(os.environ.get("DAMP", 0.995))       # 1秒あたりに残る速さ(ほとんど減らない、ふわふわ漂う)
+SPLIT = 4                                         # はさまれると何個に分かれるか(参考動画と同じ4個)
+TARGET = int(os.environ.get("TARGET", 3000))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 40.5))
 OUTRO = 4.2
 
-# つかみ腕
-L1, L2 = float(os.environ.get("L1", 380.0)), float(os.environ.get("L2", 210.0))                    # 腕の長さ、先の曲がった部分の長さ
-ARM_W = 7.0                              # 腕の太さ(半分)
-TH_OPEN = math.radians(68)               # あごを開いたときの、片方の腕の角度
-TH_CLOSE = math.asin(L2 / L1) + math.radians(1.5)   # 閉じたとき(腕の先どうしがほぼ合わさる)
-JAW_T = float(os.environ.get("JAW_T", 1.7))         # 開いて閉じる1回の時間(秒)
-SWAY = math.radians(float(os.environ.get("SWAY", 60)))                  # 首ふりの大きさ
-SWAY_T = 5.3                             # 首ふり1往復の時間
+# つかみ腕(参考動画と同じ:V字に開く → [字 → ひし形のかご → 腕どうしが重なる「T」字まで閉じきる)
+L1, L2 = float(os.environ.get("L1", 360.0)), float(os.environ.get("L2", 220.0))
+ARM_W = 8.0                              # 腕の太さ(半分)
+TH_OPEN = math.radians(70)               # あごを開いたときの、片方の腕の角度
+TH_CLOSE = 0.0                           # 閉じきったとき(2本の腕が重なる)
+JAW_T = float(os.environ.get("JAW_T", 1.6))         # 開いて閉じる1回の時間(秒)
+SPIN_T = float(os.environ.get("SPIN_T", 3.4))       # 腕が歯車のまわりを1周する時間(秒)
 GEARS = [(CX - R, CY, 0.0, 0.0), (CX + R, CY, math.pi, 0.5)]   # (x, y, まっすぐ内向きの角度, リズムのずれ)
 
 NAMES = ["白", "青", "紫", "緑", "赤", "金", "虹"]
@@ -69,24 +68,49 @@ TOP = len(NAMES) - 1
 
 
 def jaw(t, ph):
-    """あごの開き(片方の腕の角度)。ゆっくり開いて、ぐっと閉じて、少し閉じたまま止まる。"""
+    """あごの開き(片方の腕の角度)。開いて → ゆっくり閉じて → 腕が重なるまで閉じきって少し止まる。"""
     u = ((t / JAW_T) + ph) % 1.0
-    if u < 0.45:                      # 開く
-        k = 0.5 - 0.5 * math.cos(math.pi * u / 0.45)
+    if u < 0.4:                       # 開く
+        k = 0.5 - 0.5 * math.cos(math.pi * u / 0.4)
         return TH_CLOSE + (TH_OPEN - TH_CLOSE) * k
-    if u < 0.75:                      # 閉じる
-        k = 0.5 - 0.5 * math.cos(math.pi * (u - 0.45) / 0.3)
+    if u < 0.85:                      # 閉じる
+        k = 0.5 - 0.5 * math.cos(math.pi * (u - 0.4) / 0.45)
         return TH_OPEN - (TH_OPEN - TH_CLOSE) * k
-    return TH_CLOSE                   # 閉じたまま
+    return TH_CLOSE                   # 閉じきったまま
 
 
-SPIN_T = float(os.environ.get("SPIN_T", 3.4))   # 腕が歯車のまわりを1周する時間(秒)
+def close_start(t, ph):
+    """いま閉じている途中なら、その閉じ始めの時刻。"""
+    u = ((t / JAW_T) + ph) % 1.0
+    return t - max(0.0, u - 0.4) * JAW_T
 
 
 def sway(t, base, ph):
     """腕の向き:歯車のまわりを一定の速さでぐるぐる回る(左右で逆回り)。わくの外を向いているあいだは、わくの外を通る。"""
     d = 1 if base == 0.0 else -1
     return base + d * 2 * math.pi * (t / SPIN_T + ph)
+
+
+TH_BOX = math.atan(L2 / L1)   # 腕の先どうしが合わさって、ひし形のかごになる角度
+
+
+def _in_cage(u, v):
+    """閉じたひし形のかご(歯車 → 上のひじ → 腕の先が合わさる所 → 下のひじ)の中か。"""
+    c_, s_ = math.cos(TH_BOX), math.sin(TH_BOX)
+    pts = [(0, 0), (L1 * c_, -L1 * s_), (L1 * c_ + L2 * s_, 0), (L1 * c_, L1 * s_)]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]):
+        if (x1 - x0) * (v - y0) - (y1 - y0) * (u - x0) < 0:
+            return False
+    return True
+
+
+def _seg_dist(x, y, a, b):
+    ax, ay = a
+    bx, by = b
+    dx, dy = bx - ax, by - ay
+    L = dx * dx + dy * dy
+    k = 0.0 if L == 0 else max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / L))
+    return math.hypot(x - ax - k * dx, y - ay - k * dy)
 
 
 def arm_local(sign):
@@ -100,7 +124,8 @@ class Game:
         self.rng = rng = np.random.default_rng(seed)
         sp = pymunk.Space()
         sp.gravity = (0, 0)
-        sp.iterations = 20
+        sp.iterations = 15
+        sp.damping = DAMP
         self.space = sp
         n = 120
         pts = [(CX + (R + 10) * math.cos(2 * math.pi * k / n), CY + (R + 10) * math.sin(2 * math.pi * k / n)) for k in range(n + 1)]
@@ -110,7 +135,6 @@ class Game:
             s.collision_type = 3
             sp.add(s)
         self.t = 0.0
-        # つかみ腕(動きが決まっている「キネマティック」な物体。ボールを押したり、はさんだりする)
         self.claws = []
         for gi, (gx, gy, base, ph) in enumerate(GEARS):
             arms = []
@@ -122,7 +146,7 @@ class Game:
                 shapes = []
                 for a_, c_ in zip(p, p[1:]):
                     s = pymunk.Segment(b, a_, c_, ARM_W)
-                    s.elasticity, s.friction = 0.9, 0.0
+                    s.elasticity, s.friction = 0.3, 0.2
                     s.collision_type = 2
                     shapes.append(s)
                 sp.add(b, *shapes)
@@ -132,131 +156,91 @@ class Game:
         self.next_id = 0
         self.events = []
         self.result, self.result_t = None, None
+        # はじめは白いボール1個(まん中あたりで、ゆっくり漂っている)
         a = rng.uniform(0, 2 * math.pi)
-        self.add((CX + rng.uniform(-40, 40), CY + rng.uniform(-40, 40)), 0, a)
+        self.add((CX + rng.uniform(-60, 60), CY + rng.uniform(-60, 60)), 0, (V_START * math.cos(a), V_START * math.sin(a)))
 
-    def add(self, pos, tier, ang):
+    def add(self, pos, tier, vel):
         b = pymunk.Body(1.0, pymunk.moment_for_circle(1.0, 0, BALL_R))
         b.position = pos
-        b.velocity = (SPEED * math.cos(ang), SPEED * math.sin(ang))
+        b.velocity = vel
         s = pymunk.Circle(b, BALL_R)
-        s.elasticity, s.friction = 1.0, 0.0
+        s.elasticity, s.friction = 0.5, 0.1
         s.collision_type = 1
         self.space.add(b, s)
-        self.space.reindex_shapes_for_body(b)
         self.balls[b] = {"id": self.next_id, "tier": tier, "shape": s, "born": self.t}
         self.next_id += 1
         return b
 
     def angles(self, c, t):
-        th = jaw(t, c["ph"])
-        ph = sway(t, c["base"], c["ph"] * 0.37)
-        return ph, th
-
-    def in_jaw(self, p, margin=BALL_R * 1.5):
-        """その場所が、どれかのつかみ腕の2本のあいだ(かごの中)か。"""
-        for c in self.claws:
-            ph_, th_ = self.angles(c, self.t)
-            gx, gy = c["gear"]
-            ca, sa = math.cos(-ph_), math.sin(-ph_)
-            dx, dy = p.x - gx, p.y - gy
-            u, v = dx * ca - dy * sa, dx * sa + dy * ca
-            if -margin < u < L1 * math.cos(th_) + margin and abs(v) < u * math.tan(th_) + margin:
-                return True
-        return False
-
-    def free(self, p):
-        if (p - (CX, CY)).length > R - BALL_R - 2:
-            return False
-        if self.in_jaw(p):   # 生まれたボールが、すぐ同じ腕にまたつぶされないよう、腕のあいだには生まれない
-            return False
-        q = self.space.point_query_nearest(p, BALL_R + BIRTH_GAP, pymunk.ShapeFilter())
-        return q is None or q.shape is None
-
-    def free_spot(self, mid):
-        """つぶれた場所のすぐ近くで、ほかのボール・腕・わくと重ならない所(近い順にさがす)。"""
-        base = self.rng.uniform(0, 2 * math.pi)
-        dist = BALL_R * 1.0
-        while dist < 2 * R:
-            m = max(6, int(2 * math.pi * dist / (BALL_R * 1.2)))
-            for k in range(m):
-                a = base + 2 * math.pi * k / m
-                p = mid + pymunk.Vec2d(math.cos(a), math.sin(a)) * dist
-                if self.free(p):
-                    return p
-            dist += BALL_R * 0.8
-        return None
+        return sway(t, c["base"], c["ph"] * 0.37), jaw(t, c["ph"])
 
     def step(self, dt):
         t1 = self.t + dt
         for c in self.claws:   # 腕を、決まった動きのとおりに動かす(角速度をあたえてボールを正しく押す)
             ph1, th1 = self.angles(c, t1)
             for b, _, sign in c["arms"]:
-                target = ph1 + sign * th1
-                b.angular_velocity = (target - b.angle) / dt
+                b.angular_velocity = (ph1 + sign * th1 - b.angle) / dt
         self.space.step(dt)
         self.t = t1
-        for b in self.balls:   # ボールはいつも同じ速さ(ぶつかって変わっても、ゆっくりもどる)
-            v = b.velocity
-            n = v.length
-            k = 1 - math.exp(-dt / 0.5)
-            if n > 1e-6:
-                b.velocity = v * ((n + (SPEED - n) * k) / n)
-            else:
-                a = self.rng.uniform(0, 2 * math.pi)
-                b.velocity = (SPEED * math.cos(a), SPEED * math.sin(a))
+        for b in self.balls:   # (めったにないが)わくの外へ押し出されたらもどす
             d = b.position - (CX, CY)
-            if d.length > R - BALL_R:   # (めったにないが)わくの外へ押し出されたらもどす
+            if d.length > R - BALL_R:
                 b.position = pymunk.Vec2d(CX, CY) + d.normalized() * (R - BALL_R - 1)
-                b.velocity = -d.normalized() * SPEED
-        # はさまれたボール:つかみ腕が閉じようとしているとき、2本の腕のあいだ(内側)にいて、腕の内側に押されているボールがつぶれる。
-        # さらに、閉じきった瞬間に「かご」の中にいるボールもつぶれる
-        crushed = []
+                b.velocity = -d.normalized() * 60
+        # はさまれた瞬間:閉じていく2本の腕のあいだで、すき間がボールより細くなった(=両側の腕にはさまれた)ボール
+        pinched = []
         for ci, c in enumerate(self.claws):
             th0 = jaw(self.t - dt, c["ph"])
-            th1 = jaw(self.t, c["ph"])
-            closing = th1 < th0 - 1e-9
-            closed_now = th0 > TH_CLOSE + 1e-9 and th1 <= TH_CLOSE + 1e-9
-            if not closing and not closed_now:
-                continue
             ph_, th_ = self.angles(c, self.t)
+            if not th_ < th0 - 1e-9:
+                continue
+            cs = close_start(self.t, c["ph"])
             gx, gy = c["gear"]
-            ca, sa = math.cos(-ph_), math.sin(-ph_)
-            ex = L1 * math.cos(th_)
-            tan_ = math.tan(th_)
-            touching = set()
-            if closing:
-                for b, shapes, sign in c["arms"]:
-                    for s_ in shapes:
-                        for q in self.space.shape_query(s_):
-                            if q.shape is not None and q.shape.collision_type == 1:
-                                touching.add(q.shape.body)
-            for bb in list(self.balls):
-                dx, dy = bb.position.x - gx, bb.position.y - gy
-                u, v = dx * ca - dy * sa, dx * sa + dy * ca   # 腕の向きを x にした座標
-                inside = 25 < u < ex and abs(v) < u * tan_   # 2本の腕のあいだ(内側)
-                # その腕が閉じ始めたあとに生まれたボールは、その回にはつぶれない(生まれてすぐまたつぶれる連鎖をふせぐ)
-                u_ = ((self.t / JAW_T) + c["ph"]) % 1.0
-                close_start = self.t - max(0.0, u_ - 0.45) * JAW_T
-                if inside and (closed_now or bb in touching) and self.balls[bb]["born"] < close_start - 1e-6:
-                    crushed.append((bb, ci))
-        for bb, ci in crushed:
+            box_now = th0 > TH_BOX >= th_                    # 腕の先どうしが合わさって、ひし形のかごになった瞬間
+            cph, sph = math.cos(-ph_), math.sin(-ph_)
+            # 2本の腕それぞれに、いまふれているボール(物理エンジンの当たり判定で調べる・速い)
+            touch = []
+            for b, shapes, sign in c["arms"]:
+                got = set()
+                for s_ in shapes:
+                    for q in self.space.shape_query(s_):
+                        if q.shape is not None and q.shape.collision_type == 1 and q.contact_point_set.points and \
+                                q.contact_point_set.points[0].distance < 1.5:
+                            got.add(q.shape.body)
+                touch.append(got)
+            for bb in touch[0] & touch[1]:          # 閉じていく2本の腕の両方に同時にふれた = はさまれた
+                info = self.balls.get(bb)
+                if info is not None and info["born"] < cs - 1e-6:   # 閉じ始めたあとに生まれたボールは、その回にははさまれない
+                    pinched.append((bb, ci))
+            if box_now:   # ひし形のかごが閉じた瞬間、かごの中に閉じこめられたボールもはさまれる
+                c_, s_b = math.cos(TH_BOX), math.sin(TH_BOX)
+                cx_l = (L1 * c_ + L2 * s_b) / 2
+                mx, my = gx + cx_l * math.cos(ph_), gy + cx_l * math.sin(ph_)
+                rad = max(cx_l, L1 * s_b) + 5
+                for q in self.space.bb_query(pymunk.BB(mx - rad, my - rad, mx + rad, my + rad), pymunk.ShapeFilter()):
+                    bb = q.body
+                    info = self.balls.get(bb)
+                    if info is None or info["born"] >= cs - 1e-6:
+                        continue
+                    dx, dy = bb.position.x - gx, bb.position.y - gy
+                    u, v = dx * cph - dy * sph, dx * sph + dy * cph
+                    if _in_cage(u, v):
+                        pinched.append((bb, ci))
+        for bb, ci in pinched:
             if bb not in self.balls:
                 continue
             info = self.balls.pop(bb)
-            pos = bb.position
+            pos, vel = bb.position, bb.velocity
             self.space.remove(bb, info["shape"])
             nt = min(TOP, info["tier"] + 1)
-            out = []
-            for _ in range(SPLIT):
-                p = self.free_spot(pos)
-                if p is None:
-                    break
-                d = p - pos
-                a = math.atan2(d.y, d.x) if d.length > 1e-6 else self.rng.uniform(0, 2 * math.pi)
-                nb = self.add(p, nt, a)
-                out.append((p.x, p.y))
-            self.events.append(("crush", self.t, (pos.x, pos.y, info["tier"], nt, out, len(self.balls), ci)))
+            # その場で、次の色の4個のかたまりに分かれる(押しつぶされて、まわりへ少し広がる)
+            a0 = self.rng.uniform(0, 2 * math.pi)
+            for k in range(SPLIT):
+                a = a0 + 2 * math.pi * k / SPLIT
+                off = pymunk.Vec2d(math.cos(a), math.sin(a)) * BALL_R * 1.05
+                self.add(pos + off, nt, vel + off.normalized() * 25)
+            self.events.append(("crush", self.t, (pos.x, pos.y, info["tier"], nt, len(self.balls), ci)))
         if self.result is None:
             if len(self.balls) >= TARGET:
                 self.result, self.result_t = "success", self.t
@@ -289,7 +273,7 @@ def simulate(seed, record=False):
 def score(seed):
     r = simulate(seed)
     cr = [e for e in r["events"] if e[0] == "crush"]
-    t100 = next((e[1] for e in cr if e[2][5] >= 100), None)
+    t100 = next((e[1] for e in cr if e[2][4] >= 100), None)
     return seed, r["result"], round(r["result_t"], 1), r["n"], len(cr), t100 and round(t100, 1)
 
 
@@ -374,6 +358,24 @@ def draw_ball(ctx, x, y, col, r=BALL_R):
     ctx.fill()
 
 
+_SPR = {}
+
+
+def fast_ball(ctx, x, y, col):
+    """ボールをすばやく描く(色ごとに一度だけ描いた小さな絵を貼る。数千個でも速い)。"""
+    key = tuple(round(c * 24) for c in col)
+    spr = _SPR.get(key)
+    if spr is None:
+        n = int(BALL_R * 2 + 4)
+        spr = cairo.ImageSurface(cairo.FORMAT_ARGB32, n, n)
+        draw_ball(cairo.Context(spr), n / 2, n / 2, tuple(k / 24 for k in key))
+        _SPR[key] = spr
+    n = spr.get_width()
+    ctx.set_source_surface(spr, x - n / 2, y - n / 2)
+    ctx.rectangle(x - n / 2, y - n / 2, n, n)
+    ctx.fill()
+
+
 def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
@@ -417,7 +419,7 @@ def render(seed):
         while ev_i < len(events) and events[ev_i][1] <= t:
             kind, et, data = events[ev_i]
             if kind == "crush":
-                x, y, t0, nt, out, n, ci = data
+                x, y, t0, nt, n, ci = data
                 if len(pops) < 80:
                     pops.append((x, y, nt, et))
                 best = max(best, nt)
@@ -443,7 +445,7 @@ def render(seed):
             ctx.set_line_width(wdt)
             ctx.stroke()
         for x, y, tier, oid in fr["balls"]:
-            draw_ball(ctx, x, y, tier_col(tier, t, oid))
+            fast_ball(ctx, x, y, tier_col(tier, t, oid))
         keep = []
         for x, y, nt, t0 in pops:   # つぶれた瞬間の、はじける光
             a = t - t0
@@ -460,7 +462,7 @@ def render(seed):
                 draw_arm(ctx, x, y, ang, sign)
             draw_gear(ctx, gx, gy, 34, -t * 2.0 if gx < CX else t * 2.0)
         # 文字
-        text(ctx, "つぶすと3つに増えるボール", W / 2, 235, 62, sw=12)
+        text(ctx, "はさむと4つに増えるボール", W / 2, 235, 62, sw=12)
         text(ctx, f"{TARGET}個にできる？", W / 2, 335, 96, rgb=GOLD, sw=16)
         n = min(fr["n"], TARGET) if not over else res["n"]
         bump = 1.0 + (0.12 if n > prev_n else 0)
@@ -519,9 +521,9 @@ def crunch(amp, seed, tier):
 
 
 def pops3(tier):
-    """3つに分かれる「ポポポン」(色が上がるほど高い)。"""
-    out = np.zeros(int(0.25 * SR))
-    for k in range(3):
+    """4つに分かれる「ポポポポン」(色が上がるほど高い)。"""
+    out = np.zeros(int(0.3 * SR))
+    for k in range(4):
         t = _t(0.08)
         f = midi_hz(76 + 3 * tier + 4 * k)
         s = np.sin(2 * np.pi * f * t) * np.exp(-t * 45)
@@ -553,7 +555,7 @@ def synth_audio(res, duration, path):
     for gi, (_, _, _, ph) in enumerate(GEARS):
         k = 0
         while True:
-            tc = (k + 0.75 - ph) * JAW_T
+            tc = (k + 0.85 - ph) * JAW_T
             k += 1
             if tc < 0:
                 continue
