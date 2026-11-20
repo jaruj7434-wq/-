@@ -46,7 +46,7 @@ BALL_R = 6.0
 GRAVITY = 1500.0
 SPLIT = 2
 TARGET = int(os.environ.get("TARGET", 2000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 60.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 40.65))
 OUTRO = 4.2
 SPRAY = float(os.environ.get("SPRAY", 650.0))   # はさまれて生まれたボールが噴き出す速さ
 
