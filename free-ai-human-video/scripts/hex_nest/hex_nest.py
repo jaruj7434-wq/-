@@ -47,14 +47,14 @@ R_FRAME = 430.0                                   # いちばん外の枠(六角
 LAYER = float(os.environ.get("LAYER", 80.0))      # 1段ごとに枠が小さくなる量(外接円の半径)
 R_END = 70.0                                      # 枠がこれより小さくなったら、全部うまった(成功)
 SPIN = float(os.environ.get("SPIN", 1.2))        # 枠が回る速さ
-GROW = float(os.environ.get("GROW", 1.16))        # 1回当たるごとの大きさの倍率
+GROW = float(os.environ.get("GROW", 1.28))        # 1回当たるごとの大きさの倍率
 START_K = 0.3                                     # (使わない)
 R_START = float(os.environ.get("R_START", 18.0))  # 新しい玉の大きさ(外接円の半径・どの段でも同じ)
 FIT = 0.84                                        # この大きさ(いまの枠に対する割合)まで育つとハマる
 GRAVITY = float(os.environ.get("GRAVITY", 3000.0))
 BALL_E = float(os.environ.get("BALL_E", 0.97))
 SNAP_T = 0.22   # ハマるまでの時間(吸いこまれるように速くなって、ピタッと止まる)
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 33.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 21.4))
 OUTRO = 4.2
 WIN_DUR = JP.DURATION - JP.T_BIG   # 成功の演出の長さ(スロットなし。全部ハマった瞬間から、いきなり本番の大当たり演出)
 
