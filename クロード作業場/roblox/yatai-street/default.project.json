@@ -1,0 +1,14 @@
+{
+  "name": "yubisaki-yatai-street",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "YataiServer": { "$path": "src/server/YataiServer.server.lua" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "YataiClient": { "$path": "src/client/YataiClient.client.lua" }
+      }
+    }
+  }
+}
