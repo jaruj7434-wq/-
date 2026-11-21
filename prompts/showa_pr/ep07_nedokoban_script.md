@@ -68,3 +68,4 @@
 | 28– | 社名カード:あさねぼう工業 | 新しいジングルのしめ「あさねぼう こうぎょう〜♪」 |
 - 2026-11-21 改訂3 Wan 3.0(布団から手が生える版)28クレジット:41c92b9a-c242-40b8-9b59-648ccf6a9fd9
 - 2026-11-21 しめのジングル「あさねぼう こうぎょう〜」Gemini Omni Flash 1.2(360p、15秒):530873ff-aa6b-4351-a9e0-642f500541e8
+- 改訂3 完成 → wan/take2.mp4+しめ jingle_tail_asanebou.wav(Gemini の7.9〜11.3秒、3回目の歌)。仕上げ:prompts/showa_pr/ep07_nedokoban2_edl.json → assets/output/showa_pr/ep07_nedokoban2/
