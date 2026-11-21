@@ -106,3 +106,4 @@
 - 改訂5 完成:take2 0-6+studio2 0-5+take2 10-19+ending2 0-10+社名カード3.5秒、しめは jingle2(Gemini 9.0〜14.5秒)→ assets/output/showa_pr/ep07_nedokoban4/
 - 修正:しめの歌の切り出しで、-ss を入力の後に置いたためフェードの時刻がずれて無音になっていた(改訂3〜5すべて)→ -ss を入力の前に移して作り直し。注意書きを「(注)玄関の戸は 開けておいてください」に変更
 - 2026-11-21 しめの歌を手作りに:ElevenLabs v4(CMガールの声)で「あさねぼう、こうぎょう」0.23cr e6a7471d-2daa-4a8d-a87c-955441766582 → tools/showa_film/sing_tag.py(pyworld で一音ずつ音程を付け、3声の合唱+鉄琴・ベース・和音・ブラス・ベル)→ jingle3/jingle3_asanebou.wav。メロディ:あ・さ・ね・ぼう(ソ・ソ・ラ・シー)/こう・ぎょう〜(レー・ド・シ〜・ソーー)。仕上げ:ep07_nedokoban5_edl.json → assets/output/showa_pr/ep07_nedokoban5/
+- 手作りの歌は聞き取りにくく不採用。最初の Gemini の歌(jingle_raw.wav、第1話と同じ「歌で作って切り出す」方式)の3回目 7.9〜11.4秒を正しく切り出し直して、社名カードの頭から流す → assets/output/showa_pr/ep07_nedokoban6/
