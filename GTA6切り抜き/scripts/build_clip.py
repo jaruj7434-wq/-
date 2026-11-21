@@ -97,7 +97,7 @@ def build(cfg, src, outdir):
                "-c:v", "libx264", "-crf", "16", "-preset", "fast", "-c:a", "pcm_s16le", p]
         run(cmd)
         parts.append(p)
-        times.append((t, t + d, s.get("x", 0.5)))
+        times.append((t, t + d, s.get("x", cfg.get("x", 0.5)), s.get("free_crop", False)))
         print(f"seg{i:02d}: v {v0:.2f}-{v0+d:.2f}  a {a0:.2f}  ({d:.2f}s)")
         t += d
     total = t
@@ -129,9 +129,11 @@ def build(cfg, src, outdir):
 
     # セグメントごとのクロップ位置: x 式を区間ごとの if 連鎖で作る
     def xexpr(cw):
-        e = str(round((sw - cw) * 0.5))
-        for s0, s1, x in reversed(times):
-            e = f"if(between(t,{s0:.3f},{s1:.3f}),{round((sw - cw) * x)},{e})"
+        lo = min(cfg.get("min_x", 0), sw - cw)
+        off = lambda x, free=False: max(0 if free else lo, round((sw - cw) * x))
+        e = str(off(cfg.get("x", 0.5)))
+        for s0, s1, x, free in reversed(times):  # free_crop: その区間は min_x の制限なし
+            e = f"if(between(t,{s0:.3f},{s1:.3f}),{off(x, free)},{e})"
         return e
 
     title = [tf(f"title{j}", l) for j, l in enumerate(cfg["title"])]
@@ -145,7 +147,11 @@ def build(cfg, src, outdir):
     for i, s in enumerate(cfg["segments"]):
         if s.get("l1") or s.get("l2"):
             labels.append((times[i][0], times[i][1], tf(f"l1_{i}", s.get("l1", "")), tf(f"l2_{i}", s.get("l2", "")),
-                           em(s.get("l2", ""))))
+                           em(s.get("l1", "")), em(s.get("l2", ""))))
+
+    def fit(text, maxw, cap, k=1.0):  # はみ出さない文字サイズ(k: 書体の横幅係数。Dela Gothic は 1.12)
+        return min(cap, int(maxw / (em(text) * k)))
+    D = 1.12
     hook_en = f"between(t,0.1,{times[0][1]:.3f})"
     outro_en = f"between(t,{total - cfg.get('outro_sec', 4):.3f},{total})"
     pink = "0xE0137A"
@@ -157,14 +163,14 @@ def build(cfg, src, outdir):
          f"[b]crop={cw}:{ch}:'{xexpr(cw)}':0,scale=1080:810:flags=lanczos,unsharp=5:5:0.8[fg]"]
     o = ["[bg][fg]overlay=0:555"]
     o.append(dt(title[0], "(w-tw)/2", 110, 110, "yellow", 10, font=F_TITLE))
-    o.append(dt(title[1], "(w-tw)/2", 270, 84, "white", 10, font=F_TITLE, bcolor=pink))
+    o.append(dt(title[1], "(w-tw)/2", 270, fit(cfg["title"][1], 1000, 84, D), "white", 10, font=F_TITLE, bcolor=pink))
     if len(title) > 2:
         o.append(dt(title[2], "(w-tw)/2", 395, 60, "white", 8))
-    o.append(dt(hook[0], "(w-tw)/2", 1415, 92, "white", 10, hook_en, F_TITLE))
-    o.append(dt(hook[1], "(w-tw)/2", 1540, 110, "yellow", 12, hook_en, F_TITLE, pink))
-    for s0, s1, f1, f2, w2 in labels:
+    o.append(dt(hook[0], "(w-tw)/2", 1415, fit(cfg["hook"][0], 1000, 92, D), "white", 10, hook_en, F_TITLE))
+    o.append(dt(hook[1], "(w-tw)/2", 1540, fit(cfg["hook"][1], 1000, 110, D), "yellow", 12, hook_en, F_TITLE, pink))
+    for s0, s1, f1, f2, w1, w2 in labels:
         en = f"between(t,{s0:.3f},{s1:.3f})"
-        o.append(dt(f1, "(w-tw)/2", 1410, 64, "yellow", 8, en, F_TITLE))
+        o.append(dt(f1, "(w-tw)/2", 1410, min(64, int(1000 / (w1 * D))), "yellow", 8, en, F_TITLE))
         o.append(dt(f2, "(w-tw)/2", 1505, min(80, int(960 / w2)), "white", 10, en))
     o.append(dt(outro[0], "(w-tw)/2", 1660, 58, "white", 8, outro_en))
     o.append(dt(outro[1], "(w-tw)/2", 1740, 58, "yellow", 8, outro_en))
@@ -180,12 +186,12 @@ def build(cfg, src, outdir):
     hw = round(ch * 16 / 9)
     h = [f"crop={hw}:{ch}:'{xexpr(hw)}':0,scale=1920:1080:flags=lanczos,unsharp=5:5:0.6"]
     h.append(dt(title[0], 40, 30, 80, "yellow", 8, font=F_TITLE))
-    h.append(dt(title[1], 40, 130, 56, "white", 7, font=F_TITLE, bcolor=pink))
-    h.append(dt(hook[0], "(w-tw)/2", 800, 80, "white", 9, hook_en, F_TITLE))
-    h.append(dt(hook[1], "(w-tw)/2", 905, 100, "yellow", 10, hook_en, F_TITLE, pink))
-    for s0, s1, f1, f2, w2 in labels:
+    h.append(dt(title[1], 40, 130, fit(cfg["title"][1], 1300, 56, D), "white", 7, font=F_TITLE, bcolor=pink))
+    h.append(dt(hook[0], "(w-tw)/2", 800, fit(cfg["hook"][0], 1800, 80, D), "white", 9, hook_en, F_TITLE))
+    h.append(dt(hook[1], "(w-tw)/2", 905, fit(cfg["hook"][1], 1800, 100, D), "yellow", 10, hook_en, F_TITLE, pink))
+    for s0, s1, f1, f2, w1, w2 in labels:
         en = f"between(t,{s0:.3f},{s1:.3f})"
-        h.append(dt(f1, "(w-tw)/2", 830, 56, "yellow", 7, en, F_TITLE))
+        h.append(dt(f1, "(w-tw)/2", 830, min(56, int(1700 / (w1 * D))), "yellow", 7, en, F_TITLE))
         h.append(dt(f2, "(w-tw)/2", 915, min(76, int(1500 / w2)), "white", 9, en))
     h.append(dt(outro[0], "w-tw-50", 860, 50, "white", 7, outro_en))
     h.append(dt(outro[1], "w-tw-50", 930, 50, "yellow", 7, outro_en))
