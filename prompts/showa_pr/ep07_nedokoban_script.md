@@ -105,3 +105,4 @@
 - 2026-11-21 改訂5:CMガール言い直し Wan 5秒 7.5cr 6859f753-6519-4088-9b46-8d263a1faee2/最後10秒 Wan 15cr f98ab080-cc9b-4528-bb54-5f217ee6055f/しめの歌 Gemini t2v 15秒(人なし、メロディ指定)0be10ea2-b7e4-41a9-8ad2-2b551b5b7242
 - 改訂5 完成:take2 0-6+studio2 0-5+take2 10-19+ending2 0-10+社名カード3.5秒、しめは jingle2(Gemini 9.0〜14.5秒)→ assets/output/showa_pr/ep07_nedokoban4/
 - 修正:しめの歌の切り出しで、-ss を入力の後に置いたためフェードの時刻がずれて無音になっていた(改訂3〜5すべて)→ -ss を入力の前に移して作り直し。注意書きを「(注)玄関の戸は 開けておいてください」に変更
+- 2026-11-21 しめの歌を手作りに:ElevenLabs v4(CMガールの声)で「あさねぼう、こうぎょう」0.23cr e6a7471d-2daa-4a8d-a87c-955441766582 → tools/showa_film/sing_tag.py(pyworld で一音ずつ音程を付け、3声の合唱+鉄琴・ベース・和音・ブラス・ベル)→ jingle3/jingle3_asanebou.wav。メロディ:あ・さ・ね・ぼう(ソ・ソ・ラ・シー)/こう・ぎょう〜(レー・ド・シ〜・ソーー)。仕上げ:ep07_nedokoban5_edl.json → assets/output/showa_pr/ep07_nedokoban5/

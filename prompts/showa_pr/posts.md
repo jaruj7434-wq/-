@@ -94,7 +94,7 @@
 > #昭和 #昭和レトロ #レトロCM #昭和CM #架空CM #サラリーマン #上司 #AI動画
 
 ## 第6弾「寝たまま身支度機 ねどこ番」
-動画:assets/output/showa_pr/ep07_nedokoban4/vertical_9x16.mp4(改訂版:布団にくるまれたまま運ばれて放り投げられる版)
+動画:assets/output/showa_pr/ep07_nedokoban5/vertical_9x16.mp4(改訂版:布団にくるまれたまま運ばれて放り投げられる版)
 
 ### タイトル
 - 【昭和のまぼろしCM】寝たまま身支度機「ねどこ番」
