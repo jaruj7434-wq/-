@@ -46,14 +46,14 @@ CX, CY = 540.0, 990.0
 R_FRAME = 430.0                                   # いちばん外の枠(六角形の外接円の半径)
 LAYER = float(os.environ.get("LAYER", 52.0))      # 1段ごとに枠が小さくなる量(外接円の半径)
 R_END = 70.0                                      # 枠がこれより小さくなったら、全部うまった(成功)
-SPIN = float(os.environ.get("SPIN", 0.8))        # 枠が回る速さ
-GROW = float(os.environ.get("GROW", 1.15))        # 1回当たるごとの大きさの倍率
+SPIN = float(os.environ.get("SPIN", 1.2))        # 枠が回る速さ
+GROW = float(os.environ.get("GROW", 1.07))        # 1回当たるごとの大きさの倍率
 START_K = 0.3                                     # 新しい玉の大きさ(いまの枠に対する割合)
 FIT = 0.84                                        # この大きさ(いまの枠に対する割合)まで育つとハマる
-GRAVITY = float(os.environ.get("GRAVITY", 1200.0))
-BALL_E = 0.85
-SNAP_T = 0.35
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 34.5))
+GRAVITY = float(os.environ.get("GRAVITY", 2000.0))
+BALL_E = float(os.environ.get("BALL_E", 0.97))
+SNAP_T = 0.22   # ハマるまでの時間(吸いこまれるように速くなって、ピタッと止まる)
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 43.3))
 OUTRO = 4.2
 
 
@@ -328,6 +328,13 @@ def render(seed):
         ctx.set_source_surface(bg, 0, 0)
         ctx.paint()
         rot = fr["rot"]
+        shake = 0.0
+        for s_ in snaps:   # ピタッとハマった瞬間、画面がほんの少しだけゆれる
+            a_ = t - s_[1] - SNAP_T
+            if 0 <= a_ < 0.2:
+                shake = max(shake, 7 * (1 - a_ / 0.2))
+        ctx.save()
+        ctx.translate(shake * math.sin(t * 90), shake * math.cos(t * 77))
         # すでにハマった段(色つきの六角形の輪)。いちばん外の枠も輪で描く
         ctx.set_line_join(cairo.LINE_JOIN_ROUND)
         hex_path(ctx, CX, CY, R_FRAME + 26, rot)
@@ -359,7 +366,7 @@ def render(seed):
             et, (x0, y0, a0, r0, rf, lay) = s[1], s[2]
             u = (t - et) / SNAP_T
             if 0 <= u < 1:
-                e = 1 - (1 - u) ** 3
+                e = u * u * u   # 吸いこまれるように、だんだん速く
                 da = (rot - a0 + math.pi / 6) % (math.pi / 3) - math.pi / 6
                 x = x0 + (CX - x0) * e
                 y = y0 + (CY - y0) * e
@@ -373,16 +380,28 @@ def render(seed):
             col = layer_col(fr["layers"])
             draw_hex_ball(ctx, x, y, r, a, tuple(c * (0.6 + 0.4 * k) for c in col), 0.5 + 0.8 * k)
         keep = []
-        for et in flashes:   # ハマった瞬間のフラッシュ
+        for et in flashes:   # ピタッとハマった瞬間:白い光・外へ広がる波紋・輪がキュッと光る
             a_ = t - et - SNAP_T
-            if -SNAP_T < a_ < 0.35:
+            if -SNAP_T < a_ < 0.6:
                 if a_ >= 0:
-                    hex_path(ctx, CX, CY, fr["rf"] + LAYER + 4, rot)
-                    ctx.set_source_rgba(1, 1, 1, 0.8 * (1 - a_ / 0.35))
-                    ctx.set_line_width(14 * (1 - a_ / 0.35) + 2)
-                    ctx.stroke()
+                    ro = fr["rf"] + LAYER + 4
+                    if a_ < 0.12:   # 一瞬、輪全体が白く光る
+                        hex_path(ctx, CX, CY, ro, rot)
+                        hex_path(ctx, CX, CY, fr["rf"] + 4, rot)
+                        ctx.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+                        ctx.set_source_rgba(1, 1, 1, 0.85 * (1 - a_ / 0.12))
+                        ctx.fill()
+                        ctx.set_fill_rule(cairo.FILL_RULE_WINDING)
+                    for k2 in range(2):   # 外へ広がる波紋(2重)
+                        b_ = a_ - 0.06 * k2
+                        if 0 <= b_ < 0.5:
+                            hex_path(ctx, CX, CY, ro + 260 * b_, rot)
+                            ctx.set_source_rgba(1, 1, 1, 0.6 * (1 - b_ / 0.5))
+                            ctx.set_line_width(6 * (1 - b_ / 0.5) + 1)
+                            ctx.stroke()
                 keep.append(et)
         flashes = keep
+        ctx.restore()
         # 文字
         text(ctx, "当たるたびに大きくなる六角形", W / 2, 235, 60, sw=12)
         text(ctx, "枠を全部うめられる？", W / 2, 335, 92, rgb=GOLD, sw=16)
@@ -423,19 +442,31 @@ def _t(d):
     return np.arange(int(d * SR)) / SR
 
 
-def bounce(f, amp):
-    t = _t(0.3)
-    body = np.sin(2 * np.pi * f * t * (1 - 0.1 * t)) * np.exp(-t * 10)
-    return amp * (body + 0.35 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t * 16))
+def marimba(f, amp):
+    """壁に当たる「コン」:マリンバのような、やわらかくて気持ちいい音(木の響き+少しの金属のきらめき)。"""
+    t = _t(0.6)
+    y = (np.sin(2 * np.pi * f * t) * np.exp(-t * 7)
+         + 0.45 * np.sin(2 * np.pi * 4.0 * f * t) * np.exp(-t * 28)
+         + 0.2 * np.sin(2 * np.pi * 10.0 * f * t) * np.exp(-t * 60))
+    return amp * y * np.minimum(1, t / 0.002)
 
 
 def snap_snd(layer):
-    """カチッ!とハマる音+段が上がるほど高くなる和音。"""
-    t = _t(1.0)
-    click = np.random.default_rng(layer).normal(0, 1, len(t)) * np.exp(-t * 120) * 0.6
-    root = 60 + 2 * layer
-    chord = sum(np.sin(2 * np.pi * midi_hz(root + m) * t) * np.exp(-t * 3.5) for m in (0, 4, 7, 12))
-    return click + 0.3 * chord
+    """ピタッ!とハマる音:カチッ(高く短いクリック)+ドゥン(やわらかい低音)+キラキラと駆け上がる鐘の和音(段が上がるほど高い)。"""
+    t = _t(1.4)
+    rng = np.random.default_rng(layer + 5)
+    n = rng.normal(0, 1, len(t))
+    hp = n - np.convolve(n, np.ones(4) / 4, "same")
+    click = (0.7 * hp * np.exp(-t * 400) + 0.6 * np.sin(2 * np.pi * 3800 * t) * np.exp(-t * 150))
+    thump = 0.8 * np.sin(2 * np.pi * np.cumsum(110 * np.exp(-t * 25) + 55) / SR) * np.exp(-t * 14)
+    root = 72 + 2 * layer
+    bells = np.zeros(len(t))
+    for k, m in enumerate((0, 4, 7, 12, 16)):
+        d = int((0.04 + 0.045 * k) * SR)
+        tt = t[: len(t) - d]
+        f = midi_hz(root + m)
+        bells[d:] += (np.sin(2 * np.pi * f * tt) + 0.35 * np.sin(2 * np.pi * 2.76 * f * tt) * np.exp(-tt * 8)) * np.exp(-tt * 3.0)
+    return click + thump + 0.28 * bells
 
 
 def kyuin_one(up=1.0):
@@ -461,11 +492,12 @@ def synth_audio(res, duration, path):
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.01:
             continue
-        if kind == "grow":   # 当たって大きくなる「ポン」:その段で育つほど音が上がる
+        if kind == "grow":   # 当たって大きくなる「コン」:その段で育つほど、ドレミソラの音階で上がっていく
             r, lay = data
             rf = R_FRAME - LAYER * lay
             k = max(0.0, min(1.0, (r / rf - START_K) / (FIT - START_K)))
-            add(bounce(midi_hz(64 + 2 * lay + int(14 * k)), 0.5), t)
+            penta = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24]
+            add(marimba(midi_hz(60 + 2 * lay + penta[int(k * (len(penta) - 1))]), 0.6), t)
         elif kind == "snap":
             add(snap_snd(data[5]), t + SNAP_T, 0.9)
     wet = out.copy()
