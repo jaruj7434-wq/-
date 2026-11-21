@@ -44,7 +44,7 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY = 540.0, 990.0
 R_FRAME = 430.0                                   # いちばん外の枠(六角形の外接円の半径)
-LAYER = float(os.environ.get("LAYER", 80.0))      # 1段ごとに枠が小さくなる量(外接円の半径)
+LAYER = float(os.environ.get("LAYER", 37.0))      # 1段ごとに枠が小さくなる量(外接円の半径)
 R_END = 70.0                                      # 枠がこれより小さくなったら、全部うまった(成功)
 SPIN = float(os.environ.get("SPIN", 1.2))        # 枠が回る速さ
 GROW = float(os.environ.get("GROW", 1.28))        # 1回当たるごとの大きさの倍率
@@ -54,7 +54,7 @@ FIT = 0.84                                        # この大きさ(いまの枠
 GRAVITY = float(os.environ.get("GRAVITY", 3000.0))
 BALL_E = float(os.environ.get("BALL_E", 0.97))
 SNAP_T = 0.22   # ハマるまでの時間(吸いこまれるように速くなって、ピタッと止まる)
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 21.4))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 42.2))
 OUTRO = 4.2
 WIN_DUR = JP.DURATION - JP.T_BIG   # 成功の演出の長さ(スロットなし。全部ハマった瞬間から、いきなり本番の大当たり演出)
 
