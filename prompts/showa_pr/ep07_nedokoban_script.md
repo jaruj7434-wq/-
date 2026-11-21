@@ -46,3 +46,4 @@
 
 ## 生成の記録
 - 2026-11-21 Wan 3.0(28秒、480p、4:3、音声入り)28クレジット:d006b859-457a-4160-bb4b-8f773f32da41
+- 完成 → wan/take1.mp4。仕上げ:prompts/showa_pr/ep07_nedokoban_edl.json → assets/output/showa_pr/ep07_nedokoban/(28秒+社名カード)
