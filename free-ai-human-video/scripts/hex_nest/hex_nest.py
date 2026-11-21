@@ -44,17 +44,19 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY = 540.0, 990.0
 R_FRAME = 430.0                                   # いちばん外の枠(六角形の外接円の半径)
-LAYER = float(os.environ.get("LAYER", 52.0))      # 1段ごとに枠が小さくなる量(外接円の半径)
+LAYER = float(os.environ.get("LAYER", 80.0))      # 1段ごとに枠が小さくなる量(外接円の半径)
 R_END = 70.0                                      # 枠がこれより小さくなったら、全部うまった(成功)
 SPIN = float(os.environ.get("SPIN", 1.2))        # 枠が回る速さ
-GROW = float(os.environ.get("GROW", 1.07))        # 1回当たるごとの大きさの倍率
-START_K = 0.3                                     # 新しい玉の大きさ(いまの枠に対する割合)
+GROW = float(os.environ.get("GROW", 1.1))        # 1回当たるごとの大きさの倍率
+START_K = 0.3                                     # (使わない)
+R_START = float(os.environ.get("R_START", 18.0))  # 新しい玉の大きさ(外接円の半径・どの段でも同じ)
 FIT = 0.84                                        # この大きさ(いまの枠に対する割合)まで育つとハマる
-GRAVITY = float(os.environ.get("GRAVITY", 2000.0))
+GRAVITY = float(os.environ.get("GRAVITY", 3000.0))
 BALL_E = float(os.environ.get("BALL_E", 0.97))
 SNAP_T = 0.22   # ハマるまでの時間(吸いこまれるように速くなって、ピタッと止まる)
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 43.3))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 48.1))
 OUTRO = 4.2
+WIN_DUR = JP.DURATION - JP.T_BIG   # 成功の演出の長さ(スロットなし。全部ハマった瞬間から、いきなり本番の大当たり演出)
 
 
 def n_layers():
@@ -114,7 +116,7 @@ class Game:
         self.space.add(*self.walls)
 
     def spawn(self):
-        r = START_K * self.rf
+        r = R_START   # どの段でも、同じ小さな大きさからスタート
         b = pymunk.Body(1.0, pymunk.moment_for_poly(1.0, hexv(r)))
         b.position = (CX + self.rng.uniform(-0.2, 0.2) * self.rf, CY - self.rng.uniform(0.0, 0.3) * self.rf)
         b.velocity = (self.rng.uniform(-250, 250), self.rng.uniform(-150, 50))
@@ -192,7 +194,7 @@ def simulate(seed, record=False):
             frames.append({"t": g.t, "rot": g.frame.angle, "rf": g.rf, "layers": g.layers,
                            "ball": None if b is None else (b.position.x, b.position.y, b.angle, g.r)})
         if g.result is not None:
-            extra = (OUTRO + SCARE_DUR) if g.result == "fail" else JP.DURATION
+            extra = (OUTRO + SCARE_DUR) if g.result == "fail" else WIN_DUR
             if not record or g.t > g.result_t + extra:
                 break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "layers": g.layers}
@@ -291,8 +293,8 @@ def render(seed):
              "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    ending = None if fail else JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6, shake=16,
-                                          texts=("全部うまった!!", "COMPLETE", f"{N_LAYERS} / {N_LAYERS} 段"))
+    ending = None if fail else JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6,
+                                          texts=("うまった!!", "COMPLETE", f"{N_LAYERS} / {N_LAYERS} 段"), shake=22)
     snaps = [e for e in events if e[0] == "snap"]
     flashes = []
     bg = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
@@ -313,7 +315,7 @@ def render(seed):
             ev_i += 1
         over = end_t is not None and t >= end_t
         if ending is not None and over and t - end_t >= 1 / FPS - 1e-9:
-            ending.draw(surf, ctx, t - end_t)
+            ending.draw(surf, ctx, t - end_t + JP.T_BIG)   # スロットはとばして、本番から
             ff.stdin.write(surf.get_data())
             continue
         if ghost is not None and over and t - end_t < SCARE_DUR:
@@ -418,7 +420,7 @@ def render(seed):
             text(ctx, "時間切れ…", W / 2, 990, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"{res['layers']} / {N_LAYERS} 段までだった…", W / 2, 1110, 66, sw=12)
         elif ending is not None and over:
-            ending.draw(surf, ctx, t - end_t)
+            ending.draw(surf, ctx, t - end_t + JP.T_BIG)
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
             print(f"  描画 {fi}/{len(frames)}", file=sys.stderr)
@@ -522,23 +524,27 @@ def synth_audio(res, duration, path):
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += 0.6 * sig[:m]
     else:
+        # 全部ハマった瞬間から:ドーン!+大当たりのファンファーレ連打・キュイン・チャリンチャリン(jackpot_end の本番の部分)に、
+        # キュインキュインの連打+ファンファーレ+ジャラジャラ(pachinko.py)と「キュイン!」の連打を重ねる
         b_ = JP.music(SR, 3)
         b_ = b_.mean(axis=1) if b_.ndim == 2 else b_
-        n = int(JP.DURATION * SR)
+        b_ = b_[int(JP.T_BIG * SR) - int(0.05 * SR):]
+        n = int(WIN_DUR * SR)
         mus = np.zeros(n)
         mus[:min(n, len(b_))] += b_[:n] / (np.abs(b_).max() + 1e-9)
-        a_ = kyuin_music(SR, JP.DURATION - JP.T_BIG)
-        i = int(JP.T_BIG * SR)
-        m = min(len(a_), n - i)
-        mus[i:i + m] += 0.8 * a_[:m]
-        tt = JP.T_BIG
-        while tt < JP.DURATION - 0.5:
+        a_ = kyuin_music(SR, WIN_DUR)
+        mus[:min(n, len(a_))] += 0.8 * a_[:n]
+        tt = 0.0
+        while tt < WIN_DUR - 0.5:
             ky = kyuin_one(1.0 + 0.15 * ((int(tt / 0.3)) % 3))
             i = int(tt * SR)
             m = min(len(ky), n - i)
             mus[i:i + m] += 0.4 * ky[:m]
             tt += 0.3
-        mus *= np.minimum(1, (JP.DURATION - np.arange(n) / SR) / 0.6)
+        tb = np.arange(int(1.5 * SR)) / SR   # ドーン!
+        boom = np.sin(2 * np.pi * np.cumsum(70 * np.exp(-tb * 6) + 35) / SR) * np.exp(-tb * 2.5)
+        mus[:len(boom)] += 0.9 * boom
+        mus *= np.minimum(1, (WIN_DUR - np.arange(n) / SR) / 0.6)
         mus = np.tanh(1.6 * mus / (np.abs(mus).max() + 1e-9)) / np.tanh(1.6)
         i0 = int(end_t * SR)
         m = min(len(mus), n_out - i0)
