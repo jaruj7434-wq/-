@@ -33,7 +33,10 @@ from ball_escape import midi_hz, text  # noqa: E402
 sys.path.insert(0, os.path.join(HERE, "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 from fail_bgm import fail_music  # noqa: E402
-from pachinko import DURATION as FEVER_DUR, RainbowFever, kyuin_music  # noqa: E402
+from pachinko import kyuin_music  # noqa: E402
+sys.path.insert(0, os.path.join(HERE, "..", "glass_spiral"))
+import jackpot_end as JP  # noqa: E402   成功したときの、パチンコの当たり風の大胆な演出(フリーズ→虹ストロボ→図柄揃い→本番)
+FEVER_DUR = JP.DURATION
 
 W, H = 1080, 1920
 FPS = 60
@@ -298,6 +301,36 @@ def draw_poly(ctx, pts, light=0.82, alpha=1.0):
     ctx.stroke()
 
 
+def reel_ball(ctx, kind, x, y, ang, r, t, alpha=1.0, rng=None):
+    """図柄のリールに並ぶ絵柄:光るボール(色ちがいの7種類。7番目=虹色が揃う)。"""
+    col = colorsys.hsv_to_rgb((t * 0.7) % 1.0, 0.8, 1.0) if kind == 6 else PALETTE[kind % len(PALETTE)]
+    g = cairo.RadialGradient(x, y, r * 0.6, x, y, r * 1.5)
+    g.add_color_stop_rgba(0, *col, 0.6 * alpha)
+    g.add_color_stop_rgba(1, *col, 0)
+    ctx.arc(x, y, r * 1.5, 0, 2 * math.pi)
+    ctx.set_source(g)
+    ctx.fill()
+    if kind == 6:   # 虹色のボール:色が回る
+        for j in range(12):
+            a = 2 * math.pi * j / 12 + t * 2
+            ctx.move_to(x, y)
+            ctx.arc(x, y, r * 0.8, a, a + 2 * math.pi / 12 + 0.01)
+            ctx.close_path()
+            ctx.set_source_rgba(*colorsys.hsv_to_rgb((j / 12 + t * 0.3) % 1, 0.85, 1), alpha)
+            ctx.fill()
+    else:
+        ctx.arc(x, y, r * 0.8, 0, 2 * math.pi)
+        ctx.set_source_rgba(*col, alpha)
+        ctx.fill()
+    gr = cairo.RadialGradient(x - r * 0.3, y - r * 0.35, r * 0.05, x, y, r * 0.8)
+    gr.add_color_stop_rgba(0, 1, 1, 1, 0.85 * alpha)
+    gr.add_color_stop_rgba(0.45, 1, 1, 1, 0.1 * alpha)
+    gr.add_color_stop_rgba(1, 0, 0, 0, 0.35 * alpha)
+    ctx.arc(x, y, r * 0.8, 0, 2 * math.pi)
+    ctx.set_source(gr)
+    ctx.fill()
+
+
 def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
@@ -330,7 +363,10 @@ def render(seed):
              "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", silent],
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
-    fever = RainbowFever(W, H, seed) if not fail else None
+    ending = None
+    if not fail:
+        ending = JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6, shake=16,
+                            texts=(f"{TARGET}個!!", "COMPLETE", f"{res['n']:,} 個"))
     flashes = []
     ev_i = 0
     frozen = None
@@ -365,11 +401,13 @@ def render(seed):
         after = (t - end_t - SCARE_DUR) if (fail and over) else 0
         ctx.set_source_surface(bg, 0, 0)
         ctx.paint()
-        if fever is not None and over:
-            fever.draw_back(ctx, t - end_t)
-            ctx.arc(CX, CY, R, 0, 2 * math.pi)
-            ctx.set_source_rgba(0.02, 0.02, 0.04, 0.85)
-            ctx.fill()
+        if ending is not None and over:   # 成功:決まった瞬間の画面から、パチンコの当たり演出へ
+            if fr is not None and t - end_t < 1 / FPS + 1e-9:
+                pass   # 最初のコマはふつうに描いて、それを演出のフリーズ画面にする
+            else:
+                ending.draw(surf, ctx, t - end_t)
+                ff.stdin.write(surf.get_data())
+                continue
         # ボール
         for x, y, gg in fr["balls"].tolist():
             spr = ball_sprite(int(gg))
@@ -430,7 +468,7 @@ def render(seed):
             text(ctx, "時間切れ…", W / 2, 990, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"{res['n']:,}個までだった…", W / 2, 1110, 66, sw=12)
         elif over:
-            fever.draw_front(ctx, t - end_t, text, "大当たり!!", f"{TARGET}個達成!!")
+            ending.draw(surf, ctx, t - end_t)
         ff.stdin.write(surf.get_data())
         if fi % 300 == 0:
             print(f"  描画 {fi}/{len(frames)}", file=sys.stderr)
@@ -541,29 +579,29 @@ def synth_audio(res, duration, path):
         m = min(len(sig), n_out - i0)
         extra[i0:i0 + m] += 0.6 * sig[:m]
     else:
-        # 虹色パチンコ演出:キュインキュイン+ファンファーレ+ジャラジャラ(pachinko.py)に、大当たりのファンファーレ連打(jackpot_end.py)を重ね、
-        # 演出のあいだずっと「キュイン!」を鳴らし続ける
-        sys.path.insert(0, os.path.join(HERE, "..", "glass_spiral"))
-        import jackpot_end as JP
-        a_ = kyuin_music(SR, FEVER_DUR)
+        # パチンコの当たり演出の音(jackpot_end.py:フリーズで無音 → ドンッ → 虹ストロボのキュインキュイン → リールの回る音と止まる音 →
+        # 本番のファンファーレ連打+キュイン+チャリンチャリン)に、本番のあいだ「キュインキュイン」の連打とファンファーレ(pachinko.py)をさらに重ねて派手に
         b_ = JP.music(SR, 3)
         b_ = b_.mean(axis=1) if b_.ndim == 2 else b_
         n = int(FEVER_DUR * SR)
         mus = np.zeros(n)
-        mus[:min(n, len(a_))] += a_[:n]
-        mus[:min(n, len(b_))] += 0.8 * b_[:n] / (np.abs(b_).max() + 1e-9)
-        tt = 0.0
+        mus[:min(n, len(b_))] += b_[:n] / (np.abs(b_).max() + 1e-9)
+        a_ = kyuin_music(SR, FEVER_DUR - JP.T_BIG)
+        i = int(JP.T_BIG * SR)
+        m = min(len(a_), n - i)
+        mus[i:i + m] += 0.8 * a_[:m]
+        tt = JP.T_BIG
         while tt < FEVER_DUR - 0.5:
             ky = kyuin_one(1.0 + 0.15 * ((int(tt / 0.3)) % 3))
             i = int(tt * SR)
             m = min(len(ky), n - i)
-            mus[i:i + m] += 0.45 * ky[:m]
+            mus[i:i + m] += 0.4 * ky[:m]
             tt += 0.3
         mus *= np.minimum(1, (FEVER_DUR - np.arange(n) / SR) / 0.6)
         mus = np.tanh(1.6 * mus / (np.abs(mus).max() + 1e-9)) / np.tanh(1.6)
-        i0 = int((end_t + 0.05) * SR)
+        i0 = int(end_t * SR)
         m = min(len(mus), n_out - i0)
-        extra[i0:i0 + m] += 1.05 * mus[:m]
+        extra[i0:i0 + m] += 1.1 * mus[:m]
     wet = wet + 0.95 * extra[: len(wet)]
     mag = np.abs(wet)
     wet = np.where(mag < 0.7, wet, np.sign(wet) * (0.7 + 0.2 * np.tanh((mag - 0.7) / 0.2)))

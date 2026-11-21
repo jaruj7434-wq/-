@@ -30,7 +30,9 @@ def _rainbow(h, s=1.0, v=1.0):
 
 # ---------------------------------------------------------------- 映像
 class Jackpot:
-    def __init__(self, W, H, seed, cx, cy, draw_ball, n_kinds=6):
+    def __init__(self, W, H, seed, cx, cy, draw_ball, n_kinds=6, texts=("全部割った!!", "ALL CLEAR", "432 / 432"),
+                 shake=0.0, win=None):
+        self.texts, self.shake, self.win = texts, shake, win   # 文字(ほかの回でも使えるように)、画面ゆれの強さ、揃う絵柄
         rng = np.random.default_rng(seed + 8080)
         self.W, self.H, self.cx, self.cy = W, H, cx, cy
         self.draw_ball, self.n = draw_ball, n_kinds
@@ -158,7 +160,7 @@ class Jackpot:
             # 位置(絵柄何個ぶん回ったか)。止まる時刻に WIN がちょうど真ん中に来るように逆算する
             ts = stop - T_STROBE
             spd = 22.0   # 1秒に回る絵柄の数
-            end_pos = (10 + 3 * r) * self.n + WIN   # 止まったとき真ん中に隕石が来る位置
+            end_pos = (10 + 3 * r) * self.n + (WIN if self.win is None else self.win)   # 止まったとき真ん中に揃う絵柄が来る位置
             if t < ts:
                 if r == 1:
                     # 真ん中: 速さが途中から落ちていく(位置は止まる位置から逆算)
@@ -255,7 +257,11 @@ class Jackpot:
                     ctx.paint()
             return
         b = age - T_BIG
-        # 3) 大当たり本番
+        # 3) 大当たり本番(shake > 0 なら、ドンと出た瞬間と脈打つたびに画面がゆれる)
+        ctx.save()
+        if self.shake > 0:
+            amp = self.shake * (math.exp(-b * 4) + 0.35 * max(0.0, math.sin(age * 9)) ** 8)
+            ctx.translate(amp * math.sin(age * 83), amp * math.cos(age * 71))
         # 中心の脈打つ光
         pulse = 0.7 + 0.3 * math.sin(age * 16)
         g = cairo.RadialGradient(cx, cy, 0, cx, cy, 520)
@@ -309,22 +315,23 @@ class Jackpot:
         ctx.save()
         ctx.translate(W / 2 + shx, H * 0.43)
         ctx.scale(sc, sc)
-        self._text(ctx, "全部割った!!", 0, 55, 150, age)
+        self._text(ctx, self.texts[0], 0, 55, 150, age)
         ctx.restore()
         if b > 0.35:
             k = min(1.0, (b - 0.35) / 0.15)
             ctx.save()
             ctx.translate(W / 2, H * 0.56)
             ctx.scale(k * (1 + 0.05 * math.sin(age * 10)), k)
-            self._text(ctx, "ALL CLEAR", 0, 35, 100, age + 0.5, gold=True)
+            self._text(ctx, self.texts[1], 0, 35, 100, age + 0.5, gold=True)
             ctx.restore()
         if b > 0.6:
             k = min(1.0, (b - 0.6) / 0.15)
             ctx.save()
             ctx.translate(W / 2, H * 0.64)
             ctx.scale(k, k)
-            self._text(ctx, "432 / 432", 0, 30, 84, age + 0.2)
+            self._text(ctx, self.texts[2], 0, 30, 84, age + 0.2)
             ctx.restore()
+        ctx.restore()
         self._bulbs(ctx, age, 1.0)
         # 本番開始のフラッシュと、たまに入る虹ストロボ
         if b < 0.25:
