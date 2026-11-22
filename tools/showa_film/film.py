@@ -75,12 +75,24 @@ def font(name, size):
 
 
 # ---------------------------------------------------------------- 文字の描画
+# 和文フォントにない記号(※など)は、この字だけ別のフォントで描く
+GLYPH_FALLBACK = {"※": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"}
+
+
+def _glyph_font(ch, fnt):
+    path = GLYPH_FALLBACK.get(ch)
+    if not path or not os.path.exists(path):
+        return fnt
+    return ImageFont.truetype(path, int(fnt.size * 0.92))
+
+
 def draw_text_center(draw, cx, y, text, fnt, fill, shadow=None, spacing=0, stroke=0):
     """1行を中央揃えで描く。spacing は字間(px)、stroke は縁取りの太さ(縁の色は shadow)"""
-    widths = [draw.textlength(ch, font=fnt) for ch in text]
+    fonts = [_glyph_font(ch, fnt) for ch in text]
+    widths = [draw.textlength(ch, font=f) for ch, f in zip(text, fonts)]
     total = sum(widths) + spacing * (len(text) - 1)
     x = cx - total / 2
-    for ch, w in zip(text, widths):
+    for ch, w, fnt in zip(text, widths, fonts):
         if shadow:
             for dx, dy in ((2, 2), (1, 2), (2, 1)):
                 draw.text((x + dx, y + dy), ch, font=fnt, fill=shadow)
