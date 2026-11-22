@@ -4,8 +4,9 @@
 
 - 重力なし。ボールはいつも同じ速さで、わく・ほかのボールで跳ね返る(ねらい・補正なし)。
 - 「切られる」=レーザーの線がボールに少しでも触れた瞬間(レーザーが回って触れても、ボールが動いて触れても)。
-  分かれた2個はレーザーの両側へ、はじけるように飛び出す。分かれたばかりのボールは IMMUNE 秒のあいだ切られない。
+  分かれた2個はレーザーをはさんだ反対側(別の部屋)に1個ずつ、はじけるように飛び出す。分かれたばかりのボールは IMMUNE 秒のあいだ切られない。
 - 半径が R_MIN より小さいボールが切られると、2個にならずに消える。
+- はじめの LASER_ON 秒はレーザーのスイッチが切れていて、ボールは1個だけ。
 - 成功ならパチンコの当たり風の演出、失敗なら幽霊。
 
 使い方:
@@ -42,15 +43,16 @@ SUBSTEPS = 4
 SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
-CX, CY, R = 540.0, 1010.0, 420.0
-R0 = float(os.environ.get("R0", 250.0))            # はじめのボールの半径
-R_MIN = float(os.environ.get("R_MIN", 4.5))       # これより小さいボールは、切られると消える
+CX, CY, R = 540.0, 1030.0, 460.0
+R0 = float(os.environ.get("R0", 220.0))            # はじめのボールの半径
+R_MIN = float(os.environ.get("R_MIN", 3.0))       # これより小さいボールは、切られると消える
 SPEED = float(os.environ.get("SPEED", 260.0))
 SPIN = float(os.environ.get("SPIN", 0.9))         # レーザーが回る速さ(ラジアン/秒)
 IMMUNE = 0.35
 KICK = 140.0                                      # 分かれたボールが両側へはじける速さ
-TARGET = int(os.environ.get("TARGET", 1000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 17.5))
+LASER_ON = 1.0                                    # この時間にレーザーのスイッチが入る(それまでは1個だけ)
+TARGET = int(os.environ.get("TARGET", 2000))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 22.2))
 OUTRO = 4.2
 WIN_DUR = JP.DURATION - JP.T_BIG
 
@@ -78,8 +80,9 @@ class Game:
         self.t = 0.0
         self.events = []
         self.result, self.result_t = None, None
-        a = rng.uniform(0, 2 * math.pi)
-        p = (CX + 0.5 * (R - R0) * math.cos(a), CY + 0.5 * (R - R0) * math.sin(a))
+        # はじめの1個は、レーザー(t=0 で横向き)に触れない上か下に置く
+        a = rng.choice([-1, 1]) * (math.pi / 2 + rng.uniform(-0.15, 0.15))
+        p = (CX + (R - R0 - 1) * math.cos(a), CY + (R - R0 - 1) * math.sin(a))
         va = rng.uniform(0, 2 * math.pi)
         self.add(p, (SPEED * math.cos(va), SPEED * math.sin(va)), R0, 0, -1.0)
         self.best = 1
@@ -112,7 +115,7 @@ class Game:
             if d.length > R - info["r"]:
                 b.position = pymunk.Vec2d(CX, CY) + d.normalized() * (R - info["r"] - 1)
             dist = math.cos(ang) * (b.position.y - CY) - math.sin(ang) * (b.position.x - CX)
-            if abs(dist) < info["r"] and self.t - info["born"] > IMMUNE and self.result is None:
+            if self.t >= LASER_ON and abs(dist) < info["r"] and self.t - info["born"] > IMMUNE and self.result is None:
                 cuts.append(b)   # レーザーに触れた
         cuts.sort(key=lambda b_: self.balls[b_]["id"])
         nx, ny = -math.sin(ang), math.cos(ang)   # レーザーに垂直な向き
@@ -124,8 +127,10 @@ class Game:
                 self.events.append(("vanish", self.t, (p.x, p.y, r, info["gen"], len(self.balls))))
                 continue
             r2 = r / math.sqrt(2)
-            for sgn in (1, -1):
-                q = (p.x + sgn * nx * r2 * 1.05, p.y + sgn * ny * r2 * 1.05)
+            dist = nx * (p.x - CX) + ny * (p.y - CY)   # レーザーの線からの距離(符号つき)
+            for sgn in (1, -1):   # レーザーをはさんで、反対側の部屋に1個ずつ
+                off = sgn * r2 * 1.05 - dist
+                q = (p.x + nx * off, p.y + ny * off)
                 vv = (v.x + sgn * nx * KICK, v.y + sgn * ny * KICK)
                 self.add(q, vv, r2, info["gen"] + 1, self.t)
             self.events.append(("split", self.t, (p.x, p.y, r, info["gen"] + 1, len(self.balls))))
@@ -287,7 +292,8 @@ def render(seed):
         for wd, col, al in ((26, (1, 0.1, 0.2), 0.18), (12, (1, 0.2, 0.3), 0.45), (4, (1, 0.9, 0.9), 1.0)):
             ctx.move_to(x0, y0)
             ctx.line_to(x1, y1)
-            ctx.set_source_rgba(*col, al * (0.85 + 0.15 * math.sin(t * 40)))
+            on = 1.0 if t >= LASER_ON else 0.12 + 0.08 * (math.sin(t * 25) > 0)   # スイッチ前はうすく点滅
+            ctx.set_source_rgba(*col, on * al * (0.85 + 0.15 * math.sin(t * 40)))
             ctx.set_line_width(wd)
             ctx.stroke()
         ctx.arc(CX, CY, 16, 0, 2 * math.pi)
@@ -395,7 +401,9 @@ def synth_audio(res, duration, path):
         j = min(n_out, i + len(sig))
         if i < n_out and j > i:
             b[i:j] += gain * sig[: j - i]
-    add(hum(end_t), 0.0)
+    add(hum(end_t - LASER_ON), LASER_ON)
+    tb = _t(0.4)   # スイッチが入る「ブォン」
+    add(0.8 * np.sin(2 * np.pi * np.cumsum(60 + 200 * (1 - np.exp(-tb * 12))) / SR) * np.exp(-tb * 5), LASER_ON - 0.05)
     recent = []
     for kind, t, data in events:
         if t > end_t + 0.01:
