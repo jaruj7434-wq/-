@@ -3,8 +3,8 @@
 制限時間内に100個になれば成功、ならなければ失敗。
 
 - 重力なし。ボールはいつも同じ速さで、わく・ほかのボールで跳ね返る(ねらい・補正なし)。
-- 「切られる」=レーザーの線がボールのまん中を通りすぎた瞬間(レーザーが回って通っても、ボールが動いて通っても)。
-  分かれた2個はレーザーの両側に、はじけるように飛び出す。分かれたばかりのボールは IMMUNE 秒のあいだ切られない。
+- 「切られる」=レーザーの線がボールに少しでも触れた瞬間(レーザーが回って触れても、ボールが動いて触れても)。
+  分かれた2個はレーザーの両側へ、はじけるように飛び出す。分かれたばかりのボールは IMMUNE 秒のあいだ切られない。
 - 半径が R_MIN より小さいボールが切られると、2個にならずに消える。
 - 成功ならパチンコの当たり風の演出、失敗なら幽霊。
 
@@ -43,14 +43,14 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY, R = 540.0, 1010.0, 420.0
-R0 = float(os.environ.get("R0", 90.0))            # はじめのボールの半径
-R_MIN = float(os.environ.get("R_MIN", 7.0))       # これより小さいボールは、切られると消える
+R0 = float(os.environ.get("R0", 250.0))            # はじめのボールの半径
+R_MIN = float(os.environ.get("R_MIN", 4.5))       # これより小さいボールは、切られると消える
 SPEED = float(os.environ.get("SPEED", 260.0))
 SPIN = float(os.environ.get("SPIN", 0.9))         # レーザーが回る速さ(ラジアン/秒)
 IMMUNE = 0.35
 KICK = 140.0                                      # 分かれたボールが両側へはじける速さ
-TARGET = int(os.environ.get("TARGET", 100))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 20.5))
+TARGET = int(os.environ.get("TARGET", 1000))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 17.5))
 OUTRO = 4.2
 WIN_DUR = JP.DURATION - JP.T_BIG
 
@@ -79,7 +79,7 @@ class Game:
         self.events = []
         self.result, self.result_t = None, None
         a = rng.uniform(0, 2 * math.pi)
-        p = (CX + 0.45 * R * math.cos(a), CY + 0.45 * R * math.sin(a))
+        p = (CX + 0.5 * (R - R0) * math.cos(a), CY + 0.5 * (R - R0) * math.sin(a))
         va = rng.uniform(0, 2 * math.pi)
         self.add(p, (SPEED * math.cos(va), SPEED * math.sin(va)), R0, 0, -1.0)
         self.best = 1
@@ -111,10 +111,9 @@ class Game:
             d = b.position - (CX, CY)
             if d.length > R - info["r"]:
                 b.position = pymunk.Vec2d(CX, CY) + d.normalized() * (R - info["r"] - 1)
-            s = self.side(b, ang)
-            if info["side"] is not None and s != info["side"] and self.t - info["born"] > IMMUNE and self.result is None:
-                cuts.append(b)
-            info["side"] = s
+            dist = math.cos(ang) * (b.position.y - CY) - math.sin(ang) * (b.position.x - CX)
+            if abs(dist) < info["r"] and self.t - info["born"] > IMMUNE and self.result is None:
+                cuts.append(b)   # レーザーに触れた
         cuts.sort(key=lambda b_: self.balls[b_]["id"])
         nx, ny = -math.sin(ang), math.cos(ang)   # レーザーに垂直な向き
         for b in cuts:
@@ -242,6 +241,7 @@ def render(seed):
     bc.fill()
     frozen = None
     ev_i = 0
+    sprites = {}
     for fi, fr in enumerate(frames):
         t = fr["t"]
         while ev_i < len(events) and events[ev_i][1] <= t:
@@ -271,7 +271,14 @@ def render(seed):
             ctx.set_line_width(wd)
             ctx.stroke()
         for x, y, r, g in fr["balls"]:
-            draw_ball(ctx, x, y, r, gen_col(g))
+            sp_ = sprites.get(g)
+            if sp_ is None:   # 世代ごとに大きさが決まっているので、絵を作り置きする
+                m_ = int(math.ceil(r)) + 2
+                sp_ = cairo.ImageSurface(cairo.FORMAT_ARGB32, 2 * m_, 2 * m_)
+                draw_ball(cairo.Context(sp_), m_, m_, r, gen_col(g))
+                sprites[g] = sp_ = (sp_, m_)
+            ctx.set_source_surface(sp_[0], x - sp_[1], y - sp_[1])
+            ctx.paint()
         # レーザー(赤く光る線。まん中に回転の軸)
         a = fr["ang"]
         x0, y0 = CX - R * math.cos(a), CY - R * math.sin(a)
@@ -399,7 +406,7 @@ def synth_audio(res, duration, path):
         recent.append(t)
         if kind == "split":
             r = data[2]
-            m = 60 + int(round(12 * math.log2(R0 / r)))
+            m = 55 + int(round(7 * math.log2(R0 / r)))
             add(zap(midi_hz(min(100, m)), 0.6), t)
         elif kind == "vanish":
             add(poof(0.5, int(t * 100)), t)
