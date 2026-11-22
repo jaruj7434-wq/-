@@ -85,7 +85,8 @@ def build(cfg, src, outdir):
         a0 = s.get("a", v0)
         a1 = a0 + (v1 - v0)
         if env:  # セリフの語頭・語尾を切らないよう、無音の瞬間に合わせて区間を調整
-            n0, n1 = env.snap_start(a0), env.snap_end(a1)
+            n0 = env.snap_start(a0)
+            n1 = a1 if s.get("exact_end") else env.snap_end(a1)  # exact_end: 語の切れ目に無音がない時は指定どおりに切る
             v0, v1 = v0 + (n0 - a0), v1 + (n1 - a1)
             a0, a1 = n0, n1
         d = round((v1 - v0) * 30) / 30  # フレーム境界に揃える(映像と音声の長さを一致させる)
