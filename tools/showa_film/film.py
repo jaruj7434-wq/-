@@ -83,7 +83,7 @@ def _glyph_font(ch, fnt):
     path = GLYPH_FALLBACK.get(ch)
     if not path or not os.path.exists(path):
         return fnt
-    return ImageFont.truetype(path, int(fnt.size * 0.92))
+    return ImageFont.truetype(path, int(fnt.size * 1.0))
 
 
 def draw_text_center(draw, cx, y, text, fnt, fill, shadow=None, spacing=0, stroke=0):
