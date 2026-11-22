@@ -24,3 +24,9 @@
 - 未確認: 映像そのものが本物の GTA6 か(GTA5 MOD・AIフェイクでないか)はダウンロード後に目視で確認する
 - 状態: クラウド環境からは YouTube のボット確認でダウンロード不可。未使用(ユーザーは別動画 A1gW7NilkHg を素材として提供)
 - 確認日: 2026-11-19
+
+## 不採用(確認NG)の動画
+
+| 元動画タイトル | URL | 投稿者名 | 公開日 | ライセンス | 不採用理由 | 確認日 |
+|---|---|---|---|---|---|---|
+| ALL RARE CAR LOCATIONS — GTA 6 | https://www.youtube.com/watch?v=y_gVt2Q52Pk | How to Everything (@HowtoEverything01) | 2026-11-19 | Creative Commons Attribution license (reuse allowed) | 素材ルール2に抵触の疑い。映像の大半がWebサイトの攻略記事(第三者のスクリーンショット付き)を画面録画したもので、ナレーションも記事の読み上げ("it says…")。投稿者本人のプレイ映像とは言えず、CCライセンスが付いていても記事・画像の権利者は別のため再利用不可と判断 | 2026-11-22 |
