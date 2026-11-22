@@ -75,3 +75,4 @@
 - 改訂3 完成:take2 0-20+rip 0-7+take2 26-28+社名カード → assets/output/showa_pr/ep08_oomori3/。注意書きは画面下に「※一度ふくらませたら 三時間は戻せません」(縁取りあり)
 - 2026-11-22 しめの歌を「おおもりくんっ♪」に短く:Gemini Omni Flash 1.2 6秒 4.5cr:719b7321-71fb-4067-ad83-de170c65603f
 - しめの歌を「おおもりくんっ♪」(Gemini 1.45〜3.75秒)に差し替え、社名カード2.8秒 → assets/output/showa_pr/ep08_oomori4/
+- 冒頭を並べ替え:CMガール「殿方の"見栄"…」(take2 3.85〜7.1秒)を0秒から → 脱衣所「控えめですなぁ」(0.85〜3.67秒)→ 以降そのまま → assets/output/showa_pr/ep08_oomori5/(約31秒)
