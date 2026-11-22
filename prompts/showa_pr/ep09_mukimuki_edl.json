@@ -1,0 +1,132 @@
+{
+ "fps": 24,
+ "look": {
+  "mode": "color",
+  "tv": true,
+  "saturation": 0.9,
+  "lift": [
+   0.05,
+   0.035,
+   0.05
+  ],
+  "gain": [
+   1.0,
+   0.94,
+   0.84
+  ],
+  "gamma": [
+   0.95,
+   1.0,
+   1.05
+  ],
+  "grain": 0.035,
+  "flicker": 0.02,
+  "weave": 0.4,
+  "dust_per_frame": 0.2,
+  "hair_prob": 0,
+  "scratch_prob": 0,
+  "halation": 0.22,
+  "vignette": 0.3,
+  "glitch_rate": 0.045,
+  "seed": 1975
+ },
+ "vertical": {
+  "top_title": "昭和のまぼろしCM"
+ },
+ "base_dir": "../../assets/source/showa_pr/ep09",
+ "out_dir": "../../../output/showa_pr/ep09_mukimuki",
+ "_memo": "第9話 利き腕ガム ムキムキ一番(Wan 28秒、冒頭0.55秒の無音を削る+社名カード、しめ「ムキムキいちばんっ♪」)",
+ "cuts": [
+  {
+   "src": "wan/take1.mp4",
+   "in": 0.55,
+   "dur": 27.45,
+   "audio": true
+  },
+  {
+   "dur": 3.0,
+   "card": {
+    "bg": [
+     170,
+     40,
+     30
+    ],
+    "emblem": {
+     "y": 150,
+     "r": 40
+    },
+    "lines": [
+     {
+      "text": "利き腕ガム",
+      "y": 215,
+      "size": 34,
+      "font": "antique",
+      "spacing": 4
+     },
+     {
+      "text": "ムキムキ一番",
+      "y": 262,
+      "size": 64,
+      "font": "tokumin",
+      "spacing": 8,
+      "rule": true
+     },
+     {
+      "text": "片腕製菓",
+      "y": 372,
+      "size": 34,
+      "font": "tokumin",
+      "spacing": 6
+     },
+     {
+      "text": "架空の会社・製品です/AIで制作しています",
+      "y": 460,
+      "size": 18,
+      "font": "antique",
+      "spacing": 2
+     }
+    ]
+   }
+  }
+ ],
+ "telops": [
+  {
+   "text": "噛んで三秒 ムキムキ一番",
+   "start": 5.6,
+   "end": 9.4,
+   "font": "tokumin",
+   "stroke": "soft",
+   "color": [
+    246,
+    243,
+    236
+   ],
+   "size": 40
+  },
+  {
+   "text": "※左利きの方は 左腕がムキムキになります",
+   "start": 25.55,
+   "end": 27.45,
+   "font": "tokumin",
+   "stroke": true,
+   "color": [
+    250,
+    246,
+    236
+   ],
+   "size": 28
+  }
+ ],
+ "subtitles": [],
+ "audio": {
+  "projector_gain": 0.35,
+  "tracks": [
+   {
+    "src": "jingle_tail_mukimuki.wav",
+    "kind": "music",
+    "start": 27.5,
+    "gain": 1.0
+   }
+  ]
+ }
+}

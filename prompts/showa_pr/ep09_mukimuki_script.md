@@ -41,3 +41,4 @@
 ## 生成の記録
 - 2026-11-22 本編 Wan 3.0 28秒 28cr:4b23a618-d2df-4781-80d9-62e5611f3dfb
 - 2026-11-22 しめの歌「ムキムキいちばんっ♪」Gemini 6秒 4.5cr:4a6bb0de-f45c-4794-8a31-b2df9efefffb
+- 完成 → wan/take1.mp4(冒頭0.55秒の無音を削除)+しめ jingle_tail_mukimuki.wav(Gemini 1.35〜3.85秒)。仕上げ:prompts/showa_pr/ep09_mukimuki_edl.json → assets/output/showa_pr/ep09_mukimuki/(約30秒)
