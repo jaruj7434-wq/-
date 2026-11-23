@@ -2,9 +2,9 @@
 ボールは重力で迷路の中を流れて下からたまっていく。制限時間内に、迷路の全部のマスがボールで埋まったら成功。
 
 - 迷路は動かない。重力は下向き。迷路の形はシードごとにちがう(サイドワインダー法。入口からどのマスへも上にのぼらずに行ける)。
-- ボールは入口の上の注ぎ口から、毎秒 RATE 個ずつ出てくる。T_FAST 秒からは毎秒 RATE2 個に増量。
+- 迷路の上はふたなし。ボールは迷路の上を左右に動く注ぎ口から、毎秒 RATE 個ずつ出てくる。T_FAST 秒からは毎秒 RATE2 個に増量。
   注ぎ口のまわりがボールでいっぱいのときは出てこない。
-- マスの中のボールが FILL_N 個以上になったら、そのマスは「埋まった」(光る)。
+- マスの中のボールが FILL_N 個以上になったら、そのマスは「埋まった」(画面上の満タン度に数える)。
 - せまい通路でボールがつまる(アーチができる)と、その先が埋まらないことがある。
 - ボールの動きは物理計算のまま(ねらい・補正なし)。
 - 成功ならパチンコの大当たり風の演出、失敗なら幽霊。
@@ -59,10 +59,21 @@ LOOPS = float(os.environ.get("LOOPS", 0.2))
 CLOSE = float(os.environ.get("CLOSE", 0.6))   # 横の通路のかたまりを区切る確率
 GRAVITY = float(os.environ.get("GRAVITY", 1800.0))
 FRICTION = float(os.environ.get("FRICTION", 0.05))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 38.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 30.5))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
+
+
+SWEEP = float(os.environ.get("SWEEP", 2.4))   # 注ぎ口が左右に1往復する秒数
+NOZZLE_Y = Y0 - 150
+
+
+def nozzle(t):
+    """注ぎ口の位置(x)と左右の速さ。迷路の上を左右に行ったり来たりする。"""
+    amp = MW / 2 - 40
+    w = 2 * math.pi / SWEEP
+    return X0 + MW / 2 + amp * math.sin(w * t), amp * w * math.cos(w * t)
 
 
 # ---------------------------------------------------------------- 迷路づくり
@@ -89,8 +100,8 @@ def make_maze(rng):
         for j in range(nc):
             if rng.random() < LOOPS:
                 hw[i, j] = False
-    ent = int(rng.integers(nc))
-    hw[0, ent] = False   # 入口(上)
+    hw[0, :] = False   # 上はふたなし(どの列にも上から入れる → 上でつまらない)
+    ent = 0
     segs = []
     for i in range(nr + 1):
         for j in range(nc):
@@ -120,16 +131,13 @@ class Game:
             s = pymunk.Segment(sp.static_body, a, b, WALL_R)
             s.elasticity, s.friction = 0.3, FRICTION
             shapes.append(s)
-        # 注ぎ口(入口の上のじょうご)
-        ex = X0 + (self.ent + 0.5) * CELL
-        self.spout = (ex, Y0 - 40)
-        for sx in (-1, 1):
-            s = pymunk.Segment(sp.static_body, (ex + sx * CELL * 0.42, Y0 - 115), (ex + sx * CELL * 0.42, Y0 - 4), WALL_R)
+        # 迷路の左右の壁を上にのばす(上にあふれたボールがこぼれないように)
+        self.funnel = [((X0, Y0 - 130), (X0, Y0)), ((X0 + MW, Y0 - 130), (X0 + MW, Y0))]
+        for a, b in self.funnel:
+            s = pymunk.Segment(sp.static_body, a, b, WALL_R)
             s.elasticity, s.friction = 0.3, FRICTION
             shapes.append(s)
         sp.add(*shapes)
-        self.funnel = [((ex - CELL * 0.42, Y0 - 115), (ex - CELL * 0.42, Y0 - 4)),
-                       ((ex + CELL * 0.42, Y0 - 115), (ex + CELL * 0.42, Y0 - 4))]
         self.t = 0.0
         self.events = []
         self.result, self.result_t = None, None
@@ -141,10 +149,11 @@ class Game:
         self.dropped = 0
 
     def spawn(self):
-        """注ぎ口の中のあいている場所に1個出す(5回さがしてあいていなければ出さない)。"""
+        """左右に動く注ぎ口から1個出す(出口のまわりがボールでいっぱいなら出さない)。"""
+        nx, vx = nozzle(self.t)
         for _ in range(8):
-            x = self.spout[0] + self.rng.uniform(-CELL * 0.3, CELL * 0.3)
-            y = self.spout[1] + self.rng.uniform(-70, 25)
+            x = nx + self.rng.uniform(-20, 20)
+            y = NOZZLE_Y + 15 + self.rng.uniform(0, 70)
             hit = self.space.point_query((x, y), 2 * BALL_R + 0.5, pymunk.ShapeFilter())
             if not any(h.shape.body.body_type == pymunk.Body.DYNAMIC for h in hit):
                 break
@@ -152,7 +161,7 @@ class Game:
             return False   # 注ぎ口がつまっている
         b = pymunk.Body(1.0, pymunk.moment_for_circle(1.0, 0, BALL_R))
         b.position = (x, y)
-        b.velocity = (self.rng.uniform(-30, 30), 900)
+        b.velocity = (vx + self.rng.uniform(-20, 20), 1000)
         s = pymunk.Circle(b, BALL_R)
         s.elasticity, s.friction = 0.3, FRICTION
         self.space.add(b, s)
@@ -313,15 +322,12 @@ def render(seed):
         s_ = cairo.ImageSurface(cairo.FORMAT_ARGB32, 2 * m_, 2 * m_)
         draw_ball(cairo.Context(s_), m_, m_, BALL_R, PALETTE[c])
         sprites[c] = s_
-    fill_t = {}
     frozen = None
     ev_i = 0
     for fi, fr in enumerate(frames):
         t = fr["t"]
         while ev_i < len(events) and events[ev_i][1] <= t:
             kind, et, data = events[ev_i]
-            if kind == "fill":
-                fill_t[(data[0], data[1])] = et
             ev_i += 1
         over = end_t is not None and t >= end_t
         win_b = (t - end_t) if (ending is not None and over) else -1.0
@@ -341,28 +347,23 @@ def render(seed):
         after = (t - end_t - SCARE_DUR) if (fail and over) else 0
         ctx.set_source_surface(bg, 0, 0)
         ctx.paint()
-        # 埋まったマスは光る(埋まった瞬間はパッと明るく)
-        for (i, j), t0 in fill_t.items():
-            a_ = t - t0
-            k = math.exp(-a_ * 4)
-            hue = (i * 0.09 + j * 0.05) % 1
-            ctx.rectangle(X0 + j * CELL, Y0 + i * CELL, CELL, CELL)
-            ctx.set_source_rgba(*hsv(hue + (t * 0.8 if win_b >= 0 else 0)), 0.16 + 0.5 * k)
-            ctx.fill()
         ctx.set_source_surface(msurf, 0, 0)
         ctx.paint()
         cyc = int(win_b * 30) if win_b >= 0 else 0
         for x, y, c in fr["balls"]:
             ctx.set_source_surface(sprites[(int(c) + cyc) % 12], x - m_, y - m_)
             ctx.paint()
-        for (i, j), t0 in fill_t.items():   # 埋まった瞬間の白いわく
-            a_ = t - t0
-            if a_ < 0.4:
-                k = 1 - a_ / 0.4
-                ctx.rectangle(X0 + j * CELL + 4, Y0 + i * CELL + 4, CELL - 8, CELL - 8)
-                ctx.set_source_rgba(1, 1, 1, k)
-                ctx.set_line_width(5)
-                ctx.stroke()
+        nx_, _ = nozzle(min(t, end_t) if end_t is not None else t)   # 注ぎ口
+        ctx.rectangle(nx_ - 26, NOZZLE_Y - 60, 52, 66)
+        g_ = cairo.LinearGradient(nx_ - 26, 0, nx_ + 26, 0)
+        g_.add_color_stop_rgb(0, 0.45, 0.48, 0.55)
+        g_.add_color_stop_rgb(0.4, 0.95, 0.97, 1.0)
+        g_.add_color_stop_rgb(1, 0.35, 0.38, 0.45)
+        ctx.set_source(g_)
+        ctx.fill()
+        ctx.rectangle(X0 - 10, NOZZLE_Y - 66, MW + 20, 8)   # 注ぎ口が動くレール
+        ctx.set_source_rgba(0.8, 0.85, 0.95, 0.6)
+        ctx.fill()
         if 0 <= t - T_FAST < 1.4 and not over:
             a_ = t - T_FAST
             k = min(1.0, a_ / 0.15)
@@ -450,15 +451,6 @@ def pour(dur, seed, t_fast):
     return 0.12 * y
 
 
-def chime(f, amp):
-    t = _t(0.5)
-    y = np.sin(2 * np.pi * f * t) + 0.4 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t * 8) + 0.2 * np.sin(2 * np.pi * 3 * f * t) * np.exp(-t * 14)
-    return amp * y * np.exp(-t * 6) * np.minimum(1, t / 0.004)
-
-
-PENTA = [0, 2, 4, 7, 9]
-
-
 def synth_audio(res, duration, path):
     events, end_t, fail = res["events"], res["result_t"], res["result"] == "fail"
     n_out = int((duration + 5) * SR)
@@ -472,7 +464,6 @@ def synth_audio(res, duration, path):
         if i < n_out and j > i:
             b[i:j] += gain * sig[: j - i]
     add(pour(end_t, 3, T_FAST), 0.0)
-    last = -1.0
     for kind, t, data in events:
         if t > end_t + 0.01:
             continue
@@ -480,14 +471,6 @@ def synth_audio(res, duration, path):
             tb = _t(0.5)
             for k, m in enumerate((79, 84, 91)):
                 add(0.5 * np.sign(np.sin(2 * np.pi * midi_hz(m) * tb)) * np.exp(-tb * 6), t + 0.09 * k)
-        elif kind == "fill":   # マスが埋まるたびに1音ずつ高くなる
-            if t - last < 0.04:
-                t = last + 0.04
-            last = t
-            k = data[2] - 1
-            idx = int(k * 16 / TOTAL)   # 全部で3オクターブ上がる
-            m = 60 + 12 * (idx // 5) + PENTA[idx % 5]
-            add(chime(midi_hz(min(m, 108)), 0.6), t)
     wet = out.copy()
     for dd, g_ in ((0.043, 0.2), (0.071, 0.13)):
         kk = int(dd * SR)
