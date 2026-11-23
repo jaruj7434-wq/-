@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 from fail_bgm import fail_music  # noqa: E402
 from pachinko import RainbowFever, hsv, kyuin_music  # noqa: E402
+from flashy import PALETTE, draw_ball, drip_layout, giragira, kyuin_one, scary_text  # noqa: E402
 sys.path.insert(0, os.path.join(HERE, "..", "glass_spiral"))
 import jackpot_end as JP  # noqa: E402
 
@@ -57,7 +58,6 @@ TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 22.7))
 OUTRO = 4.2
 WIN_DUR = JP.DURATION - JP.T_BIG
 PRE = 0.7   # 成功した瞬間、ボールが虹色にギラギラ光る時間(このあと大当たり本番)
-SCARY_FONT = "Yuji Boku"   # 「失敗したら・・・」の筆文字(SIL OFL・Google Fonts。~/.fonts に入れて使う)
 
 
 def laser_ang(t):
@@ -184,146 +184,14 @@ def search(n):
 GOLD = (1, 0.86, 0.2)
 
 
-PALETTE = [colorsys.hsv_to_rgb(k / 12, 0.85, 1.0) for k in range(12)]   # 12色の虹
 
 
 def gen_col(g):
     return colorsys.hsv_to_rgb((0.55 + 0.11 * g) % 1.0, 0.75, 1.0)
 
 
-def draw_ball(ctx, x, y, r, col):
-    g = cairo.RadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r)
-    g.add_color_stop_rgb(0, *(min(1, c + 0.5) for c in col))
-    g.add_color_stop_rgb(0.5, *col)
-    g.add_color_stop_rgb(1, *(c * 0.55 for c in col))
-    ctx.arc(x, y, r, 0, 2 * math.pi)
-    ctx.set_source(g)
-    ctx.fill()
-
-
 def reel_ball(ctx, kind, x, y, ang, r, t, alpha=1.0, rng=None):
     draw_ball(ctx, x, y, r * 0.8, gen_col(kind))
-
-
-def giragira(ctx, b, fever, glints):
-    """大当たり本番の上に重ねる、虹色のギラギラ(ホログラムの光・ストロボ・サーチライト・きらめき・虹の枠)。"""
-    main = WIN_DUR
-    ctx.set_operator(cairo.OPERATOR_ADD)
-    # ホログラムのように、ななめに流れる虹の光
-    off = (b * 1100) % 1400
-    g = cairo.LinearGradient(-1400 + off, -200, off + 400, H + 200)
-    for k in range(25):
-        g.add_color_stop_rgba(k / 24, *hsv(k / 8 + b * 0.8), 0.26 if k % 2 == 0 else 0.0)
-    ctx.set_source(g)
-    ctx.paint()
-    # キュインの拍(0.3秒)ごとの虹ストロボ
-    ph = (b % 0.3) / 0.3
-    ctx.set_source_rgba(*hsv(b * 2.7), 0.32 * (1 - ph) ** 3)
-    ctx.paint()
-    # 下の両すみから振れる虹のサーチライト
-    for side in (-1, 1):
-        for j in range(3):
-            ang = -math.pi / 2 + side * (0.35 + 0.3 * math.sin(b * 2.2 + j * 2.1))
-            x0 = W / 2 + side * (W / 2 + 40)
-            y0 = H + 40
-            ln = 2400
-            spread = 0.07
-            ctx.move_to(x0, y0)
-            ctx.line_to(x0 + ln * math.cos(ang - spread), y0 + ln * math.sin(ang - spread))
-            ctx.line_to(x0 + ln * math.cos(ang + spread), y0 + ln * math.sin(ang + spread))
-            ctx.close_path()
-            lg = cairo.LinearGradient(x0, y0, x0 + ln * math.cos(ang), y0 + ln * math.sin(ang))
-            col = hsv(b * 0.9 + j / 3 + (0.5 if side > 0 else 0))
-            lg.add_color_stop_rgba(0, *col, 0.55)
-            lg.add_color_stop_rgba(1, *col, 0.0)
-            ctx.set_source(lg)
-            ctx.fill()
-    # 画面じゅうでピカッと光るきらめき(十字の光)
-    for x, y, ph0, sp, sz in glints:
-        tw = max(0.0, math.sin((b * sp + ph0) * 2 * math.pi)) ** 6
-        if tw < 0.02:
-            continue
-        L = sz * (0.5 + tw)
-        for ang, ll in ((0, L), (math.pi / 2, L), (math.pi / 4, L * 0.45), (-math.pi / 4, L * 0.45)):
-            dx, dy = ll * math.cos(ang), ll * math.sin(ang)
-            lg = cairo.LinearGradient(x - dx, y - dy, x + dx, y + dy)
-            lg.add_color_stop_rgba(0, 1, 1, 1, 0)
-            lg.add_color_stop_rgba(0.5, 1, 1, 1, tw)
-            lg.add_color_stop_rgba(1, 1, 1, 1, 0)
-            ctx.set_source(lg)
-            ctx.set_line_width(3)
-            ctx.move_to(x - dx, y - dy)
-            ctx.line_to(x + dx, y + dy)
-            ctx.stroke()
-        rg = cairo.RadialGradient(x, y, 0, x, y, L * 0.35)
-        rg.add_color_stop_rgba(0, *hsv(ph0 + b), tw)
-        rg.add_color_stop_rgba(1, *hsv(ph0 + b), 0)
-        ctx.set_source(rg)
-        ctx.arc(x, y, L * 0.35, 0, 2 * math.pi)
-        ctx.fill()
-    ctx.set_operator(cairo.OPERATOR_OVER)
-    # 画面のふちの、色が流れる虹の枠と、虹の星
-    fever.draw_front(ctx, b, lambda *a, **k: None, "", "")
-    if b > main - 0.6:
-        ctx.set_source_rgba(0, 0, 0, min(1.0, (b - (main - 0.6)) / 0.6))
-        ctx.paint()
-
-
-def drip_layout(ctx, part, cx, y, size, full, seed):
-    """「失敗したら」の文字の下から垂れる血のしずくの位置(x, 最大の長さ, 太さ, 垂れはじめる時間)。"""
-    ctx.select_font_face(SCARY_FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(size)
-    ef = ctx.text_extents(full)
-    ep = ctx.text_extents(part)
-    x0 = cx - ef.width / 2 - ef.x_bearing + ep.x_bearing
-    rng = np.random.default_rng(seed + 11)
-    return [(x0 + ep.width * (k + rng.uniform(0.25, 0.75)) / 6, rng.uniform(30, 80), rng.uniform(8, 13), rng.uniform(0, 6))
-            for k in range(6)]
-
-
-def scary_text(ctx, s, x, y, size, t, drips):
-    """怖い筆文字:赤くにじむ光+血のしずく+ときどきチラつく。"""
-    flick = (t % 2.3) < 0.09   # 2.3秒に一度、一瞬チラつく
-    jx = (6 * math.sin(t * 97)) if flick else 0.0
-    alpha = 0.55 if flick else 1.0
-    ctx.select_font_face(SCARY_FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(size)
-    e = ctx.text_extents(s)
-    tx = x - e.width / 2 - e.x_bearing + jx
-    # 血のしずく(文字のうしろから、ゆっくり垂れる)
-    for dx, ln, wd, t0 in drips:
-        k = max(0.0, min(1.0, (t - t0) / 6.0))
-        L = 6 + ln * (k * k * (3 - 2 * k))
-        x_ = dx + jx
-        top = y - size * 0.25
-        ctx.move_to(x_ - wd / 2, top)
-        ctx.line_to(x_ - wd * 0.3, y + L)
-        ctx.line_to(x_ + wd * 0.3, y + L)
-        ctx.line_to(x_ + wd / 2, top)
-        ctx.close_path()
-        ctx.set_source_rgba(0.55, 0.0, 0.03, alpha)
-        ctx.fill()
-        ctx.arc(x_, y + L, wd * 0.75, 0, 2 * math.pi)
-        ctx.fill()
-    # 赤くにじむ光
-    for wd, al in ((34, 0.10), (22, 0.18), (12, 0.35)):
-        ctx.move_to(tx, y)
-        ctx.text_path(s)
-        ctx.set_source_rgba(0.9, 0.0, 0.05, al * alpha)
-        ctx.set_line_width(wd)
-        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-        ctx.stroke()
-    ctx.move_to(tx, y)
-    ctx.text_path(s)
-    ctx.set_source_rgba(0.05, 0, 0, alpha)
-    ctx.set_line_width(6)
-    ctx.stroke_preserve()
-    g = cairo.LinearGradient(0, y - size * 0.9, 0, y + size * 0.15)
-    g.add_color_stop_rgba(0, 1.0, 0.25, 0.25, alpha)
-    g.add_color_stop_rgba(0.5, 0.85, 0.02, 0.05, alpha)
-    g.add_color_stop_rgba(1, 0.4, 0.0, 0.02, alpha)
-    ctx.set_source(g)
-    ctx.fill()
 
 
 def render(seed):
@@ -390,7 +258,7 @@ def render(seed):
         win_b = (t - end_t) if (ending is not None and over) else -1.0
         if win_b >= PRE:
             ending.draw(surf, ctx, win_b - PRE + JP.T_BIG)
-            giragira(ctx, win_b - PRE, fever, glints)
+            giragira(ctx, win_b - PRE, fever, glints, W, H, WIN_DUR)
             ff.stdin.write(surf.get_data())
             continue
         if ghost is not None and over and t - end_t < SCARE_DUR:
@@ -526,14 +394,6 @@ def hum(dur):
     """レーザーの低いうなり。"""
     t = _t(dur)
     return 0.15 * (np.sin(2 * np.pi * 110 * t) + 0.5 * np.sin(2 * np.pi * 220.7 * t)) * (0.8 + 0.2 * np.sin(2 * np.pi * 6 * t))
-
-
-def kyuin_one(up=1.0):
-    t = _t(0.28)
-    f = up * (500 + 2900 * (1 - np.exp(-t / 0.06))) * (1 + 0.03 * np.sin(2 * np.pi * 32 * t))
-    ph = 2 * np.pi * np.cumsum(f) / SR
-    y = np.sin(ph) + 0.35 * np.sign(np.sin(ph)) + 0.3 * np.sin(2 * ph)
-    return y * np.minimum(1, t / 0.01) * np.exp(-np.maximum(0, t - 0.16) / 0.05)
 
 
 def synth_audio(res, duration, path):
