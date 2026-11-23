@@ -1,5 +1,5 @@
 """「レーザーで切って100個にできる?」丸いわくの中を、まん中を通るレーザーがゆっくり回る。
-ボールがレーザーに切られるたびに、面積が半分の2個に分かれる。小さくなりすぎたボールは、切られると消えてしまう。
+ボールがレーザーに切られるたびに、少し小さい2個に分かれる。小さくなりすぎたボールは、切られると消えてしまう。
 制限時間内に100個になれば成功、ならなければ失敗。
 
 - 重力なし。ボールはいつも同じ速さで、わく・ほかのボールで跳ね返る(ねらい・補正なし)。
@@ -45,14 +45,15 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY, R = 540.0, 1030.0, 460.0
 R0 = float(os.environ.get("R0", 220.0))            # はじめのボールの半径
-R_MIN = float(os.environ.get("R_MIN", 3.0))       # これより小さいボールは、切られると消える
+R_MIN = float(os.environ.get("R_MIN", 4.5))       # これより小さいボールは、切られると消える
 SPEED = float(os.environ.get("SPEED", 260.0))
 SPIN = float(os.environ.get("SPIN", 0.9))         # レーザーが回る速さ(ラジアン/秒)
 IMMUNE = 0.35
 KICK = 140.0                                      # 分かれたボールが両側へはじける速さ
+SHRINK = float(os.environ.get("SHRINK", 0.73))  # 分かれたボールの半径 = 元の半径 × SHRINK
 LASER_ON = 1.0                                    # この時間にレーザーのスイッチが入る(それまでは1個だけ)
 TARGET = int(os.environ.get("TARGET", 2000))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 22.2))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 22.7))
 OUTRO = 4.2
 WIN_DUR = JP.DURATION - JP.T_BIG
 
@@ -84,16 +85,16 @@ class Game:
         a = rng.choice([-1, 1]) * (math.pi / 2 + rng.uniform(-0.15, 0.15))
         p = (CX + (R - R0 - 1) * math.cos(a), CY + (R - R0 - 1) * math.sin(a))
         va = rng.uniform(0, 2 * math.pi)
-        self.add(p, (SPEED * math.cos(va), SPEED * math.sin(va)), R0, 0, -1.0)
+        self.add(p, (SPEED * math.cos(va), SPEED * math.sin(va)), R0, 0, -1.0, 0)
         self.best = 1
 
-    def add(self, pos, vel, r, gen, born):
+    def add(self, pos, vel, r, gen, born, col):
         b = pymunk.Body(1.0, pymunk.moment_for_circle(1.0, 0, r))
         b.position, b.velocity = pos, vel
         s = pymunk.Circle(b, r)
         s.elasticity, s.friction = 1.0, 0.0
         self.space.add(b, s)
-        self.balls[b] = {"id": self.next_id, "shape": s, "r": r, "gen": gen, "born": born, "side": None}
+        self.balls[b] = {"id": self.next_id, "shape": s, "r": r, "gen": gen, "born": born, "col": col}
         self.next_id += 1
 
     def side(self, b, ang):
@@ -126,13 +127,13 @@ class Game:
             if r < R_MIN:   # 小さすぎ:消える
                 self.events.append(("vanish", self.t, (p.x, p.y, r, info["gen"], len(self.balls))))
                 continue
-            r2 = r / math.sqrt(2)
+            r2 = r * SHRINK
             dist = nx * (p.x - CX) + ny * (p.y - CY)   # レーザーの線からの距離(符号つき)
-            for sgn in (1, -1):   # レーザーをはさんで、反対側の部屋に1個ずつ
+            for sgn, dc in ((1, 5), (-1, 7)):   # レーザーをはさんで、反対側の部屋に1個ずつ
                 off = sgn * r2 * 1.05 - dist
                 q = (p.x + nx * off, p.y + ny * off)
                 vv = (v.x + sgn * nx * KICK, v.y + sgn * ny * KICK)
-                self.add(q, vv, r2, info["gen"] + 1, self.t)
+                self.add(q, vv, r2, info["gen"] + 1, self.t, (info["col"] + dc) % 12)   # 2個はちがう色
             self.events.append(("split", self.t, (p.x, p.y, r, info["gen"] + 1, len(self.balls))))
             self.best = max(self.best, len(self.balls))
         if self.result is None:
@@ -155,7 +156,7 @@ def simulate(seed, record=False):
             g.step(dt)
         if record:
             frames.append({"t": g.t, "ang": laser_ang(g.t), "n": len(g.balls),
-                           "balls": [(b.position.x, b.position.y, i["r"], i["gen"]) for b, i in g.balls.items()]})
+                           "balls": [(b.position.x, b.position.y, i["r"], i["col"]) for b, i in g.balls.items()]})
         if g.result is not None:
             extra = (OUTRO + SCARE_DUR) if g.result == "fail" else WIN_DUR
             if not record or g.t > g.result_t + extra:
@@ -179,6 +180,9 @@ def search(n):
 
 # ---------------------------------------------------------------- 描画
 GOLD = (1, 0.86, 0.2)
+
+
+PALETTE = [colorsys.hsv_to_rgb(k / 12, 0.85, 1.0) for k in range(12)]   # 12色の虹
 
 
 def gen_col(g):
@@ -275,12 +279,13 @@ def render(seed):
             ctx.set_source_rgba(1, 1, 1, al)
             ctx.set_line_width(wd)
             ctx.stroke()
-        for x, y, r, g in fr["balls"]:
+        for x, y, r, c in fr["balls"]:
+            g = (round(r, 2), c)
             sp_ = sprites.get(g)
             if sp_ is None:   # 世代ごとに大きさが決まっているので、絵を作り置きする
                 m_ = int(math.ceil(r)) + 2
                 sp_ = cairo.ImageSurface(cairo.FORMAT_ARGB32, 2 * m_, 2 * m_)
-                draw_ball(cairo.Context(sp_), m_, m_, r, gen_col(g))
+                draw_ball(cairo.Context(sp_), m_, m_, r, PALETTE[c])
                 sprites[g] = sp_ = (sp_, m_)
             ctx.set_source_surface(sp_[0], x - sp_[1], y - sp_[1])
             ctx.paint()
