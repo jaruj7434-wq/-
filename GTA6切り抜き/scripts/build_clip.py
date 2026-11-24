@@ -107,7 +107,12 @@ def build(cfg, src, outdir):
         f.writelines(f"file '{p}'\n" for p in parts)
     master = os.path.join(tmp, "master.mkv")  # 音声は PCM のままつなぐ(AAC のつなぎ目の隙間を防ぐ)
     run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", master])
+    render(cfg, master, times, total, sw, ch, tmp, outdir)
 
+
+def render(cfg, master, times, total, sw, ch, tmp, outdir):
+    """連結済みマスター(640x360 + 音声)にテロップを載せて、縦型・横型を書き出す。
+    times: [(開始, 終了, クロップx, free_crop)] を cfg["segments"] と同じ順で渡す。"""
     # ラウドネス -14 LUFS(コンプ → 2パス loudnorm)
     pre = "acompressor=threshold=0.05:ratio=4:attack=5:release=200:makeup=2"
     r = run(["ffmpeg", "-hide_banner", "-i", master, "-af", pre + ",loudnorm=I=-14:TP=-1:LRA=11:print_format=json",

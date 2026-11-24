@@ -1,0 +1,25 @@
+{
+ "name": "20261124_gta6_fastest_car",
+ "source": "https://www.youtube.com/watch?v=km51HmZK8Ug",
+ "narration": "Higgsfield text2speech_v2 / ElevenLabs / preset voice Hana (c25f78a0-714e-42af-8da3-a399cef94968)",
+ "narr_speed": 1.12,
+ "gap": 0.18,
+ "game_vol": 0.15,
+ "x": 0.5,
+ "title": ["GTA6", "最速の車の入手方法"],
+ "hook": ["グリッチなしで", "最速の車をGET!"],
+ "outro": ["詳しい場所は", "概要欄の元動画で!"],
+ "outro_sec": 3.2,
+ "credit": "素材: LunarGaming (YouTube / CC BY)",
+ "segments": [
+  {"narr": "../03_edit/narr/line1.mp3", "clips": [[0.5, 7.0]], "game_audio": false},
+  {"narr": "../03_edit/narr/line2.mp3", "clips": [[420.0, 428.0]], "l1": "GTA6最速", "l2": "トゥルファード・スラックス"},
+  {"narr": "../03_edit/narr/line3.mp3", "clips": [[57, 59], [78, 80], [97, 99], [112, 114], [130, 132]], "l1": "入手条件", "l2": "ノーフラッシュのタグを10個スキャン"},
+  {"narr": "../03_edit/narr/line4.mp3", "clips": [[146, 148], [166, 168], [181, 183], [197, 199], [212, 214]], "l1": "タグは全10か所", "l2": "場所は概要欄の元動画で"},
+  {"narr": "../03_edit/narr/line5.mp3", "clips": [[219.5, 225]], "l1": "10個そろうと", "l2": "アプリでアジトの場所が判明"},
+  {"narr": "../03_edit/narr/line6.mp3", "clips": [[248, 250.5], [258, 262]], "l1": "アジトに潜入", "l2": "ドアのコードを見つけて中へ"},
+  {"narr": "../03_edit/narr/line7.mp3", "clips": [[355, 360]], "l1": "ガレージに…", "l2": "お目当てのスラックス!"},
+  {"narr": "../03_edit/narr/line8.mp3", "clips": [[395, 404]], "l1": "注意", "l2": "ガレージ登録に7万ドル必要"},
+  {"narr": "../03_edit/narr/line9.mp3", "clips": [[445, 450]], "l1": "最高速は全車トップ", "l2": "ぜひ体感してみて!"}
+ ]
+}
