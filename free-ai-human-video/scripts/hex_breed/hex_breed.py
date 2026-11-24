@@ -60,6 +60,11 @@ MAX_OBJ = TARGET + 40
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
+VS = float(os.environ.get("VIEW_SCALE", 1.2))   # 画面に描くときの拡大(物理はそのまま。図形とボールを大きく見せる)
+
+
+def vx(x, y):
+    return CX + (x - CX) * VS, CY + (y - CY) * VS
 
 
 def hex_segments():
@@ -294,10 +299,10 @@ def render(seed):
     bc.set_source(gr)
     bc.paint()
     sprites = {}
-    m_ = int(math.ceil(BALL_R)) + 2
+    m_ = int(math.ceil(BALL_R * VS)) + 2
     for c in range(12):
         s_ = cairo.ImageSurface(cairo.FORMAT_ARGB32, 2 * m_, 2 * m_)
-        draw_ball(cairo.Context(s_), m_, m_, BALL_R, PALETTE[c])
+        draw_ball(cairo.Context(s_), m_, m_, BALL_R * VS, PALETTE[c])
         sprites[c] = s_
     pops = []
     frozen = None
@@ -330,6 +335,7 @@ def render(seed):
         # 六角形のわく(すき間のところは赤く光る「出口」)
         ctx.save()
         ctx.translate(CX, CY)
+        ctx.scale(VS, VS)
         ctx.rotate(fr["ang"])
         ctx.set_line_cap(cairo.LINE_CAP_ROUND)
         for wd, col, al in ((30, (0.2, 0.7, 1.0), 0.12), (18, (0.3, 0.8, 1.0), 0.3), (2 * WALL_R, (0.85, 0.97, 1.0), 1.0)):
@@ -359,10 +365,12 @@ def render(seed):
             text(ctx, "出口", lx, ly + 14, 40, rgb=(1, 0.4, 0.4), sw=8)
         cyc = int(win_b * 30) if win_b >= 0 else 0
         for x, y, c, age in fr["fly"]:   # 外に出たボール(うすくなって消える)
-            ctx.arc(x, y, BALL_R, 0, 2 * math.pi)
+            x, y = vx(x, y)
+            ctx.arc(x, y, BALL_R * VS, 0, 2 * math.pi)
             ctx.set_source_rgba(*PALETTE[int(c)], max(0.0, 1 - age))
             ctx.fill()
         for x, y, c in fr["balls"]:
+            x, y = vx(x, y)
             ctx.set_source_surface(sprites[(int(c) + cyc) % 12], x - m_, y - m_)
             ctx.paint()
         keep = []
@@ -370,7 +378,8 @@ def render(seed):
             a_ = t - t0
             if a_ < 0.3:
                 k = 1 - a_ / 0.3
-                ctx.arc(x, y, BALL_R + 25 * a_ / 0.3, 0, 2 * math.pi)
+                px, py = vx(x, y)
+                ctx.arc(px, py, (BALL_R + 25 * a_ / 0.3) * VS, 0, 2 * math.pi)
                 ctx.set_source_rgba(1, 1, 1, 0.8 * k)
                 ctx.set_line_width(2.5)
                 ctx.stroke()
@@ -429,12 +438,21 @@ def _t(d):
     return np.arange(int(d * SR)) / SR
 
 
-def pop_snd(n):
-    """生まれる「ポン」(数が増えるほど少しずつ高く)。"""
-    t = _t(0.12)
-    m = 67 + min(24, int(10 * math.log2(1 + n / 8)))
+PENTA = [0, 2, 4, 7, 9]
+
+
+def pop_snd(n, seed):
+    """ぶつかって生まれる「コロン」:マリンバとベルを混ぜたやわらかい音。ペンタトニックの音階から、数が増えるほど高い音が出やすい。"""
+    rng = np.random.default_rng(seed)
+    base = min(10, int(2.2 * math.log2(1 + n / 3)))
+    idx = base + int(rng.integers(0, 5))
+    m = 60 + 12 * (idx // 5) + PENTA[idx % 5]
     f = midi_hz(m)
-    return 0.6 * (np.sin(2 * np.pi * f * t) + 0.3 * np.sin(4 * np.pi * f * t)) * np.exp(-t * 30)
+    t = _t(0.7)
+    att = np.minimum(1, t / 0.003)
+    mar = np.sin(2 * np.pi * f * t) * np.exp(-t * 7) + 0.35 * np.sin(2 * np.pi * 4 * f * t) * np.exp(-t * 28)
+    bell = 0.35 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t * 5) + 0.12 * np.sin(2 * np.pi * 3.01 * f * t) * np.exp(-t * 9)
+    return 0.5 * att * (mar + bell)
 
 
 def out_snd():
@@ -465,7 +483,7 @@ def synth_audio(res, duration, path):
             if len(rb) >= 3:
                 continue
             rb.append(t)
-            add(pop_snd(data[2]), t)
+            add(pop_snd(data[2], int(t * 1000)), t)
         elif kind == "out":
             ro = [x for x in ro if t - x < 0.12]
             if len(ro) >= 2:
@@ -473,7 +491,7 @@ def synth_audio(res, duration, path):
             ro.append(t)
             add(out_snd(), t)
     wet = out.copy()
-    for dd, g_ in ((0.043, 0.2), (0.071, 0.13)):
+    for dd, g_ in ((0.043, 0.22), (0.071, 0.15), (0.113, 0.1), (0.167, 0.07)):   # ひびき
         kk = int(dd * SR)
         wet[kk:] += out[:-kk] * g_
     wet = wet[: int(duration * SR)]
