@@ -375,7 +375,8 @@ def render(seed):
         left = max(0.0, TIME_LIMIT - tt)
         chic(ctx, f"{left:4.1f}", W / 2, 515, 40, rgb=(1, 0.45, 0.45) if left < 5 else (0.7, 0.75, 0.85), weight="Medium")
         if not over:
-            scary_text(ctx, "失敗したら・・・", W / 2, 1590, 78, t, drips)
+            flick = 0.55 if (t % 2.3) < 0.08 else 1.0   # ときどき一瞬ちらつく
+            chic(ctx, "失敗したら…", W / 2, 1585, 58, rgb=(1, 0.38, 0.42), alpha=flick)
         if over and fail:
             k = min(1.0, after / 0.25)
             ctx.rectangle(0, 880, W, 300)
