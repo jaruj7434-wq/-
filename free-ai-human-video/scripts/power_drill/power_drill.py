@@ -43,16 +43,17 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 SHAFT_W = 620.0                      # 穴のはば(世界の座標)
 BALL_R = 9.0
-PITCH = float(os.environ.get("PITCH", 6.0))     # 板1枚の厚み(すき間こみ)
-N_LAYER = int(os.environ.get("N_LAYER", 2047))  # 板の枚数(1+2+4+…+1024 = 2047)
+PITCH = float(os.environ.get("PITCH", 3.0))     # 板1枚の厚み(すき間こみ)
+N_LAYER = int(os.environ.get("N_LAYER", 4095))  # 板の枚数(1+2+4+…+2048 = 4095)
 TOP0 = 420.0                         # 天井から1枚目の板までのきょり
 V0 = float(os.environ.get("V0", 700.0))         # パワー1のときの速さ
 V_EXP = float(os.environ.get("V_EXP", 0.3))     # 速さ = V0 × パワー^V_EXP
 DRILL_V = float(os.environ.get("DRILL_V", 1500.0))   # 板を割りながら進むときの最高の速さ
 JITTER = float(os.environ.get("JITTER", 0.012))      # 板1枚を割るたびの向きのずれ(ラジアン・標準偏差)
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 20.4))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 19.5))
 OUTRO = 4.2
-PRE = 0.7
+PRE = 1.6          # 成功の瞬間:最後の板と底がバリーンと割れる(SHATTER秒)→虹ストロボ→大当たり本番
+SHATTER = 0.9
 WIN_DUR = JP.DURATION - JP.T_BIG
 # 画面
 SX0 = (W - SHAFT_W) / 2
@@ -184,6 +185,7 @@ def stripe_pattern(scale):
     c.fill()
     p = cairo.SurfacePattern(s)
     p.set_extend(cairo.EXTEND_REPEAT)
+    p.set_filter(cairo.FILTER_NEAREST)   # くっきりしたしま模様に
     return p, h
 
 
@@ -242,6 +244,7 @@ def render(seed):
     prng = np.random.default_rng(seed + 9)
     parts = []    # 割れた板のかけら [x, y(世界), vx, vy, t0]
     cam = VIEW_Y - frames[0]["y"]
+    shards, shard_c = None, None
     ceil_t = -9.0
     frozen = None
     ev_i = 0
@@ -276,6 +279,11 @@ def render(seed):
         def sy(y):
             return y + cam
 
+        ctx.identity_matrix()
+        if 0 <= win_b < 0.5:   # バリーンでゆれる
+            amp = 26 * (1 - win_b / 0.5)
+            ctx.translate(amp * math.sin(win_b * 97), amp * math.cos(win_b * 83))
+
         ctx.set_source_surface(bg, 0, 0)
         ctx.paint()
         ctx.save()
@@ -286,12 +294,12 @@ def render(seed):
         bot_y = sy(TOP0 + N_LAYER * PITCH)
         if top_y < VIEW_BOT and fr["broken"] < N_LAYER:
             m = cairo.Matrix()
-            m.translate(0, -(TOP0 % PITCH + cam))
+            m.translate(0, -round(TOP0 % PITCH + cam))
             pat.set_matrix(m)
             ctx.rectangle(SX0, max(top_y, VIEW_TOP - 30), SHAFT_W, min(bot_y, VIEW_BOT) - max(top_y, VIEW_TOP - 30))
             ctx.set_source(pat)
             ctx.fill()
-        if bot_y < VIEW_BOT:   # 底
+        if bot_y < VIEW_BOT and win_b < 0:   # 底(最後はバリーンと割れて消える)
             ctx.rectangle(SX0 - 10, bot_y, SHAFT_W + 20, 10)
             ctx.set_source_rgb(0.85, 0.9, 1.0)
             ctx.fill()
@@ -329,6 +337,8 @@ def render(seed):
             ctx.stroke()
         # ボール(光る)
         bx, by = SX0 + fr["x"], sy(fr["y"])
+        if win_b >= 0:
+            bx, by = -999, -999
         g_ = cairo.RadialGradient(bx, by, 0, bx, by, 60 + 40 * k_)
         g_.add_color_stop_rgba(0, 1, 0.95, 0.75, 0.6 + 0.3 * k_)
         g_.add_color_stop_rgba(1, 1, 0.8, 0.4, 0)
@@ -342,7 +352,7 @@ def render(seed):
         text(ctx, fmt(fr["power"]), bx, by - 22, 38 * (1 + 0.5 * k_), rgb=(1, 1, 1) if k_ < 0.3 else GOLD, sw=7)
         # 文字
         text(ctx, "天井に当たるたびにパワー2倍", W / 2, 235, 60, sw=12)
-        text(ctx, f"板{fmt(N_LAYER)}枚、全部割れる？", W / 2, 335, 86, rgb=GOLD, sw=16)
+        text(ctx, f"板{fmt(N_LAYER)}枚、全部割れる？", W / 2, 335, 78, rgb=GOLD, sw=16)
         left_n = N_LAYER - (fr["broken"] if not over else res["broken"])
         text(ctx, f"あと {fmt(left_n)} 枚", W / 2 - 140, 445, 62, rgb=(1, 1, 1), sw=10)
         tt = min(t, end_t) if end_t is not None else t
@@ -357,9 +367,51 @@ def render(seed):
             ctx.fill()
             text(ctx, "時間切れ…", W / 2, 990, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
             text(ctx, f"あと {fmt(left_n)} 枚だった…", W / 2, 1110, 66, sw=12)
-        if win_b >= 0:
-            k = win_b / PRE
-            ph_ = (win_b * (8 + 14 * k)) % 1.0
+        if win_b >= 0 and shards is None:   # 最後の板と底がバリーンと割れる:かけらを作る
+            srng = np.random.default_rng(seed + 31)
+            cx_, cy_ = SX0 + fr["x"], sy(fr["y"])
+            shards = []
+            for _ in range(220):
+                a = srng.uniform(-math.pi, 0) if srng.random() < 0.8 else srng.uniform(0, math.pi)
+                sp_ = srng.uniform(400, 2200)
+                x0 = SX0 + srng.uniform(0, SHAFT_W)
+                y0 = cy_ + srng.uniform(-10, 40)
+                col = ORANGE if srng.random() < 0.7 else (1, 1, 0.95)
+                shards.append((x0, y0, sp_ * math.cos(a) + (x0 - cx_) * 1.5, sp_ * math.sin(a), srng.uniform(0, 6.3),
+                               srng.uniform(-14, 14), srng.uniform(6, 26), col))
+            shard_c = (cx_, cy_)
+        if shards is not None and win_b < SHATTER + 0.3:
+            for x0, y0, vx_, vy_, r0, vr, sz, col in shards:
+                x = x0 + vx_ * win_b
+                y = y0 + vy_ * win_b + 1400 * win_b * win_b
+                ctx.save()
+                ctx.translate(x, y)
+                ctx.rotate(r0 + vr * win_b)
+                ctx.move_to(-sz * 0.6, -sz * 0.3)
+                ctx.line_to(sz * 0.5, -sz * 0.5)
+                ctx.line_to(sz * 0.1, sz * 0.6)
+                ctx.close_path()
+                ctx.set_source_rgba(*col, max(0.0, 1 - win_b / (SHATTER + 0.3)))
+                ctx.fill()
+                ctx.restore()
+            if win_b < 0.35:   # 白いフラッシュと衝撃の輪
+                k = 1 - win_b / 0.35
+                g_ = cairo.RadialGradient(*shard_c, 0, *shard_c, 700)
+                g_.add_color_stop_rgba(0, 1, 1, 1, 0.95 * k)
+                g_.add_color_stop_rgba(1, 1, 0.9, 0.6, 0)
+                ctx.set_source(g_)
+                ctx.paint()
+                ctx.arc(*shard_c, 80 + 1400 * win_b, 0, 2 * math.pi)
+                ctx.set_source_rgba(1, 0.9, 0.6, k)
+                ctx.set_line_width(14 * k + 2)
+                ctx.stroke()
+            if 0.05 < win_b < SHATTER:
+                k = min(1.0, (win_b - 0.05) / 0.1)
+                text(ctx, "バリーン!!", W / 2, 900, 150 * (1.25 - 0.25 * k), rgb=hsv(win_b * 2), sw=20,
+                     alpha=min(1.0, (SHATTER - win_b) / 0.2))
+        if win_b >= SHATTER:
+            k = (win_b - SHATTER) / (PRE - SHATTER)
+            ph_ = ((win_b - SHATTER) * (8 + 14 * k)) % 1.0
             ctx.set_operator(cairo.OPERATOR_ADD)
             ctx.set_source_rgba(*hsv(win_b * 4), (0.25 + 0.4 * k) * (1 - ph_) ** 2)
             ctx.paint()
@@ -417,6 +469,27 @@ def crackle(nb, seed):
         c = np.sin(2 * np.pi * rng.uniform(1800, 4200) * tc) * np.exp(-tc * 600) * rng.uniform(0.5, 1.0)
         y[i:i + len(c)] += c
     return 0.5 * y
+
+
+def shatter():
+    """最後に全部割れる「バリーン!!」:ガラスが割れる音(高いチリチリ+低いドン+長く残るきらきら)。"""
+    rng = np.random.default_rng(77)
+    t = _t(1.6)
+    n = rng.normal(0, 1, len(t))
+    hp = n - np.convolve(n, np.ones(6) / 6, "same")
+    y = 1.2 * hp * np.exp(-t * 9)
+    y += 0.9 * np.sin(2 * np.pi * (60 + 80 * np.exp(-t * 20)) * t) * np.exp(-t * 6)
+    for _ in range(70):   # かけらがぶつかるチリンチリン
+        t0 = rng.exponential(0.25)
+        i = int(t0 * SR)
+        if i >= len(t):
+            continue
+        tc = _t(0.25)
+        f = rng.uniform(2500, 9000)
+        c = np.sin(2 * np.pi * f * tc) * np.exp(-tc * rng.uniform(15, 40)) * rng.uniform(0.2, 0.6) * np.exp(-t0 * 1.5)
+        j = min(len(t), i + len(c))
+        y[i:j] += c[: j - i]
+    return 0.8 * y / np.abs(y).max()
 
 
 def tick():
@@ -497,14 +570,15 @@ def synth_audio(res, duration, path):
         i0 = int((end_t + PRE) * SR)
         m = min(len(mus), n_out - i0)
         extra[i0:i0 + m] += 1.1 * mus[:m]
-        tt = 0.0
+        add(shatter(), end_t, 1.0, extra)   # バリーン!!
+        tt = SHATTER
         while tt < PRE - 0.05:
-            k = tt / PRE
+            k = (tt - SHATTER) / (PRE - SHATTER)
             ky = kyuin_one(1.0 + 0.6 * k)
             i = int((end_t + tt) * SR)
             m = min(len(ky), n_out - i)
             extra[i:i + m] += (0.35 + 0.35 * k) * ky[:m]
-            tt += 0.11 - 0.05 * k
+            tt += 0.1 - 0.045 * k
     wet = wet + 0.95 * extra[: len(wet)]
     mag = np.abs(wet)
     wet = np.where(mag < 0.7, wet, np.sign(wet) * (0.7 + 0.2 * np.tanh((mag - 0.7) / 0.2)))
