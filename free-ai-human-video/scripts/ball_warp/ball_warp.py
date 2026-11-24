@@ -210,7 +210,7 @@ def search(n):
 
 # ---------------------------------------------------------------- 描画
 GOLD = (1, 0.86, 0.2)
-IN_COL = (0.25, 0.6, 1.0)
+IN_COL = (0.7, 0.35, 1.0)
 OUT_COL = (1.0, 0.55, 0.15)
 
 
@@ -366,10 +366,34 @@ def render(seed):
         ctx.paint()
         tt = min(t, end_t) if end_t is not None else t
         for hx, hy in fr["holes"]:
-            portal(ctx, hx, hy, HOLE_R, IN_COL, tt, "IN")
+            portal(ctx, hx, hy, HOLE_R, IN_COL, tt, "×2")
         k_ = math.exp(-(t - out_flash) * 6) if t >= out_flash else 0
-        portal(ctx, OUT_X, OUT_Y, 34 * (1 + 0.3 * k_), OUT_COL, tt, "OUT", spin=-1)
-        text(ctx, "×2", OUT_X + 75, OUT_Y + 14, 40, rgb=OUT_COL, sw=8)
+        # ワープの出口(上から下りている金色の土管)。穴に入ったボールはここから2個になって出てくる
+        pw = 60 * (1 + 0.15 * k_)
+        for x0_, w_, y0_, y1_ in ((OUT_X - pw / 2 + 6, pw - 12, BY0, OUT_Y - 14), (OUT_X - pw / 2, pw, OUT_Y - 26, OUT_Y - 4)):
+            g_ = cairo.LinearGradient(x0_, 0, x0_ + w_, 0)
+            g_.add_color_stop_rgb(0, 0.55, 0.38, 0.05)
+            g_.add_color_stop_rgb(0.35, 1.0, 0.92, 0.5)
+            g_.add_color_stop_rgb(1, 0.5, 0.33, 0.04)
+            ctx.rectangle(x0_, y0_, w_, y1_ - y0_)
+            ctx.set_source(g_)
+            ctx.fill()
+        if k_ > 0.02:
+            ctx.arc(OUT_X, OUT_Y, 30 + 25 * (1 - k_), 0, 2 * math.pi)
+            ctx.set_source_rgba(1, 0.85, 0.3, 0.8 * k_)
+            ctx.set_line_width(4)
+            ctx.stroke()
+        text(ctx, "← ワープの出口", OUT_X + 150, OUT_Y - 18, 30, rgb=(1, 0.85, 0.3), sw=6)
+        text(ctx, "(2個になって出る)", OUT_X + 150, OUT_Y + 18, 26, rgb=(1, 0.85, 0.3), sw=6)
+        # 下:落ちたら消える
+        ctx.move_to(BX0, BY1)
+        ctx.line_to(BX1, BY1)
+        ctx.set_source_rgba(1, 0.3, 0.3, 0.8)
+        ctx.set_line_width(4)
+        ctx.set_dash([14, 10])
+        ctx.stroke()
+        ctx.set_dash([])
+        text(ctx, "↓ 落ちたら消える ↓", W / 2, BY1 - 12, 30, rgb=(1, 0.45, 0.45), sw=6)
         keep = []
         for x, y, t0 in fx:   # 入った穴から OUT へ走る光
             a_ = t - t0
@@ -391,7 +415,7 @@ def render(seed):
             ctx.set_source_surface(sprites[(int(c) + cyc) % 12], x - m_, y - m_)
             ctx.paint()
         # 文字
-        text(ctx, "ワープ穴に入ると2倍になるボール", W / 2, 235, 56, sw=12)
+        text(ctx, "ワープ穴に入ると2個になって戻るボール", W / 2, 235, 52, sw=12)
         text(ctx, f"{TARGET}個にできる？", W / 2, 335, 96, rgb=GOLD, sw=16)
         n = fr["n"] if not over else res["n"]
         text(ctx, f"{n} / {TARGET} 個", W / 2, 445, 70, rgb=(1, 1, 1), sw=10)
