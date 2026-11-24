@@ -2,7 +2,7 @@
 ボールは重力で迷路の中を流れて下からたまっていく。制限時間内に、迷路の全部のマスがボールで埋まったら成功。
 
 - 迷路は動かない。重力は下向き。迷路の形はシードごとにちがう(サイドワインダー法。入口からどのマスへも上にのぼらずに行ける)。
-- 迷路の上はふたなし。ボールは迷路の上を左右に動く注ぎ口から、毎秒 RATE 個ずつ出てくる。T_FAST 秒からは毎秒 RATE2 個に増量。
+- 迷路の上はふたなし。ボールは迷路の上のまん中に固定された注ぎ口から、毎秒 RATE 個ずつ出てくる。T_FAST 秒からは毎秒 RATE2 個に増量。
   注ぎ口のまわりがボールでいっぱいのときは出てこない。
 - マスの中のボールが FILL_N 個以上になったら、そのマスは「埋まった」(画面上の満タン度に数える)。
 - せまい通路でボールがつまる(アーチができる)と、その先が埋まらないことがある。
@@ -59,21 +59,18 @@ LOOPS = float(os.environ.get("LOOPS", 0.2))
 CLOSE = float(os.environ.get("CLOSE", 0.6))   # 横の通路のかたまりを区切る確率
 GRAVITY = float(os.environ.get("GRAVITY", 1800.0))
 FRICTION = float(os.environ.get("FRICTION", 0.05))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 30.5))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 31.6))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
 
 
-SWEEP = float(os.environ.get("SWEEP", 2.4))   # 注ぎ口が左右に1往復する秒数
-NOZZLE_Y = Y0 - 150
+NOZZLE_Y = Y0 - 190   # 注ぎ口(まん中に固定・動かない)
 
 
 def nozzle(t):
-    """注ぎ口の位置(x)と左右の速さ。迷路の上を左右に行ったり来たりする。"""
-    amp = MW / 2 - 40
-    w = 2 * math.pi / SWEEP
-    return X0 + MW / 2 + amp * math.sin(w * t), amp * w * math.cos(w * t)
+    """注ぎ口の位置(x)と左右の速さ。迷路の上のまん中に固定。"""
+    return X0 + MW / 2, 0.0
 
 
 # ---------------------------------------------------------------- 迷路づくり
@@ -132,7 +129,7 @@ class Game:
             s.elasticity, s.friction = 0.3, FRICTION
             shapes.append(s)
         # 迷路の左右の壁を上にのばす(上にあふれたボールがこぼれないように)
-        self.funnel = [((X0, Y0 - 130), (X0, Y0)), ((X0 + MW, Y0 - 130), (X0 + MW, Y0))]
+        self.funnel = [((X0, Y0 - 170), (X0, Y0)), ((X0 + MW, Y0 - 170), (X0 + MW, Y0))]
         for a, b in self.funnel:
             s = pymunk.Segment(sp.static_body, a, b, WALL_R)
             s.elasticity, s.friction = 0.3, FRICTION
@@ -354,15 +351,12 @@ def render(seed):
             ctx.set_source_surface(sprites[(int(c) + cyc) % 12], x - m_, y - m_)
             ctx.paint()
         nx_, _ = nozzle(min(t, end_t) if end_t is not None else t)   # 注ぎ口
-        ctx.rectangle(nx_ - 26, NOZZLE_Y - 60, 52, 66)
+        ctx.rectangle(nx_ - 26, 496, 52, NOZZLE_Y + 12 - 496)
         g_ = cairo.LinearGradient(nx_ - 26, 0, nx_ + 26, 0)
         g_.add_color_stop_rgb(0, 0.45, 0.48, 0.55)
         g_.add_color_stop_rgb(0.4, 0.95, 0.97, 1.0)
         g_.add_color_stop_rgb(1, 0.35, 0.38, 0.45)
         ctx.set_source(g_)
-        ctx.fill()
-        ctx.rectangle(X0 - 10, NOZZLE_Y - 66, MW + 20, 8)   # 注ぎ口が動くレール
-        ctx.set_source_rgba(0.8, 0.85, 0.95, 0.6)
         ctx.fill()
         if 0 <= t - T_FAST < 1.4 and not over:
             a_ = t - T_FAST
