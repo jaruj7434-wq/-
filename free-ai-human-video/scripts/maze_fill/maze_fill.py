@@ -2,8 +2,10 @@
 ボールは重力で迷路の中を流れて下からたまっていく。制限時間内に、迷路の全部のマスがボールで埋まったら成功。
 
 - 迷路は動かない。重力は下向き。迷路の形はシードごとにちがう(サイドワインダー法。入口からどのマスへも上にのぼらずに行ける)。
-- 迷路の上はふたなし。ボールは迷路の上のまん中に固定された注ぎ口から、毎秒 RATE 個ずつ出てくる。T_FAST 秒からは毎秒 RATE2 個に増量。
-  注ぎ口のまわりがボールでいっぱいのときは出てこない。
+- 迷路は注ぎ口のすぐ下まである。ボールは上のまん中に固定された注ぎ口から、INTERVAL 秒ごとに1個ずつ出てくる。
+  注ぎ口の出口がボールでふさがっているときは出てこない。
+- 迷路の中のところどころのすきまに「×2」「×3」のゲートがある。ボールが上から下へくぐると、その場で2個・3個に増える
+  (1個のボールは同じゲートで1回だけ。増えたボールも、くぐったゲートでは増えない)。
 - マスの中のボールが FILL_N 個以上になったら、そのマスは「埋まった」(画面上の満タン度に数える)。
 - せまい通路でボールがつまる(アーチができる)と、その先が埋まらないことがある。
 - ボールの動きは物理計算のまま(ねらい・補正なし)。
@@ -44,73 +46,94 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 N_COL = int(os.environ.get("N_COL", 7))
-N_ROW = int(os.environ.get("N_ROW", 9))
-CELL = float(os.environ.get("CELL", 86.0))
+N_ROW = int(os.environ.get("N_ROW", 11))
+CELL = float(os.environ.get("CELL", 80.0))
 MW, MH = N_COL * CELL, N_ROW * CELL
 X0 = (W - MW) / 2
-Y0 = 1475.0 - MH            # 迷路の上のふち
+Y0 = 1475.0 - MH            # 迷路の上のふち(注ぎ口のすぐ下まで迷路)
 WALL_R = 4.0
 BALL_R = float(os.environ.get("BALL_R", 7.0))
-RATE = float(os.environ.get("RATE", 90.0))
-RATE2 = float(os.environ.get("RATE2", 180.0))
-T_FAST = float(os.environ.get("T_FAST", 10.0))
+R_VAR = float(os.environ.get("R_VAR", 0.2))   # ボールの大きさのばらつき(同じ大きさだと結晶のように積もって山が急になる)
+INTERVAL = float(os.environ.get("INTERVAL", 0.08))   # 注ぎ口から1個ずつ出る間隔(秒)
+N_GATE = int(os.environ.get("N_GATE", 16))             # ×2・×3 ゲートの数
+P_X3 = float(os.environ.get("P_X3", 0.4))            # ゲートが ×3 になる確率
 FILL_N = int(os.environ.get("FILL_N", 12))
-LOOPS = float(os.environ.get("LOOPS", 0.2))
+LOOPS = float(os.environ.get("LOOPS", 0.15))
+ROOF = int(os.environ.get("ROOF", 3))   # 上の何段を屋根の形にするか
 CLOSE = float(os.environ.get("CLOSE", 0.6))   # 横の通路のかたまりを区切る確率
 GRAVITY = float(os.environ.get("GRAVITY", 1800.0))
 FRICTION = float(os.environ.get("FRICTION", 0.05))
+MAX_BALLS = 4500
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 32.0))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
-
-
-NOZZLE_Y = Y0 - 190   # 注ぎ口(まん中に固定・動かない)
-
-
-def nozzle(t):
-    """注ぎ口の位置(x)と左右の速さ。迷路の上のまん中に固定。"""
-    return X0 + MW / 2, 0.0
+NOZZLE_Y = Y0 - 8      # 注ぎ口の出口(入口のマスのすぐ上・固定)
+GATE_COL = {2: (0.25, 1.0, 0.45), 3: (1.0, 0.55, 0.15)}
 
 
 # ---------------------------------------------------------------- 迷路づくり
+def active_mask():
+    """迷路のマス(True)。上の3段は屋根の形(1→3→5マス)にせまくなって、てっぺんの1マスが注ぎ口の真下。"""
+    c = N_COL // 2
+    m = np.ones((N_ROW, N_COL), bool)
+    for i in range(min(ROOF, N_ROW)):
+        for j in range(N_COL):
+            m[i, j] = abs(j - c) <= i
+    return m
+
+
 def make_maze(rng):
     nr, nc = N_ROW, N_COL
+    act = active_mask()
     hw = np.ones((nr + 1, nc), bool)   # hw[i][j]: 行 i の上側の横の壁
     vw = np.ones((nr, nc + 1), bool)   # vw[i][j]: 列 j の左側の縦の壁
     # サイドワインダー法:1段ごとに横の「通路のかたまり」を作り、かたまりごとに1か所だけ上の段とつなぐ。
     # → 入口からどのマスへも「上にのぼらずに」行ける(ボールが重力で全部のマスに流れこめる)形になる。
-    vw[:, 1:nc] = True
-    vw[0, 1:nc] = False   # いちばん上の段は1本の横の通路
     for i in range(1, nr):
-        run = [0]
-        for j in range(1, nc + 1):
-            close = j == nc or rng.random() < CLOSE
+        cols = [j for j in range(nc) if act[i, j]]
+        run = [cols[0]]
+        for j in cols[1:] + [None]:
+            up_ok = any(act[i - 1, k] for k in run)
+            last_alone = j is not None and j == cols[-1] and not act[i - 1, j]
+            close = j is None or (up_ok and not last_alone and rng.random() < CLOSE)
             if close:
-                k = run[rng.integers(len(run))]
-                hw[i, k] = False          # かたまりのどこか1か所を上とつなぐ
+                ks = [k for k in run if act[i - 1, k]]
+                hw[i, ks[rng.integers(len(ks))]] = False   # かたまりのどこか1か所を上とつなぐ
                 run = [j]
             else:
-                vw[i, j] = False          # 右どなりとつなぐ
+                vw[i, j] = False          # 左どなりとつなぐ
                 run.append(j)
     for i in range(1, nr):   # 少しだけ、たての抜け道を増やす
         for j in range(nc):
-            if rng.random() < LOOPS:
+            if act[i, j] and act[i - 1, j] and rng.random() < LOOPS:
                 hw[i, j] = False
-    hw[0, :] = False   # 上はふたなし(どの列にも上から入れる → 上でつまらない)
-    ent = 0
+    ent = nc // 2
+    hw[0, ent] = False   # 入口(てっぺんのマスの上)
+    # 迷路の外側(屋根の外)との境目はかならず壁。外どうしの壁は描かない
+    def on(i, j):
+        return 0 <= i < nr and 0 <= j < nc and act[i, j]
+    holes = [(i, j) for i in range(1, nr) for j in range(nc) if not hw[i, j] and on(i, j) and on(i - 1, j)]
+    pick = rng.choice(len(holes), size=min(N_GATE, len(holes)), replace=False)
+    gates = [(holes[k][0], holes[k][1], 3 if rng.random() < P_X3 else 2) for k in sorted(pick)]
     segs = []
     for i in range(nr + 1):
         for j in range(nc):
-            if hw[i, j]:
+            a, b = on(i - 1, j), on(i, j)
+            if (a or b) and (hw[i, j] or a != b) and not (i == 0 and j == ent):
                 y = Y0 + i * CELL
                 segs.append(((X0 + j * CELL, y), (X0 + (j + 1) * CELL, y)))
     for i in range(nr):
         for j in range(nc + 1):
-            if vw[i, j]:
+            a, b = on(i, j - 1), on(i, j)
+            if (a or b) and (vw[i, j] or a != b):
                 x = X0 + j * CELL
                 segs.append(((x, Y0 + i * CELL), (x, Y0 + (i + 1) * CELL)))
-    return segs, ent
+    return segs, ent, gates
+
+
+ACTIVE = active_mask()
+TOTAL = int(ACTIVE.sum())
 
 
 # ---------------------------------------------------------------- シミュレーション
@@ -120,69 +143,88 @@ class Game:
         sp = pymunk.Space()
         sp.gravity = (0, GRAVITY)
         sp.iterations = 10
-        sp.use_spatial_hash(BALL_R * 2.5, 6000)
+        sp.use_spatial_hash(BALL_R * 2.5, 8000)
         self.space = sp
-        self.segs, self.ent = make_maze(rng)
+        self.segs, self.ent, self.gates = make_maze(rng)
         shapes = []
         for a, b in self.segs:
             s = pymunk.Segment(sp.static_body, a, b, WALL_R)
             s.elasticity, s.friction = 0.3, FRICTION
             shapes.append(s)
-        # 迷路の左右の壁を上にのばす(上にあふれたボールがこぼれないように)
-        self.funnel = [((X0, Y0 - 170), (X0, Y0)), ((X0 + MW, Y0 - 170), (X0 + MW, Y0))]
-        for a, b in self.funnel:
-            s = pymunk.Segment(sp.static_body, a, b, WALL_R)
-            s.elasticity, s.friction = 0.3, FRICTION
-            shapes.append(s)
         sp.add(*shapes)
+        self.nx = X0 + (self.ent + 0.5) * CELL
+        self.funnel = []
         self.t = 0.0
         self.events = []
         self.result, self.result_t = None, None
         self.balls = {}
         self.n_id = 0
-        self.acc = 0.0
+        self.next_drop = 0.3
         self.filled = np.zeros((N_ROW, N_COL), bool)
         self.n_filled = 0
         self.dropped = 0
+        self.made = 0
 
-    def spawn(self):
-        """左右に動く注ぎ口から1個出す(出口のまわりがボールでいっぱいなら出さない)。"""
-        nx, vx = nozzle(self.t)
-        for _ in range(8):
-            x = nx + self.rng.uniform(-20, 20)
-            y = NOZZLE_Y + 15 + self.rng.uniform(0, 70)
-            hit = self.space.point_query((x, y), 2 * BALL_R + 0.5, pymunk.ShapeFilter())
-            if not any(h.shape.body.body_type == pymunk.Body.DYNAMIC for h in hit):
-                break
-        else:
-            return False   # 注ぎ口がつまっている
-        b = pymunk.Body(1.0, pymunk.moment_for_circle(1.0, 0, BALL_R))
+    def add_ball(self, x, y, vx, vy, used, r):
+        b = pymunk.Body(1.0, pymunk.moment_for_circle(1.0, 0, r))
         b.position = (x, y)
-        b.velocity = (vx + self.rng.uniform(-20, 20), 1000)
-        s = pymunk.Circle(b, BALL_R)
+        b.velocity = (vx, vy)
+        s = pymunk.Circle(b, r)
         s.elasticity, s.friction = 0.3, FRICTION
         self.space.add(b, s)
-        self.balls[b] = {"id": self.n_id, "shape": s, "col": self.n_id % 12}
+        self.balls[b] = {"id": self.n_id, "shape": s, "col": self.n_id % 12, "used": used, "py": y, "r": r}
         self.n_id += 1
+
+    def spawn(self):
+        """注ぎ口から1個だけ出す(出口がボールでふさがっていたら出さない)。"""
+        x, y = self.nx, NOZZLE_Y
+        hit = self.space.point_query((x, y), 2 * BALL_R + 0.5, pymunk.ShapeFilter())
+        if any(h.shape.body.body_type == pymunk.Body.DYNAMIC for h in hit):
+            return False
+        self.add_ball(x, y, self.rng.uniform(-15, 15), 250, frozenset(), BALL_R * self.rng.uniform(1 - R_VAR, 1 + R_VAR))
         self.dropped += 1
         return True
 
     def step(self, dt):
-        if self.result is None:
-            self.acc += (RATE if self.t < T_FAST else RATE2) * dt
-            while self.acc >= 1:
-                self.acc -= 1
-                self.spawn()
+        if self.result is None and self.t >= self.next_drop:
+            self.spawn()
+            self.next_drop += INTERVAL
         self.space.step(dt)
         self.t += dt
-        if abs(self.t - T_FAST) < dt / 2:
-            self.events.append(("fast", self.t, None))
+
+    def check_gates(self):
+        """フレームごとに、ゲートを上から下へくぐったボールを2倍・3倍にする(1個のボールは同じゲートで1回だけ)。"""
+        new = []
+        for b, info in self.balls.items():
+            y, py = b.position.y, info["py"]
+            info["py"] = y
+            if y <= py:
+                continue
+            for gi, (i, j, k) in enumerate(self.gates):
+                ly = Y0 + i * CELL
+                if py < ly <= y and X0 + j * CELL < b.position.x < X0 + (j + 1) * CELL and gi not in info["used"]:
+                    new.append((b, gi, k))
+                    break
+        for b, gi, k in new:
+            if len(self.balls) >= MAX_BALLS:
+                break
+            info = self.balls[b]
+            used = info["used"] | {gi}
+            info["used"] = used
+            i, j, _ = self.gates[gi]
+            lo, hi = X0 + j * CELL + WALL_R + BALL_R + 1, X0 + (j + 1) * CELL - WALL_R - BALL_R - 1
+            x, y = b.position
+            offs = [2.2 * BALL_R, -2.2 * BALL_R] if k == 3 else [2.2 * BALL_R if x < (lo + hi) / 2 else -2.2 * BALL_R]
+            for o in offs:
+                self.add_ball(min(hi, max(lo, x + o)), y + self.rng.uniform(-2, 2),
+                              b.velocity.x + self.rng.uniform(-40, 40), b.velocity.y, used,
+                              BALL_R * self.rng.uniform(1 - R_VAR, 1 + R_VAR))
+                self.made += 1
+            self.events.append(("gate", self.t, (gi, k, x, y)))
 
     def check_fill(self):
         """フレームごとに、マスの埋まり具合を数える。"""
-        gone = [b for b in self.balls if b.position.y > H + 50]
-        for b in gone:
-            self.space.remove(b, self.balls.pop(b)["shape"])
+        self.check_gates()
         if not self.balls:
             return
         pos = np.array([(b.position.x, b.position.y) for b in self.balls])
@@ -191,13 +233,13 @@ class Game:
         ok = (i >= 0) & (i < N_ROW) & (j >= 0) & (j < N_COL)
         cnt = np.zeros((N_ROW, N_COL), int)
         np.add.at(cnt, (i[ok], j[ok]), 1)
-        new = (cnt >= FILL_N) & ~self.filled
+        new = (cnt >= FILL_N) & ~self.filled & ACTIVE
         for ii, jj in sorted(zip(*np.nonzero(new))):
             self.filled[ii, jj] = True
             self.n_filled += 1
             self.events.append(("fill", self.t, (int(ii), int(jj), self.n_filled)))
         if self.result is None:
-            if self.n_filled >= N_ROW * N_COL:
+            if self.n_filled >= TOTAL:
                 self.result, self.result_t = "success", self.t
                 self.events.append(("success", self.t, None))
             elif self.t >= TIME_LIMIT:
@@ -216,20 +258,21 @@ def simulate(seed, record=False):
             g.step(dt)
         g.check_fill()
         if record:
-            frames.append({"t": g.t, "n": g.n_filled, "filled": g.filled.copy(),
-                           "balls": np.array([(b.position.x, b.position.y, i["col"]) for b, i in g.balls.items()],
-                                             dtype=np.float32).reshape(-1, 3)})
+            frames.append({"t": g.t, "n": g.n_filled,
+                           "balls": np.array([(b.position.x, b.position.y, i["col"], i["r"]) for b, i in g.balls.items()],
+                                             dtype=np.float32).reshape(-1, 4)})
         if g.result is not None:
             extra = (OUTRO + SCARE_DUR) if g.result == "fail" else (PRE + WIN_DUR)
             if not record or g.t > g.result_t + extra:
                 break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t,
-            "n": g.final_n, "segs": g.segs, "funnel": g.funnel, "dropped": g.dropped}
+            "n": g.final_n, "segs": g.segs, "funnel": g.funnel, "dropped": g.dropped, "made": g.made,
+            "gates": g.gates, "nx": g.nx}
 
 
 def score(seed):
     r = simulate(seed)
-    return seed, r["result"], round(r["result_t"], 1), r["n"], r["dropped"]
+    return seed, r["result"], round(r["result_t"], 1), r["n"], r["dropped"], r["made"]
 
 
 def search(n):
@@ -242,7 +285,6 @@ def search(n):
 
 # ---------------------------------------------------------------- 描画
 GOLD = (1, 0.86, 0.2)
-TOTAL = N_ROW * N_COL
 
 
 def reel_ball(ctx, kind, x, y, ang, r, t, alpha=1.0, rng=None):
@@ -252,7 +294,8 @@ def reel_ball(ctx, kind, x, y, ang, r, t, alpha=1.0, rng=None):
 def maze_surface(segs, funnel):
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     c = cairo.Context(surf)
-    c.rectangle(X0, Y0, MW, MH)
+    for i, j in zip(*np.nonzero(ACTIVE)):
+        c.rectangle(X0 + j * CELL, Y0 + i * CELL, CELL, CELL)
     c.set_source_rgba(0.35, 0.6, 1.0, 0.06)
     c.fill()
     c.set_line_cap(cairo.LINE_CAP_ROUND)
@@ -314,17 +357,16 @@ def render(seed):
     bc.set_source(gr)
     bc.paint()
     sprites = {}
-    m_ = int(math.ceil(BALL_R)) + 2
-    for c in range(12):
-        s_ = cairo.ImageSurface(cairo.FORMAT_ARGB32, 2 * m_, 2 * m_)
-        draw_ball(cairo.Context(s_), m_, m_, BALL_R, PALETTE[c])
-        sprites[c] = s_
+    m_ = int(math.ceil(BALL_R * (1 + R_VAR))) + 2
     frozen = None
     ev_i = 0
+    gate_t = {}
     for fi, fr in enumerate(frames):
         t = fr["t"]
         while ev_i < len(events) and events[ev_i][1] <= t:
             kind, et, data = events[ev_i]
+            if kind == "gate":
+                gate_t[data[0]] = et
             ev_i += 1
         over = end_t is not None and t >= end_t
         win_b = (t - end_t) if (ending is not None and over) else -1.0
@@ -347,22 +389,36 @@ def render(seed):
         ctx.set_source_surface(msurf, 0, 0)
         ctx.paint()
         cyc = int(win_b * 30) if win_b >= 0 else 0
-        for x, y, c in fr["balls"]:
-            ctx.set_source_surface(sprites[(int(c) + cyc) % 12], x - m_, y - m_)
+        for x, y, c, r in fr["balls"]:
+            key = ((int(c) + cyc) % 12, int(round(r * 2)))
+            sp_ = sprites.get(key)
+            if sp_ is None:
+                rr = key[1] / 2
+                sp_ = cairo.ImageSurface(cairo.FORMAT_ARGB32, 2 * m_, 2 * m_)
+                draw_ball(cairo.Context(sp_), m_, m_, rr, PALETTE[key[0]])
+                sprites[key] = sp_
+            ctx.set_source_surface(sp_, x - m_, y - m_)
             ctx.paint()
-        nx_, _ = nozzle(min(t, end_t) if end_t is not None else t)   # 注ぎ口
-        ctx.rectangle(nx_ - 26, 496, 52, NOZZLE_Y + 12 - 496)
-        g_ = cairo.LinearGradient(nx_ - 26, 0, nx_ + 26, 0)
+        nx_ = res["nx"]   # 注ぎ口(固定)
+        ctx.rectangle(nx_ - 16, 500, 32, Y0 - 500)
+        g_ = cairo.LinearGradient(nx_ - 16, 0, nx_ + 16, 0)
         g_.add_color_stop_rgb(0, 0.45, 0.48, 0.55)
         g_.add_color_stop_rgb(0.4, 0.95, 0.97, 1.0)
         g_.add_color_stop_rgb(1, 0.35, 0.38, 0.45)
         ctx.set_source(g_)
         ctx.fill()
-        if 0 <= t - T_FAST < 1.4 and not over:
-            a_ = t - T_FAST
-            k = min(1.0, a_ / 0.15)
-            text(ctx, "ボール増量!!", W / 2, Y0 + MH * 0.45, 110 * (1.2 - 0.2 * k), rgb=hsv(t * 2), sw=16,
-                 alpha=min(1.0, (1.4 - a_) / 0.3))
+        for gi, (gi_, gj, gk) in enumerate(res["gates"]):   # ×2・×3 ゲート(くぐった瞬間に光る)
+            a_ = t - gate_t.get(gi, -9)
+            k = math.exp(-a_ * 8) if a_ >= 0 else 0.0
+            gx, gy = X0 + gj * CELL, Y0 + gi_ * CELL
+            col = GATE_COL[gk]
+            for wd, al in ((16, 0.25 + 0.5 * k), (6, 0.9)):
+                ctx.move_to(gx + 6, gy)
+                ctx.line_to(gx + CELL - 6, gy)
+                ctx.set_source_rgba(*col, al)
+                ctx.set_line_width(wd)
+                ctx.stroke()
+            text(ctx, f"×{gk}", gx + CELL / 2, gy + 13, 34 * (1 + 0.35 * k), rgb=col, sw=7)
         # 文字
         text(ctx, "迷路にボールを流しこむ", W / 2, 235, 60, sw=12)
         text(ctx, "満タンにできる？", W / 2, 335, 96, rgb=GOLD, sw=16)
@@ -457,14 +513,19 @@ def synth_audio(res, duration, path):
         j = min(n_out, i + len(sig))
         if i < n_out and j > i:
             b[i:j] += gain * sig[: j - i]
-    add(pour(end_t, 3, T_FAST), 0.0)
+    add(pour(end_t, 3, 1e9), 0.0)
+    recent = []
     for kind, t, data in events:
         if t > end_t + 0.01:
             continue
-        if kind == "fast":
-            tb = _t(0.5)
-            for k, m in enumerate((79, 84, 91)):
-                add(0.5 * np.sign(np.sin(2 * np.pi * midi_hz(m) * tb)) * np.exp(-tb * 6), t + 0.09 * k)
+        if kind == "gate":   # ゲートで増えた「ピコッ」(×3 は高い)
+            recent = [x for x in recent if t - x < 0.06]
+            if len(recent) >= 3:
+                continue
+            recent.append(t)
+            tb = _t(0.12)
+            f = midi_hz(84 if data[1] == 2 else 91)
+            add(0.35 * np.sin(2 * np.pi * f * tb * (1 + 0.5 * tb)) * np.exp(-tb * 30), t)
     wet = out.copy()
     for dd, g_ in ((0.043, 0.2), (0.071, 0.13)):
         kk = int(dd * SR)
