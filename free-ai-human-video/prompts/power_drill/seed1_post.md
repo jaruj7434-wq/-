@@ -1,4 +1,4 @@
-# 投稿用テキスト:power_drill_1.mp4(天井に当たるたびにパワー2倍・板2047枚・失敗パターン)
+# 投稿用テキスト:power_drill_1.mp4(天井に当たるたびにパワー2倍・板4095枚・失敗パターン)
 
 - 動画: assets/output/power_drill_1.mp4(1080x1920 / 60fps / 24.9秒 / H.264 + AAC・git 管理外)
 - 再生成: `python scripts/power_drill/power_drill.py render --seed 1`
