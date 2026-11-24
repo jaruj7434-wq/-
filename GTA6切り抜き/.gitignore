@@ -10,3 +10,6 @@
 *.srt
 *.vtt
 *.json
+
+# Python キャッシュ
+__pycache__/
