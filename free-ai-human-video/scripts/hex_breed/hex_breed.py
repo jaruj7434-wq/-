@@ -1,5 +1,5 @@
-"""「ぶつかると増えるボール、○個にできる?」ゆっくり回る六角形のわくの中で、ボールどうしがぶつかるたびに1個ずつ増える。
-ただし六角形の1辺にはすき間(出口)があいていて、そこから外に出たボールは消えてしまう。
+"""「ぶつかると増えるボール、○個にできる?」ゆっくり回る六角形のわくの中で、ボールどうしがぶつかるたびに1個ずつ増える。はじめは2個。
+(GAP > 0 にすると、六角形の1辺にすき間(出口)があき、そこから外に出たボールは消える。42本目の最初の版)
 
 - 重力・摩擦なし。ボールはいつも同じ速さで、わく・ほかのボールで跳ね返る(ねらい・補正なし)。
 - ボールとボールが触れたら、そのあいだのすぐ横の空いている所に1個生まれる(29本目と同じ増え方)。
@@ -43,14 +43,14 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY = 540.0, 1030.0
-HEX_R = float(os.environ.get("HEX_R", 450.0))     # 六角形の中心から角までのきょり
+HEX_R = float(os.environ.get("HEX_R", 400.0))     # 六角形の中心から角までのきょり
 APO = HEX_R * math.cos(math.pi / 6)
 WALL_R = 8.0
-GAP = float(os.environ.get("GAP", 0.3))          # すき間の大きさ(1辺の長さに対する割合)
+GAP = float(os.environ.get("GAP", 0.0))          # すき間の大きさ(1辺の長さに対する割合)
 SPIN = float(os.environ.get("SPIN", 0.45))        # 六角形が回る速さ(ラジアン/秒)
-BALL_R = float(os.environ.get("BALL_R", 11.0))
-SPEED = float(os.environ.get("SPEED", 320.0))
-N_START = int(os.environ.get("N_START", 5))
+BALL_R = float(os.environ.get("BALL_R", 13.0))
+SPEED = float(os.environ.get("SPEED", 500.0))
+N_START = int(os.environ.get("N_START", 2))
 TARGET = int(os.environ.get("TARGET", 300))
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 33.0))
 BIRTH_GAP = 0.3
@@ -68,7 +68,7 @@ def hex_segments():
     segs = []
     for k in range(6):
         a, b = pts[k], pts[k + 1]
-        if k == 0:
+        if k == 0 and GAP > 0:
             h = (1 - GAP) / 2
             segs.append((a, (a[0] + (b[0] - a[0]) * h, a[1] + (b[1] - a[1]) * h)))
             segs.append(((a[0] + (b[0] - a[0]) * (1 - h), a[1] + (b[1] - a[1]) * (1 - h)), b))
@@ -199,7 +199,7 @@ class Game:
             if len(self.objs) >= TARGET:
                 self.result, self.result_t = "success", self.t
                 self.events.append(("success", self.t, None))
-            elif self.t >= TIME_LIMIT or len(self.objs) <= 1:
+            elif self.t >= TIME_LIMIT or (GAP > 0 and len(self.objs) <= 1):
                 self.result, self.result_t = "fail", self.t
                 self.events.append(("fail", self.t, None))
             if self.result is not None:
@@ -280,7 +280,7 @@ def render(seed):
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
     ending = None if fail else JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6, shake=22,
-                                          texts=(f"{TARGET}個!!", "COMPLETE", f"にげた {res['escaped']}個"))
+                                          texts=(f"{TARGET}個!!", "COMPLETE", f"{res['n']} 個"))
     fever = RainbowFever(W, H, seed)
     grng = np.random.default_rng(seed + 5)
     glints = [(grng.uniform(0, W), grng.uniform(0, H), grng.uniform(0, 1), grng.uniform(1.5, 3.5), grng.uniform(30, 90))
@@ -339,21 +339,24 @@ def render(seed):
             ctx.set_source_rgba(*col, al)
             ctx.set_line_width(wd)
             ctx.stroke()
-        a, b = SEGS[0][1], SEGS[1][0]   # すき間
-        ctx.move_to(*a)
-        ctx.line_to(*b)
-        ctx.set_source_rgba(1, 0.25, 0.25, 0.55 + 0.25 * math.sin(t * 8))
-        ctx.set_line_width(5)
-        ctx.set_dash([12, 10])
-        ctx.stroke()
-        ctx.set_dash([])
-        mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
-        ctx.restore()
-        ca, sa = math.cos(fr["ang"]), math.sin(fr["ang"])
-        ex, ey = CX + mx * ca - my * sa, CY + mx * sa + my * ca
-        nd = math.hypot(ex - CX, ey - CY)
-        lx, ly = CX + (ex - CX) * (nd + 50) / nd, CY + (ey - CY) * (nd + 50) / nd
-        text(ctx, "出口", lx, ly + 14, 40, rgb=(1, 0.4, 0.4), sw=8)
+        if GAP <= 0:
+            ctx.restore()
+        else:
+            a, b = SEGS[0][1], SEGS[1][0]   # すき間
+            ctx.move_to(*a)
+            ctx.line_to(*b)
+            ctx.set_source_rgba(1, 0.25, 0.25, 0.55 + 0.25 * math.sin(t * 8))
+            ctx.set_line_width(5)
+            ctx.set_dash([12, 10])
+            ctx.stroke()
+            ctx.set_dash([])
+            mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
+            ctx.restore()
+            ca, sa = math.cos(fr["ang"]), math.sin(fr["ang"])
+            ex, ey = CX + mx * ca - my * sa, CY + mx * sa + my * ca
+            nd = math.hypot(ex - CX, ey - CY)
+            lx, ly = CX + (ex - CX) * (nd + 50) / nd, CY + (ey - CY) * (nd + 50) / nd
+            text(ctx, "出口", lx, ly + 14, 40, rgb=(1, 0.4, 0.4), sw=8)
         cyc = int(win_b * 30) if win_b >= 0 else 0
         for x, y, c, age in fr["fly"]:   # 外に出たボール(うすくなって消える)
             ctx.arc(x, y, BALL_R, 0, 2 * math.pi)
@@ -380,8 +383,9 @@ def render(seed):
         text(ctx, f"{n} / {TARGET} 個", W / 2, 445, 70, rgb=(1, 1, 1), sw=10)
         tt = min(t, end_t) if end_t is not None else t
         left = max(0.0, TIME_LIMIT - tt)
-        text(ctx, f"残り {left:4.1f}秒", W / 2 - 150, 522, 40, rgb=(1, 0.4, 0.4) if left < 10 else (0.95, 0.95, 0.95), sw=8)
-        text(ctx, f"にげた {fr['esc'] if not over else res['escaped']}個", W / 2 + 170, 522, 40, rgb=(1, 0.5, 0.5), sw=8)
+        text(ctx, f"残り {left:4.1f}秒", W / 2 - (150 if GAP > 0 else 0), 522, 40, rgb=(1, 0.4, 0.4) if left < 10 else (0.95, 0.95, 0.95), sw=8)
+        if GAP > 0:
+            text(ctx, f"にげた {fr['esc'] if not over else res['escaped']}個", W / 2 + 170, 522, 40, rgb=(1, 0.5, 0.5), sw=8)
         if not over:
             scary_text(ctx, "失敗したら・・・", W / 2, 1590, 78, t, drips)
         if over and fail:
