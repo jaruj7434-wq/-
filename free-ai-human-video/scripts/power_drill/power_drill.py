@@ -189,6 +189,24 @@ def stripe_pattern(scale):
     return p, h
 
 
+def chic(ctx, s, x, y, size, rgb=(1, 1, 1), alpha=1.0, weight="Bold"):
+    """すっきりしたゴシック体(Zen Kaku Gothic New・SIL OFL)。太いふちどりはなし、やわらかい影だけ。"""
+    ctx.select_font_face("Zen Kaku Gothic New" if weight == "Bold" else "Zen Kaku Gothic New Medium",
+                         cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD if weight == "Bold" else cairo.FONT_WEIGHT_NORMAL)
+    ctx.set_font_size(size)
+    e = ctx.text_extents(s)
+    tx = x - e.width / 2 - e.x_bearing
+    for dx, dy, a in ((0, 4, 0.45), (0, 2, 0.35)):   # やわらかい影
+        ctx.move_to(tx + dx, y + dy)
+        ctx.text_path(s)
+        ctx.set_source_rgba(0, 0, 0, a * alpha)
+        ctx.fill()
+    ctx.move_to(tx, y)
+    ctx.text_path(s)
+    ctx.set_source_rgba(*rgb, alpha)
+    ctx.fill()
+
+
 def fmt(n):
     return f"{n:,}"
 
@@ -349,15 +367,13 @@ def render(seed):
         ctx.set_source_rgb(1, 1, 0.95)
         ctx.fill()
         ctx.restore()
-        text(ctx, fmt(fr["power"]), bx, by - 22, 38 * (1 + 0.5 * k_), rgb=(1, 1, 1) if k_ < 0.3 else GOLD, sw=7)
         # 文字
-        text(ctx, "天井に当たるたびにパワー2倍", W / 2, 235, 60, sw=12)
-        text(ctx, f"板{fmt(N_LAYER)}枚、全部割れる？", W / 2, 335, 78, rgb=GOLD, sw=16)
+        chic(ctx, f"{fmt(N_LAYER)}枚、全部割れる？", W / 2, 320, 64, rgb=(1, 0.88, 0.6))
         left_n = N_LAYER - (fr["broken"] if not over else res["broken"])
-        text(ctx, f"あと {fmt(left_n)} 枚", W / 2 - 140, 445, 62, rgb=(1, 1, 1), sw=10)
+        chic(ctx, fmt(left_n), W / 2, 445, 92, rgb=(1, 1, 1), weight="Medium")
         tt = min(t, end_t) if end_t is not None else t
         left = max(0.0, TIME_LIMIT - tt)
-        text(ctx, f"残り {left:4.1f}秒", W / 2 + 250, 445, 44, rgb=(1, 0.4, 0.4) if left < 10 else (0.95, 0.95, 0.95), sw=8)
+        chic(ctx, f"{left:4.1f}", W / 2, 515, 40, rgb=(1, 0.45, 0.45) if left < 5 else (0.7, 0.75, 0.85), weight="Medium")
         if not over:
             scary_text(ctx, "失敗したら・・・", W / 2, 1590, 78, t, drips)
         if over and fail:
@@ -365,8 +381,7 @@ def render(seed):
             ctx.rectangle(0, 880, W, 300)
             ctx.set_source_rgba(0, 0, 0, 0.6)
             ctx.fill()
-            text(ctx, "時間切れ…", W / 2, 990, 130 * (1.3 - 0.3 * k), rgb=(1, 0.3, 0.3), sw=20)
-            text(ctx, f"あと {fmt(left_n)} 枚だった…", W / 2, 1110, 66, sw=12)
+            chic(ctx, f"あと {fmt(left_n)} 枚", W / 2, 1060, 100 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
         if win_b >= 0 and shards is None:   # 最後の板と底がバリーンと割れる:かけらを作る
             srng = np.random.default_rng(seed + 31)
             cx_, cy_ = SX0 + fr["x"], sy(fr["y"])
@@ -405,10 +420,6 @@ def render(seed):
                 ctx.set_source_rgba(1, 0.9, 0.6, k)
                 ctx.set_line_width(14 * k + 2)
                 ctx.stroke()
-            if 0.05 < win_b < SHATTER:
-                k = min(1.0, (win_b - 0.05) / 0.1)
-                text(ctx, "バリーン!!", W / 2, 900, 150 * (1.25 - 0.25 * k), rgb=hsv(win_b * 2), sw=20,
-                     alpha=min(1.0, (SHATTER - win_b) / 0.2))
         if win_b >= SHATTER:
             k = (win_b - SHATTER) / (PRE - SHATTER)
             ph_ = ((win_b - SHATTER) * (8 + 14 * k)) % 1.0
