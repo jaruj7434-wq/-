@@ -207,6 +207,39 @@ def chic(ctx, s, x, y, size, rgb=(1, 1, 1), alpha=1.0, weight="Bold"):
     ctx.fill()
 
 
+def horror(ctx, s, x, y, size, t):
+    """怖い筆文字(Yuji Syuku・SIL OFL)。赤黒くにじむ光と、ときどき入るノイズのようなズレ。"""
+    flick = (t % 2.3) < 0.09
+    ctx.select_font_face("Yuji Syuku", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(size)
+    e = ctx.text_extents(s)
+    tx = x - e.width / 2 - e.x_bearing
+    for wd, al in ((26, 0.08), (14, 0.16)):   # 赤黒くにじむ光
+        ctx.move_to(tx, y)
+        ctx.text_path(s)
+        ctx.set_source_rgba(0.6, 0.0, 0.03, al)
+        ctx.set_line_width(wd)
+        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        ctx.stroke()
+    if flick:   # ズレた残像(ノイズ)
+        for dx, col in ((-7, (0.2, 0.0, 0.0)), (6, (1.0, 0.2, 0.25))):
+            ctx.move_to(tx + dx, y)
+            ctx.text_path(s)
+            ctx.set_source_rgba(*col, 0.6)
+            ctx.fill()
+    ctx.move_to(tx + 2, y + 4)
+    ctx.text_path(s)
+    ctx.set_source_rgba(0, 0, 0, 0.6)
+    ctx.fill()
+    g = cairo.LinearGradient(0, y - size * 0.9, 0, y + size * 0.15)
+    g.add_color_stop_rgb(0, 0.95, 0.15, 0.18)
+    g.add_color_stop_rgb(1, 0.5, 0.0, 0.03)
+    ctx.move_to(tx, y)
+    ctx.text_path(s)
+    ctx.set_source(g)
+    ctx.fill()
+
+
 def fmt(n):
     return f"{n:,}"
 
@@ -375,8 +408,7 @@ def render(seed):
         left = max(0.0, TIME_LIMIT - tt)
         chic(ctx, f"{left:4.1f}", W / 2, 515, 40, rgb=(1, 0.45, 0.45) if left < 5 else (0.7, 0.75, 0.85), weight="Medium")
         if not over:
-            flick = 0.55 if (t % 2.3) < 0.08 else 1.0   # ときどき一瞬ちらつく
-            chic(ctx, "失敗したら…", W / 2, 1585, 58, rgb=(1, 0.38, 0.42), alpha=flick)
+            horror(ctx, "失敗したら…", W / 2, 1590, 74, t)
         if over and fail:
             k = min(1.0, after / 0.25)
             ctx.rectangle(0, 880, W, 300)
