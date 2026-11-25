@@ -58,7 +58,8 @@ Edit this exact photo. Keep everything identical: the same boy, same face shape,
 | kurama v1(幼少期・全身正面)【非公開・確認用】 | gpt_image_2_6(ナルト v5 参照) | 9:16 | 0.75 クレジット | 3fe3e862-01c1-4c55-b5b9-6fa49edf9e52 | 金色のチャクラの衣・黒い炎模様・首の勾玉・お腹の渦巻き・角のような髪・オレンジの目、いずれも出た。瞳孔は横長というより丸っこい |
 | kurama v2(成人・ファスナー開け・全身金色)【非公開・確認用】 | gpt_image_2_6(kurama v1 参照) | 9:16 | 0.75 クレジット | 325e5c63-e3b0-478f-845f-2e44900a8052 | 20歳くらいの大人に。上着の前が開き、黒シャツにも渦巻きと炎模様。顔・肌・髪・額当てまで全部金色。目は金色寄りで瞳孔は横長になっていない。頬線は再び濃い線 |
 | kurama v3(成人・眉細め・日本人顔・角張った頬線)【非公開・確認用】 | gpt_image_2_6(kurama v2 参照) | 9:16 | 0.75 クレジット | 1808c9e0-e257-43e6-a2fc-f9cad765e2cb | 眉が細く、切れ長の目の日本人顔に。頬線は太い長方形の角張った黒い線(かなり太め)。体・衣装はv2を維持 |
-| kurama v4(額当ての紐を炎のように長く)【非公開・確認用】 | gpt_image_2_6(kurama v3 参照) | 9:16 | 0.75 クレジット | b0d39889-db06-498a-952c-b1f00668cb94 | 額当ての紐が金色の炎のように長く、頭上へ左右に大きくなびく。顔の右横に元の短い紐も少し残る。**現時点の九喇嘛モード基準** |
+| kurama v4(額当ての紐を炎のように長く)【非公開・確認用】 | gpt_image_2_6(kurama v3 参照) | 9:16 | 0.75 クレジット | b0d39889-db06-498a-952c-b1f00668cb94 | 額当ての紐が金色の炎のように長く、頭上へ左右に大きくなびく。顔の右横に元の短い紐も少し残る |
+| kurama v5(眉さらに細く・オレンジの目に十字の瞳孔・黒アイシャドウ)【非公開・確認用】 | gpt_image_2_6(kurama v4 参照) | 9:16 | 0.75 クレジット | 67c23762-0267-468b-b913-07d15cdfcd30 | オレンジの目に黒い十字の瞳孔、目の上に黒いアイシャドウ(目じりに跳ね上げ)が出た。眉はほぼ見えないほど細い。頬線は再び太め。右横の短い紐は残ったまま。**現時点の九喇嘛モード基準** |
 
 ```
 Using this photo as the character reference, keep the same boy: same face, same age, same spiky blond hair, same natural whisker marks on both cheeks, same headband with its engraved emblem, same front-facing full-body standing pose, same plain light gray studio background and framing. Transform him into Naruto's Nine-Tails Chakra Mode (Kurama mode) as a photorealistic live-action film VFX shot: his whole body is wrapped in a bright glowing golden-yellow chakra cloak like translucent flowing fire light, with black flame-shaped markings across his torso, arms and legs, a ring of black magatama-like marks around the collar and a black spiral mark on the stomach. His hair glows golden and two tufts stick up like small horns. His eyes are glowing orange with horizontal black pupils. Golden light softly illuminates his skin and the floor around him, faint sparks and heat haze in the air. Serious determined expression. Cinematic, realistic skin and fabric under the glow. No text.
@@ -147,4 +148,10 @@ Edit this exact image. Keep everything else identical: the golden glowing Nine-T
 
 ```
 Edit this exact image. Keep everything else identical: his face, eyebrows, eyes, the thick rectangular whisker marks, the horn-like hair tufts, the golden glowing headband plate with emblem, the golden chakra cloak, open jacket, black shirt with spiral, flame markings, magatama ring, the front-facing full-body pose, background, framing and lighting. Change ONLY the headband tails (the tied cloth ends of the headband): make the two tails much LONGER, glowing golden like chakra flames, streaming and fluttering dramatically UPWARD and outward from behind his head like rising fire, as if blown by a powerful updraft of chakra, reaching well above the top of his hair, with flame-like wispy edges and soft sparks. No text.
+```
+
+#### kurama v5 プロンプト(kurama v4 を参照して目まわりのみ編集)
+
+```
+Edit this exact image. Keep everything else identical: his face shape, nose, mouth, the rectangular whisker marks, the horn-like hair tufts, the golden headband plate with emblem and the long flame-like headband tails rising upward, the golden chakra cloak, open jacket, black shirt with spiral, flame markings, magatama ring, the front-facing full-body pose, background, framing and lighting. Change ONLY the eye area: 1) make his eyebrows very thin, sharp and fine. 2) Make the irises vivid glowing orange, and inside each iris put a black cross-shaped pupil (a black plus-sign / cross pattern) clearly visible in both eyes. 3) Add dark black shading on the upper eyelids like heavy black eyeshadow, extending slightly outward toward the outer corners, giving a fierce beast-like look. Keep the serious determined expression. No text.
 ```
