@@ -250,3 +250,24 @@ Edit this exact image with the smallest possible change. Change ONLY the sandals
 ```
 Edit this exact image with the smallest possible change. Change ONLY his two hands: make both hands glow in the same bright golden flame chakra color as the rest of his body, and on the back of each hand add a black marking: a thin black horizontal band going across the back of the hand just above the knuckles-to-wrist middle, with a solid filled black circle at the center of the band, like a dot on a line. Keep everything else exactly the same: face, eyes, headband, hair, flame-like headband tails, magatama ring, spirals, the suit pattern, white haori with red flames, golden sandals, pose, background and lighting. No text.
 ```
+
+## サスケ風(忍界大戦編・両目 永遠の万華鏡写輪眼)
+
+- 17歳くらいの架空の日本人青年、細身で引き締まった体(実在の俳優には似せない)
+- 日本人らしい顔立ち、細くまっすぐな眉、冷たく鋭い表情
+- ツヤのある黒髪。後ろがツンツンと立ち、長い前髪が顔の両側と額にかかる
+- 両目とも永遠の万華鏡写輪眼(赤い瞳に黒い模様)、目の下に血の跡
+- 額当てなし
+- 濃いグレーのハイネックのファスナー付き長袖シャツ、濃いグレーのズボン、太い紫の縄ベルト(蝶結び)と紺色の腰布、紺色の前腕ガード、黒い忍者サンダル、背中に横向きの刀
+
+### 生成記録
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| v1(全身正面)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | e9b05490-b879-4873-bbdf-02e5e096d5ea | 衣装・髪・刀はほぼ指定どおり。目は赤く光るが、全身画像では万華鏡写輪眼の模様が小さくはっきりしない。血の跡が「うっすら乾いた」ではなく、両目から長く垂れる血の涙になった |
+
+#### v1 プロンプト
+
+```
+Photorealistic live-action character reference photo, vertical 9:16, full body shot from head to shoes, subject standing straight and facing the camera directly (front view), arms relaxed at sides, centered in frame. A fictional Japanese young man around 17 years old, slim and athletic, original face (not resembling any real actor), clearly Japanese facial features, thin straight eyebrows, cold calm intense expression. Glossy black hair, spiky and sticking up at the back, with long bangs framing both sides of his face and falling over his forehead. BOTH eyes have the Eternal Mangekyo Sharingan from the Naruto anime: glowing deep red irises with an intricate black pinwheel-star pattern (a six-pointed star-flower shape with three curved blades), clearly visible in both eyes, whites of the eyes normal white, a thin trace of dried blood under each eye. No headband. Outfit (Fourth Great Ninja War era): a dark gray long-sleeved high-collared zip-up shirt, dark gray trousers, a thick purple rope belt tied in a bow at the waist with a dark navy cloth hanging over the hips like a short apron, dark navy forearm guards, black open-toe ninja sandals, a straight sword with a plain black hilt and sheath tucked horizontally at his back behind the rope belt. Plain light gray seamless studio background, soft even studio lighting, sharp focus, realistic skin, hair and fabric texture, like a Japanese live-action film costume photo. No text.
+```
