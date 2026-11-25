@@ -64,6 +64,7 @@ Edit this exact photo. Keep everything identical: the same boy, same face shape,
 | kurama v7(目を自然な大きさに戻す)【非公開・確認用】 | gpt_image_2_6(kurama v6 + v3 参照) | 9:16 | 0.75 クレジット | 00273570-b376-4321-ad8a-6593ab67a9b7 | **ほぼ失敗**: 目は少し落ち着いたが黒目はまだ大きい。頬の線がにじんで崩れた(片側2本半に見える)。基準は v4〜v6 のまま |
 | kurama v8(v4 の黒目をオレンジにするだけ)【非公開・確認用】 | gpt_image_2_6(kurama v4 参照) | 9:16 | 0.75 クレジット | 0363eb1e-8fa6-4a9a-9259-c676ad7cc520 | 目の大きさ・形はv4の自然なまま、黒目だけオレンジ。白目も自然。頬線もきれい |
 | kurama v9(v8 の眉毛だけ細く)【非公開・確認用】 | gpt_image_2_6(kurama v8 参照) | 9:16 | 0.75 クレジット | aa7338da-8a21-4a4d-86d7-ef752f3b9957 | 眉が細く薄くなった。目・頬線・体はv8のまま。**現時点の九喇嘛モード基準** |
+| kurama v10(眉さらに細く・目の間隔を縮める・鼻の穴を目立たなく・小顔・目を少し大きく)【非公開・確認用】 | gpt_image_2_6(kurama v9 参照) | 9:16 | 0.75 クレジット | 34720423-db5e-4240-944a-eb0445ea184f | **変化がほとんど出なかった**。全身画像で顔が小さく、品質設定が既定の low のため細かい顔の編集が効きにくいと考えられる |
 
 ```
 Using this photo as the character reference, keep the same boy: same face, same age, same spiky blond hair, same natural whisker marks on both cheeks, same headband with its engraved emblem, same front-facing full-body standing pose, same plain light gray studio background and framing. Transform him into Naruto's Nine-Tails Chakra Mode (Kurama mode) as a photorealistic live-action film VFX shot: his whole body is wrapped in a bright glowing golden-yellow chakra cloak like translucent flowing fire light, with black flame-shaped markings across his torso, arms and legs, a ring of black magatama-like marks around the collar and a black spiral mark on the stomach. His hair glows golden and two tufts stick up like small horns. His eyes are glowing orange with horizontal black pupils. Golden light softly illuminates his skin and the floor around him, faint sparks and heat haze in the air. Serious determined expression. Cinematic, realistic skin and fabric under the glow. No text.
@@ -181,3 +182,5 @@ Edit this exact image with the smallest possible change. Change ONLY the eyebrow
 ```
 
 - メモ: 「変える部位を1か所にしぼり、他は一切変えない」と書くと崩れにくい(v8・v9 で確認)。
+
+- メモ: `gpt_image_2_6` の既定は quality: low / resolution: 1k。全身画像の小さな顔を細かく直すなら quality: high / resolution: 2k(1枚 2 クレジット)を検討する。
