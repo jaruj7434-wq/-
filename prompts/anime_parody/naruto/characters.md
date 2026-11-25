@@ -50,3 +50,24 @@ Edit this exact photo. Keep everything identical: the same boy, same face, same 
 ```
 Edit this exact photo. Keep everything identical: the same boy, same face shape, same expression, same blond hair, same headband and its engraved emblem, same orange and black outfit, same pants, pouch and leg band, same sandals, same front-facing full-body pose, same plain light gray studio background, same lighting and framing. Change ONLY the three lines on each cheek: they currently look like black pen or marker drawings. Make them look like natural, realistic skin marks instead — three soft, thin, slightly darker brownish-pink birthmark-like lines on each cheek, blended into the skin with realistic skin texture and pores visible through them, subtle and not glossy, slightly irregular edges, symmetrical on both cheeks. No ink, no drawn look. No text.
 ```
+
+## サスケ風の忍者少年(幼少期)
+
+- 12歳くらいの架空の日本人の男の子(実在の俳優・子役には似せない)
+- クールで真面目な表情、黒い瞳
+- ツヤのある黒髪。後ろがツンツンと立ち、長めの前髪が顔の両側にかかる
+- 紺色のハイカラー半袖シャツ、白いひざ丈ショートパンツ、グレーのアームウォーマー
+- 右太ももに黒い忍具ポーチ(白い包帯巻き)、紺色の忍者サンダル
+- 額当て: 木の葉マーク(ナルト v5 にそろえた非公開・確認用)
+
+### 生成記録
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| v1(幼少期・全身正面)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | d45cf7c0-e5e0-4c4a-8e4c-3bb3cfb5cb98 | 指定どおりの全身正面。ナルト v5 と同じ形式で並べられる |
+
+#### v1 プロンプト
+
+```
+Photorealistic live-action character reference photo, vertical 9:16, full body shot from head to shoes, subject standing straight and facing the camera directly (front view), arms relaxed at sides, centered in frame. A fictional Japanese boy around 12 years old, original face (not resembling any real actor), cool calm serious expression with a slight frown, dark eyes. Natural glossy black hair, spiky and sticking up at the back, with long bangs framing both sides of his face. Wearing a dark navy blue short-sleeved shirt with a high wide collar, white knee-length shorts, light gray arm warmers on both forearms, a black ninja tool pouch strapped to his right thigh with white bandage wrap, dark blue open-toe ninja sandals. Dark blue cloth headband with a metal plate engraved with the Hidden Leaf Village symbol from the Naruto anime (a stylized leaf outline with a spiral swirl inside and a small triangular point at the top). Plain light gray seamless studio background, soft even studio lighting, sharp focus, realistic skin and fabric texture, looks like a real child actor in a live-action film costume. No text.
+```
