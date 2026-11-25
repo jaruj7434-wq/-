@@ -265,7 +265,8 @@ Edit this exact image with the smallest possible change. Change ONLY his two han
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | v1(全身正面)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | e9b05490-b879-4873-bbdf-02e5e096d5ea | 衣装・髪・刀はほぼ指定どおり。目は赤く光るが、全身画像では万華鏡写輪眼の模様が小さくはっきりしない。血の跡が「うっすら乾いた」ではなく、両目から長く垂れる血の涙になった |
-| v2(血を削除・顔をシャープに・服を薄グレー/青灰/黒に・剣を左腰に斜め差し)【非公開・確認用】 | gpt_image_2_6(サスケ v1 参照) | 9:16 | 0.75 クレジット | 652a484a-0e04-48ee-a800-f18aafdc1cd0 | ユーザー提供の参考画像(原作アニメ絵、アップロードせず文章で指定)に合わせた。血は消え、細面でクールな表情に。薄グレーのVネック・ハイカラー半袖、青灰色の腰布、黒ズボンと黒の前腕ガード。剣は左腰に斜め差し(柄が上向き)。万華鏡写輪眼の模様は小さめ。**現時点の基準** |
+| v2(血を削除・顔をシャープに・服を薄グレー/青灰/黒に・剣を左腰に斜め差し)【非公開・確認用】 | gpt_image_2_6(サスケ v1 参照) | 9:16 | 0.75 クレジット | 652a484a-0e04-48ee-a800-f18aafdc1cd0 | ユーザー提供の参考画像(原作アニメ絵、アップロードせず文章で指定)に合わせた。血は消え、細面でクールな表情に。薄グレーのVネック・ハイカラー半袖、青灰色の腰布、黒ズボンと黒の前腕ガード。剣は左腰に斜め差し(柄が上向き)。万華鏡写輪眼の模様は小さめ |
+| v3(剣を画面左に斜めがけ・髪の前後を自然につなげる)【非公開・確認用】 | gpt_image_2_6(サスケ v2 参照) | 9:16 | 0.75 クレジット | b535f91e-ff62-4093-88b3-96577271e8f4 | 剣が画面左(本人の右腰)に斜めがけ、柄は体の後ろから斜め上へ。髪は前髪と後ろのツンツンが自然につながった。目は赤いが万華鏡の模様がほぼ消え、普通の赤い瞳に見える。**現時点の基準** |
 
 #### v1 プロンプト
 
@@ -277,4 +278,10 @@ Photorealistic live-action character reference photo, vertical 9:16, full body s
 
 ```
 Edit this exact image. Keep the same person, hair, front-facing full-body pose, purple rope belt, background and lighting. Make these changes: 1) REMOVE all blood from his face completely — no blood tears, clean skin. Keep both eyes as glowing red Eternal Mangekyo Sharingan with a black pinwheel-star pattern. 2) Face: a slimmer, sharper, handsome face with a calm, cool, slightly confident expression and narrow sharp eyes, thin straight eyebrows. 3) Outfit colors: the shirt becomes LIGHT GRAY, with a high stiff collar standing up around the neck and the front open in a deep V down the chest (no zipper closed, collarbones and upper chest visible), loose sleeves ending just above the elbows; the waist cloth hanging over the hips becomes muted slate blue-gray; the trousers become BLACK; the forearm guards become BLACK; black open-toe sandals. Keep the thick purple rope belt tied in a bow. 4) Sword: instead of horizontal, the black-sheathed sword is tucked diagonally into the rope belt at his LEFT hip, with the hilt near the left side of the waist and the sheath angled down and back behind his left leg. No text.
+```
+
+#### サスケ(忍界大戦編)v3 プロンプト(v2 を参照して剣と髪を編集)
+
+```
+Edit this exact image. Make ONLY these two changes: 1) Sword: move the black-sheathed sword to the LEFT side of the image (his right hip). It is tucked into the back of the purple rope belt and hangs DIAGONALLY: the black hilt sticks out behind him at the left side of the image near his waist and elbow, angled up and outward, and the sheath slants down and back behind his hip and thigh on the left side of the image. Remove the sword from the right side of the image. 2) Hair: make it one natural continuous hairstyle — the long front bangs and the spiky raised hair at the back of the head blend smoothly into each other with natural volume, layered strands and realistic hair flow, like real styled hair, not a separate spiky piece attached at the back. Keep the same overall look (black hair, spiky back, long bangs framing the face). Keep everything else exactly the same: face, eyes, light gray V-neck high-collar shirt, purple rope belt, slate blue-gray waist cloth, black trousers, black forearm guards, sandals, pose, background and lighting. No text.
 ```
