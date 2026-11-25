@@ -16,6 +16,7 @@
 | v1 | gpt_image_2_6 | 9:16 | 0.75 クレジット | 312e5960-df37-4432-b1ad-e28746af33f6 | 雰囲気は良い。ただし額当ての紋章が公式マークに近く、ヒゲ線が片頬にしか出ていない → 要修正 |
 | v2(幼少期・全身正面) | gpt_image_2_6 | 9:16 | 0.75 クレジット | 7e8b0bb0-7236-4eb8-ac01-cacea04fb696 | 全身・正面・グレー背景。両頬にヒゲ線、ラーメン紋章もOK。紋章がラーメンなので差し替え |
 | v3(v2の紋章のみ編集) | gpt_image_2_6(v2参照) | 9:16 | 0.75 クレジット | 957dcbb8-d016-4d5c-97ba-f4057545d575 | 顔・服・ポーズはv2を維持。紋章がカナダ国旗風のもみじになった → 葉の形を再検討中 |
+| v4(v3の紋章のみ編集)【非公開・確認用】 | gpt_image_2_6(v3参照) | 9:16 | 0.75 クレジット | 7ac3e63e-2ec7-4022-bb22-eeca14f92936 | ユーザー指示で公式の木の葉マークに。CLAUDE.md の例外として**公開動画には使わない** |
 
 #### v1 プロンプト
 
@@ -36,3 +37,9 @@ Edit this exact photo. Keep everything identical: the same boy, same face, same 
 ```
 
 - メモ: "maple-style leaf" と指定するとカナダ国旗のもみじになりやすい。
+
+#### v4 プロンプト(v3 を参照画像にして紋章のみ編集・非公開確認用)
+
+```
+Edit this exact photo. Keep everything identical: the same boy, same face, same expression, same blond hair, same whisker lines on both cheeks, same orange and black outfit, same pants, pouch and leg band, same sandals, same front-facing full-body pose, same plain light gray studio background, same lighting and framing. Change ONLY the engraving on the metal plate of the dark blue headband: replace the maple leaf with the Hidden Leaf Village symbol from the Naruto anime (a stylized leaf outline with a spiral swirl inside and a small triangular point at the top), cleanly engraved into the metal. No text.
+```
