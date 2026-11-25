@@ -186,3 +186,23 @@ Edit this exact image with the smallest possible change. Change ONLY the eyebrow
 - メモ: 「変える部位を1か所にしぼり、他は一切変えない」と書くと崩れにくい(v8・v9 で確認)。
 
 - メモ: `gpt_image_2_6` の既定は quality: low / resolution: 1k。全身画像の小さな顔を細かく直すなら quality: high / resolution: 2k(1枚 2 クレジット)を検討する。
+
+## ミナト風(穢土転生・九喇嘛モード)
+
+- 24歳くらいの架空の日本人男性、長身で細身。穏やかで芯のある真剣な表情(実在の俳優には似せない)
+- 頬の線なし。ツンツンの金髪で、長い前髪が顔の両側に垂れる
+- 額当て: 木の葉マーク(非公開・確認用)
+- 九喇嘛モード: 金色のチャクラの衣、黒い炎の模様、首の勾玉。その上に、裾に赤い炎模様が入った白いひざ丈の半袖羽織(前開き)
+- 穢土転生: 白目が黒く、黒目はオレンジ。顔と手に灰色がかったひび割れ
+
+### 生成記録
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| v1(全身正面)【非公開・確認用】 | gpt_image_2_6(ナルト kurama v10 を画風の見本として参照) | 9:16 | 0.75 クレジット | 0972b9de-3a0c-4f28-b9de-1b561f5476e5 | 顔はナルトと別人に。長い前髪・炎の羽織・黒い白目にオレンジの瞳・頬と手のひび割れが出た。参照元から炎のような額当ての紐も引き継がれた |
+
+#### v1 プロンプト
+
+```
+Use this image ONLY as the style reference (photorealistic live-action VFX look, glowing golden chakra cloak, plain light gray studio background, front-facing full-body standing pose, framing and lighting). Create a DIFFERENT character: a fictional Japanese man around 24 years old, tall and slim, calm gentle but serious expression, original face (not resembling any real actor and not the same face as the reference), NO whisker marks. Hair: spiky bright blond hair with long bangs hanging down on both sides of his face, glowing gold. Headband with metal plate engraved with the Hidden Leaf Village symbol from the Naruto anime. He is in Nine-Tails Chakra Mode: his body is wrapped in a glowing golden-yellow chakra cloak like translucent flowing fire with black flame markings and a ring of black magatama marks around the collar, and over it he wears a white knee-length short-sleeved haori coat with red-orange flame patterns along the bottom hem, open at the front. He is reanimated by the Edo Tensei (Impure World Reincarnation) technique: the WHITES of his eyes are BLACK (black sclera) with glowing orange irises, and his face and hands have subtle gray-beige cracked patches like dry porcelain or ash, as if his body is made of crumbling dust, with a few tiny flakes drifting off. Faint sparks and heat haze. No text.
+```
