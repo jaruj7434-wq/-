@@ -203,7 +203,8 @@ Edit this exact image with the smallest possible change. Change ONLY the eyebrow
 | v2(顔と額当てを髪と同じ金色の炎色に)【非公開・確認用】 | gpt_image_2_6(ミナト v1 参照) | 9:16 | 0.75 クレジット | 9b2471ee-0c3a-40d1-9046-77e1d4e5c6cc | 顔全体と額当てが金色に。黒い白目・オレンジの瞳は維持。頬のひび割れは銀灰色の斑点としてかえって目立つ。手は元の肌色のまま |
 | v3(胴の渦巻きを勾玉の輪のすぐ下へ、周りの模様を細い縦線に)【非公開・確認用】 | gpt_image_2_6(ミナト v2 参照) | 9:16 | 0.75 クレジット | e4ee91d3-b3f0-4de1-87d2-c007d1d8fe16 | 渦巻きが胸の上(勾玉の輪の直下)へ。下に細い黒の縦線3本。胴の太い炎模様は消えた。他はv2のまま |
 | v4(両肩に渦巻き・前腕と羽織の胸の黒い線を消す・インナーを上下つなぎに)【非公開・確認用】 | gpt_image_2_6(ミナト v3 参照) | 9:16 | 0.75 クレジット | c2d1f62f-9d9b-40df-ad26-328fe96e7d0b | 両肩に渦巻きが入り、前腕と羽織の胸の黒い線は消えた。上下つなぎは不十分で、腰に上着の裾のような境目がまだ見える |
-| v5(渦巻きの下を「Π」形の模様に・脚の炎模様を削除・腰の境目を消す)【非公開・確認用】 | gpt_image_2_6(ミナト v4 参照) | 9:16 | 0.75 クレジット | 6abeb498-5723-422b-a540-f9a1fab571ff | ユーザー提供の参考画像(フィギュア写真、アップロードはせず文章で指定)どおり、中央の縦線→横線→両太ももの前を下る線に。脚の炎模様も消え、腰の境目もほぼ目立たない。**現時点のミナト基準** |
+| v5(渦巻きの下を「Π」形の模様に・脚の炎模様を削除・腰の境目を消す)【非公開・確認用】 | gpt_image_2_6(ミナト v4 参照) | 9:16 | 0.75 クレジット | 6abeb498-5723-422b-a540-f9a1fab571ff | ユーザー提供の参考画像(フィギュア写真、アップロードはせず文章で指定)どおり、中央の縦線→横線→両太ももの前を下る線に。脚の炎模様も消え、腰の境目もほぼ目立たない |
+| v6(サンダルと足を炎色に)【非公開・確認用】 | gpt_image_2_6(ミナト v5 参照) | 9:16 | 0.75 クレジット | 257a82d8-17f2-4a33-9af1-dd325102ffe2 | サンダルと足が金色の炎色に光るように。他はv5のまま。手は肌色のまま。**現時点のミナト基準** |
 
 #### v1 プロンプト
 
@@ -233,4 +234,10 @@ Edit this exact image. Make ONLY these three changes: 1) Add a black spiral mark
 
 ```
 Edit this exact image. Change ONLY the black markings on the glowing golden one-piece inner suit below the chest spiral, and remove the waist seam: 1) Remove the three thin vertical lines under the chest spiral and remove ALL the black flame-shaped markings on the legs and trousers. 2) Draw this new pattern in solid dark black-navy lines of medium thickness: a single straight vertical line running down the center from just below the chest spiral to the lower stomach; there it meets a short horizontal line, forming an upside-down U (like the Greek letter Π); from both ends of that horizontal line, a line curves slightly outward and then runs straight down the front of each thigh to just above each knee. The rest of the suit is plain glowing gold. 3) The inner suit is one continuous piece from chest to ankles with no waistband, hem or seam at the waist. Keep everything else exactly the same: golden face and headband, black sclera with orange irises, cracks, hair, flame-like headband tails, magatama ring, chest spiral, shoulder spirals, white haori with red flames at the hem, hands, pose, background and lighting. No text.
+```
+
+#### ミナト v6 プロンプト(v5 を参照して足元の色のみ変更)
+
+```
+Edit this exact image with the smallest possible change. Change ONLY the sandals/shoes and his visible feet: make them glow in the same bright golden flame chakra color as the rest of his suit and hair, with soft golden glow. Keep everything else exactly the same: face, eyes, headband, hair, flame-like headband tails, magatama ring, spirals, the suit pattern, white haori with red flames, hands, pose, background and lighting. No text.
 ```
