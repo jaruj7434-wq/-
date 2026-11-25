@@ -53,7 +53,7 @@ Edit this exact photo. Keep everything identical: the same boy, same face shape,
 
 ### 九喇嘛モード(変身形態)
 
-**完成形: kurama v10(ジョブID 34720423-db5e-4240-944a-eb0445ea184f)**
+**完成形: 三面図 v4(ジョブID 3b791203-ebfc-4090-a63e-1a4e5bc5ce92、長コート版)/ 正面単体の完成形は kurama v10(34720423-db5e-4240-944a-eb0445ea184f)**
 
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
@@ -70,7 +70,7 @@ Edit this exact photo. Keep everything identical: the same boy, same face shape,
 | kurama 三面図 v1(正面・横・後ろ)【非公開・確認用】 | gpt_image_2_6(kurama v10 参照、quality: high / 2k) | 16:9 | 2 クレジット | 434bf83a-c6db-4357-b028-405c03cafee3 | 3方向で金色の衣・角の髪・炎の紐・勾玉の輪・炎模様がそろった。後ろ姿で額当ての結び目から紐が左右に上がる。横向きで太ももポーチが逆の脚(手前=左脚)に付いている |
 | kurama 三面図 v2(衣装を長コート版に作り直し)【非公開・確認用】 | gpt_image_2_6(三面図 v1 参照、quality: high / 2k) | 16:9 | 2 クレジット | 2000b838-42ca-47c1-94d1-f099af2d777d | ユーザー提供の参考画像2枚(フィギュア写真、アップロードせず文章で指定)に合わせた。ふくらはぎ丈の金色の長コート(黒の裏地・炎形の裾と袖口)、黒いインナーに金の縦線と同心円マーク、金のズボンに黒の縦線2本、黒ストラップのサンダル。背中に黒い輪と両肩へ広がる黒い曲線。ポーチは削除 |
 | kurama 三面図 v3(背中の模様を黒丸+輪+4方向の線に)【非公開・確認用】 | gpt_image_2_6(三面図 v2 参照、quality: high / 2k) | 16:9 | 2 クレジット | 4a13de1d-6b4d-4f3f-ad3f-17231df75e90 | 背中に黒く塗った丸、その外側に黒い輪、輪から上下左右斜めに4本の黒い直線(X字)。参考画像の線は肩に沿って曲がるが、こちらはまっすぐ。正面・横はv2のまま |
-| kurama 三面図 v4(背中の4本線を太く、体と服の曲線に沿わせる)【非公開・確認用】 | gpt_image_2_6(三面図 v3 参照、quality: high / 2k) | 16:9 | 2 クレジット | 3b791203-ebfc-4090-a63e-1a4e5bc5ce92 | 4本線が太くなり、上は肩の丸みに沿って回り込み、下はあばらに沿って脇へ流れる自然なカーブに。他はv3のまま。**現時点の三面図** |
+| kurama 三面図 v4(背中の4本線を太く、体と服の曲線に沿わせる)【非公開・確認用】 | gpt_image_2_6(三面図 v3 参照、quality: high / 2k) | 16:9 | 2 クレジット | 3b791203-ebfc-4090-a63e-1a4e5bc5ce92 | 4本線が太くなり、上は肩の丸みに沿って回り込み、下はあばらに沿って脇へ流れる自然なカーブに。他はv3のまま。ユーザー判断で **九喇嘛モードナルトの完成形(三面図)** |
 
 ```
 Using this photo as the character reference, keep the same boy: same face, same age, same spiky blond hair, same natural whisker marks on both cheeks, same headband with its engraved emblem, same front-facing full-body standing pose, same plain light gray studio background and framing. Transform him into Naruto's Nine-Tails Chakra Mode (Kurama mode) as a photorealistic live-action film VFX shot: his whole body is wrapped in a bright glowing golden-yellow chakra cloak like translucent flowing fire light, with black flame-shaped markings across his torso, arms and legs, a ring of black magatama-like marks around the collar and a black spiral mark on the stomach. His hair glows golden and two tufts stick up like small horns. His eyes are glowing orange with horizontal black pupils. Golden light softly illuminates his skin and the floor around him, faint sparks and heat haze in the air. Serious determined expression. Cinematic, realistic skin and fabric under the glow. No text.
