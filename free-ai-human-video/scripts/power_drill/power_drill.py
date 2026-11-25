@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 from fail_bgm import fail_music  # noqa: E402
 from pachinko import RainbowFever, hsv, kyuin_music  # noqa: E402
-from flashy import PALETTE, draw_ball, drip_layout, giragira, kyuin_one, scary_text  # noqa: E402
+from flashy import PALETTE, chic, draw_ball, drip_layout, giragira, horror, kyuin_one, scary_text  # noqa: E402
 sys.path.insert(0, os.path.join(HERE, "..", "glass_spiral"))
 import jackpot_end as JP  # noqa: E402
 
@@ -187,57 +187,6 @@ def stripe_pattern(scale):
     p.set_extend(cairo.EXTEND_REPEAT)
     p.set_filter(cairo.FILTER_NEAREST)   # くっきりしたしま模様に
     return p, h
-
-
-def chic(ctx, s, x, y, size, rgb=(1, 1, 1), alpha=1.0, weight="Bold"):
-    """すっきりしたゴシック体(Zen Kaku Gothic New・SIL OFL)。太いふちどりはなし、やわらかい影だけ。"""
-    ctx.select_font_face("Zen Kaku Gothic New" if weight == "Bold" else "Zen Kaku Gothic New Medium",
-                         cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD if weight == "Bold" else cairo.FONT_WEIGHT_NORMAL)
-    ctx.set_font_size(size)
-    e = ctx.text_extents(s)
-    tx = x - e.width / 2 - e.x_bearing
-    for dx, dy, a in ((0, 4, 0.45), (0, 2, 0.35)):   # やわらかい影
-        ctx.move_to(tx + dx, y + dy)
-        ctx.text_path(s)
-        ctx.set_source_rgba(0, 0, 0, a * alpha)
-        ctx.fill()
-    ctx.move_to(tx, y)
-    ctx.text_path(s)
-    ctx.set_source_rgba(*rgb, alpha)
-    ctx.fill()
-
-
-def horror(ctx, s, x, y, size, t):
-    """怖い筆文字(Yuji Syuku・SIL OFL)。赤黒くにじむ光と、ときどき入るノイズのようなズレ。"""
-    flick = (t % 2.3) < 0.09
-    ctx.select_font_face("Yuji Syuku", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(size)
-    e = ctx.text_extents(s)
-    tx = x - e.width / 2 - e.x_bearing
-    for wd, al in ((26, 0.08), (14, 0.16)):   # 赤黒くにじむ光
-        ctx.move_to(tx, y)
-        ctx.text_path(s)
-        ctx.set_source_rgba(0.6, 0.0, 0.03, al)
-        ctx.set_line_width(wd)
-        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-        ctx.stroke()
-    if flick:   # ズレた残像(ノイズ)
-        for dx, col in ((-7, (0.2, 0.0, 0.0)), (6, (1.0, 0.2, 0.25))):
-            ctx.move_to(tx + dx, y)
-            ctx.text_path(s)
-            ctx.set_source_rgba(*col, 0.6)
-            ctx.fill()
-    ctx.move_to(tx + 2, y + 4)
-    ctx.text_path(s)
-    ctx.set_source_rgba(0, 0, 0, 0.6)
-    ctx.fill()
-    g = cairo.LinearGradient(0, y - size * 0.9, 0, y + size * 0.15)
-    g.add_color_stop_rgb(0, 0.95, 0.15, 0.18)
-    g.add_color_stop_rgb(1, 0.5, 0.0, 0.03)
-    ctx.move_to(tx, y)
-    ctx.text_path(s)
-    ctx.set_source(g)
-    ctx.fill()
 
 
 def fmt(n):

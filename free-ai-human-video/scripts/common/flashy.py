@@ -3,6 +3,7 @@
 - scary_text / drip_layout: 「失敗したら・・・」用の、血がしたたる怖い筆文字(Yuji Boku・SIL OFL。~/.fonts に入れて使う)
 - draw_ball / PALETTE: つやのあるボールと12色の虹
 - kyuin_one: キュイン1回分の音
+- chic: すっきりしたゴシック体の文字(Zen Kaku Gothic New)/ horror: 怖い筆文字(Yuji Syuku)の「失敗したら…」
 """
 import colorsys
 import math
@@ -155,5 +156,56 @@ def draw_ball(ctx, x, y, r, col):
     g.add_color_stop_rgb(0.5, *col)
     g.add_color_stop_rgb(1, *(c * 0.55 for c in col))
     ctx.arc(x, y, r, 0, 2 * math.pi)
+    ctx.set_source(g)
+    ctx.fill()
+
+
+def chic(ctx, s, x, y, size, rgb=(1, 1, 1), alpha=1.0, weight="Bold"):
+    """すっきりしたゴシック体(Zen Kaku Gothic New・SIL OFL)。太いふちどりはなし、やわらかい影だけ。"""
+    ctx.select_font_face("Zen Kaku Gothic New" if weight == "Bold" else "Zen Kaku Gothic New Medium",
+                         cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD if weight == "Bold" else cairo.FONT_WEIGHT_NORMAL)
+    ctx.set_font_size(size)
+    e = ctx.text_extents(s)
+    tx = x - e.width / 2 - e.x_bearing
+    for dx, dy, a in ((0, 4, 0.45), (0, 2, 0.35)):   # やわらかい影
+        ctx.move_to(tx + dx, y + dy)
+        ctx.text_path(s)
+        ctx.set_source_rgba(0, 0, 0, a * alpha)
+        ctx.fill()
+    ctx.move_to(tx, y)
+    ctx.text_path(s)
+    ctx.set_source_rgba(*rgb, alpha)
+    ctx.fill()
+
+
+def horror(ctx, s, x, y, size, t):
+    """怖い筆文字(Yuji Syuku・SIL OFL)。赤黒くにじむ光と、ときどき入るノイズのようなズレ。"""
+    flick = (t % 2.3) < 0.09
+    ctx.select_font_face("Yuji Syuku", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(size)
+    e = ctx.text_extents(s)
+    tx = x - e.width / 2 - e.x_bearing
+    for wd, al in ((26, 0.08), (14, 0.16)):   # 赤黒くにじむ光
+        ctx.move_to(tx, y)
+        ctx.text_path(s)
+        ctx.set_source_rgba(0.6, 0.0, 0.03, al)
+        ctx.set_line_width(wd)
+        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        ctx.stroke()
+    if flick:   # ズレた残像(ノイズ)
+        for dx, col in ((-7, (0.2, 0.0, 0.0)), (6, (1.0, 0.2, 0.25))):
+            ctx.move_to(tx + dx, y)
+            ctx.text_path(s)
+            ctx.set_source_rgba(*col, 0.6)
+            ctx.fill()
+    ctx.move_to(tx + 2, y + 4)
+    ctx.text_path(s)
+    ctx.set_source_rgba(0, 0, 0, 0.6)
+    ctx.fill()
+    g = cairo.LinearGradient(0, y - size * 0.9, 0, y + size * 0.15)
+    g.add_color_stop_rgb(0, 0.95, 0.15, 0.18)
+    g.add_color_stop_rgb(1, 0.5, 0.0, 0.03)
+    ctx.move_to(tx, y)
+    ctx.text_path(s)
     ctx.set_source(g)
     ctx.fill()
