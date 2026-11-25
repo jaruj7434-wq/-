@@ -1,0 +1,163 @@
+{
+ "name": "20261125_gta6_randy_cars",
+ "source": "https://www.youtube.com/watch?v=FeZgt7pZ7NI",
+ "narration": "Higgsfield text2speech_v2 / ElevenLabs / preset voice Hana (c25f78a0-714e-42af-8da3-a399cef94968)",
+ "narr_speed": 1.12,
+ "gap": 0.18,
+ "game_vol": 0.15,
+ "x": 0.5,
+ "title": [
+  "GTA6",
+  "ランディの依頼車 爆速納車術"
+ ],
+ "hook": [
+  "警察に追われず",
+  "一瞬で納車!"
+ ],
+ "outro": [
+  "車の出現場所は",
+  "概要欄の元動画で!"
+ ],
+ "outro_sec": 4.0,
+ "credit": "素材: LunarGaming (YouTube / CC BY)",
+ "segments": [
+  {
+   "narr": "../03_edit/narr7/line1.mp3",
+   "clips": [
+    [
+     6,
+     14
+    ]
+   ],
+   "game_audio": false
+  },
+  {
+   "narr": "../03_edit/narr7/line2.mp3",
+   "clips": [
+    [
+     25.5,
+     31
+    ]
+   ],
+   "game_audio": false,
+   "l1": "STEP 1",
+   "l2": "ジェイソンとルシア2人で乗車"
+  },
+  {
+   "narr": "../03_edit/narr7/line3.mp3",
+   "clips": [
+    [
+     32.5,
+     38
+    ]
+   ],
+   "game_audio": false,
+   "l1": "STEP 2",
+   "l2": "相棒に「車で待ってて」→自分だけ降りる"
+  },
+  {
+   "narr": "../03_edit/narr7/line4.mp3",
+   "clips": [
+    [
+     38,
+     41.5
+    ],
+    [
+     48.6,
+     51.5
+    ]
+   ],
+   "game_audio": false,
+   "l1": "STEP 3",
+   "l2": "RideMeでランディのガレージへ"
+  },
+  {
+   "narr": "../03_edit/narr7/line5.mp3",
+   "clips": [
+    [
+     50.5,
+     57.5
+    ]
+   ],
+   "game_audio": false,
+   "l1": "STEP 4",
+   "l2": "ファストトラベルで一気に移動"
+  },
+  {
+   "narr": "../03_edit/narr7/line6.mp3",
+   "clips": [
+    [
+     67,
+     77
+    ]
+   ],
+   "game_audio": false,
+   "l1": "STEP 5",
+   "l2": "相棒に「こっちに来て」と指示"
+  },
+  {
+   "narr": "../03_edit/narr7/line7.mp3",
+   "clips": [
+    [
+     82,
+     90
+    ]
+   ],
+   "game_audio": false,
+   "l1": "盗んだ車が届く!",
+   "l2": "ダメージ・警察・ドライブなし"
+  },
+  {
+   "narr": "../03_edit/narr7/line8.mp3",
+   "clips": [
+    [
+     114,
+     121
+    ]
+   ],
+   "game_audio": false,
+   "l1": "STEP 6",
+   "l2": "ガレージに入れて報酬ゲット"
+  },
+  {
+   "narr": "../03_edit/narr7/line9.mp3",
+   "clips": [
+    [
+     228,
+     230
+    ],
+    [
+     245,
+     247
+    ],
+    [
+     294,
+     296
+    ],
+    [
+     336,
+     338
+    ],
+    [
+     372,
+     374
+    ],
+    [
+     434,
+     437
+    ]
+   ],
+   "l1": "全18台OK",
+   "l2": "ミッションを待たずに集められる"
+  },
+  {
+   "narr": "../03_edit/narr7/line10.mp3",
+   "clips": [
+    [
+     522,
+     528
+    ]
+   ]
+  }
+ ]
+}
