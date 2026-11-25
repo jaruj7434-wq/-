@@ -62,7 +62,8 @@ Edit this exact photo. Keep everything identical: the same boy, same face shape,
 | kurama v5(眉さらに細く・オレンジの目に十字の瞳孔・黒アイシャドウ)【非公開・確認用】 | gpt_image_2_6(kurama v4 参照) | 9:16 | 0.75 クレジット | 67c23762-0267-468b-b913-07d15cdfcd30 | オレンジの目に黒い十字の瞳孔、目の上に黒いアイシャドウ(目じりに跳ね上げ)が出た。眉はほぼ見えないほど細い。頬線は再び太め。右横の短い紐は残ったまま |
 | kurama v6(白目は白・黒目だけオレンジ・十字を極小・アイシャドウ控えめ)【非公開・確認用】 | gpt_image_2_6(kurama v5 参照) | 9:16 | 0.75 クレジット | dcb79774-351f-41c6-a621-9b440d448a29 | 白目が白に戻り、黒目だけオレンジ。十字は細く小さくなった。アイシャドウは細い線程度に。ただし黒目が大きく、目を見開いたような印象に |
 | kurama v7(目を自然な大きさに戻す)【非公開・確認用】 | gpt_image_2_6(kurama v6 + v3 参照) | 9:16 | 0.75 クレジット | 00273570-b376-4321-ad8a-6593ab67a9b7 | **ほぼ失敗**: 目は少し落ち着いたが黒目はまだ大きい。頬の線がにじんで崩れた(片側2本半に見える)。基準は v4〜v6 のまま |
-| kurama v8(v4 の黒目をオレンジにするだけ)【非公開・確認用】 | gpt_image_2_6(kurama v4 参照) | 9:16 | 0.75 クレジット | 0363eb1e-8fa6-4a9a-9259-c676ad7cc520 | 目の大きさ・形はv4の自然なまま、黒目だけオレンジ。白目も自然。頬線もきれい。**現時点の九喇嘛モード基準** |
+| kurama v8(v4 の黒目をオレンジにするだけ)【非公開・確認用】 | gpt_image_2_6(kurama v4 参照) | 9:16 | 0.75 クレジット | 0363eb1e-8fa6-4a9a-9259-c676ad7cc520 | 目の大きさ・形はv4の自然なまま、黒目だけオレンジ。白目も自然。頬線もきれい |
+| kurama v9(v8 の眉毛だけ細く)【非公開・確認用】 | gpt_image_2_6(kurama v8 参照) | 9:16 | 0.75 クレジット | aa7338da-8a21-4a4d-86d7-ef752f3b9957 | 眉が細く薄くなった。目・頬線・体はv8のまま。**現時点の九喇嘛モード基準** |
 
 ```
 Using this photo as the character reference, keep the same boy: same face, same age, same spiky blond hair, same natural whisker marks on both cheeks, same headband with its engraved emblem, same front-facing full-body standing pose, same plain light gray studio background and framing. Transform him into Naruto's Nine-Tails Chakra Mode (Kurama mode) as a photorealistic live-action film VFX shot: his whole body is wrapped in a bright glowing golden-yellow chakra cloak like translucent flowing fire light, with black flame-shaped markings across his torso, arms and legs, a ring of black magatama-like marks around the collar and a black spiral mark on the stomach. His hair glows golden and two tufts stick up like small horns. His eyes are glowing orange with horizontal black pupils. Golden light softly illuminates his skin and the floor around him, faint sparks and heat haze in the air. Serious determined expression. Cinematic, realistic skin and fabric under the glow. No text.
@@ -172,3 +173,11 @@ Edit this exact image. Keep everything else identical: his face shape, very thin
 ```
 Edit this exact image with the smallest possible change. Do NOT change the size, shape or openness of the eyes, irises or eyelids at all — keep the eyes exactly as they are now (natural, slightly narrow, calm, normal-sized irises). Keep everything else identical too: face, eyebrows, whisker marks, hair, golden headband and flame-like tails, golden chakra cloak, body, pose, background, lighting. Change ONLY the color of the irises to vivid orange, with a normal round black pupil in the center. The whites of the eyes stay natural white. No crosses, no extra makeup. No text.
 ```
+
+#### kurama v9 プロンプト(kurama v8 を参照して眉毛のみ編集)
+
+```
+Edit this exact image with the smallest possible change. Change ONLY the eyebrows: make both eyebrows much thinner — narrow, fine, neatly shaped straight brows, about one third of their current thickness, same position and same length. Do NOT change the eyes at all (keep the same size, shape, openness and the orange irises with white sclera), and keep everything else identical: face, whisker marks, hair, golden headband and flame-like tails, golden chakra cloak, body, pose, background, lighting. No text.
+```
+
+- メモ: 「変える部位を1か所にしぼり、他は一切変えない」と書くと崩れにくい(v8・v9 で確認)。
