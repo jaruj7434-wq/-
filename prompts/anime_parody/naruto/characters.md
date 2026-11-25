@@ -51,6 +51,16 @@ Edit this exact photo. Keep everything identical: the same boy, same face, same 
 Edit this exact photo. Keep everything identical: the same boy, same face shape, same expression, same blond hair, same headband and its engraved emblem, same orange and black outfit, same pants, pouch and leg band, same sandals, same front-facing full-body pose, same plain light gray studio background, same lighting and framing. Change ONLY the three lines on each cheek: they currently look like black pen or marker drawings. Make them look like natural, realistic skin marks instead — three soft, thin, slightly darker brownish-pink birthmark-like lines on each cheek, blended into the skin with realistic skin texture and pores visible through them, subtle and not glossy, slightly irregular edges, symmetrical on both cheeks. No ink, no drawn look. No text.
 ```
 
+### 九喇嘛モード(変身形態)
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| kurama v1(幼少期・全身正面)【非公開・確認用】 | gpt_image_2_6(ナルト v5 参照) | 9:16 | 0.75 クレジット | 3fe3e862-01c1-4c55-b5b9-6fa49edf9e52 | 金色のチャクラの衣・黒い炎模様・首の勾玉・お腹の渦巻き・角のような髪・オレンジの目、いずれも出た。瞳孔は横長というより丸っこい |
+
+```
+Using this photo as the character reference, keep the same boy: same face, same age, same spiky blond hair, same natural whisker marks on both cheeks, same headband with its engraved emblem, same front-facing full-body standing pose, same plain light gray studio background and framing. Transform him into Naruto's Nine-Tails Chakra Mode (Kurama mode) as a photorealistic live-action film VFX shot: his whole body is wrapped in a bright glowing golden-yellow chakra cloak like translucent flowing fire light, with black flame-shaped markings across his torso, arms and legs, a ring of black magatama-like marks around the collar and a black spiral mark on the stomach. His hair glows golden and two tufts stick up like small horns. His eyes are glowing orange with horizontal black pupils. Golden light softly illuminates his skin and the floor around him, faint sparks and heat haze in the air. Serious determined expression. Cinematic, realistic skin and fabric under the glow. No text.
+```
+
 ## サスケ風の忍者少年(幼少期)
 
 - 12歳くらいの架空の日本人の男の子(実在の俳優・子役には似せない)
