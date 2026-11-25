@@ -266,7 +266,8 @@ Edit this exact image with the smallest possible change. Change ONLY his two han
 |---|---|---|---|---|---|
 | v1(全身正面)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | e9b05490-b879-4873-bbdf-02e5e096d5ea | 衣装・髪・刀はほぼ指定どおり。目は赤く光るが、全身画像では万華鏡写輪眼の模様が小さくはっきりしない。血の跡が「うっすら乾いた」ではなく、両目から長く垂れる血の涙になった |
 | v2(血を削除・顔をシャープに・服を薄グレー/青灰/黒に・剣を左腰に斜め差し)【非公開・確認用】 | gpt_image_2_6(サスケ v1 参照) | 9:16 | 0.75 クレジット | 652a484a-0e04-48ee-a800-f18aafdc1cd0 | ユーザー提供の参考画像(原作アニメ絵、アップロードせず文章で指定)に合わせた。血は消え、細面でクールな表情に。薄グレーのVネック・ハイカラー半袖、青灰色の腰布、黒ズボンと黒の前腕ガード。剣は左腰に斜め差し(柄が上向き)。万華鏡写輪眼の模様は小さめ |
-| v3(剣を画面左に斜めがけ・髪の前後を自然につなげる)【非公開・確認用】 | gpt_image_2_6(サスケ v2 参照) | 9:16 | 0.75 クレジット | b535f91e-ff62-4093-88b3-96577271e8f4 | 剣が画面左(本人の右腰)に斜めがけ、柄は体の後ろから斜め上へ。髪は前髪と後ろのツンツンが自然につながった。目は赤いが万華鏡の模様がほぼ消え、普通の赤い瞳に見える。**現時点の基準** |
+| v3(剣を画面左に斜めがけ・髪の前後を自然につなげる)【非公開・確認用】 | gpt_image_2_6(サスケ v2 参照) | 9:16 | 0.75 クレジット | b535f91e-ff62-4093-88b3-96577271e8f4 | 剣が画面左(本人の右腰)に斜めがけ、柄は体の後ろから斜め上へ。髪は前髪と後ろのツンツンが自然につながった。目は赤いが万華鏡の模様がほぼ消え、普通の赤い瞳に見える |
+| v4(剣を体の後ろに斜めがけ・万華鏡写輪眼を描き込み)【非公開・確認用】 | gpt_image_2_6(サスケ v3 参照、quality: high / 2k) | 9:16 | 2 クレジット | bfa5a5e0-695d-41e7-9499-b365e77d826e | 剣は体の後ろ側に回り、柄が左肩の後ろから、鞘先が腰布の下から見える。拡大すると赤い瞳に黒い花びら状の模様が見える(原作の六芒星とは少し違う)。画質が上がり全体も鮮明に(1520×2688)。**現時点の基準** |
 
 #### v1 プロンプト
 
@@ -284,4 +285,10 @@ Edit this exact image. Keep the same person, hair, front-facing full-body pose, 
 
 ```
 Edit this exact image. Make ONLY these two changes: 1) Sword: move the black-sheathed sword to the LEFT side of the image (his right hip). It is tucked into the back of the purple rope belt and hangs DIAGONALLY: the black hilt sticks out behind him at the left side of the image near his waist and elbow, angled up and outward, and the sheath slants down and back behind his hip and thigh on the left side of the image. Remove the sword from the right side of the image. 2) Hair: make it one natural continuous hairstyle — the long front bangs and the spiky raised hair at the back of the head blend smoothly into each other with natural volume, layered strands and realistic hair flow, like real styled hair, not a separate spiky piece attached at the back. Keep the same overall look (black hair, spiky back, long bangs framing the face). Keep everything else exactly the same: face, eyes, light gray V-neck high-collar shirt, purple rope belt, slate blue-gray waist cloth, black trousers, black forearm guards, sandals, pose, background and lighting. No text.
+```
+
+#### サスケ(忍界大戦編)v4 プロンプト(v3 を参照、quality: high / resolution: 2k)
+
+```
+Edit this exact image. Make ONLY these two changes: 1) Sword: keep it on the LEFT side of the image, but tuck it into the BACK of the purple rope belt so the whole sword is clearly BEHIND his body: the black hilt rises diagonally up and outward behind his back/arm on the left side of the image, and the sheath slants diagonally down behind his hip and leg, partly hidden by his body, arm and waist cloth. Nothing of the sword is in front of his body or legs. 2) Eyes: render both eyes in sharp detail as the Eternal Mangekyo Sharingan from the Naruto anime: glowing red irises with a clearly visible black pattern of a six-pointed star made of three curved pinwheel blades overlapping three straight triangular points, with a small black pupil at the center, crisp enough to be recognized when zoomed in. Whites of the eyes natural white, no blood. Keep everything else exactly the same: face, expression, hairstyle, light gray V-neck high-collar shirt, purple rope belt, slate blue-gray waist cloth, black trousers, black forearm guards, sandals, pose, background and lighting. No text.
 ```
