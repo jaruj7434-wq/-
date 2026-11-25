@@ -95,3 +95,25 @@ Photorealistic live-action character reference photo, vertical 9:16, full body s
 ```
 
 - メモ: 参照画像を使った編集では、顔立ちを大きく変える指示がほとんど反映されなかった(v2)。顔を変えたいときは参照なしで新規生成する方がよい。
+
+## カカシ風の忍者先生
+
+- 26歳くらいの架空の日本人男性、長身で細身(実在の俳優には似せない)
+- 片側に流れて逆立った銀白色のツンツン頭
+- 紺色の布マスクで鼻から下を覆う。額当てを斜めに着けて左目を隠し、見えている右目は眠たげ
+- 紺色の長袖シャツ、オリーブ色のベスト、紺色のズボン、右すねに白い包帯、右太ももに忍具ポーチ
+- 金属プレート付きの指なしグローブ、紺色の忍者サンダル
+- 無地のオレンジ色の文庫本を片手で読む(原作の小説タイトルは入れない)
+- 額当て: 木の葉マーク(非公開・確認用)
+
+### 生成記録
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| v1(全身正面・本を読むポーズ)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | 0d430021-d3b7-40c9-9e8a-d509b8eb42c0 | ほぼ指定どおり。両肩に赤い渦巻きワッペン、グローブにも木の葉マークが自動で付いた |
+
+#### v1 プロンプト
+
+```
+Photorealistic live-action character reference photo, vertical 9:16, full body shot from head to shoes, subject standing straight and facing the camera directly (front view), centered in frame. A fictional Japanese man around 26 years old, tall and slim, original face (not resembling any real actor), East Asian Japanese features. Natural-looking spiky silver-white hair swept up and slanting to one side. A dark navy fabric face mask covering his nose, mouth and chin up to just under the eyes. Dark blue cloth headband with a metal plate engraved with the Hidden Leaf Village symbol from the Naruto anime (a stylized leaf outline with a spiral swirl inside and a small triangular point at the top), worn tilted so it covers his left eye; his visible right eye looks relaxed, sleepy and bored. Wearing a dark navy long-sleeved shirt, an olive green padded tactical flak vest with front pockets, dark navy trousers with white bandage wrap at the lower right leg and a black tool pouch on the right thigh, fingerless dark gloves with metal plates on the backs, dark blue open-toe ninja sandals. Holding a small plain orange paperback book open in one hand at chest height, the other hand in his pocket. Plain light gray seamless studio background, soft even studio lighting, sharp focus, realistic skin, hair and fabric texture, like a Japanese live-action film costume photo. No text.
+```
