@@ -56,9 +56,16 @@ Edit this exact photo. Keep everything identical: the same boy, same face shape,
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | kurama v1(幼少期・全身正面)【非公開・確認用】 | gpt_image_2_6(ナルト v5 参照) | 9:16 | 0.75 クレジット | 3fe3e862-01c1-4c55-b5b9-6fa49edf9e52 | 金色のチャクラの衣・黒い炎模様・首の勾玉・お腹の渦巻き・角のような髪・オレンジの目、いずれも出た。瞳孔は横長というより丸っこい |
+| kurama v2(成人・ファスナー開け・全身金色)【非公開・確認用】 | gpt_image_2_6(kurama v1 参照) | 9:16 | 0.75 クレジット | 325e5c63-e3b0-478f-845f-2e44900a8052 | 20歳くらいの大人に。上着の前が開き、黒シャツにも渦巻きと炎模様。顔・肌・髪・額当てまで全部金色。目は金色寄りで瞳孔は横長になっていない。頬線は再び濃い線 |
 
 ```
 Using this photo as the character reference, keep the same boy: same face, same age, same spiky blond hair, same natural whisker marks on both cheeks, same headband with its engraved emblem, same front-facing full-body standing pose, same plain light gray studio background and framing. Transform him into Naruto's Nine-Tails Chakra Mode (Kurama mode) as a photorealistic live-action film VFX shot: his whole body is wrapped in a bright glowing golden-yellow chakra cloak like translucent flowing fire light, with black flame-shaped markings across his torso, arms and legs, a ring of black magatama-like marks around the collar and a black spiral mark on the stomach. His hair glows golden and two tufts stick up like small horns. His eyes are glowing orange with horizontal black pupils. Golden light softly illuminates his skin and the floor around him, faint sparks and heat haze in the air. Serious determined expression. Cinematic, realistic skin and fabric under the glow. No text.
+```
+
+kurama v2 プロンプト:
+
+```
+Use this photo as the style and costume reference for a NEW image. Keep: the Nine-Tails Chakra Mode look (bright glowing golden-yellow chakra cloak like translucent flowing fire light, black flame-shaped markings on torso, arms and legs, ring of black magatama marks around the collar, black spiral mark on the stomach), two hair tufts sticking up like horns, the front-facing full-body standing pose with arms relaxed at sides, plain light gray studio background, framing and cinematic VFX lighting. Change: make him a fictional ADULT Japanese man around 20 years old, taller, broader shoulders and a more mature, sharper adult face with a strong jawline (original face, not resembling any real actor), serious determined expression, glowing orange eyes with horizontal black pupils, three whisker marks on both cheeks. His jacket is UNZIPPED and open at the front, showing a fitted black shirt underneath that also glows with golden chakra. Make EVERYTHING on him golden: his entire face and skin glow bright golden-yellow chakra light, his hair is glowing gold, and the headband cloth and its metal plate are also fully glowing gold with the engraved emblem as a darker gold line. No text.
 ```
 
 ## サスケ風の忍者少年(幼少期)
