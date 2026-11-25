@@ -86,9 +86,12 @@ Photorealistic live-action character reference photo, vertical 9:16, full body s
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | v1(幼少期・全身正面)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | 214133fb-c10e-45ba-903d-c5297db4d8db | 衣装・髪・額当ては指定どおり。顔立ちがやや欧米系寄り(そばかすあり)で、日本人らしさが弱い |
+| v2(v1の顔のみ編集)【非公開・確認用】 | gpt_image_2_6(v1参照) | 9:16 | 0.75 クレジット | 23b9f972-b275-4b85-81e5-f0573ab907cc | **失敗**: 顔がほぼ変わらず、欧米系の顔立ちとそばかすが残った。参照編集では顔の大きな変更が効きにくい |
 
 #### v1 プロンプト
 
 ```
 Photorealistic live-action character reference photo, vertical 9:16, full body shot from head to shoes, subject standing straight and facing the camera directly (front view), arms relaxed at sides, centered in frame. A fictional Japanese girl around 12 years old, original face (not resembling any real actor), bright cheerful confident smile, green eyes, a slightly wide forehead. Natural-looking straight long pastel pink hair reaching past her shoulders, with bangs parted to the sides. Wearing a red sleeveless high-collar qipao-style top with a white circle emblem on the front and a zipper at the collar, dark green knee-length shorts underneath, a black ninja tool pouch strapped to her right thigh with white bandage wrap, dark blue open-toe ninja sandals. The dark blue cloth headband is worn on top of her head like a hairband, with a metal plate engraved with the Hidden Leaf Village symbol from the Naruto anime (a stylized leaf outline with a spiral swirl inside and a small triangular point at the top). Plain light gray seamless studio background, soft even studio lighting, sharp focus, realistic skin, hair and fabric texture, looks like a real child actor in a live-action film costume. Age-appropriate modest costume. No text.
 ```
+
+- メモ: 参照画像を使った編集では、顔立ちを大きく変える指示がほとんど反映されなかった(v2)。顔を変えたいときは参照なしで新規生成する方がよい。
