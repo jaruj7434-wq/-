@@ -204,7 +204,8 @@ Edit this exact image with the smallest possible change. Change ONLY the eyebrow
 | v3(胴の渦巻きを勾玉の輪のすぐ下へ、周りの模様を細い縦線に)【非公開・確認用】 | gpt_image_2_6(ミナト v2 参照) | 9:16 | 0.75 クレジット | e4ee91d3-b3f0-4de1-87d2-c007d1d8fe16 | 渦巻きが胸の上(勾玉の輪の直下)へ。下に細い黒の縦線3本。胴の太い炎模様は消えた。他はv2のまま |
 | v4(両肩に渦巻き・前腕と羽織の胸の黒い線を消す・インナーを上下つなぎに)【非公開・確認用】 | gpt_image_2_6(ミナト v3 参照) | 9:16 | 0.75 クレジット | c2d1f62f-9d9b-40df-ad26-328fe96e7d0b | 両肩に渦巻きが入り、前腕と羽織の胸の黒い線は消えた。上下つなぎは不十分で、腰に上着の裾のような境目がまだ見える |
 | v5(渦巻きの下を「Π」形の模様に・脚の炎模様を削除・腰の境目を消す)【非公開・確認用】 | gpt_image_2_6(ミナト v4 参照) | 9:16 | 0.75 クレジット | 6abeb498-5723-422b-a540-f9a1fab571ff | ユーザー提供の参考画像(フィギュア写真、アップロードはせず文章で指定)どおり、中央の縦線→横線→両太ももの前を下る線に。脚の炎模様も消え、腰の境目もほぼ目立たない |
-| v6(サンダルと足を炎色に)【非公開・確認用】 | gpt_image_2_6(ミナト v5 参照) | 9:16 | 0.75 クレジット | 257a82d8-17f2-4a33-9af1-dd325102ffe2 | サンダルと足が金色の炎色に光るように。他はv5のまま。手は肌色のまま。**現時点のミナト基準** |
+| v6(サンダルと足を炎色に)【非公開・確認用】 | gpt_image_2_6(ミナト v5 参照) | 9:16 | 0.75 クレジット | 257a82d8-17f2-4a33-9af1-dd325102ffe2 | サンダルと足が金色の炎色に光るように。他はv5のまま。手は肌色のまま |
+| v7(両手を炎色に・手の甲に黒い帯と丸の模様)【非公開・確認用】 | gpt_image_2_6(ミナト v6 参照) | 9:16 | 0.75 クレジット | 5135bb4e-8e02-408c-b4a7-ffea606bb45e | 両手が金色になり全身の色がそろった。手首寄りの甲に細い黒の帯と黒丸(参考画像=フィギュア写真、アップロードせず文章で指定)。他はv6のまま。**現時点のミナト基準** |
 
 #### v1 プロンプト
 
@@ -240,4 +241,10 @@ Edit this exact image. Change ONLY the black markings on the glowing golden one-
 
 ```
 Edit this exact image with the smallest possible change. Change ONLY the sandals/shoes and his visible feet: make them glow in the same bright golden flame chakra color as the rest of his suit and hair, with soft golden glow. Keep everything else exactly the same: face, eyes, headband, hair, flame-like headband tails, magatama ring, spirals, the suit pattern, white haori with red flames, hands, pose, background and lighting. No text.
+```
+
+#### ミナト v7 プロンプト(v6 を参照して両手のみ編集)
+
+```
+Edit this exact image with the smallest possible change. Change ONLY his two hands: make both hands glow in the same bright golden flame chakra color as the rest of his body, and on the back of each hand add a black marking: a thin black horizontal band going across the back of the hand just above the knuckles-to-wrist middle, with a solid filled black circle at the center of the band, like a dot on a line. Keep everything else exactly the same: face, eyes, headband, hair, flame-like headband tails, magatama ring, spirals, the suit pattern, white haori with red flames, golden sandals, pose, background and lighting. No text.
 ```
