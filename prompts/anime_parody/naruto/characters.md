@@ -202,7 +202,8 @@ Edit this exact image with the smallest possible change. Change ONLY the eyebrow
 | v1(全身正面)【非公開・確認用】 | gpt_image_2_6(ナルト kurama v10 を画風の見本として参照) | 9:16 | 0.75 クレジット | 0972b9de-3a0c-4f28-b9de-1b561f5476e5 | 顔はナルトと別人に。長い前髪・炎の羽織・黒い白目にオレンジの瞳・頬と手のひび割れが出た。参照元から炎のような額当ての紐も引き継がれた |
 | v2(顔と額当てを髪と同じ金色の炎色に)【非公開・確認用】 | gpt_image_2_6(ミナト v1 参照) | 9:16 | 0.75 クレジット | 9b2471ee-0c3a-40d1-9046-77e1d4e5c6cc | 顔全体と額当てが金色に。黒い白目・オレンジの瞳は維持。頬のひび割れは銀灰色の斑点としてかえって目立つ。手は元の肌色のまま |
 | v3(胴の渦巻きを勾玉の輪のすぐ下へ、周りの模様を細い縦線に)【非公開・確認用】 | gpt_image_2_6(ミナト v2 参照) | 9:16 | 0.75 クレジット | e4ee91d3-b3f0-4de1-87d2-c007d1d8fe16 | 渦巻きが胸の上(勾玉の輪の直下)へ。下に細い黒の縦線3本。胴の太い炎模様は消えた。他はv2のまま |
-| v4(両肩に渦巻き・前腕と羽織の胸の黒い線を消す・インナーを上下つなぎに)【非公開・確認用】 | gpt_image_2_6(ミナト v3 参照) | 9:16 | 0.75 クレジット | c2d1f62f-9d9b-40df-ad26-328fe96e7d0b | 両肩に渦巻きが入り、前腕と羽織の胸の黒い線は消えた。上下つなぎは不十分で、腰に上着の裾のような境目がまだ見える。**現時点のミナト基準** |
+| v4(両肩に渦巻き・前腕と羽織の胸の黒い線を消す・インナーを上下つなぎに)【非公開・確認用】 | gpt_image_2_6(ミナト v3 参照) | 9:16 | 0.75 クレジット | c2d1f62f-9d9b-40df-ad26-328fe96e7d0b | 両肩に渦巻きが入り、前腕と羽織の胸の黒い線は消えた。上下つなぎは不十分で、腰に上着の裾のような境目がまだ見える |
+| v5(渦巻きの下を「Π」形の模様に・脚の炎模様を削除・腰の境目を消す)【非公開・確認用】 | gpt_image_2_6(ミナト v4 参照) | 9:16 | 0.75 クレジット | 6abeb498-5723-422b-a540-f9a1fab571ff | ユーザー提供の参考画像(フィギュア写真、アップロードはせず文章で指定)どおり、中央の縦線→横線→両太ももの前を下る線に。脚の炎模様も消え、腰の境目もほぼ目立たない。**現時点のミナト基準** |
 
 #### v1 プロンプト
 
@@ -226,4 +227,10 @@ Edit this exact image. Change ONLY the black markings on the glowing golden ches
 
 ```
 Edit this exact image. Make ONLY these three changes: 1) Add a black spiral mark on each shoulder (one on the left shoulder and one on the right shoulder), the same style as the spiral on his chest, clearly visible on the outer layer at the top of each shoulder. 2) Remove the black jagged lightning-like flame markings on the forearms of the glowing inner layer, and remove the black jagged lightning-like markings on both chest sides of the white haori coat, leaving those areas plain. 3) Make the glowing golden inner garment ONE continuous piece from chest to ankles, like a one-piece bodysuit/jumpsuit, with no waistband or visible separation between the top and the trousers. Keep everything else exactly the same: golden face and headband, black sclera with orange irises, cracks, hair, flame-like headband tails, magatama ring, chest spiral with the thin vertical lines below it, white haori with red flames at the hem, the leg markings, hands, pose, background and lighting. No text.
+```
+
+#### ミナト v5 プロンプト(v4 を参照して胴〜脚の模様を編集)
+
+```
+Edit this exact image. Change ONLY the black markings on the glowing golden one-piece inner suit below the chest spiral, and remove the waist seam: 1) Remove the three thin vertical lines under the chest spiral and remove ALL the black flame-shaped markings on the legs and trousers. 2) Draw this new pattern in solid dark black-navy lines of medium thickness: a single straight vertical line running down the center from just below the chest spiral to the lower stomach; there it meets a short horizontal line, forming an upside-down U (like the Greek letter Π); from both ends of that horizontal line, a line curves slightly outward and then runs straight down the front of each thigh to just above each knee. The rest of the suit is plain glowing gold. 3) The inner suit is one continuous piece from chest to ankles with no waistband, hem or seam at the waist. Keep everything else exactly the same: golden face and headband, black sclera with orange irises, cracks, hair, flame-like headband tails, magatama ring, chest spiral, shoulder spirals, white haori with red flames at the hem, hands, pose, background and lighting. No text.
 ```
