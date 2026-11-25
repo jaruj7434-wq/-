@@ -210,10 +210,10 @@ GLASS_HUES = [0.0, 0.08, 0.15, 0.3, 0.47, 0.58, 0.7, 0.8, 0.9]
 
 
 def glass_color(k, ths):
-    """虹色のガラス:うずまきを半周するごとに色が変わる(赤→オレンジ→黄→緑→水色→青→紫→ピンク…)。"""
-    half = int((ths[k] - GS.TH_WOOD0) / math.pi)
-    hue = GLASS_HUES[(len(GLASS_HUES) - 1 - half) % len(GLASS_HUES)]
-    return colorsys.hsv_to_rgb(hue, 0.62, 0.9)
+    """虹色のグラデーションガラス:うずまきに沿って色がなめらかに変わる(となりの段とはちがう色になる)。"""
+    u = (ths[k] - GS.TH_WOOD0) / (2 * math.pi)
+    hue = (0.95 - 0.72 * u) % 1.0
+    return colorsys.hsv_to_rgb(hue, 0.6, 0.82)
 
 
 def cell_poly(k, ths):
@@ -344,8 +344,21 @@ def render(seed):
             for c in q[1:]:
                 ctx.line_to(*c)
             ctx.close_path()
-            ctx.set_source_rgba(*cols[k], al)
+            c0 = cols[k]
+            ix, iy = (q[0][0] + q[1][0]) / 2, (q[0][1] + q[1][1]) / 2   # 内側のふち
+            ox, oy = (q[2][0] + q[3][0]) / 2, (q[2][1] + q[3][1]) / 2   # 外側のふち
+            g_ = cairo.LinearGradient(ix, iy, ox, oy)   # ガラスらしく:内側は少し暗く、外側に光
+            g_.add_color_stop_rgba(0, *[c * 0.72 for c in c0], al)
+            g_.add_color_stop_rgba(0.55, *c0, al)
+            g_.add_color_stop_rgba(0.85, *[min(1, c * 1.12 + 0.08) for c in c0], al)
+            g_.add_color_stop_rgba(1, *[min(1, c * 1.05 + 0.15) for c in c0], al)
+            ctx.set_source(g_)
             ctx.fill_preserve()
+            ctx.set_source_rgba(1, 1, 1, 0.5 * al)   # 白く光るふち
+            ctx.set_line_width(1.1)
+            ctx.stroke()
+            ctx.move_to((q[0][0] + q[3][0]) / 2, (q[0][1] + q[3][1]) / 2)   # まん中のうすい線(ガラスの段)
+            ctx.line_to((q[1][0] + q[2][0]) / 2, (q[1][1] + q[2][1]) / 2)
             ctx.set_source_rgba(1, 1, 1, 0.22 * al)
             ctx.set_line_width(1.0)
             ctx.stroke()
