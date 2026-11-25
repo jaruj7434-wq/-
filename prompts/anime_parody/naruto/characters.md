@@ -53,6 +53,8 @@ Edit this exact photo. Keep everything identical: the same boy, same face shape,
 
 ### 九喇嘛モード(変身形態)
 
+**完成形: kurama v10(ジョブID 34720423-db5e-4240-944a-eb0445ea184f)**
+
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | kurama v1(幼少期・全身正面)【非公開・確認用】 | gpt_image_2_6(ナルト v5 参照) | 9:16 | 0.75 クレジット | 3fe3e862-01c1-4c55-b5b9-6fa49edf9e52 | 金色のチャクラの衣・黒い炎模様・首の勾玉・お腹の渦巻き・角のような髪・オレンジの目、いずれも出た。瞳孔は横長というより丸っこい |
@@ -63,8 +65,8 @@ Edit this exact photo. Keep everything identical: the same boy, same face shape,
 | kurama v6(白目は白・黒目だけオレンジ・十字を極小・アイシャドウ控えめ)【非公開・確認用】 | gpt_image_2_6(kurama v5 参照) | 9:16 | 0.75 クレジット | dcb79774-351f-41c6-a621-9b440d448a29 | 白目が白に戻り、黒目だけオレンジ。十字は細く小さくなった。アイシャドウは細い線程度に。ただし黒目が大きく、目を見開いたような印象に |
 | kurama v7(目を自然な大きさに戻す)【非公開・確認用】 | gpt_image_2_6(kurama v6 + v3 参照) | 9:16 | 0.75 クレジット | 00273570-b376-4321-ad8a-6593ab67a9b7 | **ほぼ失敗**: 目は少し落ち着いたが黒目はまだ大きい。頬の線がにじんで崩れた(片側2本半に見える)。基準は v4〜v6 のまま |
 | kurama v8(v4 の黒目をオレンジにするだけ)【非公開・確認用】 | gpt_image_2_6(kurama v4 参照) | 9:16 | 0.75 クレジット | 0363eb1e-8fa6-4a9a-9259-c676ad7cc520 | 目の大きさ・形はv4の自然なまま、黒目だけオレンジ。白目も自然。頬線もきれい |
-| kurama v9(v8 の眉毛だけ細く)【非公開・確認用】 | gpt_image_2_6(kurama v8 参照) | 9:16 | 0.75 クレジット | aa7338da-8a21-4a4d-86d7-ef752f3b9957 | 眉が細く薄くなった。目・頬線・体はv8のまま。**現時点の九喇嘛モード基準** |
-| kurama v10(眉さらに細く・目の間隔を縮める・鼻の穴を目立たなく・小顔・目を少し大きく)【非公開・確認用】 | gpt_image_2_6(kurama v9 参照) | 9:16 | 0.75 クレジット | 34720423-db5e-4240-944a-eb0445ea184f | **変化がほとんど出なかった**。全身画像で顔が小さく、品質設定が既定の low のため細かい顔の編集が効きにくいと考えられる |
+| kurama v9(v8 の眉毛だけ細く)【非公開・確認用】 | gpt_image_2_6(kurama v8 参照) | 9:16 | 0.75 クレジット | aa7338da-8a21-4a4d-86d7-ef752f3b9957 | 眉が細く薄くなった。目・頬線・体はv8のまま |
+| kurama v10(眉さらに細く・目の間隔を縮める・鼻の穴を目立たなく・小顔・目を少し大きく)【非公開・確認用】 | gpt_image_2_6(kurama v9 参照) | 9:16 | 0.75 クレジット | 34720423-db5e-4240-944a-eb0445ea184f | **変化がほとんど出なかった**。全身画像で顔が小さく、品質設定が既定の low のため細かい顔の編集が効きにくいと考えられる。ユーザー判断で **これを九喇嘛モード完成形とする** |
 
 ```
 Using this photo as the character reference, keep the same boy: same face, same age, same spiky blond hair, same natural whisker marks on both cheeks, same headband with its engraved emblem, same front-facing full-body standing pose, same plain light gray studio background and framing. Transform him into Naruto's Nine-Tails Chakra Mode (Kurama mode) as a photorealistic live-action film VFX shot: his whole body is wrapped in a bright glowing golden-yellow chakra cloak like translucent flowing fire light, with black flame-shaped markings across his torso, arms and legs, a ring of black magatama-like marks around the collar and a black spiral mark on the stomach. His hair glows golden and two tufts stick up like small horns. His eyes are glowing orange with horizontal black pupils. Golden light softly illuminates his skin and the floor around him, faint sparks and heat haze in the air. Serious determined expression. Cinematic, realistic skin and fabric under the glow. No text.
