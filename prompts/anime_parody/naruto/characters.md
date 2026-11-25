@@ -267,7 +267,8 @@ Edit this exact image with the smallest possible change. Change ONLY his two han
 | v1(全身正面)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | e9b05490-b879-4873-bbdf-02e5e096d5ea | 衣装・髪・刀はほぼ指定どおり。目は赤く光るが、全身画像では万華鏡写輪眼の模様が小さくはっきりしない。血の跡が「うっすら乾いた」ではなく、両目から長く垂れる血の涙になった |
 | v2(血を削除・顔をシャープに・服を薄グレー/青灰/黒に・剣を左腰に斜め差し)【非公開・確認用】 | gpt_image_2_6(サスケ v1 参照) | 9:16 | 0.75 クレジット | 652a484a-0e04-48ee-a800-f18aafdc1cd0 | ユーザー提供の参考画像(原作アニメ絵、アップロードせず文章で指定)に合わせた。血は消え、細面でクールな表情に。薄グレーのVネック・ハイカラー半袖、青灰色の腰布、黒ズボンと黒の前腕ガード。剣は左腰に斜め差し(柄が上向き)。万華鏡写輪眼の模様は小さめ |
 | v3(剣を画面左に斜めがけ・髪の前後を自然につなげる)【非公開・確認用】 | gpt_image_2_6(サスケ v2 参照) | 9:16 | 0.75 クレジット | b535f91e-ff62-4093-88b3-96577271e8f4 | 剣が画面左(本人の右腰)に斜めがけ、柄は体の後ろから斜め上へ。髪は前髪と後ろのツンツンが自然につながった。目は赤いが万華鏡の模様がほぼ消え、普通の赤い瞳に見える |
-| v4(剣を体の後ろに斜めがけ・万華鏡写輪眼を描き込み)【非公開・確認用】 | gpt_image_2_6(サスケ v3 参照、quality: high / 2k) | 9:16 | 2 クレジット | bfa5a5e0-695d-41e7-9499-b365e77d826e | 剣は体の後ろ側に回り、柄が左肩の後ろから、鞘先が腰布の下から見える。拡大すると赤い瞳に黒い花びら状の模様が見える(原作の六芒星とは少し違う)。画質が上がり全体も鮮明に(1520×2688)。**現時点の基準** |
+| v4(剣を体の後ろに斜めがけ・万華鏡写輪眼を描き込み)【非公開・確認用】 | gpt_image_2_6(サスケ v3 参照、quality: high / 2k) | 9:16 | 2 クレジット | bfa5a5e0-695d-41e7-9499-b365e77d826e | 剣は体の後ろ側に回り、柄が左肩の後ろから、鞘先が腰布の下から見える。拡大すると赤い瞳に黒い花びら状の模様が見える(原作の六芒星とは少し違う)。画質が上がり全体も鮮明に(1520×2688)。ユーザー判断で **正面の完成形** |
+| 三面図 v1(正面・横・後ろ、背中にうちはの家紋)【非公開・確認用】 | gpt_image_2_6(サスケ v4 参照、quality: high / 2k) | 16:9 | 2 クレジット | 4e1a8641-0376-4f73-b94e-a4537145f792 | 3方向で顔・髪・服・色がそろった。後ろ姿の背中上部に赤白のうちわ型の家紋。剣は後ろ姿で右肩側から左腰へ斜め。2688×1520 |
 
 #### v1 プロンプト
 
@@ -291,4 +292,12 @@ Edit this exact image. Make ONLY these two changes: 1) Sword: move the black-she
 
 ```
 Edit this exact image. Make ONLY these two changes: 1) Sword: keep it on the LEFT side of the image, but tuck it into the BACK of the purple rope belt so the whole sword is clearly BEHIND his body: the black hilt rises diagonally up and outward behind his back/arm on the left side of the image, and the sheath slants diagonally down behind his hip and leg, partly hidden by his body, arm and waist cloth. Nothing of the sword is in front of his body or legs. 2) Eyes: render both eyes in sharp detail as the Eternal Mangekyo Sharingan from the Naruto anime: glowing red irises with a clearly visible black pattern of a six-pointed star made of three curved pinwheel blades overlapping three straight triangular points, with a small black pupil at the center, crisp enough to be recognized when zoomed in. Whites of the eyes natural white, no blood. Keep everything else exactly the same: face, expression, hairstyle, light gray V-neck high-collar shirt, purple rope belt, slate blue-gray waist cloth, black trousers, black forearm guards, sandals, pose, background and lighting. No text.
+```
+
+#### サスケ(忍界大戦編)三面図 v1 プロンプト(v4 を参照、quality: high / resolution: 2k、16:9)
+
+character-sheet ワークフローの prompt-built-sheets(ターンアラウンド)の書き方に沿って作成。
+
+```
+Character turnaround model sheet of the exact same person in the attached reference photo, three consistent full-body views side by side, evenly spaced: full-body FRONT view on the left (same as the reference), full-body SIDE profile view facing right in the middle, and full-body BACK view on the right. Identical face, hairstyle, outfit, colors, proportions and height in all three panels, standing neutrally with arms relaxed at the sides, full figure in frame head to sandals. Keep every detail of the reference: glossy black hair with long bangs and spiky raised back hair blending naturally, red Eternal Mangekyo Sharingan eyes, light gray high-collar short-sleeve shirt open in a deep V at the front, thick purple rope belt tied in a bow at the front, slate blue-gray waist cloth, black trousers, black forearm guards, black ninja sandals, and the black-sheathed sword tucked diagonally into the back of the rope belt (in the side and back views the sword is clearly visible crossing diagonally behind his hips, hilt rising up toward his right shoulder side). In the back view show the back of the head with the spiky hair, the back of the shirt and collar, and the rope belt knot ends, and on the upper back of the shirt, centered between the shoulder blades just below the collar, the Uchiha clan crest from the Naruto anime: a round paper fan (uchiwa) shape with the upper part red and the lower part white, and a short white handle pointing down, printed cleanly on the fabric. Plain light gray seamless studio background, soft even studio lighting, photorealistic live-action film costume photography, realistic skin, hair and fabric texture, sharp focus. No text, no labels, no watermark, no extra people.
 ```
