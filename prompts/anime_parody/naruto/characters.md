@@ -200,9 +200,16 @@ Edit this exact image with the smallest possible change. Change ONLY the eyebrow
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | v1(全身正面)【非公開・確認用】 | gpt_image_2_6(ナルト kurama v10 を画風の見本として参照) | 9:16 | 0.75 クレジット | 0972b9de-3a0c-4f28-b9de-1b561f5476e5 | 顔はナルトと別人に。長い前髪・炎の羽織・黒い白目にオレンジの瞳・頬と手のひび割れが出た。参照元から炎のような額当ての紐も引き継がれた |
+| v2(顔と額当てを髪と同じ金色の炎色に)【非公開・確認用】 | gpt_image_2_6(ミナト v1 参照) | 9:16 | 0.75 クレジット | 9b2471ee-0c3a-40d1-9046-77e1d4e5c6cc | 顔全体と額当てが金色に。黒い白目・オレンジの瞳は維持。頬のひび割れは銀灰色の斑点としてかえって目立つ。手は元の肌色のまま |
 
 #### v1 プロンプト
 
 ```
 Use this image ONLY as the style reference (photorealistic live-action VFX look, glowing golden chakra cloak, plain light gray studio background, front-facing full-body standing pose, framing and lighting). Create a DIFFERENT character: a fictional Japanese man around 24 years old, tall and slim, calm gentle but serious expression, original face (not resembling any real actor and not the same face as the reference), NO whisker marks. Hair: spiky bright blond hair with long bangs hanging down on both sides of his face, glowing gold. Headband with metal plate engraved with the Hidden Leaf Village symbol from the Naruto anime. He is in Nine-Tails Chakra Mode: his body is wrapped in a glowing golden-yellow chakra cloak like translucent flowing fire with black flame markings and a ring of black magatama marks around the collar, and over it he wears a white knee-length short-sleeved haori coat with red-orange flame patterns along the bottom hem, open at the front. He is reanimated by the Edo Tensei (Impure World Reincarnation) technique: the WHITES of his eyes are BLACK (black sclera) with glowing orange irises, and his face and hands have subtle gray-beige cracked patches like dry porcelain or ash, as if his body is made of crumbling dust, with a few tiny flakes drifting off. Faint sparks and heat haze. No text.
+```
+
+#### ミナト v2 プロンプト(v1 を参照して顔と額当ての色のみ変更)
+
+```
+Edit this exact image with the smallest possible change. Change ONLY the color of his face and his headband: make his entire face and skin, and the whole headband (both the cloth and the metal plate, with the engraved emblem kept as a darker gold line), glow in the same bright golden flame color as his hair, like the golden chakra light. Keep the black sclera with orange irises, the gray cracked patches on his cheeks, his facial features and expression, hair, flame-like headband tails, white haori with red flames, chakra cloak, hands, body, pose, background and lighting exactly the same. No text.
 ```
