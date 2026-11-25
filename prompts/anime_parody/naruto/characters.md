@@ -265,9 +265,16 @@ Edit this exact image with the smallest possible change. Change ONLY his two han
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | v1(全身正面)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | e9b05490-b879-4873-bbdf-02e5e096d5ea | 衣装・髪・刀はほぼ指定どおり。目は赤く光るが、全身画像では万華鏡写輪眼の模様が小さくはっきりしない。血の跡が「うっすら乾いた」ではなく、両目から長く垂れる血の涙になった |
+| v2(血を削除・顔をシャープに・服を薄グレー/青灰/黒に・剣を左腰に斜め差し)【非公開・確認用】 | gpt_image_2_6(サスケ v1 参照) | 9:16 | 0.75 クレジット | 652a484a-0e04-48ee-a800-f18aafdc1cd0 | ユーザー提供の参考画像(原作アニメ絵、アップロードせず文章で指定)に合わせた。血は消え、細面でクールな表情に。薄グレーのVネック・ハイカラー半袖、青灰色の腰布、黒ズボンと黒の前腕ガード。剣は左腰に斜め差し(柄が上向き)。万華鏡写輪眼の模様は小さめ。**現時点の基準** |
 
 #### v1 プロンプト
 
 ```
 Photorealistic live-action character reference photo, vertical 9:16, full body shot from head to shoes, subject standing straight and facing the camera directly (front view), arms relaxed at sides, centered in frame. A fictional Japanese young man around 17 years old, slim and athletic, original face (not resembling any real actor), clearly Japanese facial features, thin straight eyebrows, cold calm intense expression. Glossy black hair, spiky and sticking up at the back, with long bangs framing both sides of his face and falling over his forehead. BOTH eyes have the Eternal Mangekyo Sharingan from the Naruto anime: glowing deep red irises with an intricate black pinwheel-star pattern (a six-pointed star-flower shape with three curved blades), clearly visible in both eyes, whites of the eyes normal white, a thin trace of dried blood under each eye. No headband. Outfit (Fourth Great Ninja War era): a dark gray long-sleeved high-collared zip-up shirt, dark gray trousers, a thick purple rope belt tied in a bow at the waist with a dark navy cloth hanging over the hips like a short apron, dark navy forearm guards, black open-toe ninja sandals, a straight sword with a plain black hilt and sheath tucked horizontally at his back behind the rope belt. Plain light gray seamless studio background, soft even studio lighting, sharp focus, realistic skin, hair and fabric texture, like a Japanese live-action film costume photo. No text.
+```
+
+#### サスケ(忍界大戦編)v2 プロンプト(v1 を参照して編集)
+
+```
+Edit this exact image. Keep the same person, hair, front-facing full-body pose, purple rope belt, background and lighting. Make these changes: 1) REMOVE all blood from his face completely — no blood tears, clean skin. Keep both eyes as glowing red Eternal Mangekyo Sharingan with a black pinwheel-star pattern. 2) Face: a slimmer, sharper, handsome face with a calm, cool, slightly confident expression and narrow sharp eyes, thin straight eyebrows. 3) Outfit colors: the shirt becomes LIGHT GRAY, with a high stiff collar standing up around the neck and the front open in a deep V down the chest (no zipper closed, collarbones and upper chest visible), loose sleeves ending just above the elbows; the waist cloth hanging over the hips becomes muted slate blue-gray; the trousers become BLACK; the forearm guards become BLACK; black open-toe sandals. Keep the thick purple rope belt tied in a bow. 4) Sword: instead of horizontal, the black-sheathed sword is tucked diagonally into the rope belt at his LEFT hip, with the hilt near the left side of the waist and the sheath angled down and back behind his left leg. No text.
 ```
