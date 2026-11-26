@@ -404,6 +404,7 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 | 三面図 v1(正面・横・後ろ)【非公開・確認用】 | gpt_image_2_6(扉間 三面図 v3 を並べ方の見本として参照、quality: high / 2k) | 16:9 | 2 クレジット | d58c26ff-2799-4125-83f7-b6e7f326bc05 | 顔は扉間と別人。真ん中分けの長い黒髪、深い赤の鎧、黒いスーツ、包帯、サンダルが3方向でそろった。**白目が黒くならず普通の白目のまま**。顔のひびは細く少し |
 | 三面図 v2(顔・服・色を参考画像に合わせる)【非公開・確認用】 | gpt_image_2_6(三面図 v1 参照、quality: high / 2k) | 16:9 | 2 クレジット | 4e1f28fb-8360-4dbd-a19e-6d59299d34f2 | ユーザー提供の参考画像(フィギュア写真、アップロードせず文章で指定)に合わせた。白目が黒くなり、ほほえんだ穏やかな顔に細いひび。濃いワインレッドのなめらかな胸当て・大きな肩当て・腰帯・左右だけの草摺・前腕ガード、青みのある濃いチャコールのスーツ、白い包帯、こげ茶のサンダル |
 | 三面図 v3(鼻まわりにひびを追加・眉をさらに細く)【非公開・確認用】 | gpt_image_2_6(三面図 v2 参照、quality: high / 2k) | 16:9 | 2 クレジット | 83124c79-9b15-4736-a34a-eff1d7664346 | 鼻すじ・小鼻から頬へのひびがはっきり入った。眉はかなり細くなった。他はv2のまま。**現時点の基準** |
+| 三面図 v4(目をキリッと男らしく)【非公開・確認用】 | gpt_image_2_6(三面図 v3 参照、quality: high / 2k) | 16:9 | 2 クレジット | 97e178b1-79c0-4ba8-9dba-f6b80313d125 | 目は細めの切れ長で鋭くなったが、**黒い白目が普通の白目に戻ってしまった**。眉もv3よりやや太く戻った。基準はv3のまま |
 
 #### 三面図 v1 プロンプト
 
@@ -424,3 +425,9 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 ```
 
 - メモ: 三面図の小さな顔でも「半分以下」「はっきり見える」のように強めに書くと効いた(柱間 v3)。
+
+#### 柱間 三面図 v4 プロンプト(三面図 v3 を参照、目のみ)
+
+```
+Edit this exact three-view character sheet with the smallest possible change. Change ONLY his eyes, consistently in the front and side views: make the eyes clearly sharper and more masculine — narrower, longer almond-shaped Japanese eyes with a straight, slightly lowered upper eyelid and slightly upturned outer corners, a strong focused gaze, no round or soft doe-eyed look. Keep the black sclera with dark brown irises. Keep everything else exactly the same: the very thin eyebrows, the cracks around the nose and cheeks, the gentle closed-mouth smile, long center-parted black hair, headband, maroon armor, charcoal suit, bandages, sandals, poses, background and lighting. No text.
+```
