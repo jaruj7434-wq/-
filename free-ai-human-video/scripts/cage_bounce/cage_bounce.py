@@ -1,8 +1,8 @@
 """「はねるたびに小さくなるボール、○回はねられる?」(参考動画「Each bounce SHRINKS the ball and builds a CAGE around it」の形)
 丸いわくの中をボールがはね回る。ボールが壁に当たるたびに、ボールは少し小さくなり、当たった場所の壁からオレンジのとげが内側へのびる(カゴがだんだん閉じていく)。
-カゴが全部うまったら(GOAL 以上)成功。ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗。
+カゴが FILL_GOAL(99%)までうまったら成功(実際にうまった割合で判定。うめる演出はしない)。ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗。
 
-- 重力なし。ボールはいつも同じ速さで、壁(とげを含む)ではね返る(ねらい・補正なし)。
+- 重力あり。ボールは壁(とげを含む)で弾性的にはね返る(エネルギーは減らない・ねらい・補正なし)。
 - 壁は中心からの放射状の線(N_RAY 本)でできていて、1本ずつ長さが変わる。とげは当たった場所でいちばん長く、まわりほど短い三角形。
   のびたとげはボールにめりこまない所で止まる。
 - カゴがせまくなるほど、はねる回数が速く増える。
@@ -43,18 +43,19 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY, R = 540.0, 1010.0, 440.0
 N_RAY = 720
-CORE = float(os.environ.get("CORE", 15.0))   # とげはまん中のこの半径より内側にはのびない
+CORE = float(os.environ.get("CORE", 8.0))   # とげはまん中のこの半径より内側にはのびない
 R0 = float(os.environ.get("R0", 34.0))            # はじめのボールの半径
-SHRINK = float(os.environ.get("SHRINK", 0.993))   # 1回はねるごとの大きさ
+SHRINK = float(os.environ.get("SHRINK", 0.985))   # 1回はねるごとの大きさ
 R_MIN = 3.0
-SPEED = float(os.environ.get("SPEED", 1100.0))
-SPIKE_U = float(os.environ.get("SPIKE_U", 18.0))   # とげの大きさの単位(px)
+SPEED = float(os.environ.get("SPEED", 1600.0))
+SPIKE_U = float(os.environ.get("SPIKE_U", 12.0))   # とげの大きさの単位(px)
 SPIKE_D = float(os.environ.get("SPIKE_D", 6.0))   # とげの深さ(SPIKE_U の何倍か)
 SPIKE_WR = float(os.environ.get("SPIKE_WR", 2.5))  # とげの根もとの半分のはば(SPIKE_U の何倍か)
 GROW_V = 1800.0                                   # とげがのびる速さ(px/秒)
-GOAL = float(os.environ.get("GOAL", 0.97))   # これだけうまったら「全部うまった」(成功)
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 60.0))
-STALL = float(os.environ.get("STALL", 6.0))   # この秒数ほとんどうまらなければ「閉じこめられた」
+FILL_GOAL = float(os.environ.get("FILL_GOAL", 0.99))   # ここまでうまったら成功
+GRAVITY = float(os.environ.get("GRAVITY", 2500.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 80.0))
+STALL = float(os.environ.get("STALL", 10.0))   # この秒数ほとんどうまらなければ「閉じこめられた」
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -88,6 +89,7 @@ class Game:
 
     def step(self, dt):
         self.t += dt
+        self.vy += GRAVITY * dt   # 重力
         self.x += self.vx * dt
         self.y += self.vy * dt
         # とげをのばす(ボールにめりこまない所まで)
@@ -170,7 +172,7 @@ class Game:
 
     def check(self):
         f = self.fill()
-        if self.result is None and f >= GOAL:
+        if self.result is None and f >= FILL_GOAL:   # 実際にうまった割合で判定(うめる演出はしない)
             self.result, self.result_t = "success", self.t
             self.events.append(("success", self.t, None))
         # ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗
@@ -262,7 +264,7 @@ def render(seed):
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
     ending = None if fail else JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6, shake=22,
-                                          texts=("全部うまった!!", "COMPLETE", "カゴ完成"))
+                                          texts=("99%うまった!!", "COMPLETE", "カゴ完成"))
     fever = RainbowFever(W, H, seed)
     grng = np.random.default_rng(seed + 5)
     glints = [(grng.uniform(0, W), grng.uniform(0, H), grng.uniform(0, 1), grng.uniform(1.5, 3.5), grng.uniform(30, 90))
@@ -290,8 +292,6 @@ def render(seed):
         ctx.set_source_rgb(0.02, 0.02, 0.04)
         ctx.paint()
         rad, fl = fr["rad"], fr["flash"]
-        if win_b >= 0:   # 成功の瞬間:最後のすき間がシュッとうまる(しめくくりの演出)
-            rad = rad + (CORE - rad) * min(1.0, win_b / 0.35)
         # オレンジのカゴ(外の円と、のびた放射状の線のあいだ)
         ctx.arc(CX, CY, R + 3, 0, 2 * math.pi)
         ctx.close_path()
@@ -345,8 +345,8 @@ def render(seed):
         ctx.set_source_rgb(*cyc)
         ctx.fill()
         # 文字(少なめ)
-        chic(ctx, "全部うめられる？", W / 2, 300, 66, rgb=(1, 0.88, 0.6))
-        pct = min(100, int(fr["fill"] / GOAL * 100))
+        chic(ctx, "99%うめられる？", W / 2, 300, 66, rgb=(1, 0.88, 0.6))
+        pct = int(fr["fill"] * 100)
         chic(ctx, f"{pct}%", W / 2, 420, 100, rgb=(1, 1, 1), weight="Medium")
         if not over:
             horror(ctx, "失敗したら…", W / 2, 1610, 74, t)
@@ -354,7 +354,7 @@ def render(seed):
             k = min(1.0, after / 0.25)
             if res["trapped"]:
                 chic(ctx, "閉じこめられた…", W / 2, 1000, 96 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
-            chic(ctx, f"{min(99, int(res['fill'] / GOAL * 100))}%", W / 2, 1130, 90 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
+            chic(ctx, f"{int(res['fill'] * 100)}%", W / 2, 1130, 90 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
         if win_b >= 0:
             k = win_b / PRE
             ph_ = (win_b * (8 + 14 * k)) % 1.0
