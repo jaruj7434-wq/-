@@ -1,7 +1,7 @@
 """「はねるたびに小さくなるボール、○回はねられる?」(参考動画「Each bounce SHRINKS the ball and builds a CAGE around it」の形)
 丸いわくの中をボールがはね回る。ボールが壁に当たるたびに、ボールは少し小さくなり、当たった場所の壁からオレンジのとげが内側へのびる(カゴがだんだん閉じていく)。
 制限時間内に円が完全にふさがったら(すき間がボールのまわりだけ=ボールの面積の FREE_K 倍か FREE_A 以下)成功(実際のすき間で判定。うめる演出はしない)。
-ボールははね返るたびに少しずつ速くなる(ACCEL 倍・V_MAX まで)。ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗。
+ボールははね返るたびに少しずつ速くなる(ACCEL 倍・V_MAX まで)。ボールがとげにかこまれて閉じこめられ、STALL 秒たっても残りのすき間が3%も小さくならなくなったら失敗。
 
 - 重力あり。ボールは壁(とげを含む)で弾性的にはね返る(エネルギーは減らない・ねらい・補正なし)。
 - 壁は中心からの放射状の線(N_RAY 本)でできていて、1本ずつ長さが変わる。とげは当たった場所でいちばん長く、まわりほど短い三角形。
@@ -56,11 +56,11 @@ SPIKE_WR = float(os.environ.get("SPIKE_WR", 2.5))  # とげの根もとの半分
 GROW_V = 1800.0                                   # とげがのびる速さ(px/秒)
 FREE_A = float(os.environ.get("FREE_A", 0.0))   # すき間の面積がこれ以下(px²)でも「完全にふさがった」
 FREE_K = float(os.environ.get("FREE_K", 4.0))
-MAX_GAP = float(os.environ.get("MAX_GAP", 12.0))   # どの線もまん中の軸からこれ以内までのびきったら「完全にふさがった」(細いすき間も残さない)   # すき間がボールの面積のこの倍以下=円が完全にふさがった
+MAX_GAP = float(os.environ.get("MAX_GAP", 9999.0))   # どの線もまん中の軸からこれ以内までのびきったら「完全にふさがった」(細いすき間も残さない)   # すき間がボールの面積のこの倍以下=円が完全にふさがった
 ACCEL = float(os.environ.get("ACCEL", 1.004))   # はね返るたびに速さがこの倍に
 V_MAX = float(os.environ.get("V_MAX", 4000.0))
-GRAVITY = float(os.environ.get("GRAVITY", 2500.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 41.0))
+GRAVITY = float(os.environ.get("GRAVITY", 0.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 60.0))
 STALL = float(os.environ.get("STALL", 10.0))   # この秒数ほとんどうまらなければ「閉じこめられた」
 OUTRO = 4.2
 PRE = 0.7
@@ -187,11 +187,11 @@ class Game:
         if self.result is None and free <= max(FREE_K * math.pi * self.r ** 2, FREE_A) and float(self.rad.max()) <= CORE + MAX_GAP:   # ボールのまわり以外、全部ふさがった
             self.result, self.result_t = "success", self.t
             self.events.append(("success", self.t, None))
-        # ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗
+        # ボールがとげにかこまれて閉じこめられ、STALL 秒たっても残りのすき間が3%も小さくならなくなったら失敗
         self.hist.append((self.t, f))
         while self.hist and self.hist[0][0] < self.t - STALL:
             self.hist.pop(0)
-        if self.result is None and self.t > STALL + 2 and f - self.hist[0][1] < 0.002:
+        if self.result is None and self.t > STALL + 2 and (1.0 - f) > (1.0 - self.hist[0][1]) * 0.97:
             self.result, self.result_t = "fail", self.t
             self.trapped = True
             self.events.append(("fail", self.t, None))
