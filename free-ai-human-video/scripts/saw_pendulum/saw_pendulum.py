@@ -1,10 +1,10 @@
-"""「ノコギリの振り子でブロックを全部けずれる?」(参考動画の形)
-上からつるした3本の棒の振り子(多重振り子)の先に、回るノコギリがついている。振り子は物理どおりにでたらめに(カオス的に)ゆれ、
-ノコギリが通った所の虹色のブロックがけずれていく。つり下げている点は、残っているブロックのいちばん上に合わせてゆっくり下がっていく(残りの上のほうがだいたいけずれたら下がる)。
+"""「鉄球の振り子でブロックを全部けずれる?」(参考動画の形)
+上からつるした3本の棒の振り子(多重振り子)の先に、重い鉄球がついている(最初の版は回るノコギリ)。振り子は物理どおりにでたらめに(カオス的に)ゆれ、
+ノコギリが通った所の虹色のブロックがけずれていく。つり下げている点は、クレーンのように左右にゆっくり行ったり来たりしながら(振り子をゆらし続ける力)、残っているブロックのいちばん上に合わせてゆっくり下がっていく(残りの上のほうがだいたいけずれたら下がる)。
 制限時間内にブロックを全部けずれたら成功、けずれなければ失敗。
 
 - 重力あり。振り子の棒どうしは自由に回るピンでつながっている(ねらい・補正なし)。
-- ブロックをけずるたびに、けずった量に応じてノコギリにブレーキがかかり、回る刃がブロックをけって横へ進む(モーターの力)。かたいブロックにはね返される。
+- 鉄球がブロックにぶつかると、その所がくだける。くだくたびに、くだいた量に応じてほんの少しブレーキがかかる(当たっても速くはならない)。
 - ノコギリがブロックの下のほうをほったときは、その上にあった所もいっしょにくずれて消える(ブロックはいつも上の面だけの形)。
 - 下の床(ブロックの底)とつながっていない破片は、支えがないので落ちる。
 - 成功ならパチンコの大当たり風の演出、失敗なら幽霊 → 暗くなって「Failed...」。
@@ -50,7 +50,7 @@ BY0, BY1 = float(os.environ.get("BY0", 760.0)), float(os.environ.get("BY1", 1400
 CELL = 4.0
 NX, NY = int((BX1 - BX0) / CELL), int((BY1 - BY0) / CELL)
 PIV_X = W / 2
-PIV_Y0 = float(os.environ.get("PIV_Y0", 440.0))   # つり下げ点のはじめの高さ
+PIV_Y0 = float(os.environ.get("PIV_Y0", 580.0))   # つり下げ点のはじめの高さ
 PIV_Y1 = float(os.environ.get("PIV_Y1", 1360.0))   # ここまで下がる
 HEIGHTFIELD = os.environ.get("HEIGHTFIELD", "1") == "1"
 MODE = os.environ.get("MODE", "surface")
@@ -59,12 +59,14 @@ FOLLOW = float(os.environ.get("FOLLOW", 180.0))   # つり下げ点はブロッ�
 PIV_V = float(os.environ.get("PIV_V", 25.0))      # 下がる速さ(px/秒)
 LINKS = [float(x) for x in os.environ.get("LINKS", "200,185,170").split(",")]
 START = os.environ.get("START", "lift")
+SWAY_A = float(os.environ.get("SWAY_A", 150.0))   # つり下げ点が左右に動くはば(片側)
+SWAY_T = float(os.environ.get("SWAY_T", 2.4))     # 1往復の秒数
 SAW_R = float(os.environ.get("SAW_R", 44.0))
-KICK = float(os.environ.get("KICK", 1600.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
+KICK = float(os.environ.get("KICK", 0.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
-DRAG = float(os.environ.get("DRAG", 0.0015))      # けずった1マスごとのブレーキ(速さの割合)
+DRAG = float(os.environ.get("DRAG", 0.0003))      # けずった1マスごとのブレーキ(速さの割合)
 GRAVITY = float(os.environ.get("GRAVITY", 650.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 56.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 62.8))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -80,11 +82,12 @@ class Game:
         sp.iterations = 30
         self.space = sp
         self.pivot = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-        self.pivot.position = (PIV_X, PIV_Y0)
+        self.sway_ph = rng.uniform(0, 2 * math.pi)
+        self.pivot.position = (PIV_X + SWAY_A * math.sin(self.sway_ph), PIV_Y0)
         sp.add(self.pivot)
         # はじめは棒を少しずつちがう角度で横にもち上げて、はなす
         prev, prev_pt = self.pivot, (0, 0)
-        x, y = PIV_X, PIV_Y0
+        x, y = self.pivot.position
         self.links = []
         for k, L in enumerate(LINKS):
             if START == "straight":   # まっすぐ横にのばしてはなす(角度はほんの少しずつシードごとにちがう)
@@ -129,7 +132,10 @@ class Game:
             py = cur + max(-PIV_V * dt, min(PIV_V * dt, want - cur))
         else:
             py = min(want, cur + PIV_V * dt) if want > cur else cur
-        self.pivot.velocity = (0, (py - cur) / dt)
+        # つり下げ点はクレーンのように左右にゆっくり行ったり来たりする(振り子をゆらし続ける力)
+        w = 2 * math.pi / SWAY_T
+        vx = SWAY_A * w * math.cos(w * self.t + self.sway_ph)
+        self.pivot.velocity = (vx, (py - cur) / dt)
         self.space.step(dt)
         if self.result is not None:
             return
@@ -276,6 +282,22 @@ def failed_text(ctx, s, x, y, size, alpha):
     ctx.text_path(s)
     ctx.set_source(g)
     ctx.fill()
+
+
+def draw_iron(ctx, x, y, r):
+    """つやのある鉄球。"""
+    g = cairo.RadialGradient(x - r * 0.35, y - r * 0.4, r * 0.05, x, y, r)
+    g.add_color_stop_rgb(0, 0.97, 0.98, 1.0)
+    g.add_color_stop_rgb(0.25, 0.7, 0.73, 0.78)
+    g.add_color_stop_rgb(0.7, 0.32, 0.34, 0.38)
+    g.add_color_stop_rgb(1, 0.12, 0.13, 0.15)
+    ctx.arc(x, y, r, 0, 2 * math.pi)
+    ctx.set_source(g)
+    ctx.fill()
+    ctx.arc(x, y, r, 0, 2 * math.pi)
+    ctx.set_source_rgba(0.85, 0.9, 1.0, 0.35)
+    ctx.set_line_width(1.5)
+    ctx.stroke()
 
 
 def draw_saw(ctx, x, y, r, ang):
@@ -453,7 +475,7 @@ def render(seed):
         parts = keep[-2500:]
         # つり糸と振り子
         pts = fr["pts"]
-        ctx.move_to(PIV_X, 0)
+        ctx.move_to(pts[0][0], 0)
         ctx.line_to(*pts[0])
         ctx.set_source_rgba(0.8, 0.85, 1.0, 0.35)
         ctx.set_line_width(1.5)
@@ -479,7 +501,7 @@ def render(seed):
             ctx.stroke()
         if not over:
             spin += 0.5
-        draw_saw(ctx, sx, sy, SAW_R, spin)
+        draw_iron(ctx, sx, sy, SAW_R)
         # 文字
         chic(ctx, "全部けずれる？", W / 2, 250, 66, rgb=(1, 0.88, 0.6))
         pct = int((1 - fr["left"] / res["total"]) * 100)
