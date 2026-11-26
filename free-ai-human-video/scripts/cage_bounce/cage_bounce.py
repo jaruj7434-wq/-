@@ -1,6 +1,7 @@
 """「はねるたびに小さくなるボール、○回はねられる?」(参考動画「Each bounce SHRINKS the ball and builds a CAGE around it」の形)
 丸いわくの中をボールがはね回る。ボールが壁に当たるたびに、ボールは少し小さくなり、当たった場所の壁からオレンジのとげが内側へのびる(カゴがだんだん閉じていく)。
-カゴが FILL_GOAL(99%)までうまったら成功(実際にうまった割合で判定。うめる演出はしない)。ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗。
+制限時間内に円が完全にふさがったら(すき間がボールのまわりだけ=ボールの面積の FREE_K 倍か FREE_A 以下)成功(実際のすき間で判定。うめる演出はしない)。
+ボールははね返るたびに少しずつ速くなる(ACCEL 倍・V_MAX まで)。ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗。
 
 - 重力あり。ボールは壁(とげを含む)で弾性的にはね返る(エネルギーは減らない・ねらい・補正なし)。
 - 壁は中心からの放射状の線(N_RAY 本)でできていて、1本ずつ長さが変わる。とげは当たった場所でいちばん長く、まわりほど短い三角形。
@@ -47,15 +48,18 @@ N_RAY = 720
 CORE = float(os.environ.get("CORE", 8.0))   # とげはまん中のこの半径より内側にはのびない
 R0 = float(os.environ.get("R0", 34.0))            # はじめのボールの半径
 SHRINK = float(os.environ.get("SHRINK", 0.985))   # 1回はねるごとの大きさ
-R_MIN = float(os.environ.get("R_MIN", 12.0))   # ボールはこれより小さくならない
+R_MIN = float(os.environ.get("R_MIN", 2.5))   # ボールはこれより小さくならない
 SPEED = float(os.environ.get("SPEED", 1600.0))
 SPIKE_U = float(os.environ.get("SPIKE_U", 12.0))   # とげの大きさの単位(px)
 SPIKE_D = float(os.environ.get("SPIKE_D", 6.0))   # とげの深さ(SPIKE_U の何倍か)
 SPIKE_WR = float(os.environ.get("SPIKE_WR", 2.5))  # とげの根もとの半分のはば(SPIKE_U の何倍か)
 GROW_V = 1800.0                                   # とげがのびる速さ(px/秒)
-FILL_GOAL = float(os.environ.get("FILL_GOAL", 0.90))   # ここまでうまったら成功
+FREE_A = float(os.environ.get("FREE_A", 1200.0))   # すき間の面積がこれ以下(px²)でも「完全にふさがった」
+FREE_K = float(os.environ.get("FREE_K", 5.0))   # すき間がボールの面積のこの倍以下=円が完全にふさがった
+ACCEL = float(os.environ.get("ACCEL", 1.004))   # はね返るたびに速さがこの倍に
+V_MAX = float(os.environ.get("V_MAX", 4000.0))
 GRAVITY = float(os.environ.get("GRAVITY", 2500.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 80.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 36.0))
 STALL = float(os.environ.get("STALL", 10.0))   # この秒数ほとんどうまらなければ「閉じこめられた」
 OUTRO = 4.2
 PRE = 0.7
@@ -164,6 +168,11 @@ class Game:
                 self.target[i] = max(CORE, want)
                 self.flash[i] = self.t
         self.r = max(R_MIN, self.r * SHRINK)
+        sp = math.hypot(self.vx, self.vy)   # はね返るたびに少しずつ速くなる(上限あり)
+        if sp > 1e-6 and sp < V_MAX:
+            k = min(ACCEL, V_MAX / sp)
+            self.vx *= k
+            self.vy *= k
         self.bounces += 1
         self.events.append(("bounce", self.t, (hx, hy, self.bounces, self.r)))
 
@@ -173,7 +182,8 @@ class Game:
 
     def check(self):
         f = self.fill()
-        if self.result is None and f >= FILL_GOAL:   # 実際にうまった割合で判定(うめる演出はしない)
+        free = (1.0 - f) * math.pi * (R ** 2 - CORE ** 2)   # 残っているすき間の面積
+        if self.result is None and free <= max(FREE_K * math.pi * self.r ** 2, FREE_A):   # ボールのまわり以外、全部ふさがった
             self.result, self.result_t = "success", self.t
             self.events.append(("success", self.t, None))
         # ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗
@@ -265,7 +275,7 @@ def render(seed):
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
     ending = None if fail else JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6, shake=22,
-                                          texts=("90%うまった!!", "COMPLETE", "カゴ完成"))
+                                          texts=("完全にふさいだ!!", "COMPLETE", "カゴ完成"))
     fever = RainbowFever(W, H, seed)
     grng = np.random.default_rng(seed + 5)
     glints = [(grng.uniform(0, W), grng.uniform(0, H), grng.uniform(0, 1), grng.uniform(1.5, 3.5), grng.uniform(30, 90))
@@ -351,14 +361,24 @@ def render(seed):
             ctx.set_line_width(max(1.0, fr["r"] * 0.5 * a))
             ctx.set_line_cap(cairo.LINE_CAP_ROUND)
             ctx.stroke()
+        gr_ = max(26.0, fr["r"] * 2.4)   # 見失わないように、まわりに光の輪(当たり判定は本当の大きさのまま)
+        g_ = cairo.RadialGradient(fr["x"], fr["y"], fr["r"], fr["x"], fr["y"], gr_)
+        g_.add_color_stop_rgba(0, 1, 1, 1, 0.55)
+        g_.add_color_stop_rgba(1, 1, 1, 1, 0)
+        ctx.arc(fr["x"], fr["y"], gr_, 0, 2 * math.pi)
+        ctx.set_source(g_)
+        ctx.fill()
         ctx.arc(fr["x"], fr["y"], fr["r"], 0, 2 * math.pi)
         cyc = hsv(win_b * 3) if win_b >= 0 else (1, 1, 1)
         ctx.set_source_rgb(*cyc)
         ctx.fill()
         # 文字(少なめ)
-        chic(ctx, "90%うめられる？", W / 2, 300, 66, rgb=(1, 0.88, 0.6))
+        chic(ctx, "円を完全にふさげる？", W / 2, 300, 66, rgb=(1, 0.88, 0.6))
         pct = int(fr["fill"] * 100)
         chic(ctx, f"{pct}%", W / 2, 420, 100, rgb=(1, 1, 1), weight="Medium")
+        tt = min(t, end_t) if end_t is not None else t
+        left = max(0.0, TIME_LIMIT - tt)
+        chic(ctx, f"{left:4.1f}", W / 2, 490, 40, rgb=(1, 0.45, 0.45) if left < 5 else (0.7, 0.75, 0.85), weight="Medium")
         if not over:
             horror(ctx, "失敗したら…", W / 2, 1610, 74, t)
         if over and fail:
