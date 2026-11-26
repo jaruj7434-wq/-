@@ -6,6 +6,7 @@
 - 重力あり。ボールは壁(とげを含む)で弾性的にはね返る(エネルギーは減らない・ねらい・補正なし)。
 - 壁は中心からの放射状の線(N_RAY 本)でできていて、1本ずつ長さが変わる。とげは当たった場所でいちばん長く、まわりほど短い三角形。
   のびたとげはボールにめりこまない所で止まる。
+- ボールより細いすき間(ひび)は、まわりのとげがくっついてふさがる(ボールが細いひびに入りこんで閉じこめられることはない)。
 - カゴがせまくなるほど、はねる回数が速く増える。
 - 成功ならパチンコの大当たり風の演出、失敗なら幽霊。
 
@@ -55,13 +56,15 @@ SPIKE_D = float(os.environ.get("SPIKE_D", 5.0))   # とげの深さ(SPIKE_U の�
 SPIKE_WR = float(os.environ.get("SPIKE_WR", 4.0))  # とげの根もとの半分のはば(SPIKE_U の何倍か)
 GROW_V = 1800.0                                   # とげがのびる速さ(px/秒)
 FREE_A = float(os.environ.get("FREE_A", 0.0))   # すき間の面積がこれ以下(px²)でも「完全にふさがった」
-FREE_K = float(os.environ.get("FREE_K", 4.0))
+FREE_K = float(os.environ.get("FREE_K", 1.5))
+CRACK_MAX = float(os.environ.get("CRACK_MAX", 10.0))   # ふさがるすき間の太さの上限(大きいボールのときに大きくけずりすぎないように)
+CRACK_K = float(os.environ.get("CRACK_K", 1.0))   # ボールの半径のこの倍より細いすき間はふさがる
 START_JIT = float(os.environ.get("START_JIT", 0.6))   # はじめの位置の左右のずれ(px)
-MAX_GAP = float(os.environ.get("MAX_GAP", 12.0))   # どの線もまん中の軸からこれ以内までのびきったら「完全にふさがった」(細いすき間も残さない)   # すき間がボールの面積のこの倍以下=円が完全にふさがった
+MAX_GAP = float(os.environ.get("MAX_GAP", 9999.0))   # どの線もまん中の軸からこれ以内までのびきったら「完全にふさがった」(細いすき間も残さない)   # すき間がボールの面積のこの倍以下=円が完全にふさがった
 ACCEL = float(os.environ.get("ACCEL", 1.004))   # はね返るたびに速さがこの倍に
 V_MAX = float(os.environ.get("V_MAX", 4000.0))
 GRAVITY = float(os.environ.get("GRAVITY", 0.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 60.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 23.0))
 STALL = float(os.environ.get("STALL", 10.0))   # この秒数ほとんどうまらなければ「閉じこめられた」
 OUTRO = 4.2
 PRE = 0.7
@@ -75,6 +78,9 @@ class Game:
     def __init__(self, seed):
         self.rng = rng = np.random.default_rng(seed)
         self.rad = np.full(N_RAY, R)       # 壁の位置(中心からのきょり)
+        self.inn_target = np.full(N_RAY, CORE)
+        self.inn = np.full(N_RAY, CORE)    # 内側のふさがった所(まん中の軸からのびる。ボールが入れないほど細い所がうまる)
+        self.next_crack = 0.0
         self.target = np.full(N_RAY, R)    # とげがのびていく先
         self.flash = np.full(N_RAY, -9.0)  # その線がのびはじめた時刻(光らせる)
         # はじめはまん中から真上へ(縦にまっすぐ行き来する)。左右のずれはほんのわずか(シードごとにちがう)だけ
@@ -109,13 +115,45 @@ class Game:
             far = proj + np.sqrt(np.maximum(0.0, self.r * self.r - perp2)) + 1.5
             new = np.where(hit, np.maximum(new, np.minimum(self.rad[idx], far)), new)
             self.rad[idx] = new
+        if self.t >= self.next_crack and self.result is None:
+            self.close_cracks()
+            self.next_crack = self.t + 0.15
+        gi = self.inn_target > self.inn + 0.01
+        if gi.any():
+            idx_ = np.nonzero(gi)[0]
+            newi = np.minimum(self.inn_target[idx_], self.inn[idx_] + GROW_V * dt)
+            dxb, dyb = self.x - CX, self.y - CY
+            proj = dxb * COS[idx_] + dyb * SIN[idx_]
+            perp2 = (dxb * dxb + dyb * dyb) - proj * proj
+            hitb = (perp2 < self.r * self.r) & (proj > 0)
+            near = proj - np.sqrt(np.maximum(0.0, self.r * self.r - perp2)) - 1.5
+            newi = np.where(hitb, np.minimum(newi, np.maximum(self.inn[idx_], near)), newi)
+            self.inn[idx_] = newi
         # 壁との当たり判定(近くの線分だけ調べる)
         dx, dy = self.x - CX, self.y - CY
         phi = math.atan2(dy, dx) % (2 * math.pi)
         i0 = int(phi / (2 * math.pi) * N_RAY)
         rho = math.hypot(dx, dy)
+        if rho < CORE + 2 + self.r:   # まん中の白い軸(かたい丸)ではね返る
+            nx, ny = (dx / rho, dy / rho) if rho > 1e-6 else (1.0, 0.0)
+            vn = self.vx * nx + self.vy * ny
+            self.x, self.y = CX + nx * (CORE + 2 + self.r + 0.5), CY + ny * (CORE + 2 + self.r + 0.5)
+            if vn < 0:
+                self.vx -= 2 * vn * nx
+                self.vy -= 2 * vn * ny
+            dx, dy = self.x - CX, self.y - CY
+            rho = math.hypot(dx, dy)
         # はみ出し防止:ボールの中心が壁の外に出ていたら内側へもどす
         k_ = int(round(phi / (2 * math.pi) * N_RAY)) % N_RAY
+        if rho < self.inn[k_] + 0.5:   # 内側のふさがった所にめりこんだら外へ
+            out = self.inn[k_] + self.r * 0.5 + 0.5
+            self.x, self.y = CX + dx / rho * out, CY + dy / rho * out
+            vr = (self.vx * dx + self.vy * dy) / rho
+            if vr < 0:
+                self.vx -= 2 * vr * dx / rho
+                self.vy -= 2 * vr * dy / rho
+            dx, dy = self.x - CX, self.y - CY
+            rho = math.hypot(dx, dy)
         if rho > self.rad[k_] - 0.5:
             back = max(1.0, self.rad[k_] - self.r * 0.5)
             self.x, self.y = CX + dx / rho * back, CY + dy / rho * back
@@ -126,9 +164,13 @@ class Game:
             dx, dy = self.x - CX, self.y - CY
         win = 70 if rho > 260 else N_RAY // 2   # まん中近くでは、まわり全部のとげを調べる
         idx = (np.arange(i0 - win, i0 + win + 1)) % N_RAY
-        px = CX + self.rad[idx] * COS[idx]
-        py = CY + self.rad[idx] * SIN[idx]
-        ax, ay, bx, by = px[:-1], py[:-1], px[1:], py[1:]
+        px = np.concatenate([CX + self.rad[idx] * COS[idx], CX + self.inn[idx] * COS[idx]])
+        py = np.concatenate([CY + self.rad[idx] * SIN[idx], CY + self.inn[idx] * SIN[idx]])
+        n_ = len(idx)
+        ax = np.concatenate([px[:n_ - 1], px[n_:-1]])
+        ay = np.concatenate([py[:n_ - 1], py[n_:-1]])
+        bx = np.concatenate([px[1:n_], px[n_ + 1:]])
+        by = np.concatenate([py[1:n_], py[n_ + 1:]])
         ex, ey = bx - ax, by - ay
         l2 = ex * ex + ey * ey + 1e-9
         u = np.clip(((self.x - ax) * ex + (self.y - ay) * ey) / l2, 0, 1)
@@ -149,7 +191,7 @@ class Game:
             if vn < 0:
                 self.vx -= 2 * vn * nx
                 self.vy -= 2 * vn * ny
-                if self.t - self.last_hit > 0.012:
+                if self.t - self.last_hit > 0.012 and j < n_ - 1:   # 外側のとげに当たったときだけ、とげがのびる
                     self.bounce(int(idx[j]), qx[j], qy[j])
                     self.last_hit = self.t
 
@@ -177,9 +219,55 @@ class Game:
         self.bounces += 1
         self.events.append(("bounce", self.t, (hx, hy, self.bounces, self.r)))
 
+    def close_cracks(self):
+        """ボールが入れないほど細い所(とげとげのあいだのひびや、まん中へ向かうせまいすき間)は、まわりがくっついてふさがる。
+        ボールの中心が置ける所をしらべて、そこからとどかない所をうめる(外側のとげはのびて、内側は軸のほうからうまる)。"""
+        rb = min(max(self.r * CRACK_K, 3.0), CRACK_MAX)
+        dth = 2 * math.pi / N_RAY
+        rad = np.maximum(self.target, self.inn)
+        inn = self.inn
+        rhos = np.linspace(CORE + 2 + rb, R - rb, 48)
+        ms = np.ceil(np.arcsin(np.clip(rb / rhos, 0, 1)) / dth).astype(int)
+        M = int(min(120, ms.max()))
+        offs = np.arange(-M, M + 1)
+        RR = np.stack([np.roll(rad, -o) for o in offs])   # RR[k, i] = rad[i + offs[k]]
+        II = np.stack([np.roll(inn, -o) for o in offs])
+        hi = np.full(N_RAY, -1.0)
+        lo = np.full(N_RAY, 1e9)
+        for rho, m in zip(rhos, ms):
+            m = min(m, M)
+            sl = slice(M - m, M + m + 1)
+            ok = (RR[sl].min(axis=0) >= rho + rb) & (II[sl].max(axis=0) <= rho - rb)
+            if not ok.any():
+                continue
+            okf = ok.astype(np.int8)
+            cov = np.zeros(N_RAY, bool)
+            for o in range(-m, m + 1):
+                cov |= np.roll(okf, o).astype(bool)
+            hi = np.where(cov, np.maximum(hi, rho + rb), hi)
+            lo = np.where(cov, np.minimum(lo, rho - rb), lo)
+        # ボールが今いる所は必ず残す
+        bx, by = self.x - CX, self.y - CY
+        brho = math.hypot(bx, by)
+        bi = int(round(math.atan2(by, bx) % (2 * math.pi) / dth)) % N_RAY
+        bm = int(math.ceil(math.asin(min(1.0, (self.r + 2) / max(brho, self.r + 2))) / dth))
+        for o in range(-bm, bm + 1):
+            k = (bi + o) % N_RAY
+            hi[k] = max(hi[k], brho + self.r + 2)
+            lo[k] = min(lo[k], brho - self.r - 2)
+        none = hi < 0
+        new_t = np.where(none, inn, np.minimum(self.target, hi))
+        new_i = np.where(none, inn, np.maximum(inn, np.minimum(lo, rad)))
+        new_t = np.maximum(new_t, new_i)
+        idx = np.nonzero(new_t < self.target - 0.5)[0]
+        if len(idx):
+            self.target[idx] = new_t[idx]
+            self.flash[idx] = self.t
+        self.inn_target = np.maximum(self.inn_target, new_i)
+
     def fill(self):
         """カゴがどれだけうまったか(0〜1)。まん中の小さな空き(CORE)は数えない。"""
-        return 1.0 - float(np.sum(self.rad ** 2 - CORE ** 2)) / (N_RAY * (R ** 2 - CORE ** 2))
+        return 1.0 - float(np.sum(np.maximum(0.0, self.rad ** 2 - self.inn ** 2))) / (N_RAY * (R ** 2 - CORE ** 2))
 
     def check(self):
         f = self.fill()
@@ -213,7 +301,7 @@ def simulate(seed, record=False):
         g.check()
         if record:
             frames.append({"t": g.t, "x": g.x, "y": g.y, "r": g.r, "n": g.bounces, "fill": g.fill(),
-                           "rad": g.rad.astype(np.float32).copy(), "flash": g.flash.astype(np.float32).copy()})
+                           "rad": g.rad.astype(np.float32).copy(), "inn": g.inn.astype(np.float32).copy(), "flash": g.flash.astype(np.float32).copy()})
         if g.result is not None:
             extra = (OUTRO + SCARE_DUR) if g.result == "fail" else (PRE + WIN_DUR)
             if not record or g.t > g.result_t + extra:
@@ -305,14 +393,9 @@ def render(seed):
         ctx.set_source_rgb(0.02, 0.02, 0.04)
         ctx.paint()
         rad, fl = fr["rad"], fr["flash"]
-        # 虹色のカゴ(外の円と、のびた放射状の線のあいだ)
+        inn = np.minimum(fr["inn"], rad)
+        # 虹色のカゴ(円ぜんぶを虹色にぬって、残っているすき間を黒くぬる)
         ctx.arc(CX, CY, R + 3, 0, 2 * math.pi)
-        ctx.close_path()
-        ctx.move_to(CX + rad[0] * COS[0], CY + rad[0] * SIN[0])
-        for i in range(N_RAY - 1, -1, -1):
-            ctx.line_to(CX + rad[i] * COS[i], CY + rad[i] * SIN[i])
-        ctx.close_path()
-        ctx.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
         ctx.save()
         ctx.clip()   # うまった所を虹色に(中心から見た向きで色が変わる)
         nseg = 180
@@ -325,6 +408,17 @@ def render(seed):
             ctx.set_source_rgb(*colorsys.hsv_to_rgb(k / nseg, 0.62, 0.95))
             ctx.fill()
         ctx.restore()
+        ctx.move_to(CX + rad[0] * COS[0], CY + rad[0] * SIN[0])   # すき間(外のとげの先と、内側のふさがった所のあいだ)
+        for i in range(1, N_RAY):
+            ctx.line_to(CX + rad[i] * COS[i], CY + rad[i] * SIN[i])
+        ctx.close_path()
+        ctx.move_to(CX + inn[0] * COS[0], CY + inn[0] * SIN[0])
+        for i in range(N_RAY - 1, 0, -1):
+            ctx.line_to(CX + inn[i] * COS[i], CY + inn[i] * SIN[i])
+        ctx.close_path()
+        ctx.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+        ctx.set_source_rgb(0.02, 0.02, 0.04)
+        ctx.fill()
         ctx.set_fill_rule(cairo.FILL_RULE_WINDING)
         # のびたばかりの所はクリーム色に光る
         age = t - fl
