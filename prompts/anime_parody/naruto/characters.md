@@ -366,7 +366,8 @@ Edit this photo. Keep the same man, silver hair, navy face mask, outfit, vest, g
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | 三面図 v1(正面・横・後ろ)【非公開・確認用】 | gpt_image_2_6(参照なし、quality: high / 2k) | 16:9 | 2 クレジット | b5c5e980-cc56-4d7a-9608-819a320f9053 | 3方向で白銀髪・毛皮・鎧・額当てがそろった。黒い白目に赤い瞳、頬とあごの赤い線。ひび割れは顔全体と手に細かく入る |
-| 三面図 v2(顔のペイント・額当て・服と鎧の形と色を参考画像に合わせる)【非公開・確認用】 | gpt_image_2_6(三面図 v1 参照、quality: high / 2k) | 16:9 | 2 クレジット | d9449a72-b5a5-41ca-ac5c-2e1e5b019c6a | ユーザー提供の参考画像(原作アニメ絵、アップロードせず文章で指定)に合わせた。頬の細い斜めの赤線とあごの短い赤線、ひびは控えめに。銀灰色の頭巾風額当て、黒っぽいオリーブの長袖とズボン、すねに包帯、青緑の1枚板の胸当て・前垂れ3枚・肩当て(下に薄紫)。**現時点の基準** |
+| 三面図 v2(顔のペイント・額当て・服と鎧の形と色を参考画像に合わせる)【非公開・確認用】 | gpt_image_2_6(三面図 v1 参照、quality: high / 2k) | 16:9 | 2 クレジット | d9449a72-b5a5-41ca-ac5c-2e1e5b019c6a | ユーザー提供の参考画像(原作アニメ絵、アップロードせず文章で指定)に合わせた。頬の細い斜めの赤線とあごの短い赤線、ひびは控えめに。銀灰色の頭巾風額当て、黒っぽいオリーブの長袖とズボン、すねに包帯、青緑の1枚板の胸当て・前垂れ3枚・肩当て(下に薄紫) |
+| 三面図 v3(前髪を少し垂らす・眉を細く)【非公開・確認用】 | gpt_image_2_6(三面図 v2 参照、quality: high / 2k) | 16:9 | 2 クレジット | 48be247f-35c0-4cfd-afb4-4c52e6f7c476 | 額当ての上と横に白銀の毛先が少しかかるようになったが、変化は控えめ。眉はわずかに細くなった程度。他はv2のまま。**現時点の基準** |
 
 #### 三面図 v1 プロンプト
 
@@ -378,4 +379,10 @@ Character turnaround model sheet, three consistent full-body views of the same m
 
 ```
 Edit this exact three-view character sheet. Keep the same man, his face shape, spiky white-silver hair, black sclera with red irises, the three poses (front, side facing right, back), background and lighting. Change, identically in all three views: 1) FACE PAINT: replace the thick red stripes with thin red lines — one thin red line running from just under each eye diagonally down across the cheek, and one short thin red vertical line on the center of the chin. Reduce the Edo Tensei cracks to only a few subtle thin cracks on the face and hands. 2) HEADBAND: light silver-gray cloth hood that covers the forehead and wraps down over the sides of the face like cheek guards, with the metal plate engraved with the leaf emblem on the forehead. 3) OUTFIT: a dark olive-black long-sleeved high-neck shirt and loose dark olive-black trousers; light gray bandage wraps around the lower shins above the ankles; black open-toe sandals; no forearm guards (bare hands). 4) ARMOR in solid steel-blue/teal color: a single smooth flat steel-blue chest-and-back plate with small lacing loops, no segmented horizontal bands; at the front of the waist only, one hanging apron of three stacked rectangular steel-blue plates covering the groin and upper thighs (in the back view a matching short plate panel at the back); on each shoulder a curved steel-blue shoulder guard with a pale lavender-purple padded layer underneath, partly under the fur. A few fine crack lines on the armor. 5) Keep a big thick white fur ruff around the neck and shoulders. No text, no extra people.
+```
+
+#### 扉間 三面図 v3 プロンプト(三面図 v2 を参照、前髪と眉のみ)
+
+```
+Edit this exact three-view character sheet with the smallest possible change. Change ONLY these two things, consistently in the front and side views: 1) HAIR: add a few spiky white-silver bangs that hang down over the top edge of the headband onto the forehead area and slightly over the sides near the temples, naturally connected to the rest of his spiky white-silver hair (in the back view keep the hair as it is). 2) EYEBROWS: make both eyebrows much thinner and finer, sharp narrow brows. Keep everything else exactly the same: face, black sclera with red irises, thin red face lines, subtle cracks, silver-gray hood headband with leaf plate, white fur ruff, steel-blue armor with lavender pads, dark olive clothes, bandaged shins, sandals, poses, background and lighting. No text.
 ```
