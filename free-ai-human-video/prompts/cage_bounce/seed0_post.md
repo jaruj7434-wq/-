@@ -3,7 +3,7 @@
 - 動画: assets/output/cage_bounce_0.mp4(1080x1920 / 60fps / 42.2秒 / H.264 + AAC・git 管理外)
 - 再生成: `python scripts/cage_bounce/cage_bounce.py render --seed 0`
 - 結末: 成功(シード0をそのまま使用・選んでいない)。17.5秒で50% → 26.6秒で90% → 28.4秒で99% → 34.9秒で99.9% →
-  35.4秒(852回はねた・残り5.6秒)に細いすき間も残さず円が完全にふさがった!! → 大当たり演出(文字は「Congratulations!!」「COMPLETE」)
+  35.4秒(852回はねた・残り5.6秒)に細いすき間も残さず円が完全にふさがった!! → 大当たり演出(文字は「Congratulations!!」「COMPLETE」・フォントは Playfair Display Italic(SIL OFL)で細いふち)
 - 音量: 通常部分 約 -13dB
 - 参考動画: 「Each bounce SHRINKS the ball and builds a CAGE around it」(ユーザー提供)の形を参考に、映像と音を一から作った
 - ルール: 丸いわくの中を白いボールがはね回る。重力あり、壁(とげを含む)ではね返るたびに少しずつ速くなる(1回ごとに1.004倍)。ねらい・補正なし・はじめの向きはランダム。

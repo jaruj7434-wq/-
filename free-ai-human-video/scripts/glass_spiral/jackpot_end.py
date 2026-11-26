@@ -31,8 +31,9 @@ def _rainbow(h, s=1.0, v=1.0):
 # ---------------------------------------------------------------- 映像
 class Jackpot:
     def __init__(self, W, H, seed, cx, cy, draw_ball, n_kinds=6, texts=("全部割った!!", "ALL CLEAR", "432 / 432"),
-                 shake=0.0, win=None):
-        self.texts, self.shake, self.win = texts, shake, win   # 文字(ほかの回でも使えるように)、画面ゆれの強さ、揃う絵柄
+                 shake=0.0, win=None, font=None, slim=False):
+        self.texts, self.shake, self.win = texts, shake, win
+        self.font, self.slim = font or FONT, slim   # 文字のフォントと、ふちを細くしておしゃれにするか   # 文字(ほかの回でも使えるように)、画面ゆれの強さ、揃う絵柄
         rng = np.random.default_rng(seed + 8080)
         self.W, self.H, self.cx, self.cy = W, H, cx, cy
         self.draw_ball, self.n = draw_ball, n_kinds
@@ -58,7 +59,7 @@ class Jackpot:
         """ギラギラ光る文字(黒ふち+白ふち、中は虹(または金)のグラデーションが流れ、光の筋が走る)。"""
         if not s:
             return
-        ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         ctx.set_font_size(size)
         ext = ctx.text_extents(s)
         max_w = self.W * 0.86   # 長い文字(英語など)は画面からはみ出さないように小さくする
@@ -77,10 +78,10 @@ class Jackpot:
             ctx.set_line_width(w)
             ctx.stroke_preserve()
         ctx.set_source_rgb(0, 0, 0)
-        ctx.set_line_width(size * 0.28)
+        ctx.set_line_width(size * (0.1 if self.slim else 0.28))
         ctx.stroke_preserve()
         ctx.set_source_rgb(1, 1, 1)
-        ctx.set_line_width(size * 0.13)
+        ctx.set_line_width(size * (0.045 if self.slim else 0.13))
         ctx.stroke_preserve()
         g = cairo.LinearGradient(x, y - size, x + ext.width * 0.4, y)
         if gold:
