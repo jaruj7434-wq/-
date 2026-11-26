@@ -54,12 +54,13 @@ SPIKE_U = float(os.environ.get("SPIKE_U", 12.0))   # とげの大きさの単位
 SPIKE_D = float(os.environ.get("SPIKE_D", 6.0))   # とげの深さ(SPIKE_U の何倍か)
 SPIKE_WR = float(os.environ.get("SPIKE_WR", 2.5))  # とげの根もとの半分のはば(SPIKE_U の何倍か)
 GROW_V = 1800.0                                   # とげがのびる速さ(px/秒)
-FREE_A = float(os.environ.get("FREE_A", 1200.0))   # すき間の面積がこれ以下(px²)でも「完全にふさがった」
-FREE_K = float(os.environ.get("FREE_K", 5.0))   # すき間がボールの面積のこの倍以下=円が完全にふさがった
+FREE_A = float(os.environ.get("FREE_A", 0.0))   # すき間の面積がこれ以下(px²)でも「完全にふさがった」
+FREE_K = float(os.environ.get("FREE_K", 4.0))
+MAX_GAP = float(os.environ.get("MAX_GAP", 12.0))   # どの線もまん中の軸からこれ以内までのびきったら「完全にふさがった」(細いすき間も残さない)   # すき間がボールの面積のこの倍以下=円が完全にふさがった
 ACCEL = float(os.environ.get("ACCEL", 1.004))   # はね返るたびに速さがこの倍に
 V_MAX = float(os.environ.get("V_MAX", 4000.0))
 GRAVITY = float(os.environ.get("GRAVITY", 2500.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 36.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 41.0))
 STALL = float(os.environ.get("STALL", 10.0))   # この秒数ほとんどうまらなければ「閉じこめられた」
 OUTRO = 4.2
 PRE = 0.7
@@ -183,7 +184,7 @@ class Game:
     def check(self):
         f = self.fill()
         free = (1.0 - f) * math.pi * (R ** 2 - CORE ** 2)   # 残っているすき間の面積
-        if self.result is None and free <= max(FREE_K * math.pi * self.r ** 2, FREE_A):   # ボールのまわり以外、全部ふさがった
+        if self.result is None and free <= max(FREE_K * math.pi * self.r ** 2, FREE_A) and float(self.rad.max()) <= CORE + MAX_GAP:   # ボールのまわり以外、全部ふさがった
             self.result, self.result_t = "success", self.t
             self.events.append(("success", self.t, None))
         # ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗
@@ -349,6 +350,10 @@ def render(seed):
         ctx.set_source_rgba(1, 1, 1, 0.85)
         ctx.set_line_width(4)
         ctx.stroke()
+        # まん中の軸(とげが集まる中心の小さな丸。ここはすき間に数えない)
+        ctx.arc(CX, CY, CORE + 2, 0, 2 * math.pi)
+        ctx.set_source_rgb(0.92, 0.92, 0.95)
+        ctx.fill()
         # ボール(白く光る・短い尾)
         if not over:
             trail.append((fr["x"], fr["y"]))
