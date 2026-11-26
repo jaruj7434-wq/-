@@ -470,6 +470,7 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | オリジナル甲冑 三面図 v1 | gpt_image_2_6(三面図 v8 を顔だけ参照、quality: high / 2k) | 16:9 | 2 クレジット | bef2b8cd-f839-4eaf-8a29-a6fd301eaf14 | 当世具足風の深い赤の甲冑(胴・紐で綴じた袖・籠手・草摺・佩楯・臑当)、藍の帯、足袋に草鞋。編集の劣化はなく画質は良好。顔・前髪の細い毛束・ひびはv8を維持。額当ての紋はオリジナル。**黒い白目は弱く、普通の目に近い** |
+| オリジナル甲冑 三面図 v2(目を少し大きく・白目を黒に・すねを白い脚絆に) | gpt_image_2_6(オリジナル甲冑 v1 参照、quality: high / 2k) | 16:9 | 2 クレジット | 48f934aa-b7c8-485a-b8b7-27043c0174c1 | 白目が完全に黒くなり、目も少し大きく。赤いすね当てが白い脚絆に替わり、白い足袋と草鞋で足元が白に。甲冑・オリジナルの紋・顔のひび・前髪はv1のまま。**現時点の基準** |
 
 #### オリジナル甲冑 三面図 v1 プロンプト
 
@@ -478,3 +479,9 @@ Use the attached image ONLY for the man's head: keep his exact face, natural eye
 ```
 
 - メモ: 編集を何度も重ねると体や衣装の画質が落ちる。大きく直すときは、気に入った部分(顔など)だけを参照にして一から生成し直すほうがきれいに仕上がる。
+
+#### オリジナル甲冑 三面図 v2 プロンプト(v1 を参照、目と足元のみ)
+
+```
+Edit this exact three-view character sheet with the smallest possible change. Change ONLY these details, consistently in all views where visible: 1) EYES (front and side views): keep the same natural realistic eye shape, but make the eyes slightly larger (about 10 percent); the whites of BOTH eyes must be completely BLACK (black sclera, no white visible anywhere in the eyes) with dark gray-black irises. 2) FEET: replace the red shin guards with clean WHITE cloth leg wraps (kyahan) wound around the lower legs from below the knee down to the ankles, over white tabi socks, with the same straw sandals, so the lower legs and feet look white. Keep everything else exactly the same: face, thin eyebrows, face cracks, expression, long black hair and the two thin front strands, the headband with its original sapling crest, the oxblood red lacquered armor, indigo sash, charcoal clothing, poses, background and lighting. No text.
+```
