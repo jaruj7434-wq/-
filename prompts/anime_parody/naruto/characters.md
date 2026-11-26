@@ -406,7 +406,8 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 | 三面図 v3(鼻まわりにひびを追加・眉をさらに細く)【非公開・確認用】 | gpt_image_2_6(三面図 v2 参照、quality: high / 2k) | 16:9 | 2 クレジット | 83124c79-9b15-4736-a34a-eff1d7664346 | 鼻すじ・小鼻から頬へのひびがはっきり入った。眉はかなり細くなった。他はv2のまま |
 | 三面図 v4(目をキリッと男らしく)【非公開・確認用】 | gpt_image_2_6(三面図 v3 参照、quality: high / 2k) | 16:9 | 2 クレジット | 97e178b1-79c0-4ba8-9dba-f6b80313d125 | 目は細めの切れ長で鋭くなったが、**黒い白目が普通の白目に戻ってしまった**。眉もv3よりやや太く戻った。基準はv3のまま |
 | 三面図 v5(白目を黒に戻す・眉を細く・前髪を細い毛束で両サイドに・目を気持ち大きく)【非公開・確認用】 | gpt_image_2_6(三面図 v4 参照、quality: high / 2k) | 16:9 | 2 クレジット | 2d424b45-9803-44a9-8f26-1dc67736df4c | 白目が黒に戻り、キリッとした切れ長の目を少しだけ大きく。眉は細め。額当ての下から細い前髪が顔の両サイドに垂れる |
-| 三面図 v6(顔を参考画像のイメージに:真剣な表情・鼻まわりを囲むひび・額当ての前に垂れる細い毛束)【非公開・確認用】 | gpt_image_2_6(三面図 v5 参照、quality: high / 2k) | 16:9 | 2 クレジット | 47b65f67-f482-4fc5-ae52-fda58c73ee08 | ユーザー提供の参考画像(フィギュアの顔アップ、アップロードせず文章で指定)に寄せた。口を閉じた厳しい表情、眉間を寄せた細い眉、黒い白目。鼻すじを横切り鼻を囲むひび、あごと眉間にもひび。細い毛束が額当ての両脇から垂れる。額当ての布は濃いグレーにならず明るい銀色のまま。**現時点の基準** |
+| 三面図 v6(顔を参考画像のイメージに:真剣な表情・鼻まわりを囲むひび・額当ての前に垂れる細い毛束)【非公開・確認用】 | gpt_image_2_6(三面図 v5 参照、quality: high / 2k) | 16:9 | 2 クレジット | 47b65f67-f482-4fc5-ae52-fda58c73ee08 | ユーザー提供の参考画像(フィギュアの顔アップ、アップロードせず文章で指定)に寄せた。口を閉じた厳しい表情、眉間を寄せた細い眉、黒い白目。鼻すじを横切り鼻を囲むひび、あごと眉間にもひび。細い毛束が額当ての両脇から垂れる。額当ての布は濃いグレーにならず明るい銀色のまま |
+| 三面図 v7(目の形を自然な人間の目に)【非公開・確認用】 | gpt_image_2_6(三面図 v6 参照、quality: high / 2k) | 16:9 | 2 クレジット | 32b3975a-3f0f-41b6-894d-4baecb9d6498 | アイラインのような縁取りと角ばった形がなくなり、自然なまぶたの切れ長の目に。黒い白目は維持。他はv6のまま。**現時点の基準** |
 
 #### 三面図 v1 プロンプト
 
@@ -446,4 +447,10 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 
 ```
 Edit this exact three-view character sheet. Change ONLY his head and face, consistently in the front and side views (keep the back view, body, armor, clothes, poses, background and lighting exactly the same): 1) EXPRESSION: serious, stern and calm, mouth closed in a straight neutral line (no smile), slightly furrowed brow with thin, sharp eyebrows angled slightly down toward the center. 2) EYES: sharp narrow masculine eyes; the whites of BOTH eyes completely BLACK (black sclera, no white visible) with dark gray-black irises. 3) CRACKS (thin dark lines like cracked porcelain, clearly visible): one crack line running horizontally across the bridge of the nose and continuing along both sides of the nose onto both cheeks, forming a mask-like outline around the nose; one crack running down from below each eye across the cheek toward the jaw; a few short cracks on the forehead between the eyebrows just below the headband. 4) HAIR: long straight black hair parted in the center going behind the shoulders; two long thin strands of hair fall from the top of the head down IN FRONT of the headband on both sides of the forehead and hang down past the cheeks to the jaw. 5) HEADBAND: dark gray cloth with a polished metal plate engraved with the leaf emblem. Natural light skin tone. No text.
+```
+
+#### 柱間 三面図 v7 プロンプト(三面図 v6 を参照、目の形のみ)
+
+```
+Edit this exact three-view character sheet with the smallest possible change. Change ONLY the shape of his eyes, consistently in the front and side views: make them look like natural, realistic human eyes of a Japanese man — natural almond shape with soft realistic eyelids, natural eyelid crease, real eyelashes and skin texture, normal human proportions, no heavy black eyeliner outline, no exaggerated sharp angular or anime-like shape. Keep the calm serious expression. The whites of BOTH eyes stay completely BLACK (black sclera, Edo Tensei, no white visible) with dark gray-black irises. Keep everything else exactly the same: thin eyebrows, face cracks, mouth, hair strands, headband, armor, clothes, back view, poses, background and lighting. No text.
 ```
