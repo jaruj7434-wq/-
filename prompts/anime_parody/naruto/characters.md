@@ -388,3 +388,23 @@ Edit this exact three-view character sheet. Keep the same man, his face shape, s
 ```
 Edit this exact three-view character sheet with the smallest possible change. Change ONLY these two things, consistently in the front and side views: 1) HAIR: add a few spiky white-silver bangs that hang down over the top edge of the headband onto the forehead area and slightly over the sides near the temples, naturally connected to the rest of his spiky white-silver hair (in the back view keep the hair as it is). 2) EYEBROWS: make both eyebrows much thinner and finer, sharp narrow brows. Keep everything else exactly the same: face, black sclera with red irises, thin red face lines, subtle cracks, silver-gray hood headband with leaf plate, white fur ruff, steel-blue armor with lavender pads, dark olive clothes, bandaged shins, sandals, poses, background and lighting. No text.
 ```
+
+## 柱間風(穢土転生・初代)
+
+- 30歳くらいの架空の日本人男性、長身でがっしり(実在の俳優には似せない)。穏やかで威厳のある表情、細くまっすぐな眉
+- 真ん中分けのまっすぐな長い黒髪(背中の中ほどまで)
+- 穢土転生: 白目が黒く瞳はこげ茶(予定)、顔と手に細いひびを少し
+- 額当て: 紺色の布に木の葉マーク(非公開・確認用)
+- 黒に近い紺色のハイネックのボディスーツとゆったりしたズボン、深い赤の鎧(段のある胸当て・背当て・丸い肩当て・前後の草摺)、前腕ガード、すねに包帯、黒い忍者サンダル
+
+### 生成記録
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| 三面図 v1(正面・横・後ろ)【非公開・確認用】 | gpt_image_2_6(扉間 三面図 v3 を並べ方の見本として参照、quality: high / 2k) | 16:9 | 2 クレジット | d58c26ff-2799-4125-83f7-b6e7f326bc05 | 顔は扉間と別人。真ん中分けの長い黒髪、深い赤の鎧、黒いスーツ、包帯、サンダルが3方向でそろった。**白目が黒くならず普通の白目のまま**。顔のひびは細く少し |
+
+#### 三面図 v1 プロンプト
+
+```
+Use the attached image ONLY as the layout and style reference (three-view turnaround: front on the left, side profile facing right in the middle, back on the right; light gray studio background; photorealistic live-action costume photography). Create a DIFFERENT character with a different face: a fictional Japanese man around 30 years old, tall and well-built, original face (not resembling any real actor and not the reference face), clearly Japanese features, calm gentle but dignified expression, thin straight eyebrows. Very long straight glossy black hair parted in the center, falling past the shoulders down to the middle of the back. Edo Tensei reanimation: black sclera with dark brown irises, a few subtle thin gray cracks on the face and hands. Dark navy cloth headband with a metal plate engraved with the Hidden Leaf Village symbol. Outfit: dark navy-black long-sleeved high-neck bodysuit and loose dark trousers; over it deep crimson-red lacquered armor — segmented chest plate and back plate, rounded shoulder guards, and an armored skirt of red plates hanging over the hips and thighs front and back; dark forearm guards; light gray bandage wraps on the lower shins; black open-toe sandals. In the back view the long black hair falls over the red back plate. Identical character, outfit and proportions in all three views, arms relaxed at sides. No text, no labels, no extra people.
+```
