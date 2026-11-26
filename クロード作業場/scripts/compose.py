@@ -4,7 +4,7 @@ FFmpeg(無料)が必要。Windows / Mac / Linux で動く。
 
 フォルダ構成(keyhole_scene.py の --render で書き出したもの):
   RENDER_DIR/s0/f_0001.png ...
-  RENDER_DIR/s25/ ...  s50/  s75/  s100/
+  RENDER_DIR/s20/ ... (s0〜s100 の任意の段階)
 
 使い方:
   python compose.py RENDER_DIR out.mp4
@@ -18,7 +18,6 @@ import subprocess
 import sys
 import tempfile
 
-LEVELS = [0, 25, 50, 75, 100]
 
 DEFAULT_FONTS = [
     "/usr/share/fonts/opentype/inter/Inter-Medium.otf",
@@ -44,6 +43,9 @@ if not font:
     sys.exit("フォントが見つかりません。--font でフォントファイルを指定してください。")
 font_esc = font.replace("\\", "/").replace(":", "\\:")
 
+# render_dir 内の s0, s20, s25 ... を数値順に並べる
+LEVELS = sorted(int(n[1:]) for n in os.listdir(a.render_dir)
+                if n.startswith("s") and n[1:].isdigit())
 tmp = tempfile.mkdtemp()
 parts = []
 for lv in LEVELS:
