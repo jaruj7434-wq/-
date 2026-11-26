@@ -45,22 +45,24 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 BX0, BX1 = 240.0, 840.0            # ブロックの左右
-BY0, BY1 = 760.0, 1440.0           # ブロックの上下
+BY0, BY1 = float(os.environ.get("BY0", 760.0)), float(os.environ.get("BY1", 1440.0))          # ブロックの上下
 CELL = 4.0
 NX, NY = int((BX1 - BX0) / CELL), int((BY1 - BY0) / CELL)
 PIV_X = W / 2
 PIV_Y0 = float(os.environ.get("PIV_Y0", 560.0))   # つり下げ点のはじめの高さ
 PIV_Y1 = float(os.environ.get("PIV_Y1", 1300.0))   # ここまで下がる
+MODE = os.environ.get("MODE", "top")
 TOP_Q = float(os.environ.get("TOP_Q", 0.3))
 FOLLOW = float(os.environ.get("FOLLOW", 150.0))   # つり下げ点はブロックのいちばん上よりこれだけ上
 PIV_V = float(os.environ.get("PIV_V", 40.0))      # 下がる速さ(px/秒)
 LINKS = [float(x) for x in os.environ.get("LINKS", "170,150,140").split(",")]
+START = os.environ.get("START", "lift")
 SAW_R = float(os.environ.get("SAW_R", 30.0))
-KICK = float(os.environ.get("KICK", 2500.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
+KICK = float(os.environ.get("KICK", 1000.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
 DRAG = float(os.environ.get("DRAG", 0.0015))      # けずった1マスごとのブレーキ(速さの割合)
-GRAVITY = 1400.0
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 37.2))
+GRAVITY = float(os.environ.get("GRAVITY", 500.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 72.4))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -83,7 +85,10 @@ class Game:
         x, y = PIV_X, PIV_Y0
         self.links = []
         for k, L in enumerate(LINKS):
-            a = math.radians(rng.uniform(-20, 20) + (-10 if k % 2 == 0 else -170))   # ほぼ横にもち上げてはなす(高い所から落ちる)
+            if START == "straight":   # まっすぐ横にのばしてはなす(角度はほんの少しずつシードごとにちがう)
+                a = math.radians(rng.uniform(-6, 6) - 8)
+            else:
+                a = math.radians(rng.uniform(-20, 20) + (-10 if k % 2 == 0 else -170))   # ほぼ横にもち上げてはなす(高い所から落ちる)
             ex, ey = x + L * math.cos(a), y + L * math.sin(a)
             m = 1.0 if k < len(LINKS) - 1 else 2.0
             b = pymunk.Body(m, pymunk.moment_for_segment(m, (0, 0), (ex - x, ey - y), 2))
@@ -118,7 +123,10 @@ class Game:
         # つり下げ点は、残っているブロックのいちばん上より FOLLOW だけ上の高さまで、ゆっくり下がる(上がりはしない)
         want = min(PIV_Y1, max(PIV_Y0, self.top_y - FOLLOW))
         cur = self.pivot.position.y
-        py = min(want, cur + PIV_V * dt) if want > cur else cur
+        if MODE == "center":   # 残っているブロックのまん中の高さに合わせて、上にも下にもゆっくり動く(クレーン)
+            py = cur + max(-PIV_V * dt, min(PIV_V * dt, want - cur))
+        else:
+            py = min(want, cur + PIV_V * dt) if want > cur else cur
         self.pivot.velocity = (0, (py - cur) / dt)
         self.space.step(dt)
         if self.result is not None:
@@ -141,7 +149,9 @@ class Game:
                 self.left -= n
                 cnt = self.grid.sum(axis=1)
                 cum = np.cumsum(cnt)
-                if cum[-1] > 0:   # 残っているブロックの上から TOP_Q の量のところ(小さなかけらにひっぱられない)
+                if MODE == "center" and cum[-1] > 0:
+                    self.top_y = BY0 + float((cnt * np.arange(NY)).sum() / cum[-1]) * CELL
+                elif cum[-1] > 0:   # 残っているブロックの上から TOP_Q の量のところ(小さなかけらにひっぱられない)
                     r_ = int(np.searchsorted(cum, cum[-1] * TOP_Q))
                     self.top_y = BY0 + r_ * CELL
                 self.cut_now += n
@@ -162,6 +172,13 @@ class Game:
                 b.apply_impulse_at_world_point((ix * b.mass, iy * b.mass), (sx, sy))
         if self.t >= self.next_drop_chk:   # 下の床(ブロックの底)とつながっていない破片は、支えがないので落ちる
             self.next_drop_chk = self.t + 0.2
+            cnt = self.grid.sum(axis=1)   # 残っているブロックの高さを見直す(破片が落ちたあとも)
+            cum = np.cumsum(cnt)
+            if cum[-1] > 0:
+                if MODE == "center":
+                    self.top_y = BY0 + float((cnt * np.arange(NY)).sum() / cum[-1]) * CELL
+                else:
+                    self.top_y = BY0 + int(np.searchsorted(cum, cum[-1] * TOP_Q)) * CELL
             lab, nlab = ndimage.label(self.grid)
             if nlab > 1 or (nlab == 1 and not self.grid[-1].any()):
                 keep = set(np.unique(lab[-1])) - {0}
