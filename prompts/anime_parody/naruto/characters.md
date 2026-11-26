@@ -402,7 +402,8 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | 三面図 v1(正面・横・後ろ)【非公開・確認用】 | gpt_image_2_6(扉間 三面図 v3 を並べ方の見本として参照、quality: high / 2k) | 16:9 | 2 クレジット | d58c26ff-2799-4125-83f7-b6e7f326bc05 | 顔は扉間と別人。真ん中分けの長い黒髪、深い赤の鎧、黒いスーツ、包帯、サンダルが3方向でそろった。**白目が黒くならず普通の白目のまま**。顔のひびは細く少し |
-| 三面図 v2(顔・服・色を参考画像に合わせる)【非公開・確認用】 | gpt_image_2_6(三面図 v1 参照、quality: high / 2k) | 16:9 | 2 クレジット | 4e1f28fb-8360-4dbd-a19e-6d59299d34f2 | ユーザー提供の参考画像(フィギュア写真、アップロードせず文章で指定)に合わせた。白目が黒くなり、ほほえんだ穏やかな顔に細いひび。濃いワインレッドのなめらかな胸当て・大きな肩当て・腰帯・左右だけの草摺・前腕ガード、青みのある濃いチャコールのスーツ、白い包帯、こげ茶のサンダル。**現時点の基準** |
+| 三面図 v2(顔・服・色を参考画像に合わせる)【非公開・確認用】 | gpt_image_2_6(三面図 v1 参照、quality: high / 2k) | 16:9 | 2 クレジット | 4e1f28fb-8360-4dbd-a19e-6d59299d34f2 | ユーザー提供の参考画像(フィギュア写真、アップロードせず文章で指定)に合わせた。白目が黒くなり、ほほえんだ穏やかな顔に細いひび。濃いワインレッドのなめらかな胸当て・大きな肩当て・腰帯・左右だけの草摺・前腕ガード、青みのある濃いチャコールのスーツ、白い包帯、こげ茶のサンダル |
+| 三面図 v3(鼻まわりにひびを追加・眉をさらに細く)【非公開・確認用】 | gpt_image_2_6(三面図 v2 参照、quality: high / 2k) | 16:9 | 2 クレジット | 83124c79-9b15-4736-a34a-eff1d7664346 | 鼻すじ・小鼻から頬へのひびがはっきり入った。眉はかなり細くなった。他はv2のまま。**現時点の基準** |
 
 #### 三面図 v1 プロンプト
 
@@ -415,3 +416,11 @@ Use the attached image ONLY as the layout and style reference (three-view turnar
 ```
 Edit this exact three-view character sheet. Keep the same man, his long center-parted straight black hair, the three poses (front, side facing right, back), background and lighting. Change, identically in all three views: 1) FACE: a slightly tanned warm skin tone, calm relaxed expression with a faint gentle smile; Edo Tensei eyes with the whites of the eyes clearly BLACK (black sclera) and dark brown irises; clearly visible thin gray-beige crack lines on the face and hands like dry porcelain. Headband: light gray cloth with a metal plate engraved with the leaf emblem. 2) BODYSUIT: change the inner suit and trousers to dark charcoal slate-gray (bluish dark gray), long sleeves and high neck; fitted trousers tucked at the shins with white bandage wraps on the lower shins; dark brown-black thong sandals. 3) ARMOR in dark matte burgundy maroon red (deep dark wine-red, not bright crimson), with a few fine crack lines: a smooth chest plate (one main plate with a raised border, only one or two subtle horizontal seams, not many segments) and matching back plate; large curved shoulder guards; a wide dark maroon waist sash/belt; armored tassets of stacked maroon plates hanging at the LEFT and RIGHT sides of the hips (not covering the front center), so the dark gray trousers are visible at the front; dark maroon forearm guards. No text, no extra people.
 ```
+
+#### 柱間 三面図 v3 プロンプト(三面図 v2 を参照、顔のみ)
+
+```
+Edit this exact three-view character sheet with the smallest possible change. Change ONLY his face, consistently in the front and side views: 1) CRACKS: add several clearly visible thin gray-beige crack lines around the NOSE — running down the bridge of the nose, across the nose and from the sides of the nose onto both cheeks, like cracked dry porcelain, in addition to the existing cracks. 2) EYEBROWS: make both eyebrows less than half of their current thickness — very thin, fine, sharp narrow brows, clearly thinner than now. Keep everything else exactly the same: black sclera with dark brown irises, gentle smile, long center-parted black hair, headband, maroon armor, charcoal suit, bandages, sandals, poses, background and lighting. No text.
+```
+
+- メモ: 三面図の小さな顔でも「半分以下」「はっきり見える」のように強めに書くと効いた(柱間 v3)。
