@@ -12,3 +12,8 @@ assets/source/
 
 # OS / エディタ
 .DS_Store
+
+# Blender
+*.blend
+*.blend1
+render/
