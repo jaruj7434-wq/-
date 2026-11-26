@@ -5,6 +5,7 @@
 
 - 重力あり。振り子の棒どうしは自由に回るピンでつながっている(ねらい・補正なし)。
 - ブロックをけずるたびに、けずった量に応じてノコギリにブレーキがかかり、回る刃がブロックをけって横へ進む(モーターの力)。かたいブロックにはね返される。
+- ノコギリがブロックの下のほうをほったときは、その上にあった所もいっしょにくずれて消える(ブロックはいつも上の面だけの形)。
 - 下の床(ブロックの底)とつながっていない破片は、支えがないので落ちる。
 - 成功ならパチンコの大当たり風の演出、失敗なら幽霊 → 暗くなって「Failed...」。
 
@@ -44,25 +45,26 @@ SUBSTEPS = 8
 SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
-BX0, BX1 = 240.0, 840.0            # ブロックの左右
-BY0, BY1 = float(os.environ.get("BY0", 760.0)), float(os.environ.get("BY1", 1440.0))          # ブロックの上下
+BX0, BX1 = float(os.environ.get("BX0", 160.0)), float(os.environ.get("BX1", 920.0))            # ブロックの左右
+BY0, BY1 = float(os.environ.get("BY0", 760.0)), float(os.environ.get("BY1", 1400.0))          # ブロックの上下
 CELL = 4.0
 NX, NY = int((BX1 - BX0) / CELL), int((BY1 - BY0) / CELL)
 PIV_X = W / 2
-PIV_Y0 = float(os.environ.get("PIV_Y0", 560.0))   # つり下げ点のはじめの高さ
-PIV_Y1 = float(os.environ.get("PIV_Y1", 1300.0))   # ここまで下がる
-MODE = os.environ.get("MODE", "top")
+PIV_Y0 = float(os.environ.get("PIV_Y0", 440.0))   # つり下げ点のはじめの高さ
+PIV_Y1 = float(os.environ.get("PIV_Y1", 1360.0))   # ここまで下がる
+HEIGHTFIELD = os.environ.get("HEIGHTFIELD", "1") == "1"
+MODE = os.environ.get("MODE", "surface")
 TOP_Q = float(os.environ.get("TOP_Q", 0.3))
-FOLLOW = float(os.environ.get("FOLLOW", 150.0))   # つり下げ点はブロックのいちばん上よりこれだけ上
-PIV_V = float(os.environ.get("PIV_V", 40.0))      # 下がる速さ(px/秒)
-LINKS = [float(x) for x in os.environ.get("LINKS", "170,150,140").split(",")]
+FOLLOW = float(os.environ.get("FOLLOW", 180.0))   # つり下げ点はブロックのいちばん上よりこれだけ上
+PIV_V = float(os.environ.get("PIV_V", 25.0))      # 下がる速さ(px/秒)
+LINKS = [float(x) for x in os.environ.get("LINKS", "200,185,170").split(",")]
 START = os.environ.get("START", "lift")
-SAW_R = float(os.environ.get("SAW_R", 30.0))
-KICK = float(os.environ.get("KICK", 1000.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
+SAW_R = float(os.environ.get("SAW_R", 44.0))
+KICK = float(os.environ.get("KICK", 1600.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
 DRAG = float(os.environ.get("DRAG", 0.0015))      # けずった1マスごとのブレーキ(速さの割合)
-GRAVITY = float(os.environ.get("GRAVITY", 500.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 72.4))
+GRAVITY = float(os.environ.get("GRAVITY", 650.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 56.0))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -145,6 +147,12 @@ class Game:
                         n += 1
                         mx += px
                         my += py_
+                        if HEIGHTFIELD:   # 下をほったら、その上にあった所もいっしょにくずれる(ブロックは上の面だけの形)
+                            above = int(self.grid[:i, j].sum())
+                            if above:
+                                self.grid[:i, j] = False
+                                self.left -= above
+                                self.cut_now += above
             if n:
                 self.left -= n
                 cnt = self.grid.sum(axis=1)
@@ -175,7 +183,10 @@ class Game:
             cnt = self.grid.sum(axis=1)   # 残っているブロックの高さを見直す(破片が落ちたあとも)
             cum = np.cumsum(cnt)
             if cum[-1] > 0:
-                if MODE == "center":
+                if MODE == "surface":   # 上の面の高さの平均
+                    colh = self.grid.sum(axis=0)
+                    self.top_y = BY1 - float(colh.mean()) * CELL
+                elif MODE == "center":
                     self.top_y = BY0 + float((cnt * np.arange(NY)).sum() / cum[-1]) * CELL
                 else:
                     self.top_y = BY0 + int(np.searchsorted(cum, cum[-1] * TOP_Q)) * CELL
@@ -386,6 +397,19 @@ def render(seed):
         mp.set_filter(cairo.FILTER_BILINEAR)
         ctx.set_source_surface(rainbow, 0, 0)
         ctx.mask(mp)
+        # 上の面のふちを白くうっすら光らせる
+        colh = grid.sum(axis=0)
+        if colh.any():
+            ctx.new_path()
+            for j in range(NX):
+                y_ = BY1 - colh[j] * CELL
+                ctx.line_to(BX0 + (j + 0.5) * CELL, y_)
+            for wd, al in ((8, 0.12), (2.5, 0.75)):
+                ctx.set_source_rgba(0.85, 0.95, 1.0, al)
+                ctx.set_line_width(wd)
+                ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+                ctx.stroke_preserve()
+            ctx.new_path()
         # 支えがなくなって落ちる破片
         keepf = []
         for t0, xs, ys in falling:
