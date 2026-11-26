@@ -407,7 +407,8 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 | 三面図 v4(目をキリッと男らしく)【非公開・確認用】 | gpt_image_2_6(三面図 v3 参照、quality: high / 2k) | 16:9 | 2 クレジット | 97e178b1-79c0-4ba8-9dba-f6b80313d125 | 目は細めの切れ長で鋭くなったが、**黒い白目が普通の白目に戻ってしまった**。眉もv3よりやや太く戻った。基準はv3のまま |
 | 三面図 v5(白目を黒に戻す・眉を細く・前髪を細い毛束で両サイドに・目を気持ち大きく)【非公開・確認用】 | gpt_image_2_6(三面図 v4 参照、quality: high / 2k) | 16:9 | 2 クレジット | 2d424b45-9803-44a9-8f26-1dc67736df4c | 白目が黒に戻り、キリッとした切れ長の目を少しだけ大きく。眉は細め。額当ての下から細い前髪が顔の両サイドに垂れる |
 | 三面図 v6(顔を参考画像のイメージに:真剣な表情・鼻まわりを囲むひび・額当ての前に垂れる細い毛束)【非公開・確認用】 | gpt_image_2_6(三面図 v5 参照、quality: high / 2k) | 16:9 | 2 クレジット | 47b65f67-f482-4fc5-ae52-fda58c73ee08 | ユーザー提供の参考画像(フィギュアの顔アップ、アップロードせず文章で指定)に寄せた。口を閉じた厳しい表情、眉間を寄せた細い眉、黒い白目。鼻すじを横切り鼻を囲むひび、あごと眉間にもひび。細い毛束が額当ての両脇から垂れる。額当ての布は濃いグレーにならず明るい銀色のまま |
-| 三面図 v7(目の形を自然な人間の目に)【非公開・確認用】 | gpt_image_2_6(三面図 v6 参照、quality: high / 2k) | 16:9 | 2 クレジット | 32b3975a-3f0f-41b6-894d-4baecb9d6498 | アイラインのような縁取りと角ばった形がなくなり、自然なまぶたの切れ長の目に。黒い白目は維持。他はv6のまま。**現時点の基準** |
+| 三面図 v7(目の形を自然な人間の目に)【非公開・確認用】 | gpt_image_2_6(三面図 v6 参照、quality: high / 2k) | 16:9 | 2 クレジット | 32b3975a-3f0f-41b6-894d-4baecb9d6498 | アイラインのような縁取りと角ばった形がなくなり、自然なまぶたの切れ長の目に。黒い白目は維持。他はv6のまま |
+| 三面図 v8(額当てのプレートに縦の亀裂と劣化・細い毛束を中央寄りに)【非公開・確認用】 | gpt_image_2_6(三面図 v7 参照、quality: high / 2k) | 16:9 | 2 クレジット | a4bc70bf-5148-4cad-bed4-9cc19c6a6cde | プレートがくすみ、細い縦の亀裂・欠け・傷が入った。毛束2本が額当ての前を通り、眉の内側寄りから顔の前をあごまで垂れて見分けやすくなった。瞳が赤みを帯び、黒い白目がやや弱まった。**現時点の基準** |
 
 #### 三面図 v1 プロンプト
 
@@ -453,4 +454,10 @@ Edit this exact three-view character sheet. Change ONLY his head and face, consi
 
 ```
 Edit this exact three-view character sheet with the smallest possible change. Change ONLY the shape of his eyes, consistently in the front and side views: make them look like natural, realistic human eyes of a Japanese man — natural almond shape with soft realistic eyelids, natural eyelid crease, real eyelashes and skin texture, normal human proportions, no heavy black eyeliner outline, no exaggerated sharp angular or anime-like shape. Keep the calm serious expression. The whites of BOTH eyes stay completely BLACK (black sclera, Edo Tensei, no white visible) with dark gray-black irises. Keep everything else exactly the same: thin eyebrows, face cracks, mouth, hair strands, headband, armor, clothes, back view, poses, background and lighting. No text.
+```
+
+#### 柱間 三面図 v8 プロンプト(三面図 v7 を参照、額当てプレートと毛束のみ)
+
+```
+Edit this exact three-view character sheet with the smallest possible change. Change ONLY these two details, consistently in the front and side views: 1) HEADBAND METAL PLATE: make the metal plate look old and worn — a few thin vertical cracks running down through the metal, small chips and scratches, slightly dulled and tarnished surface, while the engraved leaf emblem stays clearly visible. 2) FRONT HAIR STRANDS: move the two thin strands of black hair closer to the center of the face so they are clearly visible — each strand falls from the top of the head down in front of the headband, over the forehead just inside the outer corners of the eyebrows, and hangs down in front of the face past the eyes and cheeks to about the jaw, one on each side, framing the face. They are thin, separate, sharply defined strands, easy to see against the face. Keep everything else exactly the same: face, natural eyes with black sclera, thin eyebrows, face cracks, expression, the rest of the long hair, armor, clothes, back view, poses, background and lighting. No text.
 ```
