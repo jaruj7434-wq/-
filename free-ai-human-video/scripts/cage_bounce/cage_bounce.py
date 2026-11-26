@@ -51,12 +51,13 @@ SHRINK = float(os.environ.get("SHRINK", 0.985))   # 1回はねるごとの大き
 R_MIN = float(os.environ.get("R_MIN", 2.5))   # ボールはこれより小さくならない
 SPEED = float(os.environ.get("SPEED", 1600.0))
 SPIKE_U = float(os.environ.get("SPIKE_U", 12.0))   # とげの大きさの単位(px)
-SPIKE_D = float(os.environ.get("SPIKE_D", 6.0))   # とげの深さ(SPIKE_U の何倍か)
-SPIKE_WR = float(os.environ.get("SPIKE_WR", 2.5))  # とげの根もとの半分のはば(SPIKE_U の何倍か)
+SPIKE_D = float(os.environ.get("SPIKE_D", 5.0))   # とげの深さ(SPIKE_U の何倍か)
+SPIKE_WR = float(os.environ.get("SPIKE_WR", 4.0))  # とげの根もとの半分のはば(SPIKE_U の何倍か)
 GROW_V = 1800.0                                   # とげがのびる速さ(px/秒)
 FREE_A = float(os.environ.get("FREE_A", 0.0))   # すき間の面積がこれ以下(px²)でも「完全にふさがった」
 FREE_K = float(os.environ.get("FREE_K", 4.0))
-MAX_GAP = float(os.environ.get("MAX_GAP", 9999.0))   # どの線もまん中の軸からこれ以内までのびきったら「完全にふさがった」(細いすき間も残さない)   # すき間がボールの面積のこの倍以下=円が完全にふさがった
+START_JIT = float(os.environ.get("START_JIT", 0.6))   # はじめの位置の左右のずれ(px)
+MAX_GAP = float(os.environ.get("MAX_GAP", 12.0))   # どの線もまん中の軸からこれ以内までのびきったら「完全にふさがった」(細いすき間も残さない)   # すき間がボールの面積のこの倍以下=円が完全にふさがった
 ACCEL = float(os.environ.get("ACCEL", 1.004))   # はね返るたびに速さがこの倍に
 V_MAX = float(os.environ.get("V_MAX", 4000.0))
 GRAVITY = float(os.environ.get("GRAVITY", 0.0))
@@ -76,11 +77,9 @@ class Game:
         self.rad = np.full(N_RAY, R)       # 壁の位置(中心からのきょり)
         self.target = np.full(N_RAY, R)    # とげがのびていく先
         self.flash = np.full(N_RAY, -9.0)  # その線がのびはじめた時刻(光らせる)
-        a = rng.uniform(0, 2 * math.pi)
-        d = rng.uniform(0, 150)
-        self.x, self.y = CX + d * math.cos(a), CY + d * math.sin(a)
-        va = rng.uniform(0, 2 * math.pi)
-        self.vx, self.vy = SPEED * math.cos(va), SPEED * math.sin(va)
+        # はじめはまん中から真上へ(縦にまっすぐ行き来する)。左右のずれはほんのわずか(シードごとにちがう)だけ
+        self.x, self.y = CX + rng.uniform(-START_JIT, START_JIT), CY
+        self.vx, self.vy = 0.0, -SPEED
         self.r = R0
         self.bounces = 0
         self.t = 0.0
@@ -161,10 +160,11 @@ class Game:
         depth = SPIKE_D * SPIKE_U
         base = math.hypot(hx - CX, hy - CY)
         half_px = SPIKE_WR * SPIKE_U                       # とげの根もとの半分のはば(ボールの大きさに比例)
-        nw = max(2, min(int(0.3 / (2 * math.pi) * N_RAY), int(half_px / max(base, 20.0) / (2 * math.pi) * N_RAY)))
-        for o in range(-nw, nw + 1):                      # 当たった所の線ほど大きく縮む三角形のとげ
+        nw = max(2, min(int(0.6 / (2 * math.pi) * N_RAY), int(half_px / max(base, 20.0) / (2 * math.pi) * N_RAY)))
+        for o in range(-nw, nw + 1):                      # 当たった所がいちばん深く、横へなめらかに広がる波の形
             i = (k + o) % N_RAY
-            want = self.rad[i] - depth * (1 - abs(o) / (nw + 1))
+            u = abs(o) / (nw + 1)
+            want = self.rad[i] - depth * (0.5 + 0.5 * math.cos(math.pi * u)) ** 1.3
             if want < self.target[i]:
                 self.target[i] = max(CORE, want)
                 self.flash[i] = self.t
