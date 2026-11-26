@@ -403,8 +403,9 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 |---|---|---|---|---|---|
 | 三面図 v1(正面・横・後ろ)【非公開・確認用】 | gpt_image_2_6(扉間 三面図 v3 を並べ方の見本として参照、quality: high / 2k) | 16:9 | 2 クレジット | d58c26ff-2799-4125-83f7-b6e7f326bc05 | 顔は扉間と別人。真ん中分けの長い黒髪、深い赤の鎧、黒いスーツ、包帯、サンダルが3方向でそろった。**白目が黒くならず普通の白目のまま**。顔のひびは細く少し |
 | 三面図 v2(顔・服・色を参考画像に合わせる)【非公開・確認用】 | gpt_image_2_6(三面図 v1 参照、quality: high / 2k) | 16:9 | 2 クレジット | 4e1f28fb-8360-4dbd-a19e-6d59299d34f2 | ユーザー提供の参考画像(フィギュア写真、アップロードせず文章で指定)に合わせた。白目が黒くなり、ほほえんだ穏やかな顔に細いひび。濃いワインレッドのなめらかな胸当て・大きな肩当て・腰帯・左右だけの草摺・前腕ガード、青みのある濃いチャコールのスーツ、白い包帯、こげ茶のサンダル |
-| 三面図 v3(鼻まわりにひびを追加・眉をさらに細く)【非公開・確認用】 | gpt_image_2_6(三面図 v2 参照、quality: high / 2k) | 16:9 | 2 クレジット | 83124c79-9b15-4736-a34a-eff1d7664346 | 鼻すじ・小鼻から頬へのひびがはっきり入った。眉はかなり細くなった。他はv2のまま。**現時点の基準** |
+| 三面図 v3(鼻まわりにひびを追加・眉をさらに細く)【非公開・確認用】 | gpt_image_2_6(三面図 v2 参照、quality: high / 2k) | 16:9 | 2 クレジット | 83124c79-9b15-4736-a34a-eff1d7664346 | 鼻すじ・小鼻から頬へのひびがはっきり入った。眉はかなり細くなった。他はv2のまま |
 | 三面図 v4(目をキリッと男らしく)【非公開・確認用】 | gpt_image_2_6(三面図 v3 参照、quality: high / 2k) | 16:9 | 2 クレジット | 97e178b1-79c0-4ba8-9dba-f6b80313d125 | 目は細めの切れ長で鋭くなったが、**黒い白目が普通の白目に戻ってしまった**。眉もv3よりやや太く戻った。基準はv3のまま |
+| 三面図 v5(白目を黒に戻す・眉を細く・前髪を細い毛束で両サイドに・目を気持ち大きく)【非公開・確認用】 | gpt_image_2_6(三面図 v4 参照、quality: high / 2k) | 16:9 | 2 クレジット | 2d424b45-9803-44a9-8f26-1dc67736df4c | 白目が黒に戻り、キリッとした切れ長の目を少しだけ大きく。眉は細め。額当ての下から細い前髪が顔の両サイドに垂れる。**現時点の基準** |
 
 #### 三面図 v1 プロンプト
 
@@ -431,3 +432,11 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 ```
 Edit this exact three-view character sheet with the smallest possible change. Change ONLY his eyes, consistently in the front and side views: make the eyes clearly sharper and more masculine — narrower, longer almond-shaped Japanese eyes with a straight, slightly lowered upper eyelid and slightly upturned outer corners, a strong focused gaze, no round or soft doe-eyed look. Keep the black sclera with dark brown irises. Keep everything else exactly the same: the very thin eyebrows, the cracks around the nose and cheeks, the gentle closed-mouth smile, long center-parted black hair, headband, maroon armor, charcoal suit, bandages, sandals, poses, background and lighting. No text.
 ```
+
+#### 柱間 三面図 v5 プロンプト(三面図 v4 を参照、頭まわりのみ)
+
+```
+Edit this exact three-view character sheet with the smallest possible change. Change ONLY these details of his head, consistently in the front and side views: 1) EYES: keep the sharp, narrow, masculine almond shape, but make the eyes just very slightly larger (about 5 to 10 percent, subtle). The whites of BOTH eyes must be completely BLACK (black sclera, Edo Tensei reanimation) — no white visible anywhere in the eyes — with dark brown irises. 2) EYEBROWS: very thin, fine, sharp narrow brows, less than half of their current thickness. 3) FRONT HAIR: instead of thick chunks, a few thin, fine, wispy strands of black hair hang down loosely from under the headband on both sides of the face, framing the cheeks in a cool, stylish way, while the rest of the long center-parted straight black hair stays the same. Keep everything else exactly the same: face shape, cracks around the nose and cheeks, gentle closed-mouth smile, headband, maroon armor, charcoal suit, bandages, sandals, back view, poses, background and lighting. No text.
+```
+
+- メモ: 目の形を変える編集では、黒い白目が普通の白目に戻りやすい(v4)。目をいじるときは毎回「白目は完全に黒、白い部分を残さない」と明記する。
