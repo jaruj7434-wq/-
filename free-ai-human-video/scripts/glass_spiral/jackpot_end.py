@@ -56,9 +56,16 @@ class Jackpot:
 
     def _text(self, ctx, s, cx, y, size, age, gold=False):
         """ギラギラ光る文字(黒ふち+白ふち、中は虹(または金)のグラデーションが流れ、光の筋が走る)。"""
+        if not s:
+            return
         ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         ctx.set_font_size(size)
         ext = ctx.text_extents(s)
+        max_w = self.W * 0.86   # 長い文字(英語など)は画面からはみ出さないように小さくする
+        if ext.width + size * 0.55 > max_w:
+            size *= max_w / (ext.width + size * 0.55)
+            ctx.set_font_size(size)
+            ext = ctx.text_extents(s)
         x = cx - ext.width / 2 - ext.x_bearing
         ctx.new_path()
         ctx.move_to(x, y)

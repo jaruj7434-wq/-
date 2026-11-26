@@ -276,7 +276,7 @@ def render(seed):
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
     ending = None if fail else JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6, shake=22,
-                                          texts=("完全にふさいだ!!", "COMPLETE", "カゴ完成"))
+                                          texts=("Congratulations!!", "COMPLETE", ""))
     fever = RainbowFever(W, H, seed)
     grng = np.random.default_rng(seed + 5)
     glints = [(grng.uniform(0, W), grng.uniform(0, H), grng.uniform(0, 1), grng.uniform(1.5, 3.5), grng.uniform(30, 90))
