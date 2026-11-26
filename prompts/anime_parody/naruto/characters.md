@@ -519,3 +519,25 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 ```
 Photorealistic live-action film VFX creature reference shot of an ORIGINAL giant nine-tailed fox spirit from traditional Japanese folklore (kyubi no kitsune), full body, standing on all fours, three-quarter front view, the whole creature in frame. A slender, graceful, elegant fox with a real fox anatomy (long legs, narrow muzzle, large pointed ears), not humanoid and not bulky. Fur: pale white-gold, very soft and realistic, with luminous golden rim light along the edges of the fur. Face: vermilion-red kumadori-style folklore markings like a traditional Japanese fox mask — thin red lines sweeping from the eyes up to the ears and a small red mark on the forehead. Eyes: bright golden with dark slit pupils, calm, intelligent and majestic gaze. Nine long, full, fluffy tails fanning out behind it like a great fan. The whole body is wrapped in a translucent glowing golden flame-like aura of spiritual energy, flickering like fire, with sparks and embers rising from the tail tips and soft heat haze. Plain light gray seamless studio background with a soft golden glow on the floor beneath it, soft even studio lighting plus the creature's own golden light, cinematic, sharp focus, realistic fur detail. No text, no people, no logos.
 ```
+
+## オリジナルキャラ「蘇った仮面の忍」
+
+原作キャラクターは再現せず、「仮面・戦・悲劇の敵役」という雰囲気だけを借りたオリジナルのキャラとして作成。公開動画にも使える。
+
+- 20代後半の架空の日本人男性、細身(実在の人物には似せない)。冷たく憂いのある表情
+- 短く乱れた黒髪。顔の右側の頬から首にかけて古い火傷の傷あと、左側は整った顔
+- 禁術で蘇った設定: 白目が黒く瞳は濃い赤、顔と手に陶器のような細いひび
+- 墨色の袖なし陣羽織(背中にオリジナルの「割れた三日月」の紋)、黒の着物風の上衣と袴風のズボン、手甲、黒の脚絆、素足に草鞋
+- 腰に割れた白い能面を下げる
+
+### 生成記録
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| 三面図 v1(正面・横・後ろ) | gpt_image_2_6(参照なし、quality: high / 2k) | 16:9 | 2 クレジット | 86116182-24bd-4791-91ad-2bfe9cd238c4 | 使い込んで擦り切れた墨色の陣羽織、背中に割れた三日月の紋、腰に割れた能面。顔のひびと右頬の傷あとは出たが、**白目は黒くならず普通の白目**(瞳は赤)。傷あとは控えめ |
+
+#### 三面図 v1 プロンプト
+
+```
+Character turnaround model sheet of an ORIGINAL character, three consistent full-body views side by side, evenly spaced: FRONT view on the left, SIDE profile facing right in the middle, BACK view on the right, standing neutrally with arms relaxed at the sides, full figure head to feet, identical character, outfit and proportions in all three views. A fictional Japanese man in his late 20s, lean and athletic, original face not resembling any real person, clearly Japanese features, cold melancholic expression. Short messy black hair. The right side of his face has an old healed burn scar with irregular, mottled, slightly shiny skin texture from the cheek down to the jaw and neck; the left side of his face is smooth and handsome. He is a warrior brought back from the dead by a forbidden ritual: the whites of his eyes are black (black sclera) with dark red irises, and his face and hands have thin gray crack lines like cracked porcelain. Outfit: a long ink-black sleeveless jinbaori war coat reaching below the knees, with an original crest on the back — a white circle containing a cracked crescent moon; underneath a black high-collared kimono-style top and black hakama-like trousers; dark gray tekko hand guards; black kyahan leg wraps; straw waraji sandals on bare feet. A cracked white traditional Noh theater mask hangs from his belt at his left hip. Realistic weathering, dust and frayed fabric. Plain light gray seamless studio background, soft even studio lighting, photorealistic live-action film costume photography, sharp focus, realistic skin, hair and fabric texture. No text, no labels, no logos other than the original crest, no extra people.
+```
