@@ -142,6 +142,7 @@ Photorealistic live-action character reference photo, vertical 9:16, full body s
 | 版 | モデル | 比率 | 消費 | ジョブID | メモ |
 |---|---|---|---|---|---|
 | v1(全身正面・本を読むポーズ)【非公開・確認用】 | gpt_image_2_6 | 9:16 | 0.75 クレジット | 0d430021-d3b7-40c9-9e8a-d509b8eb42c0 | ほぼ指定どおり。両肩に赤い渦巻きワッペン、グローブにも木の葉マークが自動で付いた |
+| 片目万華鏡 v1(額当てを上げ、左目に万華鏡写輪眼・縦の傷、直立ポーズ)【非公開・確認用】 | gpt_image_2_6(カカシ v1 参照、quality: high / 2k) | 9:16 | 2 クレジット | 83f5a27d-c250-4a42-a16d-f1a79fef8d71 | 本をなくし両腕を下ろした正面直立に。額当てがまっすぐになり両目が見える。右目は黒、左目は赤に黒い模様(拡大で見える程度、3枚刃の形はやや不明瞭)。左目の縦の傷は赤く、新しい切り傷のように見える |
 
 #### v1 プロンプト
 
@@ -344,4 +345,10 @@ Edit this exact three-view character sheet. Keep the FRONT and SIDE views exactl
 
 ```
 Character turnaround model sheet of the exact same character in the attached reference image, three consistent full-body views side by side, evenly spaced: full-body FRONT view on the left (same as the reference), full-body SIDE profile view facing right in the middle, and full-body BACK view on the right. Identical face, hairstyle, outfit, colors, glow, proportions and height in all three panels, standing neutrally with arms relaxed at the sides, full figure in frame head to sandals. Keep every detail of the reference: a Japanese man in Nine-Tails Chakra Mode reanimated by Edo Tensei; glowing golden face, hands and body; black sclera with glowing orange irises; gray cracked patches on his cheeks; spiky glowing golden hair with long bangs hanging down both sides of the face; golden headband with engraved leaf emblem and two long flame-like golden tails rising up from the back of the head; glowing golden one-piece chakra bodysuit with a ring of black magatama marks around the collar, a black spiral on the upper chest, a black spiral on each shoulder, and below the chest spiral one black vertical line meeting a horizontal line that splits into two lines running down the front of each thigh to the knees; black band with a black dot on the back of each hand; golden sandals; over it an open white knee-length short-sleeved haori coat with red-orange flame patterns along the bottom hem. In the side view show the face profile, the bangs, the headband tails flowing behind, the haori hanging from the shoulder with its flame hem. In the back view show the back of the spiky hair and the headband knot with both flame-like tails rising from it, and the back of the white haori: the red-orange flame pattern runs all around the hem, and down the center of the back is written vertically in large bold red Japanese brush-style kanji the four characters 四代目火影 (top to bottom: 四, 代, 目, 火影 as 火 then 影), correctly formed and clearly legible. Plain light gray seamless studio background, soft even studio lighting, photorealistic live-action film VFX look, sharp focus. No other text, no labels, no watermark, no extra people.
+```
+
+#### カカシ 片目万華鏡 v1 プロンプト(カカシ v1 を参照、quality: high / resolution: 2k)
+
+```
+Edit this photo. Keep the same man, silver hair, navy face mask, outfit, vest, gloves, sandals, background and lighting. Changes: remove the orange book; he stands straight facing the camera with both arms relaxed at his sides. Push the headband up so it sits level on his forehead and BOTH eyes are visible. His right eye is a normal dark eye. His LEFT eye is the Mangekyo Sharingan: glowing red iris with a black pinwheel pattern of three curved scythe-like blades joined around a small black pupil, crisp and recognizable when zoomed in; a thin vertical scar runs straight down through his left eyebrow, eyelid and upper cheek. Sharp calm serious expression. No blood. No text.
 ```
