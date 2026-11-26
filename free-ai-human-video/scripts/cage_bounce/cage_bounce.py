@@ -331,6 +331,34 @@ def reel_ball(ctx, kind, x, y, ang, r, t, alpha=1.0, rng=None):
     shiny_ball(ctx, x, y, r * 0.8, PALETTE[(kind * 12 // 7) % 12])
 
 
+def failed_text(ctx, s, x, y, size, alpha):
+    """失敗の文字:Playfair Display の斜体。暗い赤で、うっすら赤黒くにじむ。"""
+    if alpha <= 0:
+        return
+    ctx.select_font_face("Playfair Display", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL)
+    ctx.set_font_size(size)
+    e = ctx.text_extents(s)
+    if e.width > W * 0.86:
+        size *= W * 0.86 / e.width
+        ctx.set_font_size(size)
+        e = ctx.text_extents(s)
+    tx = x - e.width / 2 - e.x_bearing
+    for wd, al in ((30, 0.10), (16, 0.18)):
+        ctx.move_to(tx, y)
+        ctx.text_path(s)
+        ctx.set_source_rgba(0.45, 0.02, 0.05, al * alpha)
+        ctx.set_line_width(wd)
+        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        ctx.stroke()
+    g = cairo.LinearGradient(0, y - size * 0.8, 0, y + size * 0.1)
+    g.add_color_stop_rgba(0, 0.85, 0.25, 0.28, alpha)
+    g.add_color_stop_rgba(1, 0.45, 0.05, 0.08, alpha)
+    ctx.move_to(tx, y)
+    ctx.text_path(s)
+    ctx.set_source(g)
+    ctx.fill()
+
+
 def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
@@ -481,11 +509,21 @@ def render(seed):
         chic(ctx, f"{left:4.1f}", W / 2, 490, 40, rgb=(1, 0.45, 0.45) if left < 5 else (0.7, 0.75, 0.85), weight="Medium")
         if not over:
             horror(ctx, "失敗したら…", W / 2, 1610, 74, t)
-        if over and fail:
-            k = min(1.0, after / 0.25)
-            if res["trapped"]:
-                chic(ctx, "閉じこめられた…", W / 2, 1000, 96 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
-            chic(ctx, f"{int(res['fill'] * 100)}%", W / 2, 1130, 90 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
+        if over and fail:   # 失敗:色がぬけて暗くなり、おしゃれな文字で「Failed...」
+            ctx.set_operator(cairo.OPERATOR_HSL_SATURATION)
+            ctx.set_source_rgba(0.5, 0.5, 0.5, min(1.0, after / 0.8))
+            ctx.paint()
+            ctx.set_operator(cairo.OPERATOR_OVER)
+            ctx.set_source_rgba(0, 0, 0, 0.6 * min(1.0, after / 1.2))
+            ctx.paint()
+            vg = cairo.RadialGradient(W / 2, H / 2, 300, W / 2, H / 2, 1150)
+            vg.add_color_stop_rgba(0, 0, 0, 0, 0)
+            vg.add_color_stop_rgba(1, 0, 0, 0, 0.85 * min(1.0, after / 1.2))
+            ctx.set_source(vg)
+            ctx.paint()
+            k = min(1.0, max(0.0, (after - 0.2) / 1.4))
+            k = k * k * (3 - 2 * k)
+            failed_text(ctx, "Failed...", W / 2, 1010 + 40 * (1 - k), 160, k)
         if win_b >= 0:
             k = win_b / PRE
             ph_ = (win_b * (8 + 14 * k)) % 1.0
