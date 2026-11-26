@@ -408,7 +408,7 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 | 三面図 v5(白目を黒に戻す・眉を細く・前髪を細い毛束で両サイドに・目を気持ち大きく)【非公開・確認用】 | gpt_image_2_6(三面図 v4 参照、quality: high / 2k) | 16:9 | 2 クレジット | 2d424b45-9803-44a9-8f26-1dc67736df4c | 白目が黒に戻り、キリッとした切れ長の目を少しだけ大きく。眉は細め。額当ての下から細い前髪が顔の両サイドに垂れる |
 | 三面図 v6(顔を参考画像のイメージに:真剣な表情・鼻まわりを囲むひび・額当ての前に垂れる細い毛束)【非公開・確認用】 | gpt_image_2_6(三面図 v5 参照、quality: high / 2k) | 16:9 | 2 クレジット | 47b65f67-f482-4fc5-ae52-fda58c73ee08 | ユーザー提供の参考画像(フィギュアの顔アップ、アップロードせず文章で指定)に寄せた。口を閉じた厳しい表情、眉間を寄せた細い眉、黒い白目。鼻すじを横切り鼻を囲むひび、あごと眉間にもひび。細い毛束が額当ての両脇から垂れる。額当ての布は濃いグレーにならず明るい銀色のまま |
 | 三面図 v7(目の形を自然な人間の目に)【非公開・確認用】 | gpt_image_2_6(三面図 v6 参照、quality: high / 2k) | 16:9 | 2 クレジット | 32b3975a-3f0f-41b6-894d-4baecb9d6498 | アイラインのような縁取りと角ばった形がなくなり、自然なまぶたの切れ長の目に。黒い白目は維持。他はv6のまま |
-| 三面図 v8(額当てのプレートに縦の亀裂と劣化・細い毛束を中央寄りに)【非公開・確認用】 | gpt_image_2_6(三面図 v7 参照、quality: high / 2k) | 16:9 | 2 クレジット | a4bc70bf-5148-4cad-bed4-9cc19c6a6cde | プレートがくすみ、細い縦の亀裂・欠け・傷が入った。毛束2本が額当ての前を通り、眉の内側寄りから顔の前をあごまで垂れて見分けやすくなった。瞳が赤みを帯び、黒い白目がやや弱まった。**現時点の基準** |
+| 三面図 v8(額当てのプレートに縦の亀裂と劣化・細い毛束を中央寄りに)【非公開・確認用】 | gpt_image_2_6(三面図 v7 参照、quality: high / 2k) | 16:9 | 2 クレジット | a4bc70bf-5148-4cad-bed4-9cc19c6a6cde | プレートがくすみ、細い縦の亀裂・欠け・傷が入った。毛束2本が額当ての前を通り、眉の内側寄りから顔の前をあごまで垂れて見分けやすくなった。瞳が赤みを帯び、黒い白目がやや弱まった。編集の重ねすぎで体・衣装の画質が低下 |
 
 #### 三面図 v1 プロンプト
 
@@ -461,3 +461,20 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 ```
 Edit this exact three-view character sheet with the smallest possible change. Change ONLY these two details, consistently in the front and side views: 1) HEADBAND METAL PLATE: make the metal plate look old and worn — a few thin vertical cracks running down through the metal, small chips and scratches, slightly dulled and tarnished surface, while the engraved leaf emblem stays clearly visible. 2) FRONT HAIR STRANDS: move the two thin strands of black hair closer to the center of the face so they are clearly visible — each strand falls from the top of the head down in front of the headband, over the forehead just inside the outer corners of the eyebrows, and hangs down in front of the face past the eyes and cheeks to about the jaw, one on each side, framing the face. They are thin, separate, sharply defined strands, easy to see against the face. Keep everything else exactly the same: face, natural eyes with black sclera, thin eyebrows, face cracks, expression, the rest of the long hair, armor, clothes, back view, poses, background and lighting. No text.
 ```
+
+### 作り直し:オリジナル甲冑版(初代風の戦国武将・実写版)
+
+原作フィギュアの衣装をそのまま写すのは避け、顔(三面図 v8)だけを引き継いで、体と衣装は一から新規生成した。
+紋章もオリジナル(丸の中に三枚葉の若木と年輪の弧)に変更。公開動画向けの基準として使える版。
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| オリジナル甲冑 三面図 v1 | gpt_image_2_6(三面図 v8 を顔だけ参照、quality: high / 2k) | 16:9 | 2 クレジット | bef2b8cd-f839-4eaf-8a29-a6fd301eaf14 | 当世具足風の深い赤の甲冑(胴・紐で綴じた袖・籠手・草摺・佩楯・臑当)、藍の帯、足袋に草鞋。編集の劣化はなく画質は良好。顔・前髪の細い毛束・ひびはv8を維持。額当ての紋はオリジナル。**黒い白目は弱く、普通の目に近い** |
+
+#### オリジナル甲冑 三面図 v1 プロンプト
+
+```
+Use the attached image ONLY for the man's head: keep his exact face, natural eyes with black sclera, thin eyebrows, the thin crack lines on his face, his serious expression, and his long straight center-parted black hair with two thin strands hanging in front of the face. Everything else is a brand-new, freshly generated original design. Character turnaround model sheet, three consistent full-body views side by side, evenly spaced: FRONT view on the left, SIDE profile facing right in the middle, BACK view on the right, standing neutrally with arms relaxed at the sides, full figure head to feet, identical in all three views. Headband: dark charcoal cloth with a worn, slightly cracked iron plate engraved with an ORIGINAL family crest — a simple circle containing a stylized sprouting sapling with three leaves above concentric tree-ring arcs. Costume: an authentic Japanese Sengoku-period tosei-gusoku style armor as seen in a high-budget live-action historical film, in deep oxblood red lacquer with dark iron fittings and dark indigo silk lacing: a solid lacquered do cuirass with a subtle raised rim, sode shoulder plates made of laced horizontal lames, kote armored sleeves over dark charcoal fabric, a dark indigo obi sash, kusazuri tassets of laced lames hanging all around the waist, haidate thigh guards, and suneate shin guards over white tabi with straw-and-leather waraji sandals. Underneath: a dark charcoal high-collared kimono-style undergarment and hakama-like trousers. Realistic weathering: scratches, chipped lacquer, dust. Plain light gray seamless studio background, soft even studio lighting, photorealistic, sharp focus, realistic leather, lacquer, metal and fabric texture. No text, no labels, no logos other than the original crest, no extra people.
+```
+
+- メモ: 編集を何度も重ねると体や衣装の画質が落ちる。大きく直すときは、気に入った部分(顔など)だけを参照にして一から生成し直すほうがきれいに仕上がる。
