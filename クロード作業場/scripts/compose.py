@@ -52,7 +52,7 @@ for lv in LEVELS:
         print(f"スキップ: {d} がありません")
         continue
     out = os.path.join(tmp, f"part_{lv:03d}.mp4")
-    text = f"{lv}% SOFT"
+    text = f"{lv}\\\\% SOFT"  # drawtext では % をエスケープ
     # 文字: 白・中央上部・画面幅の約 7%。0.3 秒でフェードイン
     vf = (
         f"drawtext=fontfile='{font_esc}':text='{text}':fontcolor=white:"
