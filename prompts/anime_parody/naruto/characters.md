@@ -497,3 +497,25 @@ Edit this exact three-view character sheet with the smallest possible change. Ch
 ```
 
 - メモ: 目の形を細く鋭くすると、黒い白目が普通の白目に戻りやすい(柱間 v4・オリジナル甲冑 v3 でも同じ)。白目を黒くするのは、目の形が決まったあとに「色だけ変える」1か所だけの編集で行うのが確実。
+
+## オリジナルの九尾の狐(伝承ベース・金色のオーラをまとった霊獣)
+
+原作の九喇嘛のデザインは再現せず、日本の伝承「九尾の狐」をもとにしたオリジナルの霊獣として作成。公開動画にも使える。
+
+- 細くしなやかな本物の狐の体つき(人型・ずんぐり体型にはしない)
+- 白に近い淡い金色の毛並み、ふちが金色に光る
+- 顔に伝承の狐面のような朱色の隈取り、額に小さな朱の印。金色の目に縦長の瞳孔
+- 扇のように広がる九本のふさふさした尾
+- 全身を金色の炎のようなオーラが包み、尾の先から火の粉
+
+### 生成記録
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| v1(全身・斜め前、グレー背景) | gpt_image_2_6(参照なし、quality: high / 2k) | 16:9 | 2 クレジット | 0d70b5ea-8081-4e49-9b2f-b8c3044ea37c | 細身の狐、朱の隈取り、金色の目、扇状の九本の尾、全身の金色の炎のオーラがすべて出た。足元にも金色の光 |
+
+#### v1 プロンプト
+
+```
+Photorealistic live-action film VFX creature reference shot of an ORIGINAL giant nine-tailed fox spirit from traditional Japanese folklore (kyubi no kitsune), full body, standing on all fours, three-quarter front view, the whole creature in frame. A slender, graceful, elegant fox with a real fox anatomy (long legs, narrow muzzle, large pointed ears), not humanoid and not bulky. Fur: pale white-gold, very soft and realistic, with luminous golden rim light along the edges of the fur. Face: vermilion-red kumadori-style folklore markings like a traditional Japanese fox mask — thin red lines sweeping from the eyes up to the ears and a small red mark on the forehead. Eyes: bright golden with dark slit pupils, calm, intelligent and majestic gaze. Nine long, full, fluffy tails fanning out behind it like a great fan. The whole body is wrapped in a translucent glowing golden flame-like aura of spiritual energy, flickering like fire, with sparks and embers rising from the tail tips and soft heat haze. Plain light gray seamless studio background with a soft golden glow on the floor beneath it, soft even studio lighting plus the creature's own golden light, cinematic, sharp focus, realistic fur detail. No text, no people, no logos.
+```
