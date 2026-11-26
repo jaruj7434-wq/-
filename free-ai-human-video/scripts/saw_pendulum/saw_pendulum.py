@@ -53,10 +53,11 @@ PIV_X = W / 2
 PIV_Y0 = float(os.environ.get("PIV_Y0", 580.0))   # つり下げ点のはじめの高さ
 PIV_Y1 = float(os.environ.get("PIV_Y1", 1360.0))   # ここまで下がる
 HEIGHTFIELD = os.environ.get("HEIGHTFIELD", "1") == "1"
-MODE = os.environ.get("MODE", "surface")
+MODE = os.environ.get("MODE", "high")
+HIGH_Q = float(os.environ.get("HIGH_Q", 75.0))
 TOP_Q = float(os.environ.get("TOP_Q", 0.3))
 FOLLOW = float(os.environ.get("FOLLOW", 180.0))   # つり下げ点はブロックのいちばん上よりこれだけ上
-PIV_V = float(os.environ.get("PIV_V", 25.0))      # 下がる速さ(px/秒)
+PIV_V = float(os.environ.get("PIV_V", 12.0))      # 下がる速さ(px/秒)
 LINKS = [float(x) for x in os.environ.get("LINKS", "200,185,170").split(",")]
 START = os.environ.get("START", "lift")
 SWAY_A = float(os.environ.get("SWAY_A", 150.0))   # つり下げ点が左右に動くはば(片側)
@@ -66,7 +67,7 @@ KICK = float(os.environ.get("KICK", 0.0))       # 回る刃がブロックをけ
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
 DRAG = float(os.environ.get("DRAG", 0.0003))      # けずった1マスごとのブレーキ(速さの割合)
 GRAVITY = float(os.environ.get("GRAVITY", 650.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 62.8))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 74.2))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -189,7 +190,10 @@ class Game:
             cnt = self.grid.sum(axis=1)   # 残っているブロックの高さを見直す(破片が落ちたあとも)
             cum = np.cumsum(cnt)
             if cum[-1] > 0:
-                if MODE == "surface":   # 上の面の高さの平均
+                if MODE == "high":   # 上の面の高い所(高いほうから HIGH_Q の所)に合わせる:高い所が残っているうちは下がらない
+                    colh = self.grid.sum(axis=0)
+                    self.top_y = BY1 - float(np.percentile(colh, HIGH_Q)) * CELL
+                elif MODE == "surface":   # 上の面の高さの平均
                     colh = self.grid.sum(axis=0)
                     self.top_y = BY1 - float(colh.mean()) * CELL
                 elif MODE == "center":
