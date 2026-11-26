@@ -352,3 +352,23 @@ Character turnaround model sheet of the exact same character in the attached ref
 ```
 Edit this photo. Keep the same man, silver hair, navy face mask, outfit, vest, gloves, sandals, background and lighting. Changes: remove the orange book; he stands straight facing the camera with both arms relaxed at his sides. Push the headband up so it sits level on his forehead and BOTH eyes are visible. His right eye is a normal dark eye. His LEFT eye is the Mangekyo Sharingan: glowing red iris with a black pinwheel pattern of three curved scythe-like blades joined around a small black pupil, crisp and recognizable when zoomed in; a thin vertical scar runs straight down through his left eyebrow, eyelid and upper cheek. Sharp calm serious expression. No blood. No text.
 ```
+
+## 扉間風(穢土転生・二代目)
+
+- 30歳くらいの架空の日本人男性、長身で肩幅が広い(実在の俳優には似せない)。厳しく冷たい表情
+- 短いツンツンの白銀髪。両頬に縦の赤い線、あごに赤い線(計3本)
+- 穢土転生: 白目が黒く瞳は赤い。顔と手に灰色のひび割れ、細かい破片が舞う
+- 額当て: 紺色の布に木の葉マーク(非公開・確認用)、布が顔の両横まで垂れる
+- 紺色のボディスーツ、青みがかったグレーの胸当て・背当て・肩当て・草摺、白い毛皮の襟、紺色のズボン、前腕ガード、黒い忍者サンダル
+
+### 生成記録
+
+| 版 | モデル | 比率 | 消費 | ジョブID | メモ |
+|---|---|---|---|---|---|
+| 三面図 v1(正面・横・後ろ)【非公開・確認用】 | gpt_image_2_6(参照なし、quality: high / 2k) | 16:9 | 2 クレジット | b5c5e980-cc56-4d7a-9608-819a320f9053 | 3方向で白銀髪・毛皮・鎧・額当てがそろった。黒い白目に赤い瞳、頬とあごの赤い線。ひび割れは顔全体と手に細かく入る |
+
+#### 三面図 v1 プロンプト
+
+```
+Character turnaround model sheet, three consistent full-body views of the same man side by side, evenly spaced: full-body FRONT view on the left, full-body SIDE profile view facing right in the middle, full-body BACK view on the right, identical face, hair, outfit, colors, proportions and height in all three panels, standing neutrally with arms relaxed at the sides, full figure in frame head to sandals. A fictional Japanese man around 30 years old, tall and broad-shouldered, original face (not resembling any real actor), clearly Japanese facial features, stern cold serious expression. Short spiky white-silver hair. Three red face-paint markings: one vertical red stripe under each eye on the cheeks and one red stripe on the chin. He is reanimated by the Edo Tensei (Impure World Reincarnation) technique: the whites of his eyes are BLACK (black sclera) with red irises, and his face and hands have gray-beige cracked patches like dry porcelain or ash, with a few tiny dust flakes drifting off. Headband: dark navy cloth covering the forehead with a metal plate engraved with the Hidden Leaf Village symbol from the Naruto anime, the cloth extending down over the sides of the face like cheek guards, tied at the back of the head. Outfit (feudal-era ninja leader armor): a dark navy blue long-sleeved bodysuit; over it a blue-gray lacquered segmented armor chest plate and back plate with shoulder guards, and a matching armored skirt of plates over the hips and thighs (front and back); a thick white fur ruff around the neck and across the shoulders, visible all around from the back; dark navy trousers, dark forearm guards, black open-toe ninja sandals. In the side view show the face profile with the red markings and the armor layering; in the back view show the back of the spiky hair, the headband knot, the fur ruff, the back plate and the rear armored skirt. Plain light gray seamless studio background, soft even studio lighting, sharp focus, realistic skin, hair, metal and fabric texture, like a Japanese live-action film costume photo. No text, no labels, no watermark, no extra people.
+```
