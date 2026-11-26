@@ -14,6 +14,7 @@
 """
 
 import argparse
+import colorsys
 import math
 import os
 import subprocess
@@ -46,13 +47,13 @@ N_RAY = 720
 CORE = float(os.environ.get("CORE", 8.0))   # とげはまん中のこの半径より内側にはのびない
 R0 = float(os.environ.get("R0", 34.0))            # はじめのボールの半径
 SHRINK = float(os.environ.get("SHRINK", 0.985))   # 1回はねるごとの大きさ
-R_MIN = 3.0
+R_MIN = float(os.environ.get("R_MIN", 12.0))   # ボールはこれより小さくならない
 SPEED = float(os.environ.get("SPEED", 1600.0))
 SPIKE_U = float(os.environ.get("SPIKE_U", 12.0))   # とげの大きさの単位(px)
 SPIKE_D = float(os.environ.get("SPIKE_D", 6.0))   # とげの深さ(SPIKE_U の何倍か)
 SPIKE_WR = float(os.environ.get("SPIKE_WR", 2.5))  # とげの根もとの半分のはば(SPIKE_U の何倍か)
 GROW_V = 1800.0                                   # とげがのびる速さ(px/秒)
-FILL_GOAL = float(os.environ.get("FILL_GOAL", 0.99))   # ここまでうまったら成功
+FILL_GOAL = float(os.environ.get("FILL_GOAL", 0.90))   # ここまでうまったら成功
 GRAVITY = float(os.environ.get("GRAVITY", 2500.0))
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 80.0))
 STALL = float(os.environ.get("STALL", 10.0))   # この秒数ほとんどうまらなければ「閉じこめられた」
@@ -264,7 +265,7 @@ def render(seed):
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
     ending = None if fail else JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6, shake=22,
-                                          texts=("99%うまった!!", "COMPLETE", "カゴ完成"))
+                                          texts=("90%うまった!!", "COMPLETE", "カゴ完成"))
     fever = RainbowFever(W, H, seed)
     grng = np.random.default_rng(seed + 5)
     glints = [(grng.uniform(0, W), grng.uniform(0, H), grng.uniform(0, 1), grng.uniform(1.5, 3.5), grng.uniform(30, 90))
@@ -292,7 +293,7 @@ def render(seed):
         ctx.set_source_rgb(0.02, 0.02, 0.04)
         ctx.paint()
         rad, fl = fr["rad"], fr["flash"]
-        # オレンジのカゴ(外の円と、のびた放射状の線のあいだ)
+        # 虹色のカゴ(外の円と、のびた放射状の線のあいだ)
         ctx.arc(CX, CY, R + 3, 0, 2 * math.pi)
         ctx.close_path()
         ctx.move_to(CX + rad[0] * COS[0], CY + rad[0] * SIN[0])
@@ -300,8 +301,18 @@ def render(seed):
             ctx.line_to(CX + rad[i] * COS[i], CY + rad[i] * SIN[i])
         ctx.close_path()
         ctx.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
-        ctx.set_source_rgb(*ORANGE)
-        ctx.fill()
+        ctx.save()
+        ctx.clip()   # うまった所を虹色に(中心から見た向きで色が変わる)
+        nseg = 180
+        for k in range(nseg):
+            a0 = 2 * math.pi * k / nseg
+            a1 = a0 + 2 * math.pi / nseg + 0.004
+            ctx.move_to(CX, CY)
+            ctx.arc(CX, CY, R + 5, a0, a1)
+            ctx.close_path()
+            ctx.set_source_rgb(*colorsys.hsv_to_rgb(k / nseg, 0.62, 0.95))
+            ctx.fill()
+        ctx.restore()
         ctx.set_fill_rule(cairo.FILL_RULE_WINDING)
         # のびたばかりの所はクリーム色に光る
         age = t - fl
@@ -314,7 +325,7 @@ def render(seed):
             ctx.line_to(CX + rad[j] * COS[j], CY + rad[j] * SIN[j])
             ctx.line_to(CX + R * COS[j], CY + R * SIN[j])
             ctx.close_path()
-            ctx.set_source_rgba(*CREAM, 0.85 * k)
+            ctx.set_source_rgba(*CREAM, 0.45 * k)
             ctx.fill()
         # 放射状の細い線(4本に1本)
         for i in range(0, N_RAY, 4):
@@ -325,7 +336,7 @@ def render(seed):
         ctx.set_line_width(1.0)
         ctx.stroke()
         ctx.arc(CX, CY, R + 3, 0, 2 * math.pi)
-        ctx.set_source_rgba(1.0, 0.55, 0.35, 0.95)
+        ctx.set_source_rgba(1, 1, 1, 0.85)
         ctx.set_line_width(4)
         ctx.stroke()
         # ボール(白く光る・短い尾)
@@ -345,7 +356,7 @@ def render(seed):
         ctx.set_source_rgb(*cyc)
         ctx.fill()
         # 文字(少なめ)
-        chic(ctx, "99%うめられる？", W / 2, 300, 66, rgb=(1, 0.88, 0.6))
+        chic(ctx, "90%うめられる？", W / 2, 300, 66, rgb=(1, 0.88, 0.6))
         pct = int(fr["fill"] * 100)
         chic(ctx, f"{pct}%", W / 2, 420, 100, rgb=(1, 1, 1), weight="Medium")
         if not over:
