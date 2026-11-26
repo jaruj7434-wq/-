@@ -1,6 +1,6 @@
 """「はねるたびに小さくなるボール、○回はねられる?」(参考動画「Each bounce SHRINKS the ball and builds a CAGE around it」の形)
 丸いわくの中をボールがはね回る。ボールが壁に当たるたびに、ボールは少し小さくなり、当たった場所の壁からオレンジのとげが内側へのびる(カゴがだんだん閉じていく)。
-制限時間内にボールが TARGET 回はねたら成功、はねられなければ失敗。
+カゴが全部うまったら(GOAL 以上)成功。ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗。
 
 - 重力なし。ボールはいつも同じ速さで、壁(とげを含む)ではね返る(ねらい・補正なし)。
 - 壁は中心からの放射状の線(N_RAY 本)でできていて、1本ずつ長さが変わる。とげは当たった場所でいちばん長く、まわりほど短い三角形。
@@ -43,16 +43,18 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 CX, CY, R = 540.0, 1010.0, 440.0
 N_RAY = 720
-CORE = float(os.environ.get("CORE", 45.0))   # とげはまん中のこの半径より内側にはのびない
+CORE = float(os.environ.get("CORE", 15.0))   # とげはまん中のこの半径より内側にはのびない
 R0 = float(os.environ.get("R0", 34.0))            # はじめのボールの半径
-SHRINK = float(os.environ.get("SHRINK", 0.985))   # 1回はねるごとの大きさ
+SHRINK = float(os.environ.get("SHRINK", 0.993))   # 1回はねるごとの大きさ
 R_MIN = 3.0
-SPEED = float(os.environ.get("SPEED", 900.0))
-SPIKE_D = float(os.environ.get("SPIKE_D", 6.0))   # とげの深さ(ボールの半径の何倍か)
-SPIKE_WR = float(os.environ.get("SPIKE_WR", 2.5))  # とげの根もとの半分のはば(ボールの半径の何倍か)
+SPEED = float(os.environ.get("SPEED", 1100.0))
+SPIKE_U = float(os.environ.get("SPIKE_U", 18.0))   # とげの大きさの単位(px)
+SPIKE_D = float(os.environ.get("SPIKE_D", 6.0))   # とげの深さ(SPIKE_U の何倍か)
+SPIKE_WR = float(os.environ.get("SPIKE_WR", 2.5))  # とげの根もとの半分のはば(SPIKE_U の何倍か)
 GROW_V = 1800.0                                   # とげがのびる速さ(px/秒)
-TARGET = int(os.environ.get("TARGET", 150))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 26.5))
+GOAL = float(os.environ.get("GOAL", 0.97))   # これだけうまったら「全部うまった」(成功)
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 60.0))
+STALL = float(os.environ.get("STALL", 6.0))   # この秒数ほとんどうまらなければ「閉じこめられた」
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -78,6 +80,8 @@ class Game:
         self.events = []
         self.result, self.result_t = None, None
         self.last_hit = -1.0
+        self.hist = []
+        self.trapped = False
 
     def wall_xy(self, idx):
         return CX + self.rad[idx] * COS[idx], CY + self.rad[idx] * SIN[idx]
@@ -146,9 +150,9 @@ class Game:
         """はねた:ボールが小さくなり、当たった所の壁からとげがのびる。"""
         if self.result is not None:
             return
-        depth = SPIKE_D * self.r
+        depth = SPIKE_D * SPIKE_U
         base = math.hypot(hx - CX, hy - CY)
-        half_px = SPIKE_WR * self.r                       # とげの根もとの半分のはば(ボールの大きさに比例)
+        half_px = SPIKE_WR * SPIKE_U                       # とげの根もとの半分のはば(ボールの大きさに比例)
         nw = max(2, min(int(0.3 / (2 * math.pi) * N_RAY), int(half_px / max(base, 20.0) / (2 * math.pi) * N_RAY)))
         for o in range(-nw, nw + 1):                      # 当たった所の線ほど大きく縮む三角形のとげ
             i = (k + o) % N_RAY
@@ -159,11 +163,24 @@ class Game:
         self.r = max(R_MIN, self.r * SHRINK)
         self.bounces += 1
         self.events.append(("bounce", self.t, (hx, hy, self.bounces, self.r)))
-        if self.bounces >= TARGET:
-            self.result, self.result_t = "success", self.t
-            self.events.append(("success", self.t, None))
+
+    def fill(self):
+        """カゴがどれだけうまったか(0〜1)。まん中の小さな空き(CORE)は数えない。"""
+        return 1.0 - float(np.sum(self.rad ** 2 - CORE ** 2)) / (N_RAY * (R ** 2 - CORE ** 2))
 
     def check(self):
+        f = self.fill()
+        if self.result is None and f >= GOAL:
+            self.result, self.result_t = "success", self.t
+            self.events.append(("success", self.t, None))
+        # ボールがとげにかこまれて閉じこめられ、STALL 秒たってもほとんどうまらなくなったら失敗
+        self.hist.append((self.t, f))
+        while self.hist and self.hist[0][0] < self.t - STALL:
+            self.hist.pop(0)
+        if self.result is None and self.t > STALL + 2 and f - self.hist[0][1] < 0.002:
+            self.result, self.result_t = "fail", self.t
+            self.trapped = True
+            self.events.append(("fail", self.t, None))
         if self.result is None and self.t >= TIME_LIMIT:
             self.result, self.result_t = "fail", self.t
             self.events.append(("fail", self.t, None))
@@ -181,18 +198,18 @@ def simulate(seed, record=False):
                 g.t += dt
         g.check()
         if record:
-            frames.append({"t": g.t, "x": g.x, "y": g.y, "r": g.r, "n": g.bounces,
+            frames.append({"t": g.t, "x": g.x, "y": g.y, "r": g.r, "n": g.bounces, "fill": g.fill(),
                            "rad": g.rad.astype(np.float32).copy(), "flash": g.flash.astype(np.float32).copy()})
         if g.result is not None:
             extra = (OUTRO + SCARE_DUR) if g.result == "fail" else (PRE + WIN_DUR)
             if not record or g.t > g.result_t + extra:
                 break
-    return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "n": g.bounces}
+    return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t, "n": g.bounces, "fill": g.fill(), "trapped": g.trapped}
 
 
 def score(seed):
     r = simulate(seed)
-    return seed, r["result"], round(r["result_t"], 1), r["n"]
+    return seed, r["result"], round(r["result_t"], 1), r["n"], round(r["fill"], 4)
 
 
 def search(n):
@@ -245,7 +262,7 @@ def render(seed):
             stdin=subprocess.PIPE)
     ghost = GhostScare(W, H, seed) if fail else None
     ending = None if fail else JP.Jackpot(W, H, seed, CX, CY, reel_ball, n_kinds=7, win=6, shake=22,
-                                          texts=(f"{TARGET}回!!", "COMPLETE", "カゴ完成"))
+                                          texts=("全部うまった!!", "COMPLETE", "カゴ完成"))
     fever = RainbowFever(W, H, seed)
     grng = np.random.default_rng(seed + 5)
     glints = [(grng.uniform(0, W), grng.uniform(0, H), grng.uniform(0, 1), grng.uniform(1.5, 3.5), grng.uniform(30, 90))
@@ -273,6 +290,8 @@ def render(seed):
         ctx.set_source_rgb(0.02, 0.02, 0.04)
         ctx.paint()
         rad, fl = fr["rad"], fr["flash"]
+        if win_b >= 0:   # 成功の瞬間:最後のすき間がシュッとうまる(しめくくりの演出)
+            rad = rad + (CORE - rad) * min(1.0, win_b / 0.35)
         # オレンジのカゴ(外の円と、のびた放射状の線のあいだ)
         ctx.arc(CX, CY, R + 3, 0, 2 * math.pi)
         ctx.close_path()
@@ -326,17 +345,16 @@ def render(seed):
         ctx.set_source_rgb(*cyc)
         ctx.fill()
         # 文字(少なめ)
-        chic(ctx, f"{TARGET}回はねられる？", W / 2, 300, 66, rgb=(1, 0.88, 0.6))
-        n = fr["n"]
-        chic(ctx, f"{n}", W / 2, 420, 100, rgb=(1, 1, 1), weight="Medium")
-        tt = min(t, end_t) if end_t is not None else t
-        left = max(0.0, TIME_LIMIT - tt)
-        chic(ctx, f"{left:4.1f}", W / 2, 490, 40, rgb=(1, 0.45, 0.45) if left < 5 else (0.7, 0.75, 0.85), weight="Medium")
+        chic(ctx, "全部うめられる？", W / 2, 300, 66, rgb=(1, 0.88, 0.6))
+        pct = min(100, int(fr["fill"] / GOAL * 100))
+        chic(ctx, f"{pct}%", W / 2, 420, 100, rgb=(1, 1, 1), weight="Medium")
         if not over:
             horror(ctx, "失敗したら…", W / 2, 1610, 74, t)
         if over and fail:
             k = min(1.0, after / 0.25)
-            chic(ctx, f"あと {TARGET - res['n']} 回", W / 2, 1060, 100 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
+            if res["trapped"]:
+                chic(ctx, "閉じこめられた…", W / 2, 1000, 96 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
+            chic(ctx, f"{min(99, int(res['fill'] / GOAL * 100))}%", W / 2, 1130, 90 * (1.2 - 0.2 * k), rgb=(1, 0.4, 0.4))
         if win_b >= 0:
             k = win_b / PRE
             ph_ = (win_b * (8 + 14 * k)) % 1.0
@@ -375,7 +393,7 @@ PENTA = [0, 2, 4, 7, 9]
 
 def boing(n, r):
     """はねた「ポン」+とげがのびる「シュッ」。ボールが小さくなるほど高い音。"""
-    idx = min(19, int(n / TARGET * 20))
+    idx = min(19, int(n / 150 * 20))
     m = 55 + 12 * (idx // 5) + PENTA[idx % 5]
     f = midi_hz(m)
     t = _t(0.3)
