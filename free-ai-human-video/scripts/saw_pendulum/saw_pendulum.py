@@ -57,7 +57,7 @@ MODE = os.environ.get("MODE", "high")
 HIGH_Q = float(os.environ.get("HIGH_Q", 75.0))
 TOP_Q = float(os.environ.get("TOP_Q", 0.3))
 FOLLOW = float(os.environ.get("FOLLOW", 180.0))   # つり下げ点はブロックのいちばん上よりこれだけ上
-PIV_V = float(os.environ.get("PIV_V", 10.0))      # 下がる速さ(px/秒)
+PIV_V = float(os.environ.get("PIV_V", 21.0))      # 下がる速さ(px/秒)
 LINKS = [float(x) for x in os.environ.get("LINKS", "200,185,170").split(",")]
 START = os.environ.get("START", "lift")
 DOUBLE = os.environ.get("DOUBLE", "1") == "1"   # カクカクの紐(二重振り子)
@@ -79,12 +79,12 @@ TH0_MAX = float(os.environ.get("TH0_MAX", 88.0))
 KEEP_E = os.environ.get("KEEP_E", "1") == "1"
 SWAY_A = float(os.environ.get("SWAY_A", 0.0))   # つり下げ点が左右に動くはば(片側)
 SWAY_T = float(os.environ.get("SWAY_T", 2.4))     # 1往復の秒数
-SAW_R = float(os.environ.get("SAW_R", 44.0))
+SAW_R = float(os.environ.get("SAW_R", 56.0))
 KICK = float(os.environ.get("KICK", 0.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
 DRAG = float(os.environ.get("DRAG", 0.000005))      # けずった1マスごとのブレーキ(速さの割合)
 GRAVITY = float(os.environ.get("GRAVITY", 650.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 103.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 44.9))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
