@@ -58,7 +58,7 @@ for lv in LEVELS:
     # 文字: 白・中央上部・画面幅の約 7%。0.3 秒でフェードイン
     vf = (
         f"drawtext=fontfile='{font_esc}':text='{text}':fontcolor=white:"
-        f"fontsize=h*0.042:x=(w-text_w)/2:y=h*0.085:"
+        f"fontsize=h*0.042:x=(w-text_w)/2:y=h*0.045:"
         f"alpha='min(1,t/0.3)':shadowcolor=black@0.25:shadowx=0:shadowy=2,"
         f"format=yuv420p"
     )

@@ -26,6 +26,7 @@ ap.add_argument("--res", type=str, default=None)
 ap.add_argument("--samples", type=int, default=None)
 ap.add_argument("--still", type=int, default=None)
 ap.add_argument("--step", type=int, default=1)
+ap.add_argument("--start", type=int, default=1, help="書き出し開始フレーム(シミュレーションは常に 1 から)")
 ap.add_argument("--render", type=str, default=None)
 ap.add_argument("--save", type=str, default=None)
 ap.add_argument("--report", action="store_true")
@@ -33,6 +34,8 @@ ap.add_argument("--report", action="store_true")
 ap.add_argument("--k", type=float, default=None)
 ap.add_argument("--bend", type=float, default=None)
 ap.add_argument("--fric", type=float, default=None)
+ap.add_argument("--ch", type=float, default=None)
+ap.add_argument("--rbot", type=float, default=None)
 args = ap.parse_args(argv)
 SOFT = max(0.0, min(100.0, args.soft)) / 100.0
 
@@ -51,9 +54,9 @@ def loglerp(a, b, t):
 TURNS = 1.75
 Z_TOP, Z_BOT = 3.25, 0.85
 END_ANGLE = math.radians(-65)   # 出口がカメラ手前右に来る角度
-R_TOP, R_BOT = 0.78, 0.34      # 下に行くほど半径が小さい = カーブがきつい
-CH_R = 0.11                    # 溝(U字)の半径
-ROD_LEN, ROD_R = 0.62, 0.062   # 棒の長さ・太さ
+R_TOP, R_BOT = 0.78, (args.rbot or 0.34)      # 下に行くほど半径が小さい = カーブがきつい
+CH_R = args.ch or 0.13         # 溝(U字)の半径
+ROD_LEN, ROD_R = 0.66, 0.082   # 棒の長さ・太さ
 N_PATH = 360
 
 
@@ -192,7 +195,7 @@ def metal(name, color, rough, coat=0.0):
 def mat_object(soft):
     """SOFT に応じて 鉄 → 鋼 → 真鍮 → 金 → 液体の金"""
     keys = [  # (soft, 色, 粗さ)
-        (0.00, (0.11, 0.11, 0.12), 0.48),   # 黒い鍛造鉄
+        (0.00, (0.035, 0.035, 0.038), 0.55),   # 黒い鍛造鉄
         (0.25, (0.55, 0.56, 0.58), 0.22),   # 鋼
         (0.50, (0.80, 0.62, 0.33), 0.18),   # 真鍮
         (0.75, (1.00, 0.72, 0.36), 0.10),   # 金
@@ -398,11 +401,11 @@ if SOFT <= 0.0:
 else:
     cl = rod.modifiers.new("Cloth", "CLOTH")
     s = cl.settings
-    table = [  # (SOFT%, 硬さ k, 曲げ b)
-        (25, 40.0, 40.0),
-        (50, 15.0, 5.0),
-        (75, 2.5, 0.08),
-        (100, 1.5, 0.02),
+    table = [  # (SOFT%, 硬さ k, 曲げ b) — 検証済み
+        (25, 10.0, 2.0),    # 鋼: 0% より少し先まで進んでから飛び出す
+        (50, 2.5, 0.3),     # 真鍮: 最後まで滑るが、勢い余って器を飛び越える
+        (75, 2.2, 0.06),    # 金: 器の縁に引っかかって揺れ、ギリギリで入る(焦らし)
+        (100, 1.5, 0.02),   # 液体の金: ホールインワン
     ]
     sp = SOFT * 100
     lo = max([t for t in table if t[0] <= sp] or [table[0]], key=lambda t: t[0])
@@ -469,14 +472,14 @@ world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.05, 0.045
 world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.6
 
 cd = bpy.data.cameras.new("Cam")
-cd.lens = 50
+cd.lens = 58
 cd.sensor_fit = "VERTICAL"
 cd.sensor_height = 36
 cd.dof.use_dof = True
 cd.dof.aperture_fstop = 8
 cam = link(bpy.data.objects.new("Cam", cd))
-cam.location = (1.2, -6.2, 3.3)
-cam.rotation_euler = (Vector((0, 0, 1.6)) - cam.location).to_track_quat("-Z", "Y").to_euler()
+cam.location = (1.2, -6.4, 3.0)
+cam.rotation_euler = (Vector((0.05, 0, 1.95)) - cam.location).to_track_quat("-Z", "Y").to_euler()
 scene.camera = cam
 focus = link(bpy.data.objects.new("Focus", None))
 focus.location = (0, 0, 1.8)
@@ -553,6 +556,7 @@ if args.report or args.render or args.still is not None or args.save:
         if args.report and (fr % 5 == 0 or fr == 1):
             u, d, z, inc, c = progress()
             print(f"REPORT f={fr} u={u:.2f} off={d:.2f} z={z:.2f} cup={int(inc)} x={c.x:.2f} y={c.y:.2f}")
+scene.frame_start = max(1, args.start)
 if args.save:
     bpy.ops.wm.save_as_mainfile(filepath=bpy.path.abspath(args.save))
 if args.still is not None:
