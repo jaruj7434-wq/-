@@ -51,8 +51,9 @@ CELL = 4.0
 NX, NY = int((BX1 - BX0) / CELL), int((BY1 - BY0) / CELL)
 PIV_X = W / 2
 PIV_Y0 = float(os.environ.get("PIV_Y0", 380.0))   # つり下げ点のはじめの高さ
-PIV_Y1 = float(os.environ.get("PIV_Y1", 1050.0))   # ここまで下がる
+PIV_Y1 = float(os.environ.get("PIV_Y1", 950.0))   # ここまで下がる
 CUT_ONLY_HIT = os.environ.get("CUT_ONLY_HIT", "1") == "1"   # 当たった所だけくだける(上までごっそりはくずれない)
+LOOSE_MAX = int(os.environ.get("LOOSE_MAX", 300))   # これ以下の宙にういたかけらは、支えがなくてくずれ落ちる
 DROP_LOOSE = os.environ.get("DROP_LOOSE", "0") == "1"   # 切りはなされた所をまとめて落とす(使わない:当たった所だけくだける)
 HEIGHTFIELD = os.environ.get("HEIGHTFIELD", "1") == "1"
 MODE = os.environ.get("MODE", "high")
@@ -71,7 +72,8 @@ M2 = float(os.environ.get("M2", 3.0))
 N_LEN = [float(x) for x in os.environ.get("N_LEN", "150,135,125,110").split(",")]
 N_MASS = [float(x) for x in os.environ.get("N_MASS", "1,1,1,3").split(",")]
 HIT_BALL = os.environ.get("HIT_BALL", "1") == "1"   # ブレーキは鉄球だけにかかる(紐は鉄球の重みでしなる)
-JOINT_DAMP = float(os.environ.get("JOINT_DAMP", 0.002))   # 関節のまさつ(となりの棒との回る速さの差に比例して止める)
+MOTOR_K = float(os.environ.get("MOTOR_K", 80.0))   # つり下げ点のモーター:勢い(エネルギー)が最初と同じになるよう、ゆれる向きに押す強さ
+JOINT_DAMP = float(os.environ.get("JOINT_DAMP", 0.03))   # 関節のまさつ(となりの棒との回る速さの差に比例して止める)
 N_ADD = [float(x) for x in os.environ.get("N_ADD", "10,70").split(",")]
 SINGLE = os.environ.get("SINGLE", "1") == "1"   # 1本の紐の鉄球(ふつうの振り子)
 L0 = float(os.environ.get("L0", 380.0))
@@ -83,12 +85,12 @@ TH0_MAX = float(os.environ.get("TH0_MAX", 80.0))
 KEEP_E = os.environ.get("KEEP_E", "1") == "1"
 SWAY_A = float(os.environ.get("SWAY_A", 0.0))   # つり下げ点が左右に動くはば(片側)
 SWAY_T = float(os.environ.get("SWAY_T", 2.4))     # 1往復の秒数
-SAW_R = float(os.environ.get("SAW_R", 70.0))
+SAW_R = float(os.environ.get("SAW_R", 47.0))
 KICK = float(os.environ.get("KICK", 0.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
-DRAG = float(os.environ.get("DRAG", 0.00008))      # けずった1マスごとのブレーキ(速さの割合)
+DRAG = float(os.environ.get("DRAG", 0.00015))      # けずった1マスごとのブレーキ(速さの割合)
 GRAVITY = float(os.environ.get("GRAVITY", 1100.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 42.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 38.1))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -150,6 +152,8 @@ class Game:
             m = np.array(N_MASS)
             self.mu = np.array([[m[max(i, j):].sum() for j in range(len(m))] for i in range(len(m))])
             self.jd_s = float(np.mean(np.diag(self.mu) * self.l_n ** 2))
+            self.e0 = None
+            self.e0 = self.pend_energy(self.th_n, self.w_n)   # はなした時の勢い(モーターはこれを保つ)
         if SINGLE:   # はじめは紐をななめにもち上げてからはなす(角度はシードごとにちがう)
             self.L = L0
             self.th = math.radians(rng.uniform(TH0_MIN, TH0_MAX)) * rng.choice([-1, 1])
@@ -259,9 +263,12 @@ class Game:
             self.next_drop_chk = self.t + 0.2
             colh = self.grid.sum(axis=0)
             self.top_y = BY1 - float(np.percentile(colh, HIGH_Q)) * CELL
-            if CUT_ONLY_HIT and DROP_LOOSE and self.left > 0:   # 下の床とつながっていない破片は、支えがないので落ちる
+            if CUT_ONLY_HIT and self.left > 0:   # 下の床とつながっていない破片は、支えがないので落ちる
                 lab, nlab = ndimage.label(self.grid)
                 keep = set(np.unique(lab[-1])) - {0}
+                if not DROP_LOOSE:   # 大きな塊はそのまま。小さくて細いかけら(LOOSE_MAX マス以下)だけがくずれて落ちる
+                    sizes = ndimage.sum(np.ones_like(lab), lab, index=np.arange(1, nlab + 1))
+                    keep |= {i + 1 for i, sz in enumerate(sizes) if sz > LOOSE_MAX}
                 loose = (lab > 0) & ~np.isin(lab, list(keep))
                 nl = int(loose.sum())
                 if nl:
@@ -285,6 +292,16 @@ class Game:
         ll = l[:, None] * l[None, :] * self.mu
         M = ll * np.cos(d)
         F = -(ll * np.sin(d)) @ (w * w) - np.diag(self.mu) * g * l * np.sin(th)
+        if MOTOR_K and self.e0 is not None:   # つり下げ点のモーター(ねらいなし。勢いが足りないぶん、1本目の棒をゆれる向きに押す)
+            e = self.pend_energy(th, w)
+            # 押す向きは「振り子全体が回っている向き」(つり下げ点まわりの角運動量の向き)
+            l, m = self.l_n, np.array(N_MASS)
+            x = np.cumsum(l * np.sin(th)); y = np.cumsum(l * np.cos(th))
+            vx = np.cumsum(l * np.cos(th) * w); vy = np.cumsum(-l * np.sin(th) * w)
+            Lz = float((m * (x * vy - y * vx)).sum())
+            tq = MOTOR_K * self.jd_s * max(0.0, (self.e0 - e) / abs(self.e0)) * math.tanh(-Lz / (0.3 * self.jd_s))
+            F = F.copy()
+            F[0] += tq
         if JOINT_DAMP:   # 関節のまさつ:となりどうしの棒の回る速さの差を少しずつ小さくする(つり下げ点の関節にはない)
             rel = np.diff(w)                 # 関節 k(棒 k-1 と k の間)の曲がる速さ
             tq = -JOINT_DAMP * self.jd_s * rel
@@ -292,6 +309,15 @@ class Game:
             F[1:] += tq
             F[:-1] -= tq
         return np.linalg.solve(M, F)
+
+    def pend_energy(self, th, w):
+        """つり下げ点から見た振り子のエネルギー(運動+位置。いちばん下にたれた時を0)。"""
+        l, m = self.l_n, np.array(N_MASS)
+        vx = np.cumsum(l * np.cos(th) * w)
+        vy = np.cumsum(-l * np.sin(th) * w)
+        y = np.cumsum(l * np.cos(th))
+        y0 = np.cumsum(l)
+        return float((0.5 * m * (vx * vx + vy * vy)).sum() + (m * GRAVITY * (y0 - y)).sum())
 
     def ball_impulse(self, k):
         """鉄球の速さを k の割合だけへらす力積を、鉄球の所にだけかける(M·Δω = Jᵀ·P)。"""
@@ -750,6 +776,23 @@ def render(seed):
             vg.add_color_stop_rgba(1, 0, 0, 0, 0.85 * min(1.0, after / 1.2))
             ctx.set_source(vg)
             ctx.paint()
+            # 削り残した所を赤い輪で示す(小さすぎて見えないことがあるため。結果はそのまま)
+            lab_, nl_ = ndimage.label(grid)
+            for ci in range(1, min(nl_, 12) + 1):
+                ys_, xs_ = np.nonzero(lab_ == ci)
+                cx_ = BX0 + (xs_.mean() + 0.5) * CELL
+                cy_ = BY0 + (ys_.mean() + 0.5) * CELL
+                rr = max(34.0, 0.5 * CELL * max(np.ptp(xs_), np.ptp(ys_)) + 26)
+                pul = 0.5 + 0.5 * math.sin(after * 6)
+                a_ = min(1.0, after / 0.6)
+                for wd, al in ((14, 0.18), (4, 0.9)):
+                    ctx.arc(cx_, cy_, rr + 6 * pul, 0, 2 * math.pi)
+                    ctx.set_source_rgba(1.0, 0.15, 0.2, al * a_)
+                    ctx.set_line_width(wd)
+                    ctx.stroke()
+                ctx.rectangle(cx_ - 3, cy_ - 3, 6, 6)
+                ctx.set_source_rgba(1.0, 0.35, 0.35, a_)
+                ctx.fill()
             k = min(1.0, max(0.0, (after - 0.2) / 1.4))
             k = k * k * (3 - 2 * k)
             failed_text(ctx, "Failed...", W / 2, 1010 + 40 * (1 - k), 160, k)
