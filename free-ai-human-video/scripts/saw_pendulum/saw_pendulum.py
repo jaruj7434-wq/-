@@ -70,8 +70,9 @@ M2 = float(os.environ.get("M2", 3.0))
 # 関節をふやしたカクカクの紐(多重振り子)。棒の長さと、各関節/先のおもりの重さ
 N_LEN = [float(x) for x in os.environ.get("N_LEN", "150,135,125,110").split(",")]
 N_MASS = [float(x) for x in os.environ.get("N_MASS", "1,1,1,3").split(",")]
-JOINT_DAMP = float(os.environ.get("JOINT_DAMP", 0.02))   # 関節のまさつ(となりの棒との回る速さの差に比例して止める)
-N_ADD = [float(x) for x in os.environ.get("N_ADD", "0,40").split(",")]
+HIT_BALL = os.environ.get("HIT_BALL", "1") == "1"   # ブレーキは鉄球だけにかかる(紐は鉄球の重みでしなる)
+JOINT_DAMP = float(os.environ.get("JOINT_DAMP", 0.002))   # 関節のまさつ(となりの棒との回る速さの差に比例して止める)
+N_ADD = [float(x) for x in os.environ.get("N_ADD", "10,70").split(",")]
 SINGLE = os.environ.get("SINGLE", "1") == "1"   # 1本の紐の鉄球(ふつうの振り子)
 L0 = float(os.environ.get("L0", 380.0))
 L_MAX = float(os.environ.get("L_MAX", 1060.0))
@@ -85,7 +86,7 @@ SWAY_T = float(os.environ.get("SWAY_T", 2.4))     # 1往復の秒数
 SAW_R = float(os.environ.get("SAW_R", 70.0))
 KICK = float(os.environ.get("KICK", 0.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
-DRAG = float(os.environ.get("DRAG", 0.000058))      # けずった1マスごとのブレーキ(速さの割合)
+DRAG = float(os.environ.get("DRAG", 0.00008))      # けずった1マスごとのブレーキ(速さの割合)
 GRAVITY = float(os.environ.get("GRAVITY", 1100.0))
 TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 42.0))
 OUTRO = 4.2
@@ -248,7 +249,10 @@ class Game:
             self.cut_now += n
             f = max(0.0, 1 - DRAG * n)   # くだいた分だけ、ほんの少しおそくなる
             if DOUBLE:
-                self.w_n *= f
+                if HIT_BALL:   # 鉄球にだけ、くだいた分のブレーキ(力積)をかける → 関節がしなって折れる
+                    self.ball_impulse(1 - f)
+                else:
+                    self.w_n *= f
             else:
                 self.om *= f
         if self.t >= self.next_drop_chk:
@@ -288,6 +292,17 @@ class Game:
             F[1:] += tq
             F[:-1] -= tq
         return np.linalg.solve(M, F)
+
+    def ball_impulse(self, k):
+        """鉄球の速さを k の割合だけへらす力積を、鉄球の所にだけかける(M·Δω = Jᵀ·P)。"""
+        th, w, l = self.th_n, self.w_n, self.l_n
+        Jx, Jy = l * np.cos(th), -l * np.sin(th)
+        vx, vy = Jx @ w, Jy @ w
+        mb = N_MASS[-1]
+        P = np.array([-k * mb * vx, -k * mb * vy])
+        d = th[:, None] - th[None, :]
+        M = l[:, None] * l[None, :] * self.mu * np.cos(d)
+        self.w_n = w + np.linalg.solve(M, Jx * P[0] + Jy * P[1])
 
     def step_double(self, dt):
         """カクカクの紐(関節のある多重振り子)。つり下げ点は真下へ一定の速さでおりる(横には動かない)。RK4で計算。"""
