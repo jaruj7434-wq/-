@@ -46,11 +46,11 @@ SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
 BX0, BX1 = float(os.environ.get("BX0", 260.0)), float(os.environ.get("BX1", 820.0))            # ブロックの左右
-BY0, BY1 = float(os.environ.get("BY0", 760.0)), float(os.environ.get("BY1", 1400.0))          # ブロックの上下
+BY0, BY1 = float(os.environ.get("BY0", 860.0)), float(os.environ.get("BY1", 1400.0))          # ブロックの上下
 CELL = 4.0
 NX, NY = int((BX1 - BX0) / CELL), int((BY1 - BY0) / CELL)
 PIV_X = W / 2
-PIV_Y0 = float(os.environ.get("PIV_Y0", 420.0))   # つり下げ点のはじめの高さ
+PIV_Y0 = float(os.environ.get("PIV_Y0", 380.0))   # つり下げ点のはじめの高さ
 PIV_Y1 = float(os.environ.get("PIV_Y1", 1050.0))   # ここまで下がる
 CUT_ONLY_HIT = os.environ.get("CUT_ONLY_HIT", "1") == "1"   # 当たった所だけくだける(上までごっそりはくずれない)
 DROP_LOOSE = os.environ.get("DROP_LOOSE", "0") == "1"   # 切りはなされた所をまとめて落とす(使わない:当たった所だけくだける)
@@ -70,23 +70,24 @@ M2 = float(os.environ.get("M2", 3.0))
 # 関節をふやしたカクカクの紐(多重振り子)。棒の長さと、各関節/先のおもりの重さ
 N_LEN = [float(x) for x in os.environ.get("N_LEN", "150,135,125,110").split(",")]
 N_MASS = [float(x) for x in os.environ.get("N_MASS", "1,1,1,3").split(",")]
-N_ADD = [float(x) for x in os.environ.get("N_ADD", "10,60").split(",")]
+JOINT_DAMP = float(os.environ.get("JOINT_DAMP", 0.02))   # 関節のまさつ(となりの棒との回る速さの差に比例して止める)
+N_ADD = [float(x) for x in os.environ.get("N_ADD", "0,40").split(",")]
 SINGLE = os.environ.get("SINGLE", "1") == "1"   # 1本の紐の鉄球(ふつうの振り子)
 L0 = float(os.environ.get("L0", 380.0))
 L_MAX = float(os.environ.get("L_MAX", 1060.0))
 L_V = float(os.environ.get("L_V", 12.0))        # 紐がのびる速さ(px/秒)
 DIG = float(os.environ.get("DIG", 30.0))
-TH0_MIN = float(os.environ.get("TH0_MIN", 50.0))
-TH0_MAX = float(os.environ.get("TH0_MAX", 88.0))
+TH0_MIN = float(os.environ.get("TH0_MIN", 45.0))
+TH0_MAX = float(os.environ.get("TH0_MAX", 80.0))
 KEEP_E = os.environ.get("KEEP_E", "1") == "1"
 SWAY_A = float(os.environ.get("SWAY_A", 0.0))   # つり下げ点が左右に動くはば(片側)
 SWAY_T = float(os.environ.get("SWAY_T", 2.4))     # 1往復の秒数
-SAW_R = float(os.environ.get("SAW_R", 85.0))
+SAW_R = float(os.environ.get("SAW_R", 70.0))
 KICK = float(os.environ.get("KICK", 0.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
-DRAG = float(os.environ.get("DRAG", 0.000005))      # けずった1マスごとのブレーキ(速さの割合)
-GRAVITY = float(os.environ.get("GRAVITY", 1600.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 53.0))
+DRAG = float(os.environ.get("DRAG", 0.000058))      # けずった1マスごとのブレーキ(速さの割合)
+GRAVITY = float(os.environ.get("GRAVITY", 1100.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 42.0))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -147,6 +148,7 @@ class Game:
             self.l_n = np.array(N_LEN)
             m = np.array(N_MASS)
             self.mu = np.array([[m[max(i, j):].sum() for j in range(len(m))] for i in range(len(m))])
+            self.jd_s = float(np.mean(np.diag(self.mu) * self.l_n ** 2))
         if SINGLE:   # はじめは紐をななめにもち上げてからはなす(角度はシードごとにちがう)
             self.L = L0
             self.th = math.radians(rng.uniform(TH0_MIN, TH0_MAX)) * rng.choice([-1, 1])
@@ -279,6 +281,12 @@ class Game:
         ll = l[:, None] * l[None, :] * self.mu
         M = ll * np.cos(d)
         F = -(ll * np.sin(d)) @ (w * w) - np.diag(self.mu) * g * l * np.sin(th)
+        if JOINT_DAMP:   # 関節のまさつ:となりどうしの棒の回る速さの差を少しずつ小さくする(つり下げ点の関節にはない)
+            rel = np.diff(w)                 # 関節 k(棒 k-1 と k の間)の曲がる速さ
+            tq = -JOINT_DAMP * self.jd_s * rel
+            F = F.copy()
+            F[1:] += tq
+            F[:-1] -= tq
         return np.linalg.solve(M, F)
 
     def step_double(self, dt):
@@ -617,9 +625,11 @@ def render(seed):
             ctx.new_path()
             topi = np.argmax(grid, axis=0)
             for j in range(NX):
-                if not colh[j]:
+                # 上の面の高さが急にかわる所(宙に残ったかけらと下の面の間など)は線をつながない
+                if not colh[j] or (j > 0 and colh[j - 1] and abs(int(topi[j]) - int(topi[j - 1])) > 3):
                     ctx.new_sub_path()
-                    continue
+                    if not colh[j]:
+                        continue
                 y_ = BY0 + topi[j] * CELL
                 ctx.line_to(BX0 + (j + 0.5) * CELL, y_)
             for wd, al in ((8, 0.12), (2.5, 0.75)):
