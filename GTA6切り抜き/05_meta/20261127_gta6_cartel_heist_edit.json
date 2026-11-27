@@ -1,0 +1,164 @@
+{
+ "name": "20261127_gta6_cartel_heist",
+ "source": "https://www.youtube.com/watch?v=0zkiPTVjyX0",
+ "narration": "Higgsfield text2speech_v2 / ElevenLabs / preset voice Hana (c25f78a0-714e-42af-8da3-a399cef94968)",
+ "narr_speed": 1.12,
+ "gap": 0.18,
+ "game_vol": 0.12,
+ "x": 0.5,
+ "title": [
+  "GTA6",
+  "カルテル強盗 完全攻略"
+ ],
+ "hook": [
+  "1100万ドル&",
+  "ニコール生存!"
+ ],
+ "outro": [
+  "詳しい手順は",
+  "概要欄の元動画で!"
+ ],
+ "outro_sec": 3.6,
+ "credit": "素材: LunarGaming (YouTube / CC BY)",
+ "segments": [
+  {
+   "narr": "../03_edit/narr9/line1.mp3",
+   "clips": [
+    [
+     534,
+     539
+    ],
+    [
+     541,
+     547
+    ]
+   ],
+   "game_audio": false
+  },
+  {
+   "narr": "../03_edit/narr9/line2.mp3",
+   "clips": [
+    [
+     24,
+     28
+    ],
+    [
+     31,
+     35
+    ],
+    [
+     48,
+     53
+    ],
+    [
+     60,
+     64
+    ]
+   ],
+   "game_audio": false,
+   "l1": "準備ミッション",
+   "l2": "積み荷を死守&練習はパーフェクトまで"
+  },
+  {
+   "narr": "../03_edit/narr9/line3.mp3",
+   "clips": [
+    [
+     70,
+     75
+    ],
+    [
+     93,
+     99
+    ]
+   ],
+   "game_audio": false,
+   "l1": "準備ミッション",
+   "l2": "尋問は最後まで/爆弾は3つ全部"
+  },
+  {
+   "narr": "../03_edit/narr9/line4.mp3",
+   "clips": [
+    [
+     104,
+     110
+    ]
+   ],
+   "game_audio": false,
+   "l1": "本番前",
+   "l2": "ジェイソンにアドレナリンを持たせる"
+  },
+  {
+   "narr": "../03_edit/narr9/line5.mp3",
+   "clips": [
+    [
+     118,
+     123
+    ],
+    [
+     150,
+     156
+    ]
+   ],
+   "game_audio": false,
+   "l1": "突入",
+   "l2": "警備員を気絶 → 人質を中央へ"
+  },
+  {
+   "narr": "../03_edit/narr9/line6.mp3",
+   "clips": [
+    [
+     378,
+     385
+    ],
+    [
+     396,
+     402
+    ]
+   ],
+   "l1": "屋上",
+   "l2": "アドレナリンで耐えて一気に突破"
+  },
+  {
+   "narr": "../03_edit/narr9/line7.mp3",
+   "clips": [
+    [
+     436,
+     441
+    ],
+    [
+     474,
+     482
+    ]
+   ],
+   "game_audio": false,
+   "l1": "金庫破り",
+   "l2": "ミスしたらチェックポイントから"
+  },
+  {
+   "narr": "../03_edit/narr9/line8.mp3",
+   "clips": [
+    [
+     544,
+     550
+    ],
+    [
+     575,
+     581
+    ]
+   ],
+   "game_audio": false,
+   "l1": "札束を回収",
+   "l2": "真ん中から時計回りに"
+  },
+  {
+   "narr": "../03_edit/narr9/line9.mp3",
+   "clips": [
+    [
+     600,
+     606
+    ]
+   ],
+   "game_audio": false
+  }
+ ]
+}
