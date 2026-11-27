@@ -51,15 +51,20 @@ CELL = 4.0
 NX, NY = int((BX1 - BX0) / CELL), int((BY1 - BY0) / CELL)
 PIV_X = W / 2
 PIV_Y0 = float(os.environ.get("PIV_Y0", 420.0))   # つり下げ点のはじめの高さ
-PIV_Y1 = float(os.environ.get("PIV_Y1", 1360.0))   # ここまで下がる
+PIV_Y1 = float(os.environ.get("PIV_Y1", 1200.0))   # ここまで下がる
 HEIGHTFIELD = os.environ.get("HEIGHTFIELD", "1") == "1"
 MODE = os.environ.get("MODE", "high")
 HIGH_Q = float(os.environ.get("HIGH_Q", 75.0))
 TOP_Q = float(os.environ.get("TOP_Q", 0.3))
 FOLLOW = float(os.environ.get("FOLLOW", 180.0))   # つり下げ点はブロックのいちばん上よりこれだけ上
-PIV_V = float(os.environ.get("PIV_V", 12.0))      # 下がる速さ(px/秒)
+PIV_V = float(os.environ.get("PIV_V", 10.0))      # 下がる速さ(px/秒)
 LINKS = [float(x) for x in os.environ.get("LINKS", "200,185,170").split(",")]
 START = os.environ.get("START", "lift")
+DOUBLE = os.environ.get("DOUBLE", "1") == "1"   # カクカクの紐(二重振り子)
+D_L1 = float(os.environ.get("D_L1", 280.0))
+D_L2 = float(os.environ.get("D_L2", 240.0))
+M1 = float(os.environ.get("M1", 1.0))
+M2 = float(os.environ.get("M2", 3.0))
 SINGLE = os.environ.get("SINGLE", "1") == "1"   # 1本の紐の鉄球(ふつうの振り子)
 L0 = float(os.environ.get("L0", 380.0))
 L_MAX = float(os.environ.get("L_MAX", 1060.0))
@@ -125,6 +130,11 @@ class Game:
         self.cut_now = 0
         self.spin = 0.0
         self.top_y = BY0
+        if DOUBLE:   # はじめは2本ともななめにもち上げてからはなす(角度はシードごとにちがう)
+            sgn = rng.choice([-1, 1])
+            self.t1 = math.radians(rng.uniform(TH0_MIN, TH0_MAX)) * sgn
+            self.t2 = math.radians(rng.uniform(TH0_MIN, TH0_MAX) + rng.uniform(10, 60)) * sgn
+            self.w1 = self.w2 = 0.0
         if SINGLE:   # はじめは紐をななめにもち上げてからはなす(角度はシードごとにちがう)
             self.L = L0
             self.th = math.radians(rng.uniform(TH0_MIN, TH0_MAX)) * rng.choice([-1, 1])
@@ -157,7 +167,14 @@ class Game:
                 b.velocity = pv + (b.velocity - pv) * k
                 b.angular_velocity *= k
 
+    def joint_pos(self):
+        px, py = self.pivot.position
+        return (px + D_L1 * math.sin(self.t1), py + D_L1 * math.cos(self.t1))
+
     def saw_pos(self):
+        if DOUBLE:
+            jx, jy = self.joint_pos()
+            return (jx + D_L2 * math.sin(self.t2), jy + D_L2 * math.cos(self.t2))
         if SINGLE:
             px, py = self.pivot.position
             return (px + self.L * math.sin(self.th), py + self.L * math.cos(self.th))
@@ -176,6 +193,9 @@ class Game:
         self.om += acc * dt
         self.th += self.om * dt
         self.L += dL
+        self.cut_and_check()
+
+    def cut_and_check(self):
         if self.result is not None:
             return
         sx, sy = self.saw_pos()
@@ -199,7 +219,12 @@ class Game:
         if n:
             self.left -= n
             self.cut_now += n
-            self.om *= max(0.0, 1 - DRAG * n)   # くだいた分だけ、ほんの少しおそくなる
+            f = max(0.0, 1 - DRAG * n)   # くだいた分だけ、ほんの少しおそくなる
+            if DOUBLE:
+                self.w1 *= f
+                self.w2 *= f
+            else:
+                self.om *= f
         if self.t >= self.next_drop_chk:
             self.next_drop_chk = self.t + 0.2
             colh = self.grid.sum(axis=0)
@@ -211,12 +236,43 @@ class Game:
             self.result, self.result_t = "fail", self.t
             self.events.append(("fail", self.t, None))
 
+    def dp_acc(self, t1, t2, w1, w2):
+        """二重振り子の角加速度(ふつうの式。m1:つなぎ目のおもり、m2:鉄球)。"""
+        m1, m2, l1, l2, g = M1, M2, D_L1, D_L2, GRAVITY
+        d = t1 - t2
+        den = 2 * m1 + m2 - m2 * math.cos(2 * d)
+        a1 = (-g * (2 * m1 + m2) * math.sin(t1) - m2 * g * math.sin(t1 - 2 * t2)
+              - 2 * math.sin(d) * m2 * (w2 * w2 * l2 + w1 * w1 * l1 * math.cos(d))) / (l1 * den)
+        a2 = (2 * math.sin(d) * (w1 * w1 * l1 * (m1 + m2) + g * (m1 + m2) * math.cos(t1)
+              + w2 * w2 * l2 * m2 * math.cos(d))) / (l2 * den)
+        return a1, a2
+
+    def step_double(self, dt):
+        """カクカクの紐(2本の棒の二重振り子)。つり下げ点は真下へ一定の速さでおりる(横には動かない)。"""
+        self.t += dt
+        px, py = self.pivot.position
+        self.pivot.position = (px, min(PIV_Y1, py + PIV_V * dt))
+        t1, t2, w1, w2 = self.t1, self.t2, self.w1, self.w2   # RK4
+        k1 = (w1, w2) + self.dp_acc(t1, t2, w1, w2)
+        k2 = (w1 + k1[2] * dt / 2, w2 + k1[3] * dt / 2) + self.dp_acc(t1 + k1[0] * dt / 2, t2 + k1[1] * dt / 2, w1 + k1[2] * dt / 2, w2 + k1[3] * dt / 2)
+        k3 = (w1 + k2[2] * dt / 2, w2 + k2[3] * dt / 2) + self.dp_acc(t1 + k2[0] * dt / 2, t2 + k2[1] * dt / 2, w1 + k2[2] * dt / 2, w2 + k2[3] * dt / 2)
+        k4 = (w1 + k3[2] * dt, w2 + k3[3] * dt) + self.dp_acc(t1 + k3[0] * dt, t2 + k3[1] * dt, w1 + k3[2] * dt, w2 + k3[3] * dt)
+        self.t1 += dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+        self.t2 += dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+        self.w1 += dt / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])
+        self.w2 += dt / 6 * (k1[3] + 2 * k2[3] + 2 * k3[3] + k4[3])
+        self.cut_and_check()
+
     def step(self, dt):
+        if DOUBLE:
+            return self.step_double(dt)
         if SINGLE:
             return self.step_single(dt)
         self.t += dt
         # つり下げ点は、残っているブロックのいちばん上より FOLLOW だけ上の高さまで、ゆっくり下がる(上がりはしない)
         want = min(PIV_Y1, max(PIV_Y0, self.top_y - FOLLOW))
+        if MODE == "const":   # クレーンが一定の速さでおろしていく
+            want = PIV_Y1
         cur = self.pivot.position.y
         if MODE == "center":   # 残っているブロックのまん中の高さに合わせて、上にも下にもゆっくり動く(クレーン)
             py = cur + max(-PIV_V * dt, min(PIV_V * dt, want - cur))
@@ -325,7 +381,9 @@ def simulate(seed, record=False):
         if g.cut_now:
             g.events.append(("cut", g.t, (sx, sy, g.cut_now)))
         if record:
-            if SINGLE:
+            if DOUBLE:
+                pts = [tuple(g.pivot.position), g.joint_pos(), g.saw_pos()]
+            elif SINGLE:
                 pts = [tuple(g.pivot.position), g.saw_pos()]
             else:
                 pts = [tuple(g.pivot.position)] + [tuple(b.local_to_world(e)) for b, e in g.links]
