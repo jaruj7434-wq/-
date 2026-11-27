@@ -50,7 +50,7 @@ BY0, BY1 = float(os.environ.get("BY0", 760.0)), float(os.environ.get("BY1", 1400
 CELL = 4.0
 NX, NY = int((BX1 - BX0) / CELL), int((BY1 - BY0) / CELL)
 PIV_X = W / 2
-PIV_Y0 = float(os.environ.get("PIV_Y0", 580.0))   # つり下げ点のはじめの高さ
+PIV_Y0 = float(os.environ.get("PIV_Y0", 420.0))   # つり下げ点のはじめの高さ
 PIV_Y1 = float(os.environ.get("PIV_Y1", 1360.0))   # ここまで下がる
 HEIGHTFIELD = os.environ.get("HEIGHTFIELD", "1") == "1"
 MODE = os.environ.get("MODE", "high")
@@ -60,14 +60,22 @@ FOLLOW = float(os.environ.get("FOLLOW", 180.0))   # つり下げ点はブロッ�
 PIV_V = float(os.environ.get("PIV_V", 12.0))      # 下がる速さ(px/秒)
 LINKS = [float(x) for x in os.environ.get("LINKS", "200,185,170").split(",")]
 START = os.environ.get("START", "lift")
-SWAY_A = float(os.environ.get("SWAY_A", 150.0))   # つり下げ点が左右に動くはば(片側)
+SINGLE = os.environ.get("SINGLE", "1") == "1"   # 1本の紐の鉄球(ふつうの振り子)
+L0 = float(os.environ.get("L0", 380.0))
+L_MAX = float(os.environ.get("L_MAX", 1060.0))
+L_V = float(os.environ.get("L_V", 12.0))        # 紐がのびる速さ(px/秒)
+DIG = float(os.environ.get("DIG", 30.0))
+TH0_MIN = float(os.environ.get("TH0_MIN", 50.0))
+TH0_MAX = float(os.environ.get("TH0_MAX", 88.0))
+KEEP_E = os.environ.get("KEEP_E", "1") == "1"
+SWAY_A = float(os.environ.get("SWAY_A", 0.0))   # つり下げ点が左右に動くはば(片側)
 SWAY_T = float(os.environ.get("SWAY_T", 2.4))     # 1往復の秒数
 SAW_R = float(os.environ.get("SAW_R", 44.0))
 KICK = float(os.environ.get("KICK", 0.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
-DRAG = float(os.environ.get("DRAG", 0.0003))      # けずった1マスごとのブレーキ(速さの割合)
+DRAG = float(os.environ.get("DRAG", 0.000025))      # けずった1マスごとのブレーキ(速さの割合)
 GRAVITY = float(os.environ.get("GRAVITY", 650.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 74.2))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 62.0))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -117,14 +125,95 @@ class Game:
         self.cut_now = 0
         self.spin = 0.0
         self.top_y = BY0
+        if SINGLE:   # はじめは紐をななめにもち上げてからはなす(角度はシードごとにちがう)
+            self.L = L0
+            self.th = math.radians(rng.uniform(TH0_MIN, TH0_MAX)) * rng.choice([-1, 1])
+            self.om = 0.0
+        self.e_target = None
         self.next_drop_chk = 0.0
         self.fallen = []
 
+    def energy(self):
+        """つり下げ点から見た、振り子の力学的エネルギー(運動+位置)。"""
+        pv, py = self.pivot.velocity, self.pivot.position.y
+        ke = pe = 0.0
+        for b, _ in self.links:
+            v = b.velocity - pv
+            ke += 0.5 * b.mass * v.dot(v) + 0.5 * b.moment * b.angular_velocity ** 2
+            pe += b.mass * GRAVITY * (py - b.position.y)
+        return ke, pe
+
+    def fix_energy(self):
+        """計算の誤差(数値のまさつ)で減ったエネルギーだけを元にもどす。ブロックをくだいて使った分は、もどさない。"""
+        ke, pe = self.energy()
+        if self.e_target is None:
+            self.e_target = ke + pe
+            return
+        want_ke = self.e_target - pe
+        if ke > 1e-6 and want_ke > 0:
+            k = math.sqrt(want_ke / ke)
+            pv = self.pivot.velocity
+            for b, _ in self.links:
+                b.velocity = pv + (b.velocity - pv) * k
+                b.angular_velocity *= k
+
     def saw_pos(self):
+        if SINGLE:
+            px, py = self.pivot.position
+            return (px + self.L * math.sin(self.th), py + self.L * math.cos(self.th))
         b, end = self.links[-1]
         return b.local_to_world(end)
 
+    def step_single(self, dt):
+        """1本の紐の鉄球(ふつうの振り子)。紐は固定した点からたれていて、クレーンが少しずつ紐をのばす。
+        θ'' = -(g/L)·sinθ - 2(L'/L)·θ'(紐がのびるときの振り子の式)を、細かい時間で計算する。"""
+        self.t += dt
+        px, py = self.pivot.position
+        want = L_MAX   # クレーンは一定の速さで紐をのばしていく
+        dL = min(want - self.L, L_V * dt) if want > self.L else 0.0
+        Ld = dL / dt
+        acc = -(GRAVITY / self.L) * math.sin(self.th) - 2 * (Ld / self.L) * self.om
+        self.om += acc * dt
+        self.th += self.om * dt
+        self.L += dL
+        if self.result is not None:
+            return
+        sx, sy = self.saw_pos()
+        j0 = max(0, int((sx - SAW_R - BX0) / CELL))
+        j1 = min(NX - 1, int((sx + SAW_R - BX0) / CELL))
+        n = 0
+        for j in range(j0, j1 + 1):
+            xc = BX0 + (j + 0.5) * CELL
+            dx = xc - sx
+            if abs(dx) > SAW_R:
+                continue
+            ybot = sy + math.sqrt(SAW_R * SAW_R - dx * dx)   # 鉄球の下のふち
+            col = self.grid[:, j]
+            top = NY - int(col.sum())                       # 上の面の行
+            ytop = BY0 + top * CELL
+            if ybot > ytop:
+                newtop = min(NY, int((ybot - BY0) / CELL) + 1)
+                if newtop > top:
+                    col[top:newtop] = False
+                    n += newtop - top
+        if n:
+            self.left -= n
+            self.cut_now += n
+            self.om *= max(0.0, 1 - DRAG * n)   # くだいた分だけ、ほんの少しおそくなる
+        if self.t >= self.next_drop_chk:
+            self.next_drop_chk = self.t + 0.2
+            colh = self.grid.sum(axis=0)
+            self.top_y = BY1 - float(np.percentile(colh, HIGH_Q)) * CELL
+        if self.left <= 0:
+            self.result, self.result_t = "success", self.t
+            self.events.append(("success", self.t, None))
+        elif self.t >= TIME_LIMIT:
+            self.result, self.result_t = "fail", self.t
+            self.events.append(("fail", self.t, None))
+
     def step(self, dt):
+        if SINGLE:
+            return self.step_single(dt)
         self.t += dt
         # つり下げ点は、残っているブロックのいちばん上より FOLLOW だけ上の高さまで、ゆっくり下がる(上がりはしない)
         want = min(PIV_Y1, max(PIV_Y0, self.top_y - FOLLOW))
@@ -138,6 +227,8 @@ class Game:
         vx = SWAY_A * w * math.cos(w * self.t + self.sway_ph)
         self.pivot.velocity = (vx, (py - cur) / dt)
         self.space.step(dt)
+        if KEEP_E:
+            self.fix_energy()
         if self.result is not None:
             return
         sx, sy = self.saw_pos()
@@ -185,6 +276,9 @@ class Game:
                     ix -= BOUNCE * vn * nx_
                     iy -= BOUNCE * vn * ny_
                 b.apply_impulse_at_world_point((ix * b.mass, iy * b.mass), (sx, sy))
+                if KEEP_E and self.e_target is not None:   # くだいた分だけエネルギーを使う
+                    ke, pe = self.energy()
+                    self.e_target -= ke * min(0.5, DRAG * n) * 2
         if self.t >= self.next_drop_chk:   # 下の床(ブロックの底)とつながっていない破片は、支えがないので落ちる
             self.next_drop_chk = self.t + 0.2
             cnt = self.grid.sum(axis=1)   # 残っているブロックの高さを見直す(破片が落ちたあとも)
@@ -231,7 +325,10 @@ def simulate(seed, record=False):
         if g.cut_now:
             g.events.append(("cut", g.t, (sx, sy, g.cut_now)))
         if record:
-            pts = [tuple(g.pivot.position)] + [tuple(b.local_to_world(e)) for b, e in g.links]
+            if SINGLE:
+                pts = [tuple(g.pivot.position), g.saw_pos()]
+            else:
+                pts = [tuple(g.pivot.position)] + [tuple(b.local_to_world(e)) for b, e in g.links]
             frames.append({"t": g.t, "pts": pts, "left": g.left, "grid": g.grid.copy() if g.cut_now or not frames else None,
                            "cut": g.cut_now})
         if g.result is not None:
@@ -507,12 +604,12 @@ def render(seed):
             spin += 0.5
         draw_iron(ctx, sx, sy, SAW_R)
         # 文字
-        chic(ctx, "全部けずれる？", W / 2, 250, 66, rgb=(1, 0.88, 0.6))
+        chic(ctx, "全部けずれる？", W / 2, 200, 62, rgb=(1, 0.88, 0.6))
         pct = int((1 - fr["left"] / res["total"]) * 100)
-        chic(ctx, f"{pct}%", W / 2, 360, 90, rgb=(1, 1, 1), weight="Medium")
+        chic(ctx, f"{pct}%", W / 2 - 110, 310, 84, rgb=(1, 1, 1), weight="Medium")
         tt = min(t, end_t) if end_t is not None else t
         left = max(0.0, TIME_LIMIT - tt)
-        chic(ctx, f"{left:4.1f}", W / 2, 425, 40, rgb=(1, 0.45, 0.45) if left < 5 else (0.7, 0.75, 0.85), weight="Medium")
+        chic(ctx, f"{left:4.1f}", W / 2 + 130, 305, 44, rgb=(1, 0.45, 0.45) if left < 5 else (0.7, 0.75, 0.85), weight="Medium")
         if not over:
             horror(ctx, "失敗したら…", W / 2, 1620, 74, t)
         if over and fail:
