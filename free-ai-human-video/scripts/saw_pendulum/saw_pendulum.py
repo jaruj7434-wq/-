@@ -45,19 +45,21 @@ SUBSTEPS = 8
 SR = 48000
 OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 
-BX0, BX1 = float(os.environ.get("BX0", 160.0)), float(os.environ.get("BX1", 920.0))            # ブロックの左右
+BX0, BX1 = float(os.environ.get("BX0", 260.0)), float(os.environ.get("BX1", 820.0))            # ブロックの左右
 BY0, BY1 = float(os.environ.get("BY0", 760.0)), float(os.environ.get("BY1", 1400.0))          # ブロックの上下
 CELL = 4.0
 NX, NY = int((BX1 - BX0) / CELL), int((BY1 - BY0) / CELL)
 PIV_X = W / 2
 PIV_Y0 = float(os.environ.get("PIV_Y0", 420.0))   # つり下げ点のはじめの高さ
-PIV_Y1 = float(os.environ.get("PIV_Y1", 1200.0))   # ここまで下がる
+PIV_Y1 = float(os.environ.get("PIV_Y1", 1050.0))   # ここまで下がる
+CUT_ONLY_HIT = os.environ.get("CUT_ONLY_HIT", "1") == "1"   # 当たった所だけくだける(上までごっそりはくずれない)
+DROP_LOOSE = os.environ.get("DROP_LOOSE", "0") == "1"   # 切りはなされた所をまとめて落とす(使わない:当たった所だけくだける)
 HEIGHTFIELD = os.environ.get("HEIGHTFIELD", "1") == "1"
 MODE = os.environ.get("MODE", "high")
 HIGH_Q = float(os.environ.get("HIGH_Q", 75.0))
 TOP_Q = float(os.environ.get("TOP_Q", 0.3))
 FOLLOW = float(os.environ.get("FOLLOW", 180.0))   # つり下げ点はブロックのいちばん上よりこれだけ上
-PIV_V = float(os.environ.get("PIV_V", 21.0))      # 下がる速さ(px/秒)
+PIV_V = float(os.environ.get("PIV_V", 15.0))      # 下がる速さ(px/秒)
 LINKS = [float(x) for x in os.environ.get("LINKS", "200,185,170").split(",")]
 START = os.environ.get("START", "lift")
 DOUBLE = os.environ.get("DOUBLE", "1") == "1"   # カクカクの紐(二重振り子)
@@ -79,12 +81,12 @@ TH0_MAX = float(os.environ.get("TH0_MAX", 88.0))
 KEEP_E = os.environ.get("KEEP_E", "1") == "1"
 SWAY_A = float(os.environ.get("SWAY_A", 0.0))   # つり下げ点が左右に動くはば(片側)
 SWAY_T = float(os.environ.get("SWAY_T", 2.4))     # 1往復の秒数
-SAW_R = float(os.environ.get("SAW_R", 56.0))
+SAW_R = float(os.environ.get("SAW_R", 85.0))
 KICK = float(os.environ.get("KICK", 0.0))       # 回る刃がブロックをけって進む強さ(1マスあたり)
 BOUNCE = float(os.environ.get("BOUNCE", 0.0))
 DRAG = float(os.environ.get("DRAG", 0.000005))      # けずった1マスごとのブレーキ(速さの割合)
-GRAVITY = float(os.environ.get("GRAVITY", 650.0))
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 44.9))
+GRAVITY = float(os.environ.get("GRAVITY", 1600.0))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 53.0))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -218,15 +220,27 @@ class Game:
             dx = xc - sx
             if abs(dx) > SAW_R:
                 continue
-            ybot = sy + math.sqrt(SAW_R * SAW_R - dx * dx)   # 鉄球の下のふち
-            col = self.grid[:, j]
-            top = NY - int(col.sum())                       # 上の面の行
-            ytop = BY0 + top * CELL
-            if ybot > ytop:
-                newtop = min(NY, int((ybot - BY0) / CELL) + 1)
-                if newtop > top:
-                    col[top:newtop] = False
-                    n += newtop - top
+            h = math.sqrt(SAW_R * SAW_R - dx * dx)
+            if not CUT_ONLY_HIT:
+                ybot = sy + h   # 鉄球の下のふち
+                col = self.grid[:, j]
+                top = NY - int(col.sum())                       # 上の面の行
+                ytop = BY0 + top * CELL
+                if ybot > ytop:
+                    newtop = min(NY, int((ybot - BY0) / CELL) + 1)
+                    if newtop > top:
+                        col[top:newtop] = False
+                        n += newtop - top
+                continue
+            # 鉄球が当たった所(円の中)だけくだける。その上の所はそのまま残る
+            i0 = max(0, int(math.ceil((sy - h - BY0) / CELL - 0.5)))
+            i1 = min(NY - 1, int(math.floor((sy + h - BY0) / CELL - 0.5)))
+            if i1 >= i0:
+                col = self.grid[i0:i1 + 1, j]
+                c = int(col.sum())
+                if c:
+                    col[:] = False
+                    n += c
         if n:
             self.left -= n
             self.cut_now += n
@@ -239,6 +253,18 @@ class Game:
             self.next_drop_chk = self.t + 0.2
             colh = self.grid.sum(axis=0)
             self.top_y = BY1 - float(np.percentile(colh, HIGH_Q)) * CELL
+            if CUT_ONLY_HIT and DROP_LOOSE and self.left > 0:   # 下の床とつながっていない破片は、支えがないので落ちる
+                lab, nlab = ndimage.label(self.grid)
+                keep = set(np.unique(lab[-1])) - {0}
+                loose = (lab > 0) & ~np.isin(lab, list(keep))
+                nl = int(loose.sum())
+                if nl:
+                    ys, xs = np.nonzero(loose)
+                    self.fallen.append((self.t, xs.astype(np.int16), ys.astype(np.int16)))
+                    self.grid[loose] = False
+                    self.left -= nl
+                    self.cut_now += nl
+                    self.events.append(("fall", self.t, nl))
         if self.left <= 0:
             self.result, self.result_t = "success", self.t
             self.events.append(("success", self.t, None))
@@ -589,8 +615,12 @@ def render(seed):
         colh = grid.sum(axis=0)
         if colh.any():
             ctx.new_path()
+            topi = np.argmax(grid, axis=0)
             for j in range(NX):
-                y_ = BY1 - colh[j] * CELL
+                if not colh[j]:
+                    ctx.new_sub_path()
+                    continue
+                y_ = BY0 + topi[j] * CELL
                 ctx.line_to(BX0 + (j + 0.5) * CELL, y_)
             for wd, al in ((8, 0.12), (2.5, 0.75)):
                 ctx.set_source_rgba(0.85, 0.95, 1.0, al)
