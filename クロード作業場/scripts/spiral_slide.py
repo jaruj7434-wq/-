@@ -533,6 +533,9 @@ except Exception:
 rd.use_motion_blur = True
 rd.motion_blur_shutter = 0.5
 rd.image_settings.file_format = "PNG"
+# 途中で止まっても、書き出し済みのフレームを飛ばして再開できるようにする
+rd.use_overwrite = False
+rd.use_placeholder = True
 
 
 # ----------------------------------------------------------------------------
