@@ -1,4 +1,4 @@
-"""「玉を食べて大きくなるボール、全部食べられる?」(参考動画「balls eaten」の形)
+"""「玉を食べて大きくなるキャラ、全部食べられる?」(参考動画「balls eaten」の形)
 カプセル形(スタジアム形)のわくの中に小さな玉がぎっしりならんでいる。1個のボールが一定の速さでまっすぐ進み、わくのかべで反射する。
 ボールにふれた小さな玉は食べられて消え、食べた分だけボールが大きくなる(面積を GROW の割合で足す)。
 小さな玉にぶつかったときは、弾性衝突の反動でボールの進む向きが物理どおりに変わる(速さは一定のまま)。
@@ -171,7 +171,7 @@ def simulate(seed, record=False):
         if g.bounce_now:
             g.events.append(("bounce", g.t, (g.x, g.y)))
         if record:
-            frames.append({"t": g.t, "x": g.x, "y": g.y, "r": g.r, "left": g.left,
+            frames.append({"t": g.t, "x": g.x, "y": g.y, "r": g.r, "left": g.left, "vx": g.vx, "vy": g.vy,
                            "alive": g.alive.copy() if (g.eat_now or not frames) else None, "eat": g.eat_now})
         if g.result is not None:
             extra = (OUTRO + SCARE_DUR) if g.result == "fail" else (PRE + WIN_DUR)
@@ -240,22 +240,89 @@ def capsule(ctx, r):
     ctx.close_path()
 
 
-def draw_hero(ctx, x, y, r, t):
-    """食べるボール:白く光る金色の玉。"""
-    for k, al in ((2.6, 0.06), (1.8, 0.12), (1.3, 0.22)):
+def draw_hero(ctx, x, y, r, ang, mouth, t):
+    """食べるキャラ:まんまるの体に目とほっぺ。進む向きに大きな口をあけて、食べるたびにパクパクする。
+    ang:進む向き、mouth:口のあき具合(0〜1)。左向きのときは左右反転して、顔がさかさまにならないようにする。"""
+    for k, al in ((2.4, 0.06), (1.7, 0.12), (1.25, 0.22)):   # まわりの光
         g = cairo.RadialGradient(x, y, r * 0.6, x, y, r * k)
         g.add_color_stop_rgba(0, 1.0, 0.85, 0.4, al)
         g.add_color_stop_rgba(1, 1.0, 0.7, 0.2, 0)
         ctx.arc(x, y, r * k, 0, 2 * math.pi)
         ctx.set_source(g)
         ctx.fill()
-    g = cairo.RadialGradient(x - r * 0.35, y - r * 0.4, r * 0.05, x, y, r)
-    g.add_color_stop_rgb(0, 1.0, 1.0, 0.95)
-    g.add_color_stop_rgb(0.35, 1.0, 0.85, 0.35)
-    g.add_color_stop_rgb(1, 0.85, 0.45, 0.05)
-    ctx.arc(x, y, r, 0, 2 * math.pi)
+    ctx.save()
+    ctx.translate(x, y)
+    flip = math.cos(ang) < 0
+    if flip:
+        ctx.scale(-1, 1)
+        ang = math.pi - ang
+    ctx.rotate(ang)
+    ctx.scale(r, r)
+    # 体
+    g = cairo.RadialGradient(-0.35, -0.45, 0.05, 0, 0, 1)
+    g.add_color_stop_rgb(0, 1.0, 0.98, 0.85)
+    g.add_color_stop_rgb(0.4, 1.0, 0.8, 0.3)
+    g.add_color_stop_rgb(1, 0.92, 0.45, 0.08)
+    ctx.arc(0, 0, 1, 0, 2 * math.pi)
     ctx.set_source(g)
     ctx.fill()
+    # 口(進む向きにあく)
+    mo = 0.12 + 0.88 * mouth
+    mx, my = 0.5, 0.18
+    rw, rh = 0.42, 0.42 * mo
+    ctx.save()
+    ctx.translate(mx, my)
+    ctx.scale(rw, max(0.02, rh))
+    ctx.arc(0, 0, 1, 0, 2 * math.pi)
+    ctx.restore()
+    ctx.set_source_rgb(0.35, 0.05, 0.08)
+    ctx.fill_preserve()
+    ctx.save()
+    ctx.clip()
+    ctx.arc(mx + 0.05, my + rh * 0.9, 0.3, 0, 2 * math.pi)   # 舌
+    ctx.set_source_rgb(1.0, 0.45, 0.55)
+    ctx.fill()
+    for tx_ in (mx - 0.16, mx + 0.1):                         # 上の歯
+        ctx.rectangle(tx_, my - rh - 0.02, 0.11, 0.07 + 0.08 * mo)
+        ctx.set_source_rgb(1, 1, 1)
+        ctx.fill()
+    ctx.restore()
+    ctx.save()
+    ctx.translate(mx, my)
+    ctx.scale(rw, max(0.02, rh))
+    ctx.arc(0, 0, 1, 0, 2 * math.pi)
+    ctx.restore()
+    ctx.set_source_rgb(0.55, 0.2, 0.05)
+    ctx.set_line_width(0.05)
+    ctx.stroke()
+    # 目(白目+黒目+光)
+    blink = (t % 3.1) < 0.1
+    for ex, ey, er in ((0.12, -0.42, 0.2), (0.55, -0.36, 0.17)):
+        if blink:
+            ctx.move_to(ex - er, ey)
+            ctx.line_to(ex + er, ey)
+            ctx.set_source_rgb(0.2, 0.08, 0.05)
+            ctx.set_line_width(0.06)
+            ctx.stroke()
+            continue
+        ctx.arc(ex, ey, er, 0, 2 * math.pi)
+        ctx.set_source_rgb(1, 1, 1)
+        ctx.fill()
+        ctx.arc(ex + er * 0.35, ey + er * 0.05, er * 0.6, 0, 2 * math.pi)
+        ctx.set_source_rgb(0.1, 0.06, 0.05)
+        ctx.fill()
+        ctx.arc(ex + er * 0.45, ey - er * 0.25, er * 0.22, 0, 2 * math.pi)
+        ctx.set_source_rgb(1, 1, 1)
+        ctx.fill()
+    # ほっぺ
+    ctx.save()
+    ctx.translate(-0.2, 0.15)
+    ctx.scale(0.2, 0.12)
+    ctx.arc(0, 0, 1, 0, 2 * math.pi)
+    ctx.restore()
+    ctx.set_source_rgba(1.0, 0.4, 0.45, 0.55)
+    ctx.fill()
+    ctx.restore()
 
 
 def render(seed):
@@ -302,6 +369,7 @@ def render(seed):
     alive = frames[0]["alive"]
     frozen = None
     trail = []
+    face_ang, munch, chomp_ph = None, 0.0, 0.0
     for fi, fr in enumerate(frames):
         t = fr["t"]
         if fr["alive"] is not None:
@@ -379,7 +447,18 @@ def render(seed):
                 ctx.arc(tx_, ty_, tr_ * 0.9, 0, 2 * math.pi)
                 ctx.set_source_rgba(1.0, 0.75, 0.3, 0.05 + 0.02 * i)
                 ctx.fill()
-            draw_hero(ctx, hx, hy, hr, t)
+            want = math.atan2(fr["vy"], fr["vx"])
+            if face_ang is None:
+                face_ang = want
+            dang = (want - face_ang + math.pi) % (2 * math.pi) - math.pi
+            face_ang += dang * 0.35                      # 向きはなめらかにふりむく
+            if fr["eat"]:
+                munch = min(1.0, munch + 0.5)
+            else:
+                munch = max(0.0, munch - 0.05)
+            chomp_ph += 0.55 * munch
+            mouth = (0.85 if munch < 0.05 else 0.5 + 0.5 * math.cos(chomp_ph))   # 食べている間はパクパク
+            draw_hero(ctx, hx, hy, hr, face_ang, mouth, t)
         # 文字
         chic(ctx, "全部たべられる？", W / 2, 200, 62, rgb=(1, 0.88, 0.6))
         pct = int((1 - fr["left"] / NB) * 100)
