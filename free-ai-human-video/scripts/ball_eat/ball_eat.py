@@ -47,13 +47,13 @@ OUT_DIR = os.path.join(HERE, "..", "..", "assets", "output")
 CX, CY = 540.0, 1010.0
 R = float(os.environ.get("R", 380.0))           # わく(カプセル形)の半円の半径 = 横はばの半分
 HS = float(os.environ.get("HS", 120.0))         # まん中のまっすぐな部分の長さの半分(0 なら円)
-RS = float(os.environ.get("RS", 7.0))            # 小さな玉の半径
+RS = float(os.environ.get("RS", 4.5))            # 小さな玉の半径
 R0 = float(os.environ.get("R0", 9.0))            # はじめのボールの半径
 GROW = float(os.environ.get("GROW", 0.045))      # 食べた玉の面積のこの割合だけボールの面積がふえる
-SPEED = float(os.environ.get("SPEED", 1600.0))    # ボールの速さ(一定)
+SPEED = float(os.environ.get("SPEED", 2000.0))    # ボールの速さ(一定)
 M_K = float(os.environ.get("M_K", 1.0))          # 小さな玉の重さ(面積あたり、ボールとの比)
 START_R = float(os.environ.get("START_R", 250.0))   # はじめの位置はまん中からこの半径の中
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 42.5))
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 43.7))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -69,7 +69,7 @@ def lattice():
     """六角形にぎっしりならべた小さな玉の位置(わくの中に入るものだけ)。"""
     s = 2 * RS
     pts = []
-    rows = int(R / (s * math.sqrt(3) / 2)) + 2
+    rows = int((R + HS) / (s * math.sqrt(3) / 2)) + 2
     for j in range(-rows, rows + 1):
         y = j * s * math.sqrt(3) / 2
         off = (s / 2) if j % 2 else 0.0
@@ -363,7 +363,7 @@ def render(seed):
     grng = np.random.default_rng(seed + 5)
     glints = [(grng.uniform(0, W), grng.uniform(0, H), grng.uniform(0, 1), grng.uniform(1.5, 3.5), grng.uniform(30, 90))
               for _ in range(40)]
-    cols = [colorsys.hsv_to_rgb(k / HB, 0.75, 1.0) for k in range(HB)]
+    cols = [colorsys.hsv_to_rgb(k / HB, 0.85, 1.0) for k in range(HB)]
     prng = np.random.default_rng(seed + 9)
     parts = []   # 食べたときに飛びちる光のつぶ
     alive = frames[0]["alive"]
@@ -418,10 +418,26 @@ def render(seed):
                     continue
                 for px, py in PTS[ss]:
                     ctx.new_sub_path()
-                    ctx.arc(px, py, RS - 0.8, 0, 2 * math.pi)
+                    ctx.arc(px, py, RS - 0.35, 0, 2 * math.pi)
                 f = 1.0 if lit else 0.72
                 ctx.set_source_rgb(min(1, c[0] * f + (0.25 if lit else 0)), min(1, c[1] * f + (0.25 if lit else 0)),
                                    min(1, c[2] * f + (0.25 if lit else 0)))
+                ctx.fill()
+        # 残りわずかになったら、残っている玉をやさしく光らせて見やすくする(見た目だけ)
+        nleft = int(alive.sum())
+        if 0 < nleft <= 80 and not over:
+            pul = 0.5 + 0.5 * math.sin(t * 7)
+            for k in np.nonzero(alive)[0]:
+                px, py = PTS[k]
+                c = cols[HUE_BIN[k]]
+                g = cairo.RadialGradient(px, py, 1, px, py, 22 + 6 * pul)
+                g.add_color_stop_rgba(0, *c, 0.65)
+                g.add_color_stop_rgba(1, *c, 0)
+                ctx.arc(px, py, 22 + 6 * pul, 0, 2 * math.pi)
+                ctx.set_source(g)
+                ctx.fill()
+                ctx.arc(px, py, RS + 1.5, 0, 2 * math.pi)
+                ctx.set_source_rgb(min(1, c[0] + 0.3), min(1, c[1] + 0.3), min(1, c[2] + 0.3))
                 ctx.fill()
         # 光のつぶ
         keep = []
