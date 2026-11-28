@@ -7,6 +7,8 @@
 - 重力・反発・摩擦のまま自然に落ちて転がる(ねらい・補正なし)。玉が転がると瞳の模様も一緒に回る。
 - 合体は「同じ段階どうしが触れたら」必ず起きる(1回の接触で1回)。
 - 虹の瞳ができれば成功(大当たり演出)、首までつまってあふれるか時間切れなら失敗(幽霊 → 暗くなって「Failed...」)。
+- 進化するたびに悪い笑い声(「ムフッ…ハッハッハ!」・プログラムで合成したオリジナルの声 common/evil_laugh.py)。
+  段階が上がるほど長く・低く・こわい。前の笑いが鳴っている間は、それより上の段階のときだけ重ねる。
 - 絵・音はすべてプログラムで作ったオリジナル。
 
 使い方:
@@ -33,6 +35,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "common"))
 from jumpscare import DURATION as SCARE_DUR, GhostScare, scream  # noqa: E402
 from fail_bgm import fail_music  # noqa: E402
 from pachinko import RainbowFever, kyuin_music  # noqa: E402
+from evil_laugh import evil_laugh  # noqa: E402
 from flashy import PALETTE, chic, draw_ball as shiny_ball, giragira, horror, kyuin_one  # noqa: E402
 sys.path.insert(0, os.path.join(HERE, "..", "glass_spiral"))
 import jackpot_end as JP  # noqa: E402
@@ -835,6 +838,7 @@ def synth_audio(res, duration, path):
             b[i:j] += gain * sig[: j - i]
     cache = {}
     k = 0
+    laugh_end, laugh_st = -1.0, -1
     for kind, t, data in events:
         if end_t is not None and t > end_t + 0.01:
             continue
@@ -846,6 +850,12 @@ def synth_audio(res, duration, path):
             if st not in cache:
                 cache[st] = evolve_sound(st)
             add(cache[st], t, 0.6 + 0.1 * st)
+            # 進化するたびに悪い笑い声(段階が上がるほど長く低くこわい)。前の笑いが鳴っている間は、
+            # それより上の段階のときだけ重ねる(笑いがぐちゃぐちゃに重ならないように)
+            if t >= laugh_end or st > laugh_st:
+                lg = evil_laugh(min(6, st - 1 + (1 if st == GOAL else 0)), SR)
+                add(lg, t + 0.12, 0.55 + 0.06 * st)
+                laugh_end, laugh_st = t + 0.12 + len(lg) / SR * 0.7, st
     wet = out.copy()
     for dd, g in ((0.043, 0.2), (0.071, 0.13)):
         kk = int(dd * SR)
