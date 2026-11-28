@@ -1,15 +1,15 @@
-"""「パチンコのヘソに入った玉が、虹色の玉を食べつくせる?」(参考動画「balls eaten」の形 + パチンコ)
+"""「ヘソに入った玉がぶつかると増える、へやをパンパンにできる?」(パチンコ+増える玉)
 上はパチンコの盤面。左のレールから銀の玉が一発ずつ打ちこまれ、釘に当たりながら落ちる。
-下のまん中のヘソ(入賞口)に入った玉だけが、下のへやに落ちて「口をあけたキャラ」に変身する。外れた玉は両はしのアウト口へ消える。
-へやの中には小さな虹色の玉がぎっしりつまっていて、キャラはふれた玉を食べて大きくなる(面積を GROW の割合で足す)。
-キャラは重力で落ちて、かべやほかのキャラにふつうに跳ね返る(物理エンジン pymunk。食べても向きは変わらない)。
-TIME_LIMIT 秒以内に全部食べたら成功(大当たり演出)、残ったら失敗(幽霊 → 暗くなって「Failed...」+ 残った玉を赤い輪で表示)。
+下のまん中のヘソ(入賞口)に入った玉だけが、パイプを通って下のへやに落ち、虹色の玉になる。外れた玉は両はしのアウト口へ消える。
+へやの玉どうしが勢いよくぶつかる(ぶつかる速さが V_MIN 以上)と、ぶつかった所に新しい玉がポンと生まれる(小さく生まれてふくらむ)。
+増えた玉はしばらく(COOL 秒)は増やさない。へやの中はふつうに跳ね返る(はねかえり係数 E_BOUNCE。少しずつ勢いがなくなる)。
+TIME_LIMIT 秒以内に玉が N_FULL 個(へやがパンパン)になったら成功(大当たり演出)、ならなければ失敗(幽霊 → 暗くなって「Failed...」)。
 
 - ねらい・補正なし。シードで変わるのは、打ちこむ強さの小さなばらつき(ハンドルのぶれ)だけ。
 
 使い方:
-    python ball_eat.py search [-n 80]
-    python ball_eat.py render --seed N
+    python heso_breed.py search [-n 80]
+    python heso_breed.py render --seed N
 """
 
 import argparse
@@ -57,10 +57,13 @@ LAUNCH_J = float(os.environ.get("LAUNCH_J", 0.07))  # 打ちこむ強さのば�
 # へや
 CX0, CX1, CY0, CY1, CR = 150.0, 930.0, 948.0, 1556.0, 110.0
 PIPE_Y = 938.0
-RS = float(os.environ.get("RS", 4.5))            # 小さな玉の半径
-GROW = float(os.environ.get("GROW", 0.02))       # 食べた玉の面積のこの割合だけキャラの面積がふえる
-E_BOUNCE = float(os.environ.get("E_BOUNCE", 1.0))   # へやの中の跳ね返り(はねかえり係数)
-TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 45.0))
+BR = float(os.environ.get("BR", 16.0))           # へやの玉の半径
+V_MIN = float(os.environ.get("V_MIN", 120.0))    # これ以上の速さでぶつかったら増える
+COOL = float(os.environ.get("COOL", 0.4))        # 増やしたあと、次に増やせるまでの時間(秒)
+BIRTH_T = 0.25                                    # 生まれた玉がふくらみきるまでの時間
+FILL = float(os.environ.get("FILL", 0.82))       # へやの面積のこの割合を玉がうめたら「パンパン」
+E_BOUNCE = float(os.environ.get("E_BOUNCE", 0.97))   # へやの中の跳ね返り(はねかえり係数)
+TIME_LIMIT = float(os.environ.get("TIME_LIMIT", 39.5))
 OUTRO = 4.2
 PRE = 0.7
 WIN_DUR = JP.DURATION - JP.T_BIG
@@ -86,32 +89,11 @@ def inside_rrect(x, y, x0, y0, x1, y1, r, pad):
     return math.hypot(x - qx, y - qy) <= r
 
 
-def lattice():
-    s = 2 * RS
-    pts = []
-    j = 0
-    y = CY0 + RS + 1
-    while y < CY1:
-        off = (s / 2) if j % 2 else 0.0
-        x = CX0 + RS + 1 + off
-        while x < CX1:
-            if inside_rrect(x, y, CX0, CY0, CX1, CY1, CR, RS + 0.5):
-                pts.append((x, y))
-            x += s
-        y += s * math.sqrt(3) / 2
-        j += 1
-    return np.array(pts)
+def rrect_area(x0, y0, x1, y1, r):
+    return (x1 - x0) * (y1 - y0) - (4 - math.pi) * r * r
 
 
-PTS = lattice()
-NB = len(PTS)
-CELL = 24.0
-_GX = ((PTS[:, 0] - CX0) // CELL).astype(int)
-_GY = ((PTS[:, 1] - CY0) // CELL).astype(int)
-BUCKET = {}
-for _i, (_a, _b) in enumerate(zip(_GX, _GY)):
-    BUCKET.setdefault((_a, _b), []).append(_i)
-BUCKET = {k: np.array(v) for k, v in BUCKET.items()}
+N_FULL = int(FILL * rrect_area(CX0, CY0, CX1, CY1, CR) / (math.pi * BR * BR))
 
 
 def nails():
@@ -175,21 +157,56 @@ class Game:
                 continue
             seg(a, b, E_BOUNCE, 4)
         sp.on_collision(1, 2, begin=self._nail)
+        sp.on_collision(5, 5, begin=self._touch)
         for sh in sp.shapes:   # 床はつるつる(玉が転がってアウト口へ)
             if sh.collision_type == 6:
                 sh.friction = 0.0
         self.balls = []     # 盤面の玉
-        self.eaters = []    # へやのキャラ
-        self.alive = np.ones(NB, bool)
-        self.left = NB
+        self.room = []      # へやの玉
+        self.by_shape = {}
+        self.pending = []
         self.t = 0.0
         self.next_shot = 0.3
         self.events = []
         self.result, self.result_t = None, None
-        self.eat_now = 0
+        self.born_now = 0
         self.nid = 0
+        self.hue = 0
         self.shots = 0
         self.entries = 0
+        self.born = 0
+
+    def _touch(self, arb, space, data):
+        """へやの玉どうしがぶつかった:勢いがあれば、あとで新しい玉を生む。"""
+        a, b = arb.shapes
+        oa, ob = self.by_shape.get(a), self.by_shape.get(b)
+        if oa is None or ob is None:
+            return True
+        n = arb.contact_point_set.normal
+        rv = oa["b"].velocity - ob["b"].velocity
+        vn = abs(rv.dot(n))
+        if vn >= V_MIN and self.t >= oa["cool"] and self.t >= ob["cool"]:
+            p = arb.contact_point_set.points[0].point_a if arb.contact_point_set.points else (oa["b"].position + ob["b"].position) / 2
+            oa["cool"] = ob["cool"] = self.t + COOL
+            self.pending.append((p, (oa["b"].velocity + ob["b"].velocity) / 2, n))
+        return True
+
+    def add_room(self, pos, vel, born=False):
+        bd = pymunk.Body(1.0, pymunk.moment_for_circle(1.0, 0, BR))
+        bd.position = pos
+        bd.velocity = vel
+        r0 = BR * 0.3 if born else BR
+        sh = pymunk.Circle(bd, r0)
+        sh.elasticity, sh.friction = 1.0, 0.1
+        sh.collision_type = 5
+        self.space.add(bd, sh)
+        self.nid += 1
+        o = {"id": self.nid, "b": bd, "s": sh, "r": r0, "t0": self.t if born else -9, "hue": self.hue % 12,
+             "cool": self.t + COOL}
+        self.hue += 1
+        self.room.append(o)
+        self.by_shape[sh] = o
+        return o
 
     def _nail(self, arb, space, data):
         if arb.total_impulse.length > 0 or True:
@@ -222,13 +239,9 @@ class Game:
         for o in self.balls:
             b = o["b"]
             x, y = b.position
-            if y > CY0 + RB:            # ヘソに入ってへやに落ちた → キャラに変身
-                o["s"].collision_type = 5
-                o["s"].elasticity = 1.0
-                o["s"].friction = 0.0
-                o["r"] = RB
-                o["eat"] = 0
-                self.eaters.append(o)
+            if y > CY0 + RB:            # ヘソに入ってへやに落ちた → 虹色の玉に
+                self.space.remove(b, o["s"])
+                self.add_room((x, y), b.velocity)
                 self.entries += 1
                 self.events.append(("heso", self.t, (x, y)))
                 continue
@@ -242,41 +255,24 @@ class Game:
                 continue
             keep.append(o)
         self.balls = keep
-        # 食べる
+        # 生まれたばかりの玉はふくらむ
+        for o in self.room:
+            if o["r"] < BR:
+                r = BR * min(1.0, 0.3 + 0.7 * (self.t - o["t0"]) / BIRTH_T)
+                o["r"] = r
+                o["s"].unsafe_set_radius(r)
+        # 増える
+        if self.result is None and self.pending:
+            for p, v, n in self.pending:
+                if len(self.room) >= N_FULL:
+                    break
+                o = self.add_room(p, v, born=True)
+                self.born += 1
+                self.born_now += 1
+                self.events.append(("born", self.t, (p[0], p[1], len(self.room))))
+        self.pending = []
         if self.result is None:
-            for o in self.eaters:
-                b = o["b"]
-                x, y = b.position
-                r = o["r"]
-                reach = r + RS
-                gx0, gx1 = int((x - reach - CX0) // CELL), int((x + reach - CX0) // CELL)
-                gy0, gy1 = int((y - reach - CY0) // CELL), int((y + reach - CY0) // CELL)
-                n = 0
-                for gx in range(gx0, gx1 + 1):
-                    for gy in range(gy0, gy1 + 1):
-                        idx = BUCKET.get((gx, gy))
-                        if idx is None:
-                            continue
-                        idx = idx[self.alive[idx]]
-                        if not len(idx):
-                            continue
-                        d = np.hypot(PTS[idx, 0] - x, PTS[idx, 1] - y)
-                        hit = idx[d < reach]
-                        if len(hit):
-                            self.alive[hit] = False
-                            n += len(hit)
-                if n:
-                    r = math.sqrt(r * r + GROW * n * RS * RS)
-                    o["r"] = r
-                    o["s"].unsafe_set_radius(r)
-                    m = (r / RB) ** 2
-                    b.mass = m
-                    b.moment = pymunk.moment_for_circle(m, 0, r)
-                    self.left -= n
-                    self.eat_now += n
-                    o["eat"] += n
-                    self.events.append(("eat", self.t, (x, y, n, r, NB - self.left)))
-            if self.left <= 0:
+            if len(self.room) >= N_FULL:
                 self.result, self.result_t = "success", self.t
                 self.events.append(("success", self.t, None))
             elif self.t >= TIME_LIMIT:
@@ -289,43 +285,36 @@ def simulate(seed, record=False):
     frames = []
     dt = 1 / FPS / SUBSTEPS
     while True:
-        g.eat_now = 0
-        for o in g.eaters:
-            o["eat"] = 0
+        g.born_now = 0
         for _ in range(SUBSTEPS):
             g.step(dt)
         if record:
-            frames.append({"t": g.t, "left": g.left,
+            frames.append({"t": g.t, "n": len(g.room),
                            "balls": [(o["id"], *o["b"].position) for o in g.balls],
-                           "eaters": [(o["id"], *o["b"].position, o["r"], *o["b"].velocity, o["eat"]) for o in g.eaters],
-                           "alive": g.alive.copy() if (g.eat_now or not frames) else None, "eat": g.eat_now})
+                           "room": [(o["id"], *o["b"].position, o["r"], o["hue"]) for o in g.room],
+                           "born": g.born_now})
         if g.result is not None:
             extra = (OUTRO + SCARE_DUR) if g.result == "fail" else (PRE + WIN_DUR)
             if not record or g.t > g.result_t + extra:
                 break
     return {"events": g.events, "frames": frames, "result": g.result, "result_t": g.result_t,
-            "left": g.left, "total": NB, "shots": g.shots, "entries": g.entries}
+            "n": len(g.room), "shots": g.shots, "entries": g.entries, "born": g.born}
 
 
 def score(seed):
     r = simulate(seed)
-    return seed, r["result"], round(r["result_t"], 1), r["left"], round(1 - r["left"] / r["total"], 4), r["entries"], r["shots"]
+    return seed, r["result"], round(r["result_t"], 1), r["n"], round(r["n"] / N_FULL, 3), r["entries"], r["shots"]
 
 
 def search(n):
     with Pool(os.cpu_count()) as p:
         rs = p.map(score, range(n))
-    print(f"{n} シード中 成功 {sum(r[1] == 'success' for r in rs)} 件 (玉 {NB} 個)")
+    print(f"{n} シード中 成功 {sum(r[1] == 'success' for r in rs)} 件 (目標 {N_FULL} 個)")
     for r in rs:
         print(r)
 
 
 # ---------------------------------------------------------------- 描画
-HB = 36
-_ANG = (np.arctan2(PTS[:, 1] - CCY, PTS[:, 0] - CCX) / (2 * math.pi)) % 1.0
-HUE_BIN = (_ANG * HB).astype(int) % HB
-
-
 def rrect(ctx, x0, y0, x1, y1, r):
     ctx.new_path()
     ctx.arc(x1 - r, y0 + r, r, -math.pi / 2, 0)
@@ -378,99 +367,14 @@ def failed_text(ctx, s, x, y, size, alpha):
 
 
 # 小さな玉の色:まん中からの向きで虹色(色相 HB 段階)
-def draw_hero(ctx, x, y, r, ang, mouth, t):
-    """食べるキャラ:まんまるの体に目とほっぺ。進む向きに大きな口をあけて、食べるたびにパクパクする。
-    ang:進む向き、mouth:口のあき具合(0〜1)。左向きのときは左右反転して、顔がさかさまにならないようにする。"""
-    for k, al in ((2.4, 0.06), (1.7, 0.12), (1.25, 0.22)):   # まわりの光
-        g = cairo.RadialGradient(x, y, r * 0.6, x, y, r * k)
-        g.add_color_stop_rgba(0, 1.0, 0.85, 0.4, al)
-        g.add_color_stop_rgba(1, 1.0, 0.7, 0.2, 0)
-        ctx.arc(x, y, r * k, 0, 2 * math.pi)
-        ctx.set_source(g)
-        ctx.fill()
-    ctx.save()
-    ctx.translate(x, y)
-    flip = math.cos(ang) < 0
-    if flip:
-        ctx.scale(-1, 1)
-        ang = math.pi - ang
-    ctx.rotate(ang)
-    ctx.scale(r, r)
-    # 体
-    g = cairo.RadialGradient(-0.35, -0.45, 0.05, 0, 0, 1)
-    g.add_color_stop_rgb(0, 1.0, 0.98, 0.85)
-    g.add_color_stop_rgb(0.4, 1.0, 0.8, 0.3)
-    g.add_color_stop_rgb(1, 0.92, 0.45, 0.08)
-    ctx.arc(0, 0, 1, 0, 2 * math.pi)
-    ctx.set_source(g)
-    ctx.fill()
-    # 口(進む向きにあく)
-    mo = 0.12 + 0.88 * mouth
-    mx, my = 0.5, 0.18
-    rw, rh = 0.42, 0.42 * mo
-    ctx.save()
-    ctx.translate(mx, my)
-    ctx.scale(rw, max(0.02, rh))
-    ctx.arc(0, 0, 1, 0, 2 * math.pi)
-    ctx.restore()
-    ctx.set_source_rgb(0.35, 0.05, 0.08)
-    ctx.fill_preserve()
-    ctx.save()
-    ctx.clip()
-    ctx.arc(mx + 0.05, my + rh * 0.9, 0.3, 0, 2 * math.pi)   # 舌
-    ctx.set_source_rgb(1.0, 0.45, 0.55)
-    ctx.fill()
-    for tx_ in (mx - 0.16, mx + 0.1):                         # 上の歯
-        ctx.rectangle(tx_, my - rh - 0.02, 0.11, 0.07 + 0.08 * mo)
-        ctx.set_source_rgb(1, 1, 1)
-        ctx.fill()
-    ctx.restore()
-    ctx.save()
-    ctx.translate(mx, my)
-    ctx.scale(rw, max(0.02, rh))
-    ctx.arc(0, 0, 1, 0, 2 * math.pi)
-    ctx.restore()
-    ctx.set_source_rgb(0.55, 0.2, 0.05)
-    ctx.set_line_width(0.05)
-    ctx.stroke()
-    # 目(白目+黒目+光)
-    blink = (t % 3.1) < 0.1
-    for ex, ey, er in ((0.12, -0.42, 0.2), (0.55, -0.36, 0.17)):
-        if blink:
-            ctx.move_to(ex - er, ey)
-            ctx.line_to(ex + er, ey)
-            ctx.set_source_rgb(0.2, 0.08, 0.05)
-            ctx.set_line_width(0.06)
-            ctx.stroke()
-            continue
-        ctx.arc(ex, ey, er, 0, 2 * math.pi)
-        ctx.set_source_rgb(1, 1, 1)
-        ctx.fill()
-        ctx.arc(ex + er * 0.35, ey + er * 0.05, er * 0.6, 0, 2 * math.pi)
-        ctx.set_source_rgb(0.1, 0.06, 0.05)
-        ctx.fill()
-        ctx.arc(ex + er * 0.45, ey - er * 0.25, er * 0.22, 0, 2 * math.pi)
-        ctx.set_source_rgb(1, 1, 1)
-        ctx.fill()
-    # ほっぺ
-    ctx.save()
-    ctx.translate(-0.2, 0.15)
-    ctx.scale(0.2, 0.12)
-    ctx.arc(0, 0, 1, 0, 2 * math.pi)
-    ctx.restore()
-    ctx.set_source_rgba(1.0, 0.4, 0.45, 0.55)
-    ctx.fill()
-    ctx.restore()
-
-
 def render(seed):
     res = simulate(seed, record=True)
     events, frames, result, end_t = res["events"], res["frames"], res["result"], res["result_t"]
     fail = result == "fail"
     os.makedirs(OUT_DIR, exist_ok=True)
-    silent = os.path.join(OUT_DIR, f"ball_eat_{seed}_video.mp4")
-    wav = os.path.join(OUT_DIR, f"ball_eat_{seed}.wav")
-    final = os.path.join(OUT_DIR, f"ball_eat_{seed}.mp4")
+    silent = os.path.join(OUT_DIR, f"heso_breed_{seed}_video.mp4")
+    wav = os.path.join(OUT_DIR, f"heso_breed_{seed}.wav")
+    final = os.path.join(OUT_DIR, f"heso_breed_{seed}.mp4")
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     ctx = cairo.Context(surf)
     preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
@@ -484,7 +388,7 @@ def render(seed):
                 t_ = (self.fi + 1) / FPS
                 for pt in preview:
                     if abs(t_ - pt) < 0.5 / FPS:
-                        surf.write_to_png(os.path.join(OUT_DIR, f"be_preview_{seed}_{pt:.1f}.png"))
+                        surf.write_to_png(os.path.join(OUT_DIR, f"hb_preview_{seed}_{pt:.1f}.png"))
                 self.fi += 1
         ff = _P()
         frames = [f for f in frames if f["t"] <= max(preview) + 0.05]
@@ -501,7 +405,6 @@ def render(seed):
     grng = np.random.default_rng(seed + 5)
     glints = [(grng.uniform(0, W), grng.uniform(0, H), grng.uniform(0, 1), grng.uniform(1.5, 3.5), grng.uniform(30, 90))
               for _ in range(40)]
-    cols = [colorsys.hsv_to_rgb(k / HB, 0.85, 1.0) for k in range(HB)]
     # 動かない部分(盤面・釘・へやのわく)は先に1枚の絵にしておく
     base = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     bc = cairo.Context(base)
@@ -586,22 +489,21 @@ def render(seed):
     last_heso = -9.0
     prng = np.random.default_rng(seed + 9)
     parts = []
-    alive = frames[0]["alive"]
     frozen = None
-    face = {}   # キャラごとの向きと口
+    born_ev = [(t, d) for k, t, d in events if k == "born"]
+    bi = 0
     for fi, fr in enumerate(frames):
         t = fr["t"]
         while hi < len(heso_t) and heso_t[hi] <= t:
             last_heso = heso_t[hi]
             hi += 1
-        if fr["alive"] is not None:
-            prev_alive = alive
-            alive = fr["alive"]
-            gone = np.nonzero(prev_alive & ~alive)[0]
-            for k in gone[:: max(1, len(gone) // 10)]:
+        while bi < len(born_ev) and born_ev[bi][0] <= t:   # 生まれた所に光のつぶ
+            _, d = born_ev[bi]
+            bi += 1
+            for _ in range(5):
                 a = prng.uniform(0, 2 * math.pi)
-                sp_ = prng.uniform(80, 300)
-                parts.append([PTS[k, 0], PTS[k, 1], sp_ * math.cos(a), sp_ * math.sin(a), 0.0, HUE_BIN[k]])
+                sp_ = prng.uniform(60, 220)
+                parts.append([d[0], d[1], sp_ * math.cos(a), sp_ * math.sin(a), 0.0, int(d[2]) % 12])
         over = end_t is not None and t >= end_t
         win_b = (t - end_t) if (ending is not None and over) else -1.0
         if win_b >= PRE:
@@ -615,44 +517,12 @@ def render(seed):
             continue
         if fail and over:
             if frozen is None:
-                frozen = (fr, alive)
-            fr, alive = frozen
+                frozen = fr
+            fr = frozen
         after = (t - end_t - SCARE_DUR) if (fail and over) else 0
         ctx.set_source_surface(base, 0, 0)
         ctx.paint()
         heso_deco(ctx, max(0.0, 1 - (t - last_heso) / 0.5))
-        # 虹色の玉(キャラに近いほど明るい)
-        near = np.zeros(NB, bool)
-        for e in fr["eaters"]:
-            near |= np.hypot(PTS[:, 0] - e[1], PTS[:, 1] - e[2]) < e[3] + 110
-        for k in range(HB):
-            sel = alive & (HUE_BIN == k)
-            if not sel.any():
-                continue
-            c = cols[k]
-            for lit in (False, True):
-                ss = sel & (near if lit else ~near)
-                if not ss.any():
-                    continue
-                for px, py in PTS[ss]:
-                    ctx.new_sub_path()
-                    ctx.arc(px, py, RS - 0.35, 0, 2 * math.pi)
-                f = 1.0 if lit else 0.78
-                ad = 0.22 if lit else 0.0
-                ctx.set_source_rgb(min(1, c[0] * f + ad), min(1, c[1] * f + ad), min(1, c[2] * f + ad))
-                ctx.fill()
-        nleft = int(alive.sum())
-        if 0 < nleft <= 80 and not over:   # 残りわずかは光らせる(見た目だけ)
-            pul = 0.5 + 0.5 * math.sin(t * 7)
-            for k in np.nonzero(alive)[0]:
-                px, py = PTS[k]
-                c = cols[HUE_BIN[k]]
-                g = cairo.RadialGradient(px, py, 1, px, py, 22 + 6 * pul)
-                g.add_color_stop_rgba(0, *c, 0.65)
-                g.add_color_stop_rgba(1, *c, 0)
-                ctx.arc(px, py, 22 + 6 * pul, 0, 2 * math.pi)
-                ctx.set_source(g)
-                ctx.fill()
         # 光のつぶ
         keep = []
         for p in parts:
@@ -664,29 +534,19 @@ def render(seed):
             p[2] *= 0.92
             p[3] *= 0.92
             ctx.arc(p[0], p[1], 2.2, 0, 2 * math.pi)
-            ctx.set_source_rgba(*cols[p[5]], 1 - p[4] / 0.5)
+            ctx.set_source_rgba(*PALETTE[p[5]], 1 - p[4] / 0.5)
             ctx.fill()
             keep.append(p)
         parts = keep[-700:]
         # 盤面の玉
         for _, x, y in fr["balls"]:
             silver(ctx, x, y, RB)
-        # キャラ
-        for eid, x, y, r, vx, vy, ne in fr["eaters"]:
-            st = face.get(eid)
-            want = math.atan2(vy, vx) if (vx * vx + vy * vy) > 400 else (st["ang"] if st else 0.0)
-            if st is None:
-                st = face[eid] = {"ang": want, "munch": 0.0, "ph": 0.0}
-            if not over:
-                d_ = (want - st["ang"] + math.pi) % (2 * math.pi) - math.pi
-                st["ang"] += d_ * 0.3
-                st["munch"] = min(1.0, st["munch"] + 0.5) if ne else max(0.0, st["munch"] - 0.05)
-                st["ph"] += 0.55 * st["munch"]
-            mouth = 0.85 if st["munch"] < 0.05 else 0.5 + 0.5 * math.cos(st["ph"])
-            draw_hero(ctx, x, y, r, st["ang"], mouth, t + eid * 0.7)
+        # へやの玉(虹色・生まれたては白く光る)
+        for _, x, y, r, hue in fr["room"]:
+            shiny_ball(ctx, x, y, r, PALETTE[hue])
         # 文字
-        chic(ctx, "全部たべられる？", W / 2, 200, 62, rgb=(1, 0.88, 0.6))
-        pct = int((1 - fr["left"] / NB) * 100)
+        chic(ctx, "パンパンにできる？", W / 2, 200, 62, rgb=(1, 0.88, 0.6))
+        pct = min(100, int(fr["n"] / N_FULL * 100))
         chic(ctx, f"{pct}%", W / 2 - 110, 310, 84, rgb=(1, 1, 1), weight="Medium")
         tt = min(t, end_t) if end_t is not None else t
         lft = max(0.0, TIME_LIMIT - tt)
@@ -705,14 +565,6 @@ def render(seed):
             vg.add_color_stop_rgba(1, 0, 0, 0, 0.85 * min(1.0, after / 1.2))
             ctx.set_source(vg)
             ctx.paint()
-            pul = 0.5 + 0.5 * math.sin(after * 6)
-            a_ = min(1.0, after / 0.6)
-            for px, py in PTS[alive][:60]:   # 食べのこした玉を赤い輪で示す(結果はそのまま)
-                for wd, al in ((10, 0.18), (3, 0.9)):
-                    ctx.arc(px, py, 20 + 5 * pul, 0, 2 * math.pi)
-                    ctx.set_source_rgba(1.0, 0.15, 0.2, al * a_)
-                    ctx.set_line_width(wd)
-                    ctx.stroke()
             k = min(1.0, max(0.0, (after - 0.2) / 1.4))
             k = k * k * (3 - 2 * k)
             failed_text(ctx, "Failed...", W / 2, 1010 + 40 * (1 - k), 160, k)
@@ -741,8 +593,7 @@ def render(seed):
          "-shortest", "-movflags", "+faststart", final], check=True)
     os.remove(silent)
     os.remove(wav)
-    pct = 100 * (1 - res["left"] / res["total"])
-    print(f"完成: {os.path.abspath(final)}  ({'失敗' if fail else '成功'} {pct:.2f}% / 長さ {duration:.1f}秒 / "
+    print(f"完成: {os.path.abspath(final)}  ({'失敗' if fail else '成功'} {res['n']}/{N_FULL}個 / 長さ {duration:.1f}秒 / "
           f"打った玉 {res['shots']} / ヘソ {res['entries']})")
 
 
@@ -773,14 +624,14 @@ def synth_audio(res, duration, path):
     for kind, t, data in events:
         if t > end_t + 0.01:
             continue
-        if kind == "eat":
+        if kind == "born":                   # 増えた「ポン」(数が多いほど音階が上がる)
             if t - last_eat < 0.05:
                 continue
             last_eat = t
-            frac = data[4] / NB
-            step = int(frac * 30)            # 食べた量が多いほど音が上がる
+            frac = data[2] / N_FULL
+            step = int(frac * 30)
             m = 60 + 12 * (step // 5) + SCALE[step % 5]
-            sig = pop(midi_hz(m), min(1.0, 0.45 + data[2] / 25))
+            sig = pop(midi_hz(m), 0.8)
         elif kind == "nail":                 # 釘に当たる「チン」
             if t - last_nail < 0.03:
                 continue
