@@ -36,7 +36,8 @@ def build(cfg, cfg_dir, src, outdir):
         narr = os.path.join(cfg_dir, s["narr"])
         # ナレーションの前後の無音を詰め、速さを調整
         nw = os.path.join(tmp, f"n{i:02d}.wav")
-        run(["ffmpeg", "-v", "error", "-y", "-i", narr, "-af",
+        # narr_start: ナレーション音声の途中から使う(読み間違えた冒頭を切るときなど)
+        run(["ffmpeg", "-v", "error", "-y", "-ss", str(s.get("narr_start", 0)), "-i", narr, "-af",
              "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
              "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
              f"atempo={speed},aresample=48000", "-ac", "2", nw])

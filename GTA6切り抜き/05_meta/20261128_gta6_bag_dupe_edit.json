@@ -1,0 +1,25 @@
+{
+ "name": "20261128_gta6_bag_dupe",
+ "source": "https://www.youtube.com/watch?v=dv1QlmXoUDE",
+ "narration": "Higgsfield text2speech_v2 / ElevenLabs / preset voice Hana (c25f78a0-714e-42af-8da3-a399cef94968)",
+ "narr_speed": 1.12,
+ "gap": 0.18,
+ "game_vol": 0.12,
+ "x": 0.5,
+ "title": ["GTA6", "バッグ増殖 金策グリッチ"],
+ "hook": ["10秒ごとに", "12万ドル!?"],
+ "outro": ["詳しい手順は", "概要欄の元動画で!"],
+ "outro_sec": 3.4,
+ "credit": "素材: DPJ (YouTube / CC BY)",
+ "segments": [
+  {"narr": "../03_edit/narr10/line1.mp3", "narr_start": 2.74, "clips": [[366, 374]], "game_audio": false},
+  {"narr": "../03_edit/narr10/line2.mp3", "clips": [[69, 74], [85, 92]], "game_audio": false, "l1": "場所", "l2": "マリアナ郡のテディベア工場"},
+  {"narr": "../03_edit/narr10/line3.mp3", "clips": [[125, 131], [146, 152]], "game_audio": false, "l1": "STEP 1", "l2": "バッグ2つを満タンにしてバンへ"},
+  {"narr": "../03_edit/narr10/line4.mp3", "clips": [[185, 191], [193, 200]], "game_audio": false, "l1": "STEP 2", "l2": "ブツ1個入りのバッグも作る → キャラ切替"},
+  {"narr": "../03_edit/narr10/line5.mp3", "clips": [[238, 248], [255, 263]], "game_audio": false, "l1": "STEP 3", "l2": "左のブツを連打 → バッグがあふれる"},
+  {"narr": "../03_edit/narr10/line6.mp3", "clips": [[386, 392], [420, 426]], "game_audio": false, "l1": "STEP 4", "l2": "しゃがんで多い方から落とす → 拾う連打"},
+  {"narr": "../03_edit/narr10/line7.mp3", "clips": [[429, 436]], "game_audio": false, "l1": "結果", "l2": "1回で10万ドル以上!"},
+  {"narr": "../03_edit/narr10/line8.mp3", "clips": [[636, 644]], "game_audio": false, "l1": "あとは", "l2": "繰り返すだけ!"},
+  {"narr": "../03_edit/narr10/line9.mp3", "clips": [[656, 662]], "game_audio": false}
+ ]
+}
