@@ -9,7 +9,7 @@
 
 使い方:
     from evil_laugh import evil_laugh
-    y = evil_laugh(level, sr)   # level が大きいほど長く・低く・こわい(0〜6)
+    y = evil_laugh(level, sr)   # level が大きいほど長く・低く・ざらざら・こだまが深い(0〜6)
 """
 
 import numpy as np
@@ -47,11 +47,11 @@ def _glottal(f0, sr, rng):
     return d
 
 
-def _syllable(sr, rng, vowel, dur, f0a, f0b, h_dur, shift, amp):
+def _syllable(sr, rng, vowel, dur, f0a, f0b, h_dur, shift, amp, sub=0.5):
     n = int(dur * sr)
     t = np.arange(n) / sr
     f0 = f0a + (f0b - f0a) * (t / dur) ** 0.7
-    src = _glottal(f0, sr, rng) + 0.5 * _glottal(f0 / 2, sr, rng)   # 1オクターブ下をうすく重ねる
+    src = _glottal(f0, sr, rng) + sub * _glottal(f0 / 2, sr, rng)   # 1オクターブ下を重ねる(悪いほど濃く)
     env = np.minimum(1, t / 0.015) * np.minimum(1, (dur - t) / 0.05) ** 1.5
     voice = _formants(src, vowel, sr, shift) * env
     nh = int(h_dur * sr)
@@ -75,22 +75,25 @@ def evil_laugh(level, sr, seed=7):
         return _CACHE[key]
     rng = np.random.default_rng(seed + level)
     shift = 0.92 - 0.02 * level          # 共鳴を低くずらす(体が大きく聞こえる)
-    base = 118 - 6 * level               # 声の高さ(Hz)
+    base = 120 - 9 * level               # 声の高さ(Hz):悪いほど低い
+    sub = 0.3 + 0.2 * level              # 1オクターブ下の声の濃さ
     n_ha = [2, 3, 3, 4, 5, 6, 8][level]
     parts = []
     if level >= 2:                       # 「ムフッ…」の前ぶれ
-        parts.append(_syllable(sr, rng, "u", 0.28 + 0.04 * level, base * 0.8, base * 1.05, 0.0, shift, 0.75))
+        parts.append(_syllable(sr, rng, "u", 0.28 + 0.04 * level, base * 0.8, base * 1.05, 0.0, shift, 0.75, sub))
         parts.append(np.zeros(int(0.06 * sr)))
     for k in range(n_ha):                # 「ハッ ハッ ハッ…」だんだん低く
         last = k == n_ha - 1
         f0 = base * (1.25 - 0.35 * k / max(1, n_ha - 1))
         dur = (0.22 + 0.05 * level) if last else 0.11
         parts.append(_syllable(sr, rng, "a", dur, f0 * 1.04, f0 * (0.85 if last else 0.96), 0.045, shift,
-                               1.0 if k == 0 else 0.85))
+                               1.0 if k == 0 else 0.85, sub))
         parts.append(np.zeros(int((0.05 if not last else 0.0) * sr)))
     y = np.concatenate(parts)
-    y = np.tanh(2.2 * y / (np.abs(y).max() + 1e-9)) / np.tanh(2.2)   # 少し歪ませて太く
-    for d, g in ((0.09, 0.32), (0.17, 0.2), (0.29, 0.12), (0.43, 0.07)):   # 洞くつのようなこだま
+    drive = 1.6 + 0.7 * level            # 悪いほど歪ませてざらざらに
+    y = np.tanh(drive * y / (np.abs(y).max() + 1e-9)) / np.tanh(drive)
+    ek = 0.7 + 0.12 * level              # 悪いほどこだまが深い
+    for d, g in ((0.09, 0.32 * ek), (0.17, 0.2 * ek), (0.29, 0.12 * ek), (0.43, 0.07 * ek), (0.61, 0.04 * ek)):   # 洞くつのようなこだま
         m = int(d * sr)
         y = np.concatenate([y, np.zeros(m)])
         y[m:] += g * y[:-m]
